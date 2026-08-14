@@ -34,13 +34,13 @@ const SearchResults = () => {
       </div>
       <div>
         <h2 className="text-[15px] font-bold text-gray-800">{title}</h2>
-        <p className="text-[10px] text-gray-400 font-black uppercase tracking-widest">{count} Matches Found</p>
+        <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">{count} Matches Found</p>
       </div>
     </div>
   );
 
   return (
-    <div className="min-h-[calc(100vh-80px)] bg-[#F8F5FF] p-4 lg:p-8 -m-6 lg:-m-8 font-sans text-gray-800 lg:rounded-tl-[32px]">
+    <div className="min-h-[calc(100vh-80px)] bg-background p-4 lg:p-8 -m-6 lg:-m-8 font-sans text-gray-800 lg:rounded-tl-[32px]">
       <div className="max-w-7xl mx-auto">
         {/* Header Section */}
         <div className="flex items-center gap-4 mb-2">
@@ -85,7 +85,7 @@ const SearchResults = () => {
                         </div>
                         <div>
                           <h3 className="text-[14px] font-bold text-gray-800 leading-tight">{m.storeName}</h3>
-                          <p className="text-[10px] text-gray-400 font-black uppercase tracking-widest mt-0.5">{m.category} • {m.city}</p>
+                          <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest mt-0.5">{m.category} • {m.city}</p>
                         </div>
                       </div>
                       <ChevronRightRoundedIcon sx={{ fontSize: 18 }} className="text-gray-300 group-hover:text-primary transition-all" />
@@ -112,7 +112,7 @@ const SearchResults = () => {
                         </div>
                         <div>
                           <h3 className="text-[14px] font-bold text-gray-800 leading-tight">{u.name}</h3>
-                          <p className="text-[10px] text-gray-400 font-black uppercase tracking-widest mt-0.5">{u.phone || u.email}</p>
+                          <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest mt-0.5">{u.phone || u.email}</p>
                         </div>
                       </div>
                       <ChevronRightRoundedIcon sx={{ fontSize: 18 }} className="text-gray-300 group-hover:text-indigo-500 transition-all" />
@@ -139,7 +139,7 @@ const SearchResults = () => {
                         </div>
                         <div>
                           <h3 className="text-[14px] font-bold text-gray-800 leading-tight">{c.name}</h3>
-                          <p className="text-[10px] text-gray-400 font-black uppercase tracking-widest mt-0.5">{c.zones?.length || 0} Zones Active</p>
+                          <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest mt-0.5">{c.zones?.length || 0} Zones Active</p>
                         </div>
                       </div>
                       <ChevronRightRoundedIcon sx={{ fontSize: 18 }} className="text-gray-300 group-hover:text-orange-500 transition-all" />

@@ -10,7 +10,9 @@ export const getPlans = async (req, res) => {
 
     // If logged in as merchant, get their city automatically
     if (!city && req.user) {
-      const merchant = await Merchant.findOne({ ownerId: req.user._id });
+      const merchant = await Merchant.findOne({
+        $or: [{ _id: req.user._id }, { ownerId: req.user._id }]
+      });
       if (merchant) {
         city = merchant.city;
       }

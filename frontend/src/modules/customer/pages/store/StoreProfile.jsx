@@ -40,7 +40,7 @@ const StoreProfile = () => {
     if (!merchant || !merchant.businessHours) return { isOpen: false, label: 'Hours Not Set' };
     
     const now = new Date();
-    const day = now.toLocaleDateString('en-US', { weekday: 'lowercase' });
+    const day = now.toLocaleDateString('en-US', { weekday: 'long' }).toLowerCase();
     const hours = merchant.businessHours[day];
     
     if (!hours || hours.isClosed) return { isOpen: false, label: 'Closed Today' };
@@ -179,8 +179,15 @@ const StoreProfile = () => {
     <PageTransition>
       <div className="pb-32">
         {/* Cover image */}
-        <div className="relative h-48 sm:h-56 md:h-64 lg:h-72 max-w-5xl mx-auto rounded-b-[2.5rem] overflow-hidden shadow-lg">
-          <img src={merchant.coverImage} alt="" className="w-full h-full object-cover" />
+        <div className="relative h-48 sm:h-56 md:h-64 lg:h-72 max-w-5xl mx-auto rounded-b-[2.5rem] overflow-hidden shadow-lg bg-gray-900">
+          <img 
+            src={merchant.coverImage || 'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=1200&auto=format&fit=crop&q=80'} 
+            alt="" 
+            className="w-full h-full object-cover"
+            onError={(e) => {
+              e.currentTarget.src = 'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=1200&auto=format&fit=crop&q=80';
+            }}
+          />
           <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
         </div>
 
@@ -189,14 +196,26 @@ const StoreProfile = () => {
           <div className="bg-surface rounded-3xl shadow-card p-4 sm:p-6 border border-gray-100">
             <div className="flex items-start gap-4">
               {/* Logo */}
-              <div className="w-20 h-20 rounded-2xl overflow-hidden bg-white border-4 border-white shadow-lg -mt-10 flex-shrink-0">
+              <div className="w-20 h-20 rounded-2xl overflow-hidden bg-white border-4 border-white shadow-lg -mt-10 flex-shrink-0 flex items-center justify-center">
                 {merchant.logo ? (
-                  <img src={merchant.logo} alt="" className="w-full h-full object-cover" />
-                ) : (
-                  <div className="w-full h-full flex items-center justify-center bg-primary/10">
-                    <span className="text-2xl font-bold text-primary">{merchant.storeName.charAt(0)}</span>
-                  </div>
-                )}
+                  <img 
+                    src={merchant.logo} 
+                    alt="" 
+                    className="w-full h-full object-cover"
+                    onError={(e) => {
+                      e.currentTarget.style.display = 'none';
+                      if (e.currentTarget.nextElementSibling) {
+                        e.currentTarget.nextElementSibling.style.display = 'flex';
+                      }
+                    }}
+                  />
+                ) : null}
+                <div 
+                  style={{ display: merchant.logo ? 'none' : 'flex' }}
+                  className="w-full h-full items-center justify-center bg-primary/10"
+                >
+                  <span className="text-2xl font-bold text-primary">{merchant.storeName?.charAt(0) || 'O'}</span>
+                </div>
               </div>
 
               <div className="flex-1 pt-1">
@@ -247,8 +266,8 @@ const StoreProfile = () => {
                   onClick={() => setShowHours(!showHours)}
                 >
                   <div className="flex items-center gap-3">
-                    <AccessTimeRoundedIcon sx={{ fontSize: 18 }} className={status.isOpen ? 'text-[#3D7A4F]' : 'text-red-500'} />
-                    <span className={`text-sm font-bold ${status.isOpen ? 'text-[#3D7A4F]' : 'text-red-500'}`}>
+                    <AccessTimeRoundedIcon sx={{ fontSize: 18 }} className={status.isOpen ? 'text-[#5EB929]' : 'text-red-500'} />
+                    <span className={`text-sm font-bold ${status.isOpen ? 'text-[#5EB929]' : 'text-red-500'}`}>
                       {status.label}
                     </span>
                   </div>
@@ -268,13 +287,13 @@ const StoreProfile = () => {
                       <div className="mt-4 space-y-2 bg-gray-50/50 rounded-2xl p-4 border border-gray-100">
                         {['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'].map((day) => {
                           const h = merchant.businessHours[day];
-                          const isToday = new Date().toLocaleDateString('en-US', { weekday: 'lowercase' }) === day;
+                          const isToday = new Date().toLocaleDateString('en-US', { weekday: 'long' }).toLowerCase() === day;
                           return (
                             <div key={day} className={`flex justify-between items-center ${isToday ? 'bg-white p-2 rounded-lg shadow-sm border border-gray-100' : 'px-2'}`}>
                               <span className={`text-[11px] font-bold uppercase tracking-tight ${isToday ? 'text-primary' : 'text-gray-400'}`}>
                                 {day} {isToday && '•'}
                               </span>
-                              <span className={`text-[11px] font-black ${h?.isClosed ? 'text-red-400' : 'text-gray-600'}`}>
+                              <span className={`text-[11px] font-bold ${h?.isClosed ? 'text-red-400' : 'text-gray-600'}`}>
                                 {h?.isClosed ? 'Closed' : `${h?.open} - ${h?.close}`}
                               </span>
                             </div>

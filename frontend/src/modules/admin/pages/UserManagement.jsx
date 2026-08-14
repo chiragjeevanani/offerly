@@ -35,7 +35,7 @@ const TabButton = ({ label, isActive, onClick }) => (
     onClick={onClick}
     className={`px-5 py-2 text-[12px] font-medium transition-all duration-300 rounded-[10px] flex items-center gap-2 ${
       isActive 
-        ? 'bg-[#3D7A4F] text-white shadow-md' 
+        ? 'bg-[#5EB929] text-white shadow-md' 
         : 'text-gray-500 hover:text-gray-700 hover:bg-white/80'
     }`}
   >
@@ -110,7 +110,7 @@ const UserManagement = () => {
 
 
   return (
-    <div className="min-h-[calc(100vh-80px)] bg-[#F8F5FF] p-4 lg:p-8 -m-6 lg:-m-8 font-sans text-gray-800 lg:rounded-tl-[32px]">
+    <div className="min-h-[calc(100vh-80px)] bg-background p-4 lg:p-8 -m-6 lg:-m-8 font-sans text-gray-800 lg:rounded-tl-[32px]">
       <div className="max-w-7xl mx-auto">
         {/* Header Section */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-2 mb-1.5">
@@ -144,7 +144,7 @@ const UserManagement = () => {
               placeholder="Search by name, phone or email..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full bg-white border border-gray-100 rounded-[12px] py-1.5 pl-11 pr-4 text-[12px] text-gray-800 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-[#3D7A4F]/10 focus:border-[#3D7A4F]/30 transition-all shadow-sm"
+              className="w-full bg-white border border-gray-100 rounded-[12px] py-1.5 pl-11 pr-4 text-[12px] text-gray-800 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-[#5EB929]/10 focus:border-[#5EB929]/30 transition-all shadow-sm"
             />
           </div>
         </div>
@@ -263,11 +263,11 @@ const UserManagement = () => {
                 <div className="px-5 divide-y divide-gray-50">
                    <div className="py-4 flex justify-between items-center gap-4">
                     <span className="text-[13px] text-gray-500">Referral Code</span>
-                    <span className="text-[13px] font-black text-[#3D7A4F] tracking-widest">{viewingUser.referralCode || 'N/A'}</span>
+                    <span className="text-[13px] font-bold text-[#5EB929] tracking-widest">{viewingUser.referralCode || 'N/A'}</span>
                   </div>
                   <div className="py-4 flex justify-between items-center gap-4">
                     <span className="text-[13px] text-gray-500">Account Status</span>
-                    <span className={`text-[10px] font-black px-3 py-1 rounded-full uppercase tracking-tighter ${viewingUser.status === 'suspended' ? 'bg-red-50 text-red-500' : 'bg-green-50 text-green-600'}`}>
+                    <span className={`text-[10px] font-bold px-3 py-1 rounded-full uppercase tracking-tight ${viewingUser.status === 'suspended' ? 'bg-red-50 text-red-500' : 'bg-green-50 text-green-600'}`}>
                       {viewingUser.status || 'Active'}
                     </span>
                   </div>
@@ -286,7 +286,7 @@ const UserManagement = () => {
                     </div>
                     <div>
                       <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Available Credits</p>
-                      <p className="text-xl font-black text-gray-800">{viewingUser.credits || 0}</p>
+                      <p className="text-xl font-bold text-gray-800">{viewingUser.credits || 0}</p>
                     </div>
                   </div>
                   <div className="p-5 flex flex-col items-center text-center gap-2">
@@ -295,7 +295,7 @@ const UserManagement = () => {
                     </div>
                     <div>
                       <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Saved Offers</p>
-                      <p className="text-xl font-black text-gray-800">{viewingUser.savedOffers?.length || 0}</p>
+                      <p className="text-xl font-bold text-gray-800">{viewingUser.savedOffers?.length || 0}</p>
                     </div>
                   </div>
                 </div>

@@ -25,13 +25,30 @@ axiosInstance.interceptors.request.use(
 axiosInstance.interceptors.response.use(
   (response) => response.data,
   (error) => {
-    if (error.response?.status === 401) {
-      // Token expired or invalid
-      localStorage.removeItem(STORAGE_KEYS.AUTH_TOKEN);
-      localStorage.removeItem(STORAGE_KEYS.USER_DATA);
-      // Redirect admin to admin login, others to customer login
-      const isAdmin = window.location.pathname.startsWith('/admin');
-      window.location.href = isAdmin ? '/admin/login' : '/login';
+    const status = error.response?.status;
+    const url = error.config?.url || '';
+
+    // Ignore 401 on login/auth verification requests so the UI can display normal error messages
+    const isAuthEndpoint = url.includes('/auth/login') ||
+                           url.includes('/auth/send-otp') ||
+                           url.includes('/auth/verify-otp') ||
+                           url.includes('/auth/admin-login');
+
+    if (status === 401 && !isAuthEndpoint) {
+      const currentToken = localStorage.getItem(STORAGE_KEYS.AUTH_TOKEN);
+      if (currentToken) {
+        localStorage.removeItem(STORAGE_KEYS.AUTH_TOKEN);
+        localStorage.removeItem(STORAGE_KEYS.USER_DATA);
+
+        const pathname = window.location.pathname;
+        if (pathname.startsWith('/admin') && !pathname.includes('/login')) {
+          window.location.href = '/admin/login';
+        } else if (pathname.startsWith('/merchant') && !pathname.includes('/login') && !pathname.includes('/signup')) {
+          window.location.href = '/merchant/login';
+        } else if (!pathname.startsWith('/login') && !pathname.startsWith('/signup') && !pathname.startsWith('/verify')) {
+          window.location.href = '/login';
+        }
+      }
     }
     return Promise.reject(error.response?.data || error.message);
   }

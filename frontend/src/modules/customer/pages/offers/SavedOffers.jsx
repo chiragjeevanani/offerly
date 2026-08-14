@@ -44,7 +44,7 @@ const SavedOffers = () => {
 
   return (
     <PageTransition>
-      <div className="min-h-screen bg-[#F8F5FF] px-4 py-4 pb-24 space-y-4">
+      <div className="min-h-screen bg-background px-4 py-4 pb-24 space-y-4">
         
         {saved.length === 0 ? (
           <motion.div
@@ -55,13 +55,13 @@ const SavedOffers = () => {
             <div className="w-20 h-20 bg-white rounded-3xl flex items-center justify-center mb-6 shadow-sm border border-gray-100">
               <BookmarkRoundedIcon sx={{ fontSize: 32 }} className="text-gray-200" />
             </div>
-            <h2 className="text-sm font-black text-gray-800 uppercase tracking-tight">Your vault is empty</h2>
+            <h2 className="text-sm font-bold text-gray-800 uppercase tracking-tight">Your vault is empty</h2>
             <p className="text-[11px] text-gray-400 font-medium px-10 mt-1 leading-relaxed">
               Save offers you love to keep them safe and access them instantly anytime.
             </p>
             <button 
               onClick={() => window.location.href = '/explore'}
-              className="mt-8 text-[10px] font-black text-[#3D7A4F] uppercase tracking-widest bg-white border border-gray-100 px-6 py-2.5 rounded-xl shadow-sm active:scale-95 transition-all"
+              className="mt-8 text-[10px] font-bold text-[#5EB929] uppercase tracking-widest bg-white border border-gray-100 px-6 py-2.5 rounded-xl shadow-sm active:scale-95 transition-all"
             >
               Discover Offers
             </button>
@@ -69,8 +69,8 @@ const SavedOffers = () => {
         ) : (
           <>
             <div className="flex flex-col px-0.5">
-              <p className="text-[9px] text-gray-400 font-black uppercase tracking-widest leading-none">Your Curated Collection</p>
-              <p className="text-[11px] text-gray-800 font-black mt-0.5">
+              <p className="text-[9px] text-gray-400 font-bold uppercase tracking-widest leading-none">Your Curated Collection</p>
+              <p className="text-[11px] text-gray-800 font-bold mt-0.5">
                 {saved.length} {saved.length === 1 ? 'SAVED DEAL' : 'SAVED DEALS'} IN YOUR VAULT
               </p>
             </div>

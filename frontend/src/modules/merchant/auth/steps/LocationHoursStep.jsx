@@ -122,11 +122,11 @@ const LocationHoursStep = ({ data, onSubmit, onBack, loading }) => {
         animate={{ y: 0, opacity: 1 }}
         className="bg-white rounded-[2.5rem] p-6 md:p-10 shadow-2xl shadow-gray-200/50 border border-white relative overflow-hidden"
       >
-        <div className="absolute top-0 right-0 w-32 h-32 bg-[#3D7A4F]/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
+        <div className="absolute top-0 right-0 w-32 h-32 bg-[#5EB929]/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
         
         <div className="relative z-10 space-y-8">
           <div className="space-y-1 text-center md:text-left">
-            <h2 className="text-gray-900 font-black text-xl tracking-tight">Location & Hours</h2>
+            <h2 className="text-gray-900 font-bold text-xl tracking-tight">Location & Hours</h2>
             <p className="text-gray-400 text-[10px] font-bold tracking-tight uppercase px-1">Synchronize physical presence protocol</p>
           </div>
 
@@ -134,37 +134,37 @@ const LocationHoursStep = ({ data, onSubmit, onBack, loading }) => {
             {/* Geo Hub */}
             <div className="space-y-4">
               <div className="flex items-center gap-2 px-1">
-                <MapRoundedIcon className="text-[#3D7A4F]" sx={{ fontSize: 18 }} />
-                <h3 className="text-[11px] font-black text-gray-900 uppercase tracking-widest">Physical coordinates</h3>
+                <MapRoundedIcon className="text-[#5EB929]" sx={{ fontSize: 18 }} />
+                <h3 className="text-[11px] font-bold text-gray-900 uppercase tracking-widest">Physical coordinates</h3>
               </div>
               
               <div className="space-y-4">
                 <div className="space-y-1.5">
                   <div className="flex items-center justify-between px-1">
                     <label className="text-[10px] font-bold text-gray-400">Full Address</label>
-                    <button type="button" onClick={handleUseLocation} disabled={locationLoading} className="text-[9px] font-black text-[#3D7A4F] flex items-center gap-1.5 bg-[#3D7A4F]/5 px-2.5 py-1.5 rounded-xl transition-all">
-                      {locationLoading ? <div className="w-2.5 h-2.5 border border-[#3D7A4F]/40 border-t-[#3D7A4F] rounded-full animate-spin" /> : <MyLocationRoundedIcon sx={{ fontSize: 12 }} />}
+                    <button type="button" onClick={handleUseLocation} disabled={locationLoading} className="text-[9px] font-bold text-[#5EB929] flex items-center gap-1.5 bg-[#5EB929]/5 px-2.5 py-1.5 rounded-xl transition-all">
+                      {locationLoading ? <div className="w-2.5 h-2.5 border border-[#5EB929]/40 border-t-[#5EB929] rounded-full animate-spin" /> : <MyLocationRoundedIcon sx={{ fontSize: 12 }} />}
                       {locationLoading ? 'Locating...' : 'Auto-detect'}
                     </button>
                   </div>
                   <div className="relative group">
-                    <LocationOnRoundedIcon className="absolute left-4 top-4 text-gray-300 group-focus-within:text-[#3D7A4F] transition-colors" sx={{ fontSize: 18 }} />
-                    <textarea name="address" value={formData.address} onChange={handleChange} rows="2" placeholder="Building, Street, Landmark..." className="w-full pl-11 pr-4 py-3.5 bg-[#F8F5FF] rounded-2xl border border-gray-50 text-sm font-bold outline-none focus:bg-white focus:border-[#3D7A4F]/30 transition-all resize-none" />
+                    <LocationOnRoundedIcon className="absolute left-4 top-4 text-gray-300 group-focus-within:text-[#5EB929] transition-colors" sx={{ fontSize: 18 }} />
+                    <textarea name="address" value={formData.address} onChange={handleChange} rows="2" placeholder="Building, Street, Landmark..." className="w-full pl-11 pr-4 py-3.5 bg-background rounded-2xl border border-gray-50 text-sm font-bold outline-none focus:bg-white focus:border-[#5EB929]/30 transition-all resize-none" />
                   </div>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div className="space-y-1.5">
                     <label className="text-[10px] font-bold text-gray-400 px-1">City</label>
-                    <input name="city" value={formData.city} onChange={handleChange} placeholder="City" className="w-full h-12 px-4 bg-[#F8F5FF] rounded-2xl border border-gray-50 text-sm font-bold outline-none focus:bg-white focus:border-[#3D7A4F]/30 transition-all" />
+                    <input name="city" value={formData.city} onChange={handleChange} placeholder="City" className="w-full h-12 px-4 bg-background rounded-2xl border border-gray-50 text-sm font-bold outline-none focus:bg-white focus:border-[#5EB929]/30 transition-all" />
                   </div>
                   <div className="space-y-1.5">
                     <label className="text-[10px] font-bold text-gray-400 px-1">State</label>
-                    <input name="state" value={formData.state} onChange={handleChange} placeholder="State" className="w-full h-12 px-4 bg-[#F8F5FF] rounded-2xl border border-gray-50 text-sm font-bold outline-none focus:bg-white focus:border-[#3D7A4F]/30 transition-all" />
+                    <input name="state" value={formData.state} onChange={handleChange} placeholder="State" className="w-full h-12 px-4 bg-background rounded-2xl border border-gray-50 text-sm font-bold outline-none focus:bg-white focus:border-[#5EB929]/30 transition-all" />
                   </div>
                   <div className="space-y-1.5">
                     <label className="text-[10px] font-bold text-gray-400 px-1">Pincode</label>
-                    <input name="pincode" value={formData.pincode} onChange={(e) => setFormData({...formData, pincode: e.target.value.replace(/\D/g, '').slice(0,6)})} placeholder="000000" className="w-full h-12 px-4 bg-[#F8F5FF] rounded-2xl border border-gray-50 text-sm font-bold outline-none focus:bg-white focus:border-[#3D7A4F]/30 transition-all" />
+                    <input name="pincode" value={formData.pincode} onChange={(e) => setFormData({...formData, pincode: e.target.value.replace(/\D/g, '').slice(0,6)})} placeholder="000000" className="w-full h-12 px-4 bg-background rounded-2xl border border-gray-50 text-sm font-bold outline-none focus:bg-white focus:border-[#5EB929]/30 transition-all" />
                   </div>
                 </div>
               </div>
@@ -173,21 +173,21 @@ const LocationHoursStep = ({ data, onSubmit, onBack, loading }) => {
             {/* Hours Section */}
             <div className="space-y-4">
               <div className="flex items-center gap-2 px-1">
-                <AccessTimeRoundedIcon className="text-[#3D7A4F]" sx={{ fontSize: 18 }} />
-                <h3 className="text-[11px] font-black text-gray-900 uppercase tracking-widest">Business hours</h3>
+                <AccessTimeRoundedIcon className="text-[#5EB929]" sx={{ fontSize: 18 }} />
+                <h3 className="text-[11px] font-bold text-gray-900 uppercase tracking-widest">Business hours</h3>
               </div>
               
-              <div className="bg-[#F8F5FF] rounded-[2rem] p-4 md:p-6 border border-gray-50 space-y-3">
+              <div className="bg-background rounded-[2rem] p-4 md:p-6 border border-gray-50 space-y-3">
                 {days.map((day) => (
                   <div key={day} className="flex items-center justify-between gap-4 py-2 border-b border-gray-100 last:border-0">
                     <div className="flex items-center gap-3">
                       <button 
                         type="button" onClick={() => toggleDayClosed(day)}
-                        className={`w-4 h-4 rounded border transition-all flex items-center justify-center ${formData.businessHours[day].isClosed ? 'border-gray-200 bg-white' : 'border-[#3D7A4F] bg-[#3D7A4F]'}`}
+                        className={`w-4 h-4 rounded border transition-all flex items-center justify-center ${formData.businessHours[day].isClosed ? 'border-gray-200 bg-white' : 'border-[#5EB929] bg-[#5EB929]'}`}
                       >
                          {!formData.businessHours[day].isClosed && <div className="w-1.5 h-1.5 bg-white rounded-full" />}
                       </button>
-                      <span className={`text-[11px] font-black uppercase tracking-tight w-20 ${formData.businessHours[day].isClosed ? 'text-gray-300' : 'text-gray-700'}`}>{day}</span>
+                      <span className={`text-[11px] font-bold uppercase tracking-tight w-20 ${formData.businessHours[day].isClosed ? 'text-gray-300' : 'text-gray-700'}`}>{day}</span>
                     </div>
 
                     <div className="flex items-center gap-2">
@@ -195,9 +195,9 @@ const LocationHoursStep = ({ data, onSubmit, onBack, loading }) => {
                          <span className="text-[10px] font-bold text-gray-300 uppercase tracking-widest px-4">Locked / Closed</span>
                        ) : (
                          <div className="flex items-center gap-1.5">
-                            <input type="time" value={formData.businessHours[day].open} onChange={(e) => handleHoursChange(day, 'open', e.target.value)} className="bg-white border border-gray-100 rounded-xl px-2.5 py-1.5 text-[10px] font-bold outline-none focus:border-[#3D7A4F]/30 transition-all" />
+                            <input type="time" value={formData.businessHours[day].open} onChange={(e) => handleHoursChange(day, 'open', e.target.value)} className="bg-white border border-gray-100 rounded-xl px-2.5 py-1.5 text-[10px] font-bold outline-none focus:border-[#5EB929]/30 transition-all" />
                             <span className="text-[10px] font-bold text-gray-300">to</span>
-                            <input type="time" value={formData.businessHours[day].close} onChange={(e) => handleHoursChange(day, 'close', e.target.value)} className="bg-white border border-gray-100 rounded-xl px-2.5 py-1.5 text-[10px] font-bold outline-none focus:border-[#3D7A4F]/30 transition-all" />
+                            <input type="time" value={formData.businessHours[day].close} onChange={(e) => handleHoursChange(day, 'close', e.target.value)} className="bg-white border border-gray-100 rounded-xl px-2.5 py-1.5 text-[10px] font-bold outline-none focus:border-[#5EB929]/30 transition-all" />
                          </div>
                        )}
                     </div>
@@ -210,13 +210,13 @@ const LocationHoursStep = ({ data, onSubmit, onBack, loading }) => {
             <div className="flex gap-4 pt-6 border-t border-gray-50">
                <motion.button 
                  type="button" whileTap={{ scale: 0.98 }} onClick={onBack}
-                 className="flex-1 h-14 bg-gray-50 text-gray-400 rounded-2xl font-black text-[12px] flex items-center justify-center gap-2 border border-gray-100"
+                 className="flex-1 h-14 bg-gray-50 text-gray-400 rounded-2xl font-bold text-[12px] flex items-center justify-center gap-2 border border-gray-100"
                >
                  <ArrowBackRoundedIcon sx={{ fontSize: 16 }} /> Back
                </motion.button>
                <motion.button 
                  type="submit" whileTap={{ scale: 0.98 }} disabled={loading}
-                 className="flex-[2] h-14 bg-[#3D7A4F] text-white rounded-2xl font-black text-[12px] shadow-lg shadow-[#3D7A4F]/20 flex items-center justify-center gap-2"
+                 className="flex-[2] h-14 bg-[#5EB929] text-white rounded-2xl font-bold text-[12px] shadow-lg shadow-[#5EB929]/20 flex items-center justify-center gap-2"
                >
                  {loading ? <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : <>Finalize Deployment <ArrowForwardRoundedIcon sx={{ fontSize: 16 }} /></>}
                </motion.button>

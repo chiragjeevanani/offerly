@@ -87,7 +87,7 @@ const SubscriptionRenewal = ({ merchant }) => {
             }
           },
           prefill: res.merchantDetails,
-          theme: { color: '#3D7A4F' },
+          theme: { color: '#5EB929' },
           modal: {
             ondismiss: function() {
               toast.error('Payment cancelled by user');
@@ -109,59 +109,59 @@ const SubscriptionRenewal = ({ merchant }) => {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-[#F8F5FF] flex items-center justify-center">
-        <div className="w-12 h-12 border-4 border-[#3D7A4F]/20 border-t-[#3D7A4F] rounded-full animate-spin" />
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="w-12 h-12 border-4 border-[#5EB929]/20 border-t-[#5EB929] rounded-full animate-spin" />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-[#F8F5FF] py-1 px-4 font-sans selection:bg-[#3D7A4F]/20 flex items-center justify-center">
+    <div className="min-h-screen bg-background py-1 px-4 font-sans selection:bg-[#5EB929]/20 flex items-center justify-center">
       <div className="max-w-4xl w-full mx-auto">
         {/* One-Screen Header */}
         <div className="text-center mb-3">
           <motion.div 
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
-            className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-lg bg-white shadow-sm text-indigo-600 text-[8px] font-black tracking-tight mb-0.5 border border-indigo-50"
+            className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-lg bg-white shadow-sm text-indigo-600 text-[8px] font-bold tracking-tight mb-0.5 border border-indigo-50"
           >
             <WorkspacePremiumRoundedIcon sx={{ fontSize: 12 }} />
             {hasActivePlan ? 'Active Premium Protocol' : 'Premium access protocol'}
           </motion.div>
           
-          <h1 className="mt-0 text-xl sm:text-3xl font-black text-gray-900 tracking-tighter mb-0 leading-none">
+          <h1 className="mt-0 text-xl sm:text-3xl font-bold text-gray-900 tracking-tight mb-0 leading-none">
             {hasActivePlan ? (
-              <>Your current plan: <span className="text-[#3D7A4F]">{merchant.subscription.planId.name}</span></>
+              <>Your current plan: <span className="text-[#5EB929]">{merchant.subscription.planId.name}</span></>
             ) : (
-              <>{showUpgrade ? 'Upgrade to' : 'Select your'} <span className="text-[#3D7A4F]">Offerly</span> plan</>
+              <>{showUpgrade ? 'Upgrade to' : 'Select your'} <span className="text-[#5EB929]">Offerly</span> plan</>
             )}
           </h1>
 
           {hasActivePlan ? (
-            <div className="mt-4 p-6 bg-white rounded-3xl border border-[#3D7A4F]/10 shadow-sm max-w-md mx-auto">
+            <div className="mt-4 p-6 bg-white rounded-3xl border border-[#5EB929]/10 shadow-sm max-w-md mx-auto">
               <div className="flex items-center justify-center gap-3 mb-4">
-                 <div className="w-12 h-12 bg-[#3D7A4F]/10 rounded-2xl flex items-center justify-center">
-                    <WorkspacePremiumRoundedIcon sx={{ fontSize: 24 }} className="text-[#3D7A4F]" />
+                 <div className="w-12 h-12 bg-[#5EB929]/10 rounded-2xl flex items-center justify-center">
+                    <WorkspacePremiumRoundedIcon sx={{ fontSize: 24 }} className="text-[#5EB929]" />
                  </div>
                  <div className="text-left">
-                    <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest leading-none mb-1">Status: Active</p>
-                    <p className="text-lg font-black text-gray-900 leading-none">{merchant.subscription.planId.name}</p>
+                    <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest leading-none mb-1">Status: Active</p>
+                    <p className="text-lg font-bold text-gray-900 leading-none">{merchant.subscription.planId.name}</p>
                  </div>
               </div>
               <p className="text-[11px] font-bold text-gray-500 mb-6">
-                Your subscription is active for the next <span className="text-gray-900 font-black">{merchant.remainingDays} days</span>. 
+                Your subscription is active for the next <span className="text-gray-900 font-bold">{merchant.remainingDays} days</span>. 
               </p>
               
               <div className="flex flex-col gap-2">
                 <button 
                   onClick={() => setShowUpgrade(true)}
-                  className="w-full py-3 bg-[#3D7A4F] text-white rounded-xl font-black text-xs uppercase tracking-widest hover:bg-[#2D5A3A] transition-all shadow-lg shadow-[#3D7A4F]/20"
+                  className="w-full py-3 bg-[#5EB929] text-white rounded-xl font-bold text-xs uppercase tracking-widest hover:bg-[#2D5A3A] transition-all shadow-lg shadow-[#5EB929]/20"
                 >
                   Upgrade Subscription
                 </button>
                 <button 
                   onClick={() => navigate('/merchant')}
-                  className="w-full py-3 bg-gray-100 text-gray-600 rounded-xl font-black text-xs uppercase tracking-widest hover:bg-gray-200 transition-all"
+                  className="w-full py-3 bg-gray-100 text-gray-600 rounded-xl font-bold text-xs uppercase tracking-widest hover:bg-gray-200 transition-all"
                 >
                   Return to Dashboard
                 </button>
@@ -193,13 +193,13 @@ const SubscriptionRenewal = ({ merchant }) => {
                 }`}
               >
                 {isPopular && (
-                  <div className="absolute -top-2 left-1/2 -translate-x-1/2 px-3 py-1 rounded-md bg-gradient-to-r from-amber-400 to-orange-500 text-white text-[8px] font-black tracking-widest shadow-lg">
+                  <div className="absolute -top-2 left-1/2 -translate-x-1/2 px-3 py-1 rounded-md bg-gradient-to-r from-amber-400 to-orange-500 text-white text-[8px] font-bold tracking-widest shadow-lg">
                     Best value
                   </div>
                 )}
 
                 <div className="mb-2">
-                  <h3 className={`text-[15px] font-black tracking-tight mb-0 ${isPopular ? 'text-white' : 'text-gray-900'}`}>
+                  <h3 className={`text-[15px] font-bold tracking-tight mb-0 ${isPopular ? 'text-white' : 'text-gray-900'}`}>
                     {plan.name}
                   </h3>
                   <p className={`text-[8px] font-bold tracking-widest opacity-40 ${isPopular ? 'text-gray-300' : 'text-gray-400'}`}>
@@ -210,7 +210,7 @@ const SubscriptionRenewal = ({ merchant }) => {
                 <div className="mb-3">
                   <div className="flex items-baseline gap-0.5">
                     <span className="text-[9px] font-bold opacity-60">₹</span>
-                    <span className="text-2xl font-black tracking-tighter leading-none">{plan.price}</span>
+                    <span className="text-2xl font-bold tracking-tight leading-none">{plan.price}</span>
                     <span className={`text-[8px] font-bold uppercase tracking-widest opacity-30 ml-0.5`}>/mo</span>
                   </div>
                 </div>
@@ -218,21 +218,21 @@ const SubscriptionRenewal = ({ merchant }) => {
                 {/* Compact Features */}
                 <div className="space-y-2 mb-4 flex-1">
                   <div className="flex items-center gap-2">
-                    <div className={`w-6 h-6 rounded-lg flex items-center justify-center ${isPopular ? 'bg-white/10 text-white' : 'bg-gray-50 text-[#3D7A4F]'}`}>
+                    <div className={`w-6 h-6 rounded-lg flex items-center justify-center ${isPopular ? 'bg-white/10 text-white' : 'bg-gray-50 text-[#5EB929]'}`}>
                       <Inventory2RoundedIcon sx={{ fontSize: 12 }} />
                     </div>
                     <div>
-                      <p className={`text-[7px] font-black uppercase tracking-tighter opacity-40 ${isPopular ? 'text-gray-300' : 'text-gray-400'}`}>Products</p>
-                      <p className="text-[10px] font-black leading-none">{plan.maxProducts === 999 ? 'Unlimited' : plan.maxProducts} Slots</p>
+                      <p className={`text-[7px] font-bold uppercase tracking-tight opacity-40 ${isPopular ? 'text-gray-300' : 'text-gray-400'}`}>Products</p>
+                      <p className="text-[10px] font-bold leading-none">{plan.maxProducts === 999 ? 'Unlimited' : plan.maxProducts} Slots</p>
                     </div>
                   </div>
                   <div className="flex items-center gap-2">
-                    <div className={`w-6 h-6 rounded-lg flex items-center justify-center ${isPopular ? 'bg-white/10 text-white' : 'bg-gray-50 text-[#3D7A4F]'}`}>
+                    <div className={`w-6 h-6 rounded-lg flex items-center justify-center ${isPopular ? 'bg-white/10 text-white' : 'bg-gray-50 text-[#5EB929]'}`}>
                       <LocalOfferRoundedIcon sx={{ fontSize: 12 }} />
                     </div>
                     <div>
-                      <p className={`text-[7px] font-black uppercase tracking-tighter opacity-40 ${isPopular ? 'text-gray-300' : 'text-gray-400'}`}>Offers</p>
-                      <p className="text-[10px] font-black leading-none">{plan.maxOffers === 999 ? 'Unlimited' : plan.maxOffers} Live</p>
+                      <p className={`text-[7px] font-bold uppercase tracking-tight opacity-40 ${isPopular ? 'text-gray-300' : 'text-gray-400'}`}>Offers</p>
+                      <p className="text-[10px] font-bold leading-none">{plan.maxOffers === 999 ? 'Unlimited' : plan.maxOffers} Live</p>
                     </div>
                   </div>
 
@@ -241,7 +241,7 @@ const SubscriptionRenewal = ({ merchant }) => {
                   <div className="space-y-1">
                     {plan.features?.map((feature, fIdx) => (
                       <div key={fIdx} className="flex items-center gap-1.5 text-[10px] font-bold leading-tight">
-                        <CheckCircleRoundedIcon sx={{ fontSize: 11 }} className={isPopular ? 'text-emerald-400' : 'text-[#3D7A4F]'} />
+                        <CheckCircleRoundedIcon sx={{ fontSize: 11 }} className={isPopular ? 'text-emerald-400' : 'text-[#5EB929]'} />
                         <span className={isPopular ? 'text-gray-300' : 'text-gray-500'}>{feature}</span>
                       </div>
                     ))}
@@ -251,7 +251,7 @@ const SubscriptionRenewal = ({ merchant }) => {
 
                 <button
                   onClick={() => handleRenew(plan)}
-                  className={`w-full py-2 rounded-lg font-black text-[10px] uppercase tracking-widest transition-all active:scale-95 ${
+                  className={`w-full py-2 rounded-lg font-bold text-[10px] uppercase tracking-widest transition-all active:scale-95 ${
                     isPopular 
                       ? 'bg-gradient-to-r from-emerald-500 to-teal-600 text-white shadow-md' 
                       : 'bg-gray-900 text-white hover:bg-black'
@@ -272,7 +272,7 @@ const SubscriptionRenewal = ({ merchant }) => {
           </p>
           <button
             onClick={() => { logout(); navigate('/merchant'); }}
-            className="flex items-center gap-1 text-gray-400 hover:text-red-500 transition-colors font-black text-[8px] uppercase tracking-widest"
+            className="flex items-center gap-1 text-gray-400 hover:text-red-500 transition-colors font-bold text-[8px] uppercase tracking-widest"
           >
             <LogoutRoundedIcon sx={{ fontSize: 10 }} />
             Terminate current session

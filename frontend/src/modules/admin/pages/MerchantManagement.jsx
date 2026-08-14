@@ -45,7 +45,7 @@ const TabButton = ({ label, isActive, onClick }) => (
     onClick={onClick}
     className={`px-5 py-2 text-[12px] font-medium transition-all duration-300 rounded-[10px] flex items-center gap-2 ${
       isActive 
-        ? 'bg-[#3D7A4F] text-white shadow-md' 
+        ? 'bg-[#5EB929] text-white shadow-md' 
         : 'text-gray-500 hover:text-gray-700 hover:bg-white/80'
     }`}
   >
@@ -136,7 +136,7 @@ const MerchantManagement = () => {
 
 
   return (
-    <div className="min-h-[calc(100vh-80px)] bg-[#F8F5FF] p-4 lg:p-8 -m-6 lg:-m-8 font-sans text-gray-800 lg:rounded-tl-[32px]">
+    <div className="min-h-[calc(100vh-80px)] bg-background p-4 lg:p-8 -m-6 lg:-m-8 font-sans text-gray-800 lg:rounded-tl-[32px]">
       <div className="max-w-7xl mx-auto">
         {/* Header Section */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-2 mb-1.5">
@@ -171,7 +171,7 @@ const MerchantManagement = () => {
               placeholder="Search merchants..."
               value={searchQuery}
               onChange={(e) => { setSearchQuery(e.target.value); setPage(1); }}
-              className="w-full bg-white border border-gray-100 rounded-[12px] py-1.5 pl-11 pr-4 text-[12px] text-gray-800 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-[#3D7A4F]/10 focus:border-[#3D7A4F]/30 transition-all shadow-sm"
+              className="w-full bg-white border border-gray-100 rounded-[12px] py-1.5 pl-11 pr-4 text-[12px] text-gray-800 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-[#5EB929]/10 focus:border-[#5EB929]/30 transition-all shadow-sm"
             />
           </div>
         </div>
@@ -189,7 +189,7 @@ const MerchantManagement = () => {
         {loading ? (
           <div className="py-20 flex flex-col items-center justify-center gap-4">
             <div className="w-10 h-10 border-2 border-primary/20 border-t-primary rounded-full animate-spin" />
-            <p className="text-gray-500 font-black uppercase tracking-tighter text-xs">Syncing Cloud Database...</p>
+            <p className="text-gray-500 font-bold uppercase tracking-tight text-xs">Syncing Cloud Database...</p>
           </div>
         ) : merchants.length > 0 ? (
           <div className="space-y-4">
@@ -228,7 +228,7 @@ const MerchantManagement = () => {
                              key={p}
                              onClick={() => setPage(p)}
                              className={`w-9 h-9 flex items-center justify-center rounded-[10px] text-[12px] font-medium transition-all ${
-                               page === p ? 'bg-[#3D7A4F] text-white shadow-sm' : 'text-gray-400 hover:bg-gray-50'
+                               page === p ? 'bg-[#5EB929] text-white shadow-sm' : 'text-gray-400 hover:bg-gray-50'
                              }`}
                            >
                              {p}
@@ -314,7 +314,7 @@ const MerchantManagement = () => {
                   </div>
                   <div className="py-4 flex justify-between items-start gap-4">
                     <span className="text-[13px] text-gray-500 min-w-[140px]">GST Number</span>
-                    <span className="text-[13px] font-black text-[#3D7A4F] text-right uppercase">{viewingMerchant.gstNumber || 'NOT PROVIDED'}</span>
+                    <span className="text-[13px] font-bold text-[#5EB929] text-right uppercase">{viewingMerchant.gstNumber || 'NOT PROVIDED'}</span>
                   </div>
                   <div className="py-4 flex flex-col gap-2">
                     <span className="text-[13px] text-gray-500">Store Description</span>
@@ -335,12 +335,12 @@ const MerchantManagement = () => {
               <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
                 <div className="px-5 py-4 bg-gray-50/50 border-b border-gray-100 flex justify-between items-center">
                   <h4 className="text-[14px] font-semibold text-gray-800">Operational Hours</h4>
-                  <div className="w-2 h-2 bg-[#3D7A4F] rounded-full animate-pulse" />
+                  <div className="w-2 h-2 bg-[#5EB929] rounded-full animate-pulse" />
                 </div>
                 <div className="p-5 grid grid-cols-1 sm:grid-cols-2 gap-3">
                   {viewingMerchant.businessHours && Object.entries(viewingMerchant.businessHours).map(([day, hours]) => (
                     <div key={day} className="flex justify-between items-center bg-gray-50 p-3 rounded-xl border border-gray-100">
-                      <span className="text-[10px] font-black uppercase text-gray-400 tracking-widest">{day}</span>
+                      <span className="text-[10px] font-bold uppercase text-gray-400 tracking-widest">{day}</span>
                       <span className={`text-[11px] font-bold ${hours.isClosed ? 'text-red-400' : 'text-gray-700'}`}>
                         {hours.isClosed ? 'CLOSED' : `${hours.open} - ${hours.close}`}
                       </span>
@@ -361,7 +361,7 @@ const MerchantManagement = () => {
                         <div className="aspect-[4/3] bg-gray-100 rounded-xl overflow-hidden border border-gray-100 shadow-sm group relative">
                           <img src={doc.url} alt="" className="w-full h-full object-cover transition-transform group-hover:scale-110" />
                           <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                            <a href={doc.url} target="_blank" rel="noreferrer" className="bg-white p-2 rounded-lg text-[#3D7A4F] shadow-lg">
+                            <a href={doc.url} target="_blank" rel="noreferrer" className="bg-white p-2 rounded-lg text-[#5EB929] shadow-lg">
                               <VisibilityRoundedIcon sx={{ fontSize: 18 }} />
                             </a>
                           </div>
@@ -376,7 +376,7 @@ const MerchantManagement = () => {
                         <div className="aspect-[4/3] bg-gray-100 rounded-xl overflow-hidden border border-gray-100 shadow-sm group relative">
                           <img src={photo} alt="" className="w-full h-full object-cover transition-transform group-hover:scale-110" />
                           <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                            <a href={photo} target="_blank" rel="noreferrer" className="bg-white p-2 rounded-lg text-[#3D7A4F] shadow-lg">
+                            <a href={photo} target="_blank" rel="noreferrer" className="bg-white p-2 rounded-lg text-[#5EB929] shadow-lg">
                               <VisibilityRoundedIcon sx={{ fontSize: 18 }} />
                             </a>
                           </div>
@@ -401,7 +401,7 @@ const MerchantManagement = () => {
               </button>
               <button 
                 onClick={() => handleApprove(viewingMerchant._id || viewingMerchant.id)}
-                className="flex-[1.2] flex items-center justify-center gap-2 bg-[#3D7A4F] text-white py-3.5 rounded-xl font-semibold text-[14px] hover:bg-[#2B5738] transition-all shadow-lg shadow-[#3D7A4F]/20"
+                className="flex-[1.2] flex items-center justify-center gap-2 bg-[#5EB929] text-white py-3.5 rounded-xl font-semibold text-[14px] hover:bg-[#489A1B] transition-all shadow-lg shadow-[#5EB929]/20"
               >
                 <CheckCircleRoundedIcon sx={{ fontSize: 20 }} />
                 Approve Merchant

@@ -36,7 +36,7 @@ const BottomNav = () => {
               {isActive && (
                 <motion.div
                   layoutId="customer-bottom-nav-indicator"
-                  className="absolute top-0 left-0 right-0 h-0.5 bg-[#3D7A4F] rounded-full mx-3 shadow-[0_2px_10px_rgba(61,122,79,0.3)]"
+                  className="absolute top-0 left-0 right-0 h-0.5 bg-[#5EB929] rounded-full mx-3 shadow-[0_2px_10px_rgba(94, 185, 41,0.3)]"
                   transition={{ type: 'spring', stiffness: 500, damping: 35 }}
                 />
               )}
@@ -44,14 +44,14 @@ const BottomNav = () => {
               <motion.div
                 animate={{ scale: isActive ? 1.1 : 1 }}
                 transition={{ type: 'spring', stiffness: 400, damping: 20 }}
-                className={`${isActive ? 'text-[#3D7A4F]' : 'text-gray-400'} transition-colors group-active:scale-90`}
+                className={`${isActive ? 'text-[#5EB929]' : 'text-gray-400'} transition-colors group-active:scale-90`}
               >
                 <Icon sx={{ fontSize: 22 }} />
               </motion.div>
 
               <span
-                className={`text-[9px] font-black leading-none uppercase tracking-tighter transition-colors ${
-                  isActive ? 'text-[#3D7A4F]' : 'text-gray-400'
+                className={`text-[11px] font-medium leading-none transition-colors ${
+                  isActive ? 'text-primary font-semibold' : 'text-gray-400'
                 }`}
               >
                 {tab.label}

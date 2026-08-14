@@ -322,7 +322,7 @@ const StoreRegistration = () => {
         <motion.div
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="mb-6 bg-gradient-to-br from-primary via-[#3d7a4f] to-[#2d5a3a] rounded-[2rem] p-6 md:p-8 shadow-2xl relative overflow-hidden"
+          className="mb-6 bg-gradient-to-br from-primary via-[#5EB929] to-[#2d5a3a] rounded-[2rem] p-6 md:p-8 shadow-2xl relative overflow-hidden"
         >
           {/* Decorative Background Pattern */}
           <div className="absolute inset-0 opacity-10">
@@ -334,7 +334,7 @@ const StoreRegistration = () => {
           <div className="relative z-10">
             <div className="flex items-start justify-between gap-4 mb-4">
               <div className="flex-1">
-                <h1 className="text-2xl md:text-3xl font-black text-white leading-tight mb-2 drop-shadow-lg">
+                <h1 className="text-2xl md:text-3xl font-bold text-white leading-tight mb-2 drop-shadow-lg">
                   🏪 Register Your Store
                 </h1>
                 <p className="text-white/90 font-medium text-sm md:text-base flex items-center gap-2">
@@ -425,7 +425,7 @@ const StoreRegistration = () => {
                       name="category"
                       value={formData.category}
                       onChange={handleChange}
-                      className="w-full bg-gradient-to-br from-primary/5 to-primary/10 border-2 border-primary/30 rounded-2xl py-4 pl-12 pr-10 text-gray-900 font-black focus:ring-2 focus:ring-primary focus:border-primary outline-none transition-all appearance-none cursor-pointer hover:border-primary/50"
+                      className="w-full bg-gradient-to-br from-primary/5 to-primary/10 border-2 border-primary/30 rounded-2xl py-4 pl-12 pr-10 text-gray-900 font-bold focus:ring-2 focus:ring-primary focus:border-primary outline-none transition-all appearance-none cursor-pointer hover:border-primary/50"
                       style={{
                         backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%233D7A4F'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E")`,
                         backgroundRepeat: 'no-repeat',
@@ -464,7 +464,7 @@ const StoreRegistration = () => {
               exit={{ opacity: 0, x: -20 }}
               className="space-y-6"
             >
-              <h3 className="text-sm font-black text-gray-400 uppercase tracking-widest flex items-center gap-2">
+              <h3 className="text-sm font-bold text-gray-400 uppercase tracking-widest flex items-center gap-2">
                 <LocationOnRoundedIcon sx={{ fontSize: 16 }} /> Location Details
               </h3>
 
@@ -527,7 +527,7 @@ const StoreRegistration = () => {
           {/* Step 3: KYB Documents */}
           {currentStep === 3 && (
             <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} className="space-y-6">
-              <h3 className="text-sm font-black text-gray-400 uppercase tracking-widest flex items-center gap-2">
+              <h3 className="text-sm font-bold text-gray-400 uppercase tracking-widest flex items-center gap-2">
                 <DescriptionRoundedIcon sx={{ fontSize: 16 }} /> Business Verification (KYB)
               </h3>
               
@@ -536,7 +536,7 @@ const StoreRegistration = () => {
                   const doc = formData.documents.find(d => d.label === label);
                   return (
                     <div key={label} className="p-4 border-2 border-gray-100 rounded-2xl bg-gray-50/50">
-                      <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">{label} *</p>
+                      <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2">{label} *</p>
                       {doc ? (
                         <div className="flex items-center justify-between bg-white p-2 rounded-xl border border-primary/20">
                            <div className="flex items-center gap-2 overflow-hidden">
@@ -583,7 +583,7 @@ const StoreRegistration = () => {
           {/* Step 4: Business Hours */}
           {currentStep === 4 && (
             <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} className="space-y-6">
-               <h3 className="text-sm font-black text-gray-400 uppercase tracking-widest flex items-center gap-2">
+               <h3 className="text-sm font-bold text-gray-400 uppercase tracking-widest flex items-center gap-2">
                 <AccessTimeRoundedIcon sx={{ fontSize: 16 }} /> Store Operating Hours
               </h3>
               
@@ -615,7 +615,7 @@ const StoreRegistration = () => {
                            />
                          </div>
                        ) : (
-                         <span className="text-xs font-black text-red-500 uppercase tracking-widest px-4">Closed</span>
+                         <span className="text-xs font-bold text-red-500 uppercase tracking-widest px-4">Closed</span>
                        )}
                        
                        <button
@@ -624,7 +624,7 @@ const StoreRegistration = () => {
                            ...prev,
                            businessHours: { ...prev.businessHours, [day]: { ...prev.businessHours[day], isClosed: !prev.businessHours[day].isClosed }}
                          }))}
-                         className={`text-[10px] font-black uppercase px-3 py-1.5 rounded-full border transition-all ${
+                         className={`text-[10px] font-bold uppercase px-3 py-1.5 rounded-full border transition-all ${
                            formData.businessHours[day].isClosed ? 'bg-primary text-white border-primary' : 'bg-white text-gray-400 border-gray-200'
                          }`}
                        >
@@ -640,7 +640,7 @@ const StoreRegistration = () => {
           {/* Step 5: Bank Details & Plan */}
           {currentStep === 5 && (
             <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} className="space-y-6">
-               <h3 className="text-sm font-black text-gray-400 uppercase tracking-widest flex items-center gap-2">
+               <h3 className="text-sm font-bold text-gray-400 uppercase tracking-widest flex items-center gap-2">
                 <AccountBalanceRoundedIcon sx={{ fontSize: 16 }} /> Payout & Bank Details
               </h3>
               
@@ -692,7 +692,7 @@ const StoreRegistration = () => {
               </div>
 
               <div className="pt-4 border-t border-gray-100">
-                <h3 className="text-sm font-black text-gray-400 uppercase tracking-widest mb-4">Finalize Subscription Plan</h3>
+                <h3 className="text-sm font-bold text-gray-400 uppercase tracking-widest mb-4">Finalize Subscription Plan</h3>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   {plans.filter(p => 
                     (p.planType === 'merchant' || !p.planType) && 
@@ -706,10 +706,10 @@ const StoreRegistration = () => {
                     >
                       <input type="radio" className="hidden" name="plan" value={plan.id} onChange={() => setFormData(prev => ({...prev, subscriptionPlanId: plan.id}))} />
                       <div className="flex justify-between items-center mb-1">
-                        <span className="text-xs font-black uppercase text-gray-900">{plan.name}</span>
+                        <span className="text-xs font-bold uppercase text-gray-900">{plan.name}</span>
                         {formData.subscriptionPlanId === plan.id && <CheckCircleRoundedIcon className="text-primary" sx={{fontSize: 16}} />}
                       </div>
-                      <p className="text-lg font-black text-primary">₹{plan.price} <span className="text-[10px] text-gray-400 font-bold">/ {plan.duration}</span></p>
+                      <p className="text-lg font-bold text-primary">₹{plan.price} <span className="text-[10px] text-gray-400 font-bold">/ {plan.duration}</span></p>
                     </label>
                   ))}
                 </div>
@@ -725,7 +725,7 @@ const StoreRegistration = () => {
               <button
                 type="button"
                 onClick={handleBack}
-                className="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 font-black py-4 md:py-5 rounded-2xl flex items-center justify-center gap-2 transition-all active:scale-95 uppercase tracking-widest text-sm md:text-base"
+                className="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold py-4 md:py-5 rounded-2xl flex items-center justify-center gap-2 transition-all active:scale-95 uppercase tracking-widest text-sm md:text-base"
               >
                 Back
               </button>

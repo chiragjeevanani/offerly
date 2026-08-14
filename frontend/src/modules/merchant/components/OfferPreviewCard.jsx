@@ -83,7 +83,7 @@ const OfferPreviewCard = ({
           )}
           
           {/* Discount Badge */}
-          <div className="absolute top-4 left-4 bg-primary text-white px-4 py-2 rounded-xl font-black text-sm shadow-lg">
+          <div className="absolute top-4 left-4 bg-primary text-white px-4 py-2 rounded-xl font-bold text-sm shadow-lg">
             {getDiscountBadge()}
           </div>
 
@@ -111,7 +111,7 @@ const OfferPreviewCard = ({
           </div>
 
           {/* Offer Title */}
-          <h3 className="text-xl font-black text-gray-900 leading-tight">
+          <h3 className="text-xl font-bold text-gray-900 leading-tight">
             {title || (offerType === 'product' ? productName : 'Service Offer')}
           </h3>
 
@@ -125,7 +125,7 @@ const OfferPreviewCard = ({
           {/* Product Pricing */}
           {offerType === 'product' && productPrice > 0 && (
             <div className="flex items-baseline gap-3">
-              <span className="text-3xl font-black text-primary">₹{offerPrice}</span>
+              <span className="text-3xl font-bold text-primary">₹{offerPrice}</span>
               {savings > 0 && (
                 <>
                   <span className="text-lg text-gray-400 line-through">₹{productPrice}</span>

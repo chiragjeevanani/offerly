@@ -142,7 +142,7 @@ const OtpVerify = () => {
 
   return (
     <PageTransition>
-      <div className="min-h-screen bg-[#F8F5FF] flex items-center justify-center p-4">
+      <div className="min-h-screen bg-background flex items-center justify-center p-4">
         <div className="w-full max-w-md space-y-8">
           
           {/* Header Terminal */}
@@ -155,7 +155,8 @@ const OtpVerify = () => {
               <ArrowBackRoundedIcon sx={{ fontSize: 20 }} />
             </motion.button>
             <div className="flex items-center gap-2">
-              <span className="text-gray-900 font-black text-xs tracking-tighter">Offerly Security</span>
+              <img src="/offerly-logo-ring.png" alt="Offerly" className="w-6 h-6 object-contain" />
+              <span className="text-gray-900 font-bold text-xs tracking-tight">Offerly Security</span>
             </div>
           </div>
 
@@ -171,16 +172,16 @@ const OtpVerify = () => {
 
             <div className="relative z-10 space-y-6">
               <div className="space-y-1">
-                <h2 className="text-gray-900 font-black text-lg tracking-tight">Token Verification</h2>
+                <h2 className="text-gray-900 font-bold text-lg tracking-tight">Token Verification</h2>
                 <p className="text-gray-400 text-[10px] font-bold tracking-tight leading-relaxed">
                   Cryptographic code dispatched to <span className="text-gray-900">{phone}</span>
                 </p>
               </div>
 
               {devMode && (
-                <div className="bg-[#3D7A4F]/5 border border-[#3D7A4F]/10 rounded-xl p-2.5 flex items-center gap-2">
-                  <div className="w-1.5 h-1.5 bg-[#3D7A4F] rounded-full animate-pulse" />
-                  <p className="text-[9px] font-bold text-[#3D7A4F] tracking-tight">Dev Mode: Protocol 123456</p>
+                <div className="bg-[#5EB929]/5 border border-[#5EB929]/10 rounded-xl p-2.5 flex items-center gap-2">
+                  <div className="w-1.5 h-1.5 bg-[#5EB929] rounded-full animate-pulse" />
+                  <p className="text-[9px] font-bold text-[#5EB929] tracking-tight">Dev Mode: Protocol 123456</p>
                 </div>
               )}
 
@@ -206,7 +207,7 @@ const OtpVerify = () => {
               <div className="space-y-5">
                 <div className="text-center">
                   <p className="text-[10px] font-bold text-gray-300 tracking-tight">
-                    Token Expiry: <span className={`font-black ${timeLeft < 60 ? 'text-red-500' : 'text-gray-900'}`}>{formatTime(timeLeft)}</span>
+                    Token Expiry: <span className={`font-bold ${timeLeft < 60 ? 'text-red-500' : 'text-gray-900'}`}>{formatTime(timeLeft)}</span>
                   </p>
                 </div>
 
@@ -214,7 +215,7 @@ const OtpVerify = () => {
                   <motion.button
                     whileTap={{ scale: 0.98 }}
                     disabled={isVerifying}
-                    className="w-full bg-[#3D7A4F] text-white font-black text-[12px] py-4 rounded-2xl shadow-lg shadow-[#3D7A4F]/20 active:scale-95 transition-all flex items-center justify-center gap-2 disabled:opacity-50"
+                    className="w-full bg-[#5EB929] text-white font-bold text-[12px] py-4 rounded-2xl shadow-lg shadow-[#5EB929]/20 active:scale-95 transition-all flex items-center justify-center gap-2 disabled:opacity-50"
                   >
                     {isVerifying ? (
                       <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
@@ -229,7 +230,7 @@ const OtpVerify = () => {
                     className={`w-full py-3.5 rounded-2xl font-bold text-[10px] transition-all ${
                       resendCooldown > 0 
                         ? 'text-gray-300 border border-gray-50' 
-                        : 'text-[#3D7A4F] border border-[#3D7A4F]/10 hover:bg-[#3D7A4F]/5'
+                        : 'text-[#5EB929] border border-[#5EB929]/10 hover:bg-[#5EB929]/5'
                     }`}
                   >
                     {resendCooldown > 0 ? `Wait ${resendCooldown}s for Resend` : 'Request New Token'}

@@ -111,10 +111,10 @@ const Support = () => {
 
   return (
     <PageTransition>
-      <div className="min-h-screen bg-[#F8F5FF] px-4 py-4 pb-24 space-y-8">
+      <div className="min-h-screen bg-background px-4 py-4 pb-24 space-y-8">
         
         {/* Support Hub Identity */}
-        <div className="bg-[#3D7A4F] rounded-[2.5rem] p-10 text-center relative overflow-hidden shadow-lg shadow-[#3D7A4F]/20">
+        <div className="bg-[#5EB929] rounded-[2.5rem] p-10 text-center relative overflow-hidden shadow-lg shadow-[#5EB929]/20">
            <div className="absolute top-0 right-0 w-32 h-32 bg-white/5 rounded-full -mr-16 -mt-16 blur-3xl" />
            <motion.div
              initial={{ scale: 0.8 }}
@@ -123,8 +123,8 @@ const Support = () => {
            >
              <ChatRoundedIcon sx={{ fontSize: 28 }} className="text-white" />
            </motion.div>
-           <h1 className="text-white font-black text-2xl uppercase tracking-tight">Support Center</h1>
-           <p className="text-white/60 text-[10px] font-black uppercase tracking-widest mt-2 max-w-xs mx-auto leading-relaxed">
+           <h1 className="text-white font-bold text-2xl uppercase tracking-tight">Support Center</h1>
+           <p className="text-white/60 text-[10px] font-bold uppercase tracking-widest mt-2 max-w-xs mx-auto leading-relaxed">
              Central knowledge base for the Offerly digital network
            </p>
         </div>
@@ -138,26 +138,26 @@ const Support = () => {
                 placeholder="Search Knowledge Base..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-12 pr-4 py-4.5 rounded-[1.5rem] border border-gray-100 bg-white shadow-sm focus:border-[#3D7A4F] focus:ring-4 focus:ring-[#3D7A4F]/5 outline-none transition-all text-[11px] font-black uppercase tracking-widest"
+                className="w-full pl-12 pr-4 py-4.5 rounded-[1.5rem] border border-gray-100 bg-white shadow-sm focus:border-[#5EB929] focus:ring-4 focus:ring-[#5EB929]/5 outline-none transition-all text-[11px] font-bold uppercase tracking-widest"
               />
            </div>
         </div>
 
         {/* Category Grid */}
         <div className="space-y-4">
-           <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest px-1">Protocol Categories</p>
+           <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest px-1">Protocol Categories</p>
            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               {categories.map((category, idx) => (
                 <button
                   key={idx}
                   className="bg-white rounded-[1.25rem] p-4 flex items-center gap-4 border border-gray-50 shadow-sm active:scale-95 transition-all text-left"
                 >
-                   <div className="w-10 h-10 bg-[#3D7A4F]/5 rounded-xl flex items-center justify-center border border-[#3D7A4F]/10 flex-shrink-0">
-                      <category.icon sx={{ fontSize: 18 }} className="text-[#3D7A4F]" />
+                   <div className="w-10 h-10 bg-[#5EB929]/5 rounded-xl flex items-center justify-center border border-[#5EB929]/10 flex-shrink-0">
+                      <category.icon sx={{ fontSize: 18 }} className="text-[#5EB929]" />
                    </div>
                    <div>
-                      <p className="text-[10px] font-black text-gray-900 uppercase tracking-tight">{category.title}</p>
-                      <p className="text-[8px] font-black text-gray-400 uppercase tracking-widest mt-0.5">{category.count} Protocols</p>
+                      <p className="text-[10px] font-bold text-gray-900 uppercase tracking-tight">{category.title}</p>
+                      <p className="text-[8px] font-bold text-gray-400 uppercase tracking-widest mt-0.5">{category.count} Protocols</p>
                    </div>
                 </button>
               ))}
@@ -166,7 +166,7 @@ const Support = () => {
 
         {/* FAQ Terminal */}
         <div className="space-y-4">
-           <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest px-1">Active Protocols (FAQ)</p>
+           <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest px-1">Active Protocols (FAQ)</p>
            <div className="space-y-2">
               {faqs.map((faq, idx) => (
                 <FAQItem key={idx} {...faq} />
@@ -176,13 +176,13 @@ const Support = () => {
 
         {/* Contact Strip */}
         <div className="space-y-4">
-           <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest px-1">Direct Assistance</p>
+           <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest px-1">Direct Assistance</p>
            <div className="bg-white rounded-[2rem] p-8 text-center border border-gray-100 shadow-xl shadow-gray-200/20">
-              <h3 className="text-gray-900 font-black text-xl uppercase tracking-tighter mb-2">Still Stuck?</h3>
+              <h3 className="text-gray-900 font-bold text-xl uppercase tracking-tight mb-2">Still Stuck?</h3>
               <p className="text-gray-500 text-[11px] font-medium mb-6 px-4">Our specialized support squad is ready to assist with your custom request.</p>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                 <button onClick={() => navigate('/contact')} className="bg-[#3D7A4F] text-white font-black text-[10px] uppercase tracking-widest py-3.5 rounded-xl">Initialize Chat</button>
-                 <button className="bg-gray-50 text-gray-400 font-black text-[10px] uppercase tracking-widest py-3.5 rounded-xl border border-gray-100">Voice Support</button>
+                 <button onClick={() => navigate('/contact')} className="bg-[#5EB929] text-white font-bold text-[10px] uppercase tracking-widest py-3.5 rounded-xl">Initialize Chat</button>
+                 <button className="bg-gray-50 text-gray-400 font-bold text-[10px] uppercase tracking-widest py-3.5 rounded-xl border border-gray-100">Voice Support</button>
               </div>
            </div>
         </div>

@@ -54,7 +54,7 @@ const SearchResults = () => {
 
   return (
     <PageTransition>
-      <div className="min-h-screen bg-[#F8F5FF] px-4 py-4 pb-24 space-y-4">
+      <div className="min-h-screen bg-background px-4 py-4 pb-24 space-y-4">
         
         {/* Sharp Header & Search */}
         <div className="flex flex-col gap-4">
@@ -65,20 +65,20 @@ const SearchResults = () => {
             >
               <ArrowBackRoundedIcon sx={{ fontSize: 20 }} />
             </button>
-            <div className="flex-1 flex items-center gap-2 bg-white border border-gray-100 rounded-2xl px-4 py-3 shadow-sm focus-within:border-[#3D7A4F]/30 transition-all">
-              <SearchRoundedIcon sx={{ fontSize: 18 }} className="text-[#3D7A4F]" />
+            <div className="flex-1 flex items-center gap-2 bg-white border border-gray-100 rounded-2xl px-4 py-3 shadow-sm focus-within:border-[#5EB929]/30 transition-all">
+              <SearchRoundedIcon sx={{ fontSize: 18 }} className="text-[#5EB929]" />
               <input
                 type="text"
                 placeholder="FOOD, SALONS, CAFES..."
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
                 autoFocus
-                className="flex-1 bg-transparent text-[13px] font-black text-gray-900 placeholder:text-gray-400 outline-none uppercase tracking-tight"
+                className="flex-1 bg-transparent text-[13px] font-bold text-gray-900 placeholder:text-gray-400 outline-none uppercase tracking-tight"
               />
               {query && (
                 <button 
                   onClick={() => setQuery('')} 
-                  className="text-[9px] font-black text-[#3D7A4F] uppercase tracking-widest bg-[#3D7A4F]/5 px-2.5 py-1.5 rounded-lg"
+                  className="text-[9px] font-bold text-[#5EB929] uppercase tracking-widest bg-[#5EB929]/5 px-2.5 py-1.5 rounded-lg"
                 >
                   Clear
                 </button>
@@ -99,14 +99,14 @@ const SearchResults = () => {
               <section>
                 <div className="flex items-center gap-2 mb-4 px-1">
                   <HistoryRoundedIcon sx={{ fontSize: 14 }} className="text-gray-400" />
-                  <h3 className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Recent Searches</h3>
+                  <h3 className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Recent Searches</h3>
                 </div>
                 <div className="flex flex-wrap gap-2.5">
                   {recent.map((r) => (
                     <button
                       key={r}
                       onClick={() => setQuery(r)}
-                      className="bg-white border border-gray-50 rounded-xl px-4 py-2 text-[11px] font-black text-gray-900 shadow-sm active:scale-95 transition-all uppercase tracking-tight"
+                      className="bg-white border border-gray-50 rounded-xl px-4 py-2 text-[11px] font-bold text-gray-900 shadow-sm active:scale-95 transition-all uppercase tracking-tight"
                     >
                       {r}
                     </button>
@@ -117,15 +117,15 @@ const SearchResults = () => {
               {/* Browse All */}
               <section className="space-y-4">
                 <div className="flex items-center justify-between px-1">
-                   <h3 className="text-[11px] font-black text-gray-900 uppercase tracking-widest flex items-center gap-2">
-                      <div className="w-1.5 h-1.5 rounded-full bg-[#3D7A4F]" />
+                   <h3 className="text-[11px] font-bold text-gray-900 uppercase tracking-widest flex items-center gap-2">
+                      <div className="w-1.5 h-1.5 rounded-full bg-[#5EB929]" />
                       Browse Everything
                    </h3>
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   {!cityFilter && (
                     <div className="bg-white p-8 rounded-3xl text-center border border-gray-50 shadow-sm col-span-full">
-                       <p className="text-[11px] font-black text-gray-400 uppercase tracking-widest">Select city to load offers</p>
+                       <p className="text-[11px] font-bold text-gray-400 uppercase tracking-widest">Select city to load offers</p>
                     </div>
                   )}
                   {allOffers.map((offer, idx) => (
@@ -146,10 +146,10 @@ const SearchResults = () => {
             <div className="space-y-4">
               <div className="flex items-center justify-between px-1">
                 <div className="flex flex-col">
-                   <p className="text-[9px] text-gray-400 font-black uppercase tracking-widest leading-none">Search result for</p>
-                   <p className="text-[11px] text-gray-900 font-black mt-1 uppercase tracking-tight">"{query}"</p>
+                   <p className="text-[9px] text-gray-400 font-bold uppercase tracking-widest leading-none">Search result for</p>
+                   <p className="text-[11px] text-gray-900 font-bold mt-1 uppercase tracking-tight">"{query}"</p>
                 </div>
-                <span className="text-[9px] font-black text-[#3D7A4F] bg-[#3D7A4F]/10 px-2 py-1 rounded-lg uppercase tracking-widest">
+                <span className="text-[9px] font-bold text-[#5EB929] bg-[#5EB929]/10 px-2 py-1 rounded-lg uppercase tracking-widest">
                   {results.length} Match
                 </span>
               </div>
@@ -169,13 +169,13 @@ const SearchResults = () => {
                   <div className="w-20 h-20 bg-white rounded-[2rem] flex items-center justify-center mb-6 shadow-xl shadow-gray-200/50 border border-gray-50">
                     <SentimentDissatisfiedRoundedIcon sx={{ fontSize: 32 }} className="text-gray-300" />
                   </div>
-                  <h3 className="text-[14px] font-black text-gray-900 uppercase tracking-tight leading-none mb-2">No Match Found</h3>
+                  <h3 className="text-[14px] font-bold text-gray-900 uppercase tracking-tight leading-none mb-2">No Match Found</h3>
                   <p className="text-[11px] text-gray-400 font-medium leading-relaxed">
                     We couldn't find anything matching your search. Try adjusting your keywords or city.
                   </p>
                   <button 
                     onClick={() => setQuery('')}
-                    className="mt-8 text-[10px] font-black text-[#3D7A4F] uppercase tracking-widest bg-white border border-gray-100 px-8 py-3 rounded-2xl shadow-sm active:scale-95 transition-all"
+                    className="mt-8 text-[10px] font-bold text-[#5EB929] uppercase tracking-widest bg-white border border-gray-100 px-8 py-3 rounded-2xl shadow-sm active:scale-95 transition-all"
                   >
                     Clear Search
                   </button>

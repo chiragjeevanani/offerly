@@ -4,6 +4,7 @@ import Merchant from '../../merchant/models/Merchant.js';
 import Offer from '../../merchant/models/Offer.js';
 import { emitUserNotification, emitMerchantNotification } from '../../../config/socket.js';
 import { invalidateFeedCache } from '../../../utils/feedCache.js';
+import { checkAndAwardMilestone } from '../../rewards/services/milestoneService.js';
 
 // @desc    Create a redemption/booking
 // @route   POST /api/redemptions
@@ -185,6 +186,15 @@ export const verifyQR = async (req, res) => {
       });
     } catch (socketErr) {
       console.error('WebSocket emit error (non-blocking):', socketErr);
+    }
+
+    // Check & award milestone rewards in background (non-blocking)
+    try {
+      checkAndAwardMilestone(redemption.customerId).catch((err) => {
+        console.error('[Milestone] Async check failed:', err);
+      });
+    } catch (milestoneErr) {
+      console.error('[Milestone] Trigger error:', milestoneErr);
     }
 
     res.status(200).json({ success: true, message: 'Redemption successful', data: redemption });

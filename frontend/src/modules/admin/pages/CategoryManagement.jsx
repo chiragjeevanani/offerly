@@ -21,7 +21,7 @@ const TabButton = ({ label, isActive, onClick }) => (
     onClick={onClick}
     className={`px-5 py-2 text-[12px] font-medium transition-all duration-300 rounded-[10px] flex items-center gap-2 ${
       isActive 
-        ? 'bg-[#3D7A4F] text-white shadow-md' 
+        ? 'bg-[#5EB929] text-white shadow-md' 
         : 'text-gray-500 hover:text-gray-700 hover:bg-white/80'
     }`}
   >
@@ -40,7 +40,7 @@ const CategoryManagement = () => {
     name: '', 
     type: 'product', 
     icon: '', 
-    color: '#3D7A4F', 
+    color: '#5EB929', 
     description: '', 
     order: 0,
     status: 'active' 
@@ -66,7 +66,7 @@ const CategoryManagement = () => {
       name: '', 
       type: 'product', 
       icon: '', 
-      color: '#3D7A4F', 
+      color: '#5EB929', 
       description: '', 
       order: categories.length + 1,
       status: 'active' 
@@ -80,7 +80,7 @@ const CategoryManagement = () => {
       name: cat.name, 
       type: cat.type, 
       icon: cat.icon || '', 
-      color: cat.color || '#3D7A4F', 
+      color: cat.color || '#5EB929', 
       description: cat.description || '', 
       order: cat.order || 0,
       status: cat.status 
@@ -130,7 +130,7 @@ const CategoryManagement = () => {
 
 
   return (
-    <div className="min-h-[calc(100vh-80px)] bg-[#F8F5FF] p-4 lg:p-8 -m-6 lg:-m-8 font-sans text-gray-800 lg:rounded-tl-[32px]">
+    <div className="min-h-[calc(100vh-80px)] bg-background p-4 lg:p-8 -m-6 lg:-m-8 font-sans text-gray-800 lg:rounded-tl-[32px]">
       <div className="max-w-7xl mx-auto">
         {/* Header Section */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-2 mb-2">
@@ -150,7 +150,7 @@ const CategoryManagement = () => {
             </button>
             <button
               onClick={handleAdd}
-              className="flex items-center gap-2 bg-[#3D7A4F] hover:bg-[#2d5a3a] text-white px-4 py-2 rounded-[10px] transition-all text-[12px] font-medium shadow-md shadow-[#3D7A4F]/10 active:scale-95"
+              className="flex items-center gap-2 bg-[#5EB929] hover:bg-[#2d5a3a] text-white px-4 py-2 rounded-[10px] transition-all text-[12px] font-medium shadow-md shadow-[#5EB929]/10 active:scale-95"
             >
               <AddRoundedIcon sx={{ fontSize: 18 }} />
               Add Category
@@ -173,7 +173,7 @@ const CategoryManagement = () => {
               placeholder="Search categories..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full bg-white border border-gray-100 rounded-[12px] py-2 pl-11 pr-4 text-[13px] text-gray-800 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-[#3D7A4F]/10 focus:border-[#3D7A4F]/30 transition-all shadow-sm"
+              className="w-full bg-white border border-gray-100 rounded-[12px] py-2 pl-11 pr-4 text-[13px] text-gray-800 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-[#5EB929]/10 focus:border-[#5EB929]/30 transition-all shadow-sm"
             />
           </div>
         </div>
@@ -193,7 +193,7 @@ const CategoryManagement = () => {
               >
                 <div className="flex items-center gap-3">
                   <div className={`w-10 h-10 rounded-full flex items-center justify-center border ${
-                    cat.type === 'service' ? 'bg-indigo-50 border-indigo-100 text-indigo-600' : 'bg-green-50 border-green-100 text-[#3D7A4F]'
+                    cat.type === 'service' ? 'bg-indigo-50 border-indigo-100 text-indigo-600' : 'bg-green-50 border-green-100 text-[#5EB929]'
                   }`}>
                     {cat.type === 'service' ? <MiscellaneousServicesRoundedIcon sx={{ fontSize: 20 }} /> : <Inventory2RoundedIcon sx={{ fontSize: 20 }} />}
                   </div>
@@ -237,7 +237,7 @@ const CategoryManagement = () => {
             {/* Category Icon Preview */}
             <div className="flex flex-col items-center justify-center p-8 bg-gray-50 rounded-2xl border border-gray-100 mb-2">
               <div className={`w-20 h-20 rounded-2xl flex items-center justify-center shadow-inner border-2 ${
-                formData.type === 'service' ? 'bg-indigo-50 border-indigo-200 text-indigo-600' : 'bg-green-50 border-green-200 text-[#3D7A4F]'
+                formData.type === 'service' ? 'bg-indigo-50 border-indigo-200 text-indigo-600' : 'bg-green-50 border-green-200 text-[#5EB929]'
               }`}>
                 {formData.type === 'service' ? <MiscellaneousServicesRoundedIcon sx={{ fontSize: 40 }} /> : <Inventory2RoundedIcon sx={{ fontSize: 40 }} />}
               </div>
@@ -264,7 +264,7 @@ const CategoryManagement = () => {
                     type="button"
                     onClick={() => setFormData({...formData, type: 'product'})}
                     className={`py-2.5 px-4 rounded-xl text-xs font-bold transition-all border ${
-                      formData.type === 'product' ? 'bg-[#3D7A4F] text-white border-[#3D7A4F]' : 'bg-white text-gray-500 border-gray-100 hover:border-gray-200'
+                      formData.type === 'product' ? 'bg-[#5EB929] text-white border-[#5EB929]' : 'bg-white text-gray-500 border-gray-100 hover:border-gray-200'
                     }`}
                   >
                     Product Based
@@ -332,7 +332,7 @@ const CategoryManagement = () => {
           <div className="absolute bottom-0 left-0 right-0 p-4 bg-white border-t border-gray-100 flex gap-3 z-20">
             <button 
               type="submit"
-              className="flex-1 bg-[#3D7A4F] text-white py-3.5 rounded-xl font-semibold text-[14px] shadow-lg shadow-[#3D7A4F]/10 hover:bg-[#2d5a3a] transition-all"
+              className="flex-1 bg-[#5EB929] text-white py-3.5 rounded-xl font-semibold text-[14px] shadow-lg shadow-[#5EB929]/10 hover:bg-[#2d5a3a] transition-all"
             >
               {selectedCategory ? 'Save Changes' : 'Create Category'}
             </button>
@@ -347,7 +347,7 @@ const CategoryManagement = () => {
             <div className="w-14 h-14 bg-red-50 rounded-2xl flex items-center justify-center mx-auto mb-4">
               <DeleteRoundedIcon className="text-red-500" sx={{ fontSize: 28 }} />
             </div>
-            <h3 className="text-xl font-black text-gray-900 mb-2">Delete "{selectedCategory?.name}"?</h3>
+            <h3 className="text-xl font-bold text-gray-900 mb-2">Delete "{selectedCategory?.name}"?</h3>
             <p className="text-sm text-gray-500 font-medium mb-6">This action cannot be undone. All merchants linked to this category will remain, but the category itself will be removed.</p>
             <div className="flex gap-3">
               <button onClick={() => setIsDeleteModalOpen(false)} className="flex-1 bg-gray-100 text-gray-600 py-3 rounded-xl font-bold text-sm">Cancel</button>

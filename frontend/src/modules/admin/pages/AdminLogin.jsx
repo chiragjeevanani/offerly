@@ -118,8 +118,8 @@ const AdminLogin = () => {
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.5 }}
           >
-            <div className="w-16 h-16 bg-gray-900 rounded-2xl flex items-center justify-center mb-6">
-              <SecurityRoundedIcon sx={{ fontSize: 32 }} className="text-primary-700" />
+            <div className="w-16 h-16 bg-gray-900 rounded-2xl flex items-center justify-center mb-6 p-2.5 shadow-xl shadow-black/10">
+              <img src="/offerly-logo-ring.png" alt="Offerly" className="w-full h-full object-contain" />
             </div>
             
             <h1 className="text-5xl font-bold text-gray-900 mb-4 leading-tight">
@@ -163,8 +163,8 @@ const AdminLogin = () => {
           >
             {/* Mobile Header */}
             <div className="md:hidden text-center mb-8">
-              <div className="w-16 h-16 bg-gray-900 rounded-2xl flex items-center justify-center mx-auto mb-4">
-                <SecurityRoundedIcon sx={{ fontSize: 32 }} className="text-primary-700" />
+              <div className="w-16 h-16 bg-gray-900 rounded-2xl flex items-center justify-center mx-auto mb-4 p-2.5 shadow-xl">
+                <img src="/offerly-logo-ring.png" alt="Offerly" className="w-full h-full object-contain" />
               </div>
               <h1 className="text-2xl font-bold text-gray-900">Offerly Control Center</h1>
               <p className="text-xs font-semibold text-primary-700 uppercase tracking-wider mt-1">Admin Access Only</p>

@@ -210,7 +210,7 @@ const ProductSearchSelect = ({ onSelect, selectedProduct, filterType = 'product_
 
             {/* Product Info */}
             <div className="flex-1 min-w-0">
-              <h4 className="font-black text-gray-900 text-base leading-tight truncate">
+              <h4 className="font-bold text-gray-900 text-base leading-tight truncate">
                 {selectedProduct.name}
               </h4>
               <div className="flex items-center gap-2 mt-1">

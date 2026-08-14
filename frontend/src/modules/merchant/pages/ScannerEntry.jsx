@@ -23,8 +23,8 @@ const BookingVerificationModal = ({ booking, onFulfill, onCancel, fulfilling }) 
       >
         <div className="p-5 border-b border-gray-50 flex items-center justify-between bg-gray-50/50">
           <div>
-            <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Validated Pass</p>
-            <h2 className="text-base font-black text-gray-900 leading-none">#{booking.internalId || booking._id?.slice(-6)}</h2>
+            <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Validated Pass</p>
+            <h2 className="text-base font-bold text-gray-900 leading-none">#{booking.internalId || booking._id?.slice(-6)}</h2>
           </div>
           <button onClick={onCancel} className="w-8 h-8 rounded-lg bg-white border border-gray-100 flex items-center justify-center text-gray-400 hover:text-gray-600 transition-all">
             <CloseRoundedIcon sx={{ fontSize: 18 }} />
@@ -42,8 +42,8 @@ const BookingVerificationModal = ({ booking, onFulfill, onCancel, fulfilling }) 
              </div>
           </div>
           
-          <div className="bg-[#F8F5FF] rounded-xl p-4 border border-gray-100">
-             <h4 className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-3">Service Details</h4>
+          <div className="bg-background rounded-xl p-4 border border-gray-100">
+             <h4 className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-3">Service Details</h4>
              <div className="space-y-2">
                 {booking.items?.map((it, idx) => (
                   <div key={idx} className="flex justify-between items-center text-xs font-bold text-gray-700">
@@ -53,8 +53,8 @@ const BookingVerificationModal = ({ booking, onFulfill, onCancel, fulfilling }) 
                 ))}
              </div>
              <div className="mt-3 pt-3 border-t border-gray-200 flex justify-between items-center">
-                <span className="text-xs font-black text-gray-900 uppercase">Collect From Customer</span>
-                <span className="text-xl font-black text-[#3D7A4F]">₹{(booking.totals?.final || 0).toLocaleString()}</span>
+                <span className="text-xs font-bold text-gray-900 uppercase">Collect From Customer</span>
+                <span className="text-xl font-bold text-[#5EB929]">₹{(booking.totals?.final || 0).toLocaleString()}</span>
              </div>
           </div>
         </div>
@@ -64,7 +64,7 @@ const BookingVerificationModal = ({ booking, onFulfill, onCancel, fulfilling }) 
           <button 
             onClick={() => onFulfill(booking)}
             disabled={fulfilling}
-            className="flex-[2] py-3 bg-[#3D7A4F] text-white rounded-xl font-bold text-sm shadow-lg shadow-[#3D7A4F]/20 flex items-center justify-center gap-2 hover:scale-105 active:scale-95 transition-all shadow-[inset_0_-2px_4px_rgba(0,0,0,0.1)]"
+            className="flex-[2] py-3 bg-[#5EB929] text-white rounded-xl font-bold text-sm shadow-lg shadow-[#5EB929]/20 flex items-center justify-center gap-2 hover:scale-105 active:scale-95 transition-all shadow-[inset_0_-2px_4px_rgba(0,0,0,0.1)]"
           >
             {fulfilling ? <div className="w-4 h-4 border-2 border-white/20 border-t-white rounded-full animate-spin" /> : <QrCodeScannerRoundedIcon sx={{ fontSize: 18 }} />}
             Complete Fulfillment
@@ -199,15 +199,15 @@ const ScannerEntry = ({ merchant }) => {
   };
 
   return (
-    <div className="min-h-screen bg-[#F8F5FF] p-3 lg:p-8 -m-6 lg:-m-8">
+    <div className="min-h-screen bg-background p-3 lg:p-8 -m-6 lg:-m-8">
       <div className="max-w-4xl mx-auto space-y-4 lg:space-y-6 pb-20">
         <div className="flex justify-between items-end px-1">
           <div>
             <div className="flex items-center gap-1.5 mb-0.5">
                <div className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
-               <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest">Active Scanner</p>
+               <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest">Active Scanner</p>
             </div>
-            <h1 className="text-lg lg:text-2xl font-black text-gray-900 leading-tight">Booking Verification</h1>
+            <h1 className="text-lg lg:text-2xl font-bold text-gray-900 leading-tight">Booking Verification</h1>
           </div>
           <p className="text-[10px] text-gray-400 font-bold uppercase hidden sm:block">Fizzy Hairs • Counter 01</p>
         </div>
@@ -215,7 +215,7 @@ const ScannerEntry = ({ merchant }) => {
         <AnimatePresence>
           {successMsg && (
             <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
-              className="bg-green-50 text-[#3D7A4F] p-3.5 rounded-xl border border-green-100 flex items-center gap-3 font-bold shadow-sm text-xs">
+              className="bg-green-50 text-[#5EB929] p-3.5 rounded-xl border border-green-100 flex items-center gap-3 font-bold shadow-sm text-xs">
               <CheckCircleRoundedIcon sx={{ fontSize: 20 }} /> {successMsg}
             </motion.div>
           )}
@@ -239,19 +239,19 @@ const ScannerEntry = ({ merchant }) => {
             ) : (
               <div className="relative z-10 flex flex-col items-center">
                 <div className="w-44 h-44 rounded-2xl border border-white/5 flex flex-col items-center justify-center mb-8 bg-white/[0.03] relative group">
-                   <div className="absolute -top-1 -left-1 w-8 h-8 border-t-4 border-l-4 border-primary rounded-tl-xl shadow-[0_0_15px_rgba(61,122,79,0.5)]" />
-                   <div className="absolute -top-1 -right-1 w-8 h-8 border-t-4 border-r-4 border-primary rounded-tr-xl shadow-[0_0_15px_rgba(61,122,79,0.5)]" />
-                   <div className="absolute -bottom-1 -left-1 w-8 h-8 border-b-4 border-l-4 border-primary rounded-bl-xl shadow-[0_0_15px_rgba(61,122,79,0.5)]" />
-                   <div className="absolute -bottom-1 -right-1 w-8 h-8 border-b-4 border-r-4 border-primary rounded-br-xl shadow-[0_0_15px_rgba(61,122,79,0.5)]" />
+                   <div className="absolute -top-1 -left-1 w-8 h-8 border-t-4 border-l-4 border-primary rounded-tl-xl shadow-[0_0_15px_rgba(94, 185, 41,0.5)]" />
+                   <div className="absolute -top-1 -right-1 w-8 h-8 border-t-4 border-r-4 border-primary rounded-tr-xl shadow-[0_0_15px_rgba(94, 185, 41,0.5)]" />
+                   <div className="absolute -bottom-1 -left-1 w-8 h-8 border-b-4 border-l-4 border-primary rounded-bl-xl shadow-[0_0_15px_rgba(94, 185, 41,0.5)]" />
+                   <div className="absolute -bottom-1 -right-1 w-8 h-8 border-b-4 border-r-4 border-primary rounded-br-xl shadow-[0_0_15px_rgba(94, 185, 41,0.5)]" />
                    
                    <motion.div animate={{ scale: [1, 1.1, 1] }} transition={{ duration: 2, repeat: Infinity }} className="text-white/10">
                       <QrCodeScannerRoundedIcon sx={{ fontSize: 64 }} />
                    </motion.div>
-                   <p className="mt-4 text-[9px] font-black text-white/30 uppercase tracking-[0.2em]">Ready to scan</p>
+                   <p className="mt-4 text-[9px] font-bold text-white/30 uppercase tracking-[0.2em]">Ready to scan</p>
                 </div>
                 <button 
                   onClick={startCamera} 
-                  className="bg-[#3D7A4F] text-white px-10 py-4 rounded-xl font-bold text-sm shadow-[0_10px_20px_rgba(61,122,79,0.3),inset_0_-2px_4px_rgba(0,0,0,0.1)] hover:scale-105 active:scale-95 transition-all flex items-center gap-3"
+                  className="bg-[#5EB929] text-white px-10 py-4 rounded-xl font-bold text-sm shadow-[0_10px_20px_rgba(94, 185, 41,0.3),inset_0_-2px_4px_rgba(0,0,0,0.1)] hover:scale-105 active:scale-95 transition-all flex items-center gap-3"
                 >
                    <VideocamRoundedIcon sx={{ fontSize: 20 }} />
                    Scan QR Now
@@ -263,7 +263,7 @@ const ScannerEntry = ({ merchant }) => {
               <div className="absolute inset-0 bg-black/80 backdrop-blur-md z-30 flex items-center justify-center">
                  <div className="flex flex-col items-center gap-3">
                     <div className="w-10 h-10 border-4 border-primary/20 border-t-primary rounded-full animate-spin" />
-                    <p className="text-[10px] font-black text-primary uppercase tracking-widest">Verifying Pass...</p>
+                    <p className="text-[10px] font-bold text-primary uppercase tracking-widest">Verifying Pass...</p>
                  </div>
               </div>
             )}
@@ -277,14 +277,14 @@ const ScannerEntry = ({ merchant }) => {
              <div className="w-11 h-11 rounded-xl bg-indigo-50 text-indigo-500 flex items-center justify-center mb-4 shadow-[inset_0_-2px_4px_rgba(0,0,0,0.05),0_4px_10px_rgba(0,0,0,0.05)]">
                 <SearchRoundedIcon sx={{ fontSize: 22 }} />
              </div>
-             <h2 className="text-lg font-black text-gray-900 mb-1">Manual Entry</h2>
+             <h2 className="text-lg font-bold text-gray-900 mb-1">Manual Entry</h2>
              <p className="text-[11px] text-gray-400 font-medium mb-6 leading-relaxed">Enter the 6-digit ID if the QR is damaged.</p>
 
              <form onSubmit={handleSearch} className="space-y-4 relative z-10">
                 <input 
                   type="text" value={passId} onChange={(e) => setPassId(e.target.value)}
                   placeholder="B-00000"
-                  className="w-full bg-gray-50 border border-gray-100 text-center uppercase tracking-[0.2em] font-mono font-black text-xl py-4 rounded-xl focus:bg-white focus:border-primary/30 outline-none transition-all shadow-[inset_0_2px_4px_rgba(0,0,0,0.02)]"
+                  className="w-full bg-gray-50 border border-gray-100 text-center uppercase tracking-[0.2em] font-mono font-bold text-xl py-4 rounded-xl focus:bg-white focus:border-primary/30 outline-none transition-all shadow-[inset_0_2px_4px_rgba(0,0,0,0.02)]"
                 />
                 <button 
                   type="submit" disabled={!passId.trim() || searching}

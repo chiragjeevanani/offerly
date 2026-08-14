@@ -376,7 +376,9 @@ export const getPlans = async (req, res) => {
     
     // If merchant is requesting, filter out Free Trial if already used and handle City-specific pricing
     if (req.user && req.user.role === 'merchant') {
-      const merchant = await Merchant.findOne({ ownerId: req.user._id });
+      const merchant = await Merchant.findOne({
+        $or: [{ _id: req.user._id }, { ownerId: req.user._id }]
+      });
       if (merchant) {
         let filters = [{ status: 'active' }];
         

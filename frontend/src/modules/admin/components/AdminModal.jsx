@@ -21,7 +21,7 @@ const AdminModal = ({ isOpen, onClose, title, children, footer }) => {
             className="relative bg-white w-full max-w-lg rounded-md shadow-2xl overflow-hidden flex flex-col max-h-[90vh]"
           >
             <div className="px-6 py-5 bg-gradient-to-r from-[#0E1015] to-[#1A1D24] border-b-4 border-primary flex items-center justify-between relative overflow-hidden">
-              <h2 className="text-xl font-black text-white relative z-10">{title}</h2>
+              <h2 className="text-xl font-bold text-white relative z-10">{title}</h2>
               <button 
                 onClick={onClose}
                 className="p-2 hover:bg-white/10 rounded-md text-gray-400 hover:text-white transition-colors relative z-10"

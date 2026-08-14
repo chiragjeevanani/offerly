@@ -21,7 +21,7 @@ const TabButton = ({ label, isActive, onClick }) => (
     onClick={onClick}
     className={`px-5 py-2 text-[12px] font-medium transition-all duration-300 rounded-[10px] flex items-center gap-2 ${
       isActive 
-        ? 'bg-[#3D7A4F] text-white shadow-md' 
+        ? 'bg-[#5EB929] text-white shadow-md' 
         : 'text-gray-500 hover:text-gray-700 hover:bg-white/80'
     }`}
   >
@@ -133,7 +133,7 @@ const SubscriptionManagement = () => {
 
 
   return (
-    <div className="min-h-[calc(100vh-80px)] bg-[#F8F5FF] p-4 lg:p-8 -m-6 lg:-m-8 font-sans text-gray-800 lg:rounded-tl-[32px]">
+    <div className="min-h-[calc(100vh-80px)] bg-background p-4 lg:p-8 -m-6 lg:-m-8 font-sans text-gray-800 lg:rounded-tl-[32px]">
       <div className="max-w-7xl mx-auto">
         {/* Header Section */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-2 mb-1.5">
@@ -153,7 +153,7 @@ const SubscriptionManagement = () => {
             </button>
             <button
               onClick={handleAdd}
-              className="flex items-center gap-2 bg-[#3D7A4F] hover:bg-[#2d5a3a] text-white px-4 py-2 rounded-[10px] transition-all text-[12px] font-medium shadow-md shadow-[#3D7A4F]/10 active:scale-95"
+              className="flex items-center gap-2 bg-[#5EB929] hover:bg-[#2d5a3a] text-white px-4 py-2 rounded-[10px] transition-all text-[12px] font-medium shadow-md shadow-[#5EB929]/10 active:scale-95"
             >
               <AddRoundedIcon sx={{ fontSize: 18 }} />
               Create Plan
@@ -184,14 +184,14 @@ const SubscriptionManagement = () => {
               <div 
                 key={plan._id || plan.id}
                 onClick={() => handleEdit(plan)}
-                className="bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-md hover:border-[#3D7A4F]/20 transition-all duration-300 relative overflow-hidden flex flex-col group cursor-pointer"
+                className="bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-md hover:border-[#5EB929]/20 transition-all duration-300 relative overflow-hidden flex flex-col group cursor-pointer"
               >
                 {/* Status Strip */}
                 <div className={`h-1 w-full ${plan.status === 'active' ? 'bg-green-500' : 'bg-red-400'}`} />
                 
                 <div className="p-4 flex-1 flex flex-col">
                   <div className="flex justify-between items-start mb-3">
-                    <div className="w-10 h-10 rounded-xl bg-gray-50 flex items-center justify-center text-[#3D7A4F] border border-gray-100">
+                    <div className="w-10 h-10 rounded-xl bg-gray-50 flex items-center justify-center text-[#5EB929] border border-gray-100">
                       <WorkspacePremiumRoundedIcon sx={{ fontSize: 20 }} />
                     </div>
                     <span className={`px-2 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider ${
@@ -205,16 +205,16 @@ const SubscriptionManagement = () => {
                   
                   <div className="flex flex-wrap gap-1 mb-3">
                     {(!plan.applicableCities || plan.applicableCities.length === 0) ? (
-                      <span className="text-[9px] font-black uppercase text-indigo-500 bg-indigo-50 px-1.5 py-0.5 rounded">Global</span>
+                      <span className="text-[9px] font-bold uppercase text-indigo-500 bg-indigo-50 px-1.5 py-0.5 rounded">Global</span>
                     ) : (
                       plan.applicableCities.map(city => (
-                        <span key={city} className="text-[9px] font-black uppercase text-gray-400 bg-gray-50 px-1.5 py-0.5 rounded">{city}</span>
+                        <span key={city} className="text-[9px] font-bold uppercase text-gray-400 bg-gray-50 px-1.5 py-0.5 rounded">{city}</span>
                       ))
                     )}
                   </div>
                   
                   <div className="flex items-baseline gap-1 mb-4">
-                    <span className="text-2xl font-black text-gray-900">₹{plan.price}</span>
+                    <span className="text-2xl font-bold text-gray-900">₹{plan.price}</span>
                     <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">/{plan.duration}</span>
                   </div>
 
@@ -222,13 +222,13 @@ const SubscriptionManagement = () => {
                   <div className="grid grid-cols-2 gap-2 mb-4">
                     <div className="bg-gray-50/50 rounded-xl p-2 border border-gray-50 flex flex-col items-center text-center">
                        <Inventory2RoundedIcon sx={{ fontSize: 14 }} className="text-gray-400 mb-1" />
-                       <p className="text-[9px] font-bold text-gray-400 uppercase tracking-tighter">Products</p>
-                       <p className="text-[11px] font-black text-gray-700">{plan.maxProducts === 999 ? 'Unlimited' : plan.maxProducts}</p>
+                       <p className="text-[9px] font-bold text-gray-400 uppercase tracking-tight">Products</p>
+                       <p className="text-[11px] font-bold text-gray-700">{plan.maxProducts === 999 ? 'Unlimited' : plan.maxProducts}</p>
                     </div>
                     <div className="bg-gray-50/50 rounded-xl p-2 border border-gray-50 flex flex-col items-center text-center">
                        <LocalOfferRoundedIcon sx={{ fontSize: 14 }} className="text-gray-400 mb-1" />
-                       <p className="text-[9px] font-bold text-gray-400 uppercase tracking-tighter">Offers</p>
-                       <p className="text-[11px] font-black text-gray-700">{plan.maxOffers === 999 ? 'Unlimited' : plan.maxOffers}</p>
+                       <p className="text-[9px] font-bold text-gray-400 uppercase tracking-tight">Offers</p>
+                       <p className="text-[11px] font-bold text-gray-700">{plan.maxOffers === 999 ? 'Unlimited' : plan.maxOffers}</p>
                     </div>
                   </div>
 
@@ -281,7 +281,7 @@ const SubscriptionManagement = () => {
             
             {/* Plan Identity Section */}
             <div className="flex flex-col items-center justify-center p-8 bg-gray-50 rounded-2xl border border-gray-100 mb-2">
-              <div className="w-20 h-20 rounded-2xl bg-white flex items-center justify-center shadow-sm border border-gray-100 text-[#3D7A4F]">
+              <div className="w-20 h-20 rounded-2xl bg-white flex items-center justify-center shadow-sm border border-gray-100 text-[#5EB929]">
                 <WorkspacePremiumRoundedIcon sx={{ fontSize: 40 }} />
               </div>
               <h3 className="mt-4 text-xl font-bold text-gray-800">{formData.name || 'Tier Name'}</h3>
@@ -307,7 +307,7 @@ const SubscriptionManagement = () => {
                   <button
                     type="button"
                     onClick={() => setFormData({...formData, applicableCities: []})}
-                    className={`px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all border ${
+                    className={`px-3 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-widest transition-all border ${
                       formData.applicableCities.length === 0 ? 'bg-indigo-500 text-white border-indigo-500' : 'bg-white text-gray-400 border-gray-100'
                     }`}
                   >
@@ -323,8 +323,8 @@ const SubscriptionManagement = () => {
                           : [...formData.applicableCities, city.name];
                         setFormData({...formData, applicableCities: newCities});
                       }}
-                      className={`px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all border ${
-                        formData.applicableCities.includes(city.name) ? 'bg-[#3D7A4F] text-white border-[#3D7A4F]' : 'bg-white text-gray-400 border-gray-100'
+                      className={`px-3 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-widest transition-all border ${
+                        formData.applicableCities.includes(city.name) ? 'bg-[#5EB929] text-white border-[#5EB929]' : 'bg-white text-gray-400 border-gray-100'
                       }`}
                     >
                       {city.name}
@@ -464,7 +464,7 @@ const SubscriptionManagement = () => {
           <div className="absolute bottom-0 left-0 right-0 p-4 bg-white border-t border-gray-100 flex gap-3 z-20">
             <button 
               type="submit"
-              className="flex-1 bg-[#3D7A4F] text-white py-3.5 rounded-xl font-semibold text-[14px] shadow-lg shadow-[#3D7A4F]/10 hover:bg-[#2d5a3a] transition-all"
+              className="flex-1 bg-[#5EB929] text-white py-3.5 rounded-xl font-semibold text-[14px] shadow-lg shadow-[#5EB929]/10 hover:bg-[#2d5a3a] transition-all"
             >
               {selectedPlan ? 'Update Configuration' : 'Deploy Tier'}
             </button>
@@ -479,7 +479,7 @@ const SubscriptionManagement = () => {
             <div className="w-14 h-14 bg-red-50 rounded-2xl flex items-center justify-center mx-auto mb-4">
               <DeleteRoundedIcon className="text-red-500" sx={{ fontSize: 28 }} />
             </div>
-            <h3 className="text-xl font-black text-gray-900 mb-2">Archive Tier?</h3>
+            <h3 className="text-xl font-bold text-gray-900 mb-2">Archive Tier?</h3>
             <p className="text-sm text-gray-500 font-medium mb-6">Existing subscribers will not be affected, but this plan will be hidden from all new merchant registrations immediately.</p>
             <div className="flex gap-3">
               <button onClick={() => setIsDeleteModalOpen(false)} className="flex-1 bg-gray-100 text-gray-600 py-3 rounded-xl font-bold text-sm">Cancel</button>

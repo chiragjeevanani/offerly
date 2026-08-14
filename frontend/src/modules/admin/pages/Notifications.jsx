@@ -59,7 +59,7 @@ const Notifications = () => {
   };
 
   return (
-    <div className="min-h-[calc(100vh-80px)] bg-[#F8F5FF] p-4 lg:p-8 -m-6 lg:-m-8 font-sans text-gray-800 lg:rounded-tl-[32px]">
+    <div className="min-h-[calc(100vh-80px)] bg-background p-4 lg:p-8 -m-6 lg:-m-8 font-sans text-gray-800 lg:rounded-tl-[32px]">
       <div className="max-w-4xl mx-auto">
         {/* Header Section */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-2 mb-6">
@@ -91,7 +91,7 @@ const Notifications = () => {
           <button
             onClick={() => setActiveTab('all')}
             className={`px-5 py-1.5 text-[12px] font-medium transition-all duration-300 rounded-[10px] ${
-              activeTab === 'all' ? 'bg-[#3D7A4F] text-white shadow-md' : 'text-gray-500 hover:text-gray-700'
+              activeTab === 'all' ? 'bg-[#5EB929] text-white shadow-md' : 'text-gray-500 hover:text-gray-700'
             }`}
           >
             All Alerts
@@ -99,12 +99,12 @@ const Notifications = () => {
           <button
             onClick={() => setActiveTab('unread')}
             className={`px-5 py-1.5 text-[12px] font-medium transition-all duration-300 rounded-[10px] flex items-center gap-2 ${
-              activeTab === 'unread' ? 'bg-[#3D7A4F] text-white shadow-md' : 'text-gray-500 hover:text-gray-700'
+              activeTab === 'unread' ? 'bg-[#5EB929] text-white shadow-md' : 'text-gray-500 hover:text-gray-700'
             }`}
           >
             Unread
             {notifications.filter(n => !n.isRead).length > 0 && (
-              <span className={`w-1.5 h-1.5 rounded-full ${activeTab === 'unread' ? 'bg-white' : 'bg-[#3D7A4F]'}`} />
+              <span className={`w-1.5 h-1.5 rounded-full ${activeTab === 'unread' ? 'bg-white' : 'bg-[#5EB929]'}`} />
             )}
           </button>
         </div>
@@ -122,7 +122,7 @@ const Notifications = () => {
                   key={n._id}
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
-                  className={`bg-white rounded-xl p-3 border border-gray-100 shadow-sm transition-all flex items-start gap-4 relative group ${!n.isRead ? 'border-l-4 border-l-[#3D7A4F]' : ''}`}
+                  className={`bg-white rounded-xl p-3 border border-gray-100 shadow-sm transition-all flex items-start gap-4 relative group ${!n.isRead ? 'border-l-4 border-l-[#5EB929]' : ''}`}
                 >
                   <div className={`mt-1 w-10 h-10 rounded-full flex items-center justify-center ${!n.isRead ? 'bg-primary/5' : 'bg-gray-50 opacity-60'}`}>
                     {getIcon(n.type)}
@@ -144,7 +144,7 @@ const Notifications = () => {
                     {!n.isRead && (
                       <button
                         onClick={() => markAsRead(n._id)}
-                        className="mt-2 flex items-center gap-1 text-[9px] font-black uppercase tracking-widest text-primary hover:text-[#2d5a3a] transition-colors"
+                        className="mt-2 flex items-center gap-1 text-[9px] font-bold uppercase tracking-widest text-primary hover:text-[#2d5a3a] transition-colors"
                       >
                         <DoneAllRoundedIcon sx={{ fontSize: 14 }} />
                         Mark Read

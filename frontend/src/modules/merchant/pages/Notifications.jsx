@@ -14,11 +14,11 @@ import toast from 'react-hot-toast';
 
 const typeConfig = {
   booking_new: { icon: ReceiptLongRoundedIcon, color: 'text-emerald-600', bg: 'bg-emerald-50' },
-  booking_fulfilled: { icon: ReceiptLongRoundedIcon, color: 'text-[#3D7A4F]', bg: 'bg-[#3D7A4F]/10' },
+  booking_fulfilled: { icon: ReceiptLongRoundedIcon, color: 'text-[#5EB929]', bg: 'bg-[#5EB929]/10' },
   subscription_expiry: { icon: WorkspacePremiumRoundedIcon, color: 'text-amber-600', bg: 'bg-amber-50' },
   offer_approved: { icon: LocalOfferRoundedIcon, color: 'text-indigo-600', bg: 'bg-indigo-50' },
   payment: { icon: PaymentRoundedIcon, color: 'text-blue-600', bg: 'bg-blue-50' },
-  store_status: { icon: StorefrontRoundedIcon, color: 'text-[#3D7A4F]', bg: 'bg-[#3D7A4F]/5' },
+  store_status: { icon: StorefrontRoundedIcon, color: 'text-[#5EB929]', bg: 'bg-[#5EB929]/5' },
   general: { icon: NotificationsRoundedIcon, color: 'text-gray-400', bg: 'bg-gray-100' },
 };
 
@@ -74,15 +74,15 @@ const Notifications = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#F8F5FF] flex flex-col items-center justify-center gap-3">
-        <div className="w-10 h-10 border-2 border-[#3D7A4F]/20 border-t-[#3D7A4F] rounded-full animate-spin" />
-        <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Checking Feed...</p>
+      <div className="min-h-screen bg-background flex flex-col items-center justify-center gap-3">
+        <div className="w-10 h-10 border-2 border-[#5EB929]/20 border-t-[#5EB929] rounded-full animate-spin" />
+        <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Checking Feed...</p>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-[#F8F5FF] pb-20">
+    <div className="min-h-screen bg-background pb-20">
       {/* Premium Sticky Header */}
       <div className="sticky top-0 z-50 bg-white/80 backdrop-blur-xl border-b border-gray-100 px-4 py-3 flex items-center justify-between gap-4">
         <div className="flex items-center gap-3">
@@ -90,13 +90,13 @@ const Notifications = () => {
             <ArrowBackRoundedIcon sx={{ fontSize: 20 }} />
           </button>
           <div>
-            <h1 className="text-[15px] font-black text-gray-900 leading-none">Notifications</h1>
-            <p className="text-[9px] font-bold text-[#3D7A4F] uppercase tracking-widest mt-1.5">{unread.length} Unread Actions</p>
+            <h1 className="text-[15px] font-bold text-gray-900 leading-none">Notifications</h1>
+            <p className="text-[9px] font-bold text-[#5EB929] uppercase tracking-widest mt-1.5">{unread.length} Unread Actions</p>
           </div>
         </div>
         
         {unread.length > 0 && (
-          <button onClick={handleMarkAllRead} className="flex items-center gap-2 px-3 py-1.5 bg-[#3D7A4F]/10 text-[#3D7A4F] rounded-lg text-[10px] font-black uppercase hover:bg-[#3D7A4F] hover:text-white transition-all">
+          <button onClick={handleMarkAllRead} className="flex items-center gap-2 px-3 py-1.5 bg-[#5EB929]/10 text-[#5EB929] rounded-lg text-[10px] font-bold uppercase hover:bg-[#5EB929] hover:text-white transition-all">
             <DoneAllRoundedIcon sx={{ fontSize: 16 }} />
             Mark All
           </button>
@@ -110,7 +110,7 @@ const Notifications = () => {
             <div className="w-24 h-24 bg-white rounded-3xl flex items-center justify-center mb-6 shadow-xl shadow-gray-200/50 border border-gray-50">
               <NotificationsRoundedIcon sx={{ fontSize: 48 }} className="text-gray-200" />
             </div>
-            <h2 className="text-lg font-black text-gray-900 tracking-tight">Inbox Zero</h2>
+            <h2 className="text-lg font-bold text-gray-900 tracking-tight">Inbox Zero</h2>
             <p className="text-xs font-medium text-gray-500 mt-2">You've cleared all your alerts. Take a break!</p>
           </motion.div>
         ) : (
@@ -118,8 +118,8 @@ const Notifications = () => {
             {unread.length > 0 && (
               <section>
                 <div className="flex items-center gap-3 mb-4 px-1">
-                   <div className="w-1.5 h-4 bg-[#3D7A4F] rounded-full" />
-                   <h3 className="text-[11px] font-black text-gray-900 uppercase tracking-widest">Active Alerts</h3>
+                   <div className="w-1.5 h-4 bg-[#5EB929] rounded-full" />
+                   <h3 className="text-[11px] font-bold text-gray-900 uppercase tracking-widest">Active Alerts</h3>
                 </div>
                 <div className="space-y-3">
                   {unread.map((n, idx) => (
@@ -133,7 +133,7 @@ const Notifications = () => {
               <section>
                 <div className="flex items-center gap-3 mb-4 px-1">
                    <div className="w-1.5 h-4 bg-gray-300 rounded-full" />
-                   <h3 className="text-[11px] font-black text-gray-400 uppercase tracking-widest">Earlier Feed</h3>
+                   <h3 className="text-[11px] font-bold text-gray-400 uppercase tracking-widest">Earlier Feed</h3>
                 </div>
                 <div className="space-y-3">
                   {read.map((n, idx) => (
@@ -161,7 +161,7 @@ const NotifStrip = ({ notif, idx, handleRead, formatDate, isRead }) => {
       onClick={() => !isRead && handleRead(notif._id)}
       className={`group flex items-start gap-4 p-4 rounded-2xl border transition-all cursor-pointer ${
         !isRead 
-        ? 'bg-white border-[#3D7A4F]/20 shadow-lg shadow-[#3D7A4F]/5 ring-1 ring-[#3D7A4F]/5' 
+        ? 'bg-white border-[#5EB929]/20 shadow-lg shadow-[#5EB929]/5 ring-1 ring-[#5EB929]/5' 
         : 'bg-white/50 border-gray-100 hover:bg-white hover:border-gray-200'
       }`}
     >
@@ -171,16 +171,16 @@ const NotifStrip = ({ notif, idx, handleRead, formatDate, isRead }) => {
       <div className="flex-1 min-w-0">
         <div className="flex items-start justify-between gap-3">
            <div className="min-w-0">
-              <h4 className={`text-[13px] font-black leading-tight truncate ${!isRead ? 'text-gray-900' : 'text-gray-500'}`}>{notif.title}</h4>
+              <h4 className={`text-[13px] font-bold leading-tight truncate ${!isRead ? 'text-gray-900' : 'text-gray-500'}`}>{notif.title}</h4>
               <p className={`text-[12px] font-medium mt-1 leading-relaxed ${!isRead ? 'text-gray-600' : 'text-gray-400'}`}>{notif.body}</p>
            </div>
            {!isRead && (
-             <div className="w-2 h-2 bg-[#3D7A4F] rounded-full shadow-[0_0_8px_rgba(61,122,79,0.5)] flex-shrink-0 mt-1" />
+             <div className="w-2 h-2 bg-[#5EB929] rounded-full shadow-[0_0_8px_rgba(94, 185, 41,0.5)] flex-shrink-0 mt-1" />
            )}
         </div>
         <div className="flex items-center justify-between mt-3">
-           <span className="text-[10px] font-black text-gray-400 uppercase tracking-tighter">{formatDate(notif.createdAt)}</span>
-           <span className="text-[9px] font-bold text-[#3D7A4F] opacity-0 group-hover:opacity-100 transition-opacity">Dismiss</span>
+           <span className="text-[10px] font-bold text-gray-400 uppercase tracking-tight">{formatDate(notif.createdAt)}</span>
+           <span className="text-[9px] font-bold text-[#5EB929] opacity-0 group-hover:opacity-100 transition-opacity">Dismiss</span>
         </div>
       </div>
     </motion.div>

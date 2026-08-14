@@ -103,7 +103,7 @@ const Advertise = ({ merchant }) => {
             }
           },
           prefill: res.merchantDetails,
-          theme: { color: '#3D7A4F' }
+          theme: { color: '#5EB929' }
         };
 
         const rzp = new window.Razorpay(options);
@@ -147,7 +147,7 @@ const Advertise = ({ merchant }) => {
     <div className="space-y-4 pb-20">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-black text-gray-900 tracking-tight uppercase">Boost & Advertise</h1>
+          <h1 className="text-2xl font-bold text-gray-900 tracking-tight uppercase">Boost & Advertise</h1>
           <p className="text-sm text-gray-500 font-medium">Get featured on the homepage and reach thousands of customers.</p>
         </div>
       </div>
@@ -155,7 +155,7 @@ const Advertise = ({ merchant }) => {
         {/* Available Packages - Compact Horizontal Scroll */}
         <section>
           <div className="flex items-center justify-between mb-3">
-            <h2 className="text-[12px] font-black text-[#3D7A4F] uppercase tracking-widest">Available Ad Packages</h2>
+            <h2 className="text-[12px] font-bold text-[#5EB929] uppercase tracking-widest">Available Ad Packages</h2>
             <div className="h-[1px] flex-1 bg-gray-100 ml-4"></div>
           </div>
 
@@ -175,13 +175,13 @@ const Advertise = ({ merchant }) => {
                     <CampaignRoundedIcon sx={{ fontSize: 16 }} className="text-indigo-600" />
                   </div>
                   
-                  <h3 className="text-xs font-black text-gray-900 mb-0.5 line-clamp-1">{plan.name}</h3>
-                  <p className="text-lg font-black text-[#3D7A4F]">₹{plan.price}</p>
+                  <h3 className="text-xs font-bold text-gray-900 mb-0.5 line-clamp-1">{plan.name}</h3>
+                  <p className="text-lg font-bold text-[#5EB929]">₹{plan.price}</p>
                   <p className="text-[8px] text-gray-400 font-bold uppercase mb-3">{plan.duration}</p>
                   
                   <button 
                     onClick={() => handlePurchase(plan)}
-                    className="w-full py-2 bg-gray-900 text-white rounded-lg font-black text-[9px] uppercase tracking-widest hover:bg-black transition-all"
+                    className="w-full py-2 bg-gray-900 text-white rounded-lg font-bold text-[9px] uppercase tracking-widest hover:bg-black transition-all"
                   >
                     Select
                   </button>
@@ -198,7 +198,7 @@ const Advertise = ({ merchant }) => {
         {/* Ad Status - Compact Grid */}
         <section className="space-y-3">
           <div className="flex items-center justify-between mb-1">
-            <h2 className="text-[12px] font-black text-[#3D7A4F] uppercase tracking-widest">Your Ad Status</h2>
+            <h2 className="text-[12px] font-bold text-[#5EB929] uppercase tracking-widest">Your Ad Status</h2>
             <div className="h-[1px] flex-1 bg-gray-100 ml-4"></div>
           </div>
 
@@ -210,20 +210,20 @@ const Advertise = ({ merchant }) => {
                     <WorkspacePremiumRoundedIcon sx={{ fontSize: 16 }} />
                  </div>
                  <div>
-                    <p className="text-[8px] font-black uppercase text-gray-500 tracking-tighter leading-none">Visibility</p>
-                    <p className="text-[11px] font-black uppercase tracking-tight truncate max-w-[120px]">
+                    <p className="text-[8px] font-bold uppercase text-gray-500 tracking-tight leading-none">Visibility</p>
+                    <p className="text-[11px] font-bold uppercase tracking-tight truncate max-w-[120px]">
                       {merchant?.subscription?.planId?.name || 'Standard'}
                     </p>
                  </div>
               </div>
               
               {stats.availableAdSlots > 0 ? (
-                <div className="bg-[#3D7A4F] px-2 py-1 rounded-md animate-pulse">
-                   <p className="text-[8px] font-black uppercase tracking-widest">{stats.availableAdSlots} Unused Slot{stats.availableAdSlots > 1 ? 's' : ''}</p>
+                <div className="bg-[#5EB929] px-2 py-1 rounded-md animate-pulse">
+                   <p className="text-[8px] font-bold uppercase tracking-widest">{stats.availableAdSlots} Unused Slot{stats.availableAdSlots > 1 ? 's' : ''}</p>
                 </div>
               ) : (
                 <div className="bg-white/5 px-2 py-1 rounded-md border border-white/10">
-                   <p className="text-[8px] font-black uppercase tracking-widest text-gray-500">No Slots</p>
+                   <p className="text-[8px] font-bold uppercase tracking-widest text-gray-500">No Slots</p>
                 </div>
               )}
             </div>
@@ -231,18 +231,18 @@ const Advertise = ({ merchant }) => {
             <div className="grid grid-cols-2 gap-2 mb-4">
                <div className="p-3 bg-white/5 rounded-xl border border-white/5">
                   <p className="text-[8px] font-bold text-gray-500 uppercase mb-0.5">Active</p>
-                  <p className="text-xl font-black">{stats.activeAdsCount || 0}</p>
+                  <p className="text-xl font-bold">{stats.activeAdsCount || 0}</p>
                </div>
                <div className="p-3 bg-white/5 rounded-xl border border-white/5">
                   <p className="text-[8px] font-bold text-gray-500 uppercase mb-0.5">Pending</p>
-                  <p className="text-xl font-black text-amber-500">{stats.pendingAdsCount || 0}</p>
+                  <p className="text-xl font-bold text-amber-500">{stats.pendingAdsCount || 0}</p>
                </div>
             </div>
 
             {stats.availableAdSlots > 0 ? (
               <button 
                 onClick={() => setIsRequestModalOpen(true)}
-                className="w-full py-3 bg-[#3D7A4F] text-white rounded-xl font-black text-[10px] uppercase tracking-widest shadow-lg shadow-[#3D7A4F]/20"
+                className="w-full py-3 bg-[#5EB929] text-white rounded-xl font-bold text-[10px] uppercase tracking-widest shadow-lg shadow-[#5EB929]/20"
               >
                 Submit Banner Now
               </button>
@@ -262,7 +262,7 @@ const Advertise = ({ merchant }) => {
               <CampaignRoundedIcon sx={{ fontSize: 20 }} className="text-gray-400" />
            </div>
            <div>
-              <h4 className="text-[10px] font-black text-gray-900 uppercase">Banner Guidelines</h4>
+              <h4 className="text-[10px] font-bold text-gray-900 uppercase">Banner Guidelines</h4>
               <p className="text-[9px] text-gray-500 font-bold">1200x400px • JPG/PNG • 24h Approval</p>
            </div>
         </section>
@@ -278,11 +278,11 @@ const Advertise = ({ merchant }) => {
           >
             <div className="bg-gray-900 p-6 text-white flex justify-between items-center">
                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-[#3D7A4F] rounded-xl flex items-center justify-center">
+                  <div className="w-10 h-10 bg-[#5EB929] rounded-xl flex items-center justify-center">
                     <AddPhotoAlternateRoundedIcon />
                   </div>
                   <div>
-                    <h3 className="text-lg font-black leading-none">Submit Your Banner</h3>
+                    <h3 className="text-lg font-bold leading-none">Submit Your Banner</h3>
                     <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mt-1">Package: {selectedPlan?.name}</p>
                   </div>
                </div>
@@ -300,7 +300,7 @@ const Advertise = ({ merchant }) => {
                     onChange={handleImageUpload}
                     className="absolute inset-0 opacity-0 z-10 cursor-pointer" 
                   />
-                  <div className="w-full h-48 rounded-3xl bg-gray-50 border-2 border-dashed border-gray-200 flex flex-col items-center justify-center group-hover:border-[#3D7A4F]/30 transition-all overflow-hidden relative">
+                  <div className="w-full h-48 rounded-3xl bg-gray-50 border-2 border-dashed border-gray-200 flex flex-col items-center justify-center group-hover:border-[#5EB929]/30 transition-all overflow-hidden relative">
                     {adData.imagePreview ? (
                       <img src={adData.imagePreview} className="w-full h-full object-cover" alt="Banner" />
                     ) : (
@@ -308,25 +308,25 @@ const Advertise = ({ merchant }) => {
                         <div className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center text-gray-300 shadow-sm mb-3">
                           <AddPhotoAlternateRoundedIcon sx={{ fontSize: 24 }} />
                         </div>
-                        <p className="text-[11px] font-black text-gray-400 uppercase tracking-widest">Click to upload banner</p>
+                        <p className="text-[11px] font-bold text-gray-400 uppercase tracking-widest">Click to upload banner</p>
                         <p className="text-[9px] text-gray-300 font-bold mt-1">Recommended size: 1200 x 400px</p>
                       </>
                     )}
                     {uploading && (
                       <div className="absolute inset-0 bg-white/80 flex items-center justify-center">
-                        <div className="w-6 h-6 border-2 border-[#3D7A4F] border-t-transparent rounded-full animate-spin" />
+                        <div className="w-6 h-6 border-2 border-[#5EB929] border-t-transparent rounded-full animate-spin" />
                       </div>
                     )}
                   </div>
                 </div>
 
                 <div>
-                  <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 block ml-1">Promotional Text (Optional)</label>
+                  <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2 block ml-1">Promotional Text (Optional)</label>
                   <textarea 
                     value={adData.adText}
                     onChange={(e) => setAdData({...adData, adText: e.target.value})}
                     placeholder="e.g. Special weekend sale! Up to 50% off on all items."
-                    className="w-full px-5 py-4 bg-gray-50 rounded-2xl border border-gray-100 focus:border-[#3D7A4F]/20 outline-none text-sm font-medium min-h-[100px] transition-all"
+                    className="w-full px-5 py-4 bg-gray-50 rounded-2xl border border-gray-100 focus:border-[#5EB929]/20 outline-none text-sm font-medium min-h-[100px] transition-all"
                   />
                 </div>
               </div>
@@ -334,14 +334,14 @@ const Advertise = ({ merchant }) => {
               <div className="flex gap-3 pt-2">
                 <button 
                   onClick={() => setIsRequestModalOpen(false)}
-                  className="flex-1 py-4 bg-gray-100 text-gray-600 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-gray-200 transition-all"
+                  className="flex-1 py-4 bg-gray-100 text-gray-600 rounded-2xl font-bold text-xs uppercase tracking-widest hover:bg-gray-200 transition-all"
                 >
                   Cancel
                 </button>
                 <button 
                   onClick={handleRequestSubmit}
                   disabled={uploading || submitting || !adData.image}
-                  className="flex-[2] py-4 bg-gray-900 text-white rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-black transition-all shadow-xl shadow-gray-900/20 disabled:opacity-50"
+                  className="flex-[2] py-4 bg-gray-900 text-white rounded-2xl font-bold text-xs uppercase tracking-widest hover:bg-black transition-all shadow-xl shadow-gray-900/20 disabled:opacity-50"
                 >
                   {submitting ? 'Submitting...' : 'Submit Request 🚀'}
                 </button>

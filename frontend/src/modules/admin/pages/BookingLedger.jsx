@@ -17,7 +17,7 @@ const TabButton = ({ label, isActive, onClick, count }) => (
     onClick={onClick}
     className={`px-5 py-2 text-[12px] font-medium transition-all duration-300 rounded-[10px] flex items-center gap-2 ${
       isActive 
-        ? 'bg-[#3D7A4F] text-white shadow-md' 
+        ? 'bg-[#5EB929] text-white shadow-md' 
         : 'text-gray-500 hover:text-gray-700 hover:bg-white/80'
     }`}
   >
@@ -66,7 +66,7 @@ const BookingLedger = () => {
 
 
   return (
-    <div className="min-h-[calc(100vh-80px)] bg-[#F8F5FF] p-4 lg:p-8 -m-6 lg:-m-8 font-sans text-gray-800 lg:rounded-tl-[32px]">
+    <div className="min-h-[calc(100vh-80px)] bg-background p-4 lg:p-8 -m-6 lg:-m-8 font-sans text-gray-800 lg:rounded-tl-[32px]">
       <div className="max-w-7xl mx-auto">
         {/* Header Section */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-2 mb-2">
@@ -77,8 +77,8 @@ const BookingLedger = () => {
 
           <div className="flex items-center gap-2">
             <div className="flex items-center gap-3 bg-white px-4 py-2 rounded-[12px] border border-gray-100 shadow-sm">
-               <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Total Value:</span>
-               <span className="text-[14px] font-black text-primary">₹{totalRevenue.toLocaleString()}</span>
+               <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Total Value:</span>
+               <span className="text-[14px] font-bold text-primary">₹{totalRevenue.toLocaleString()}</span>
             </div>
             <button
               onClick={() => refetch()}
@@ -105,7 +105,7 @@ const BookingLedger = () => {
               placeholder="Search ID, Merchant, or Customer..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full bg-white border border-gray-100 rounded-[12px] py-2 pl-11 pr-4 text-[13px] text-gray-800 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-[#3D7A4F]/10 focus:border-[#3D7A4F]/30 transition-all shadow-sm"
+              className="w-full bg-white border border-gray-100 rounded-[12px] py-2 pl-11 pr-4 text-[13px] text-gray-800 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-[#5EB929]/10 focus:border-[#5EB929]/30 transition-all shadow-sm"
             />
           </div>
         </div>
@@ -126,7 +126,7 @@ const BookingLedger = () => {
                   {/* ID & Icon */}
                   <div className="hidden sm:flex flex-col items-center justify-center w-12 border-r border-gray-50 pr-4">
                      <ReceiptLongRoundedIcon className="text-gray-300" sx={{ fontSize: 20 }} />
-                     <span className="text-[9px] font-black text-gray-400 uppercase mt-1">#{b.id}</span>
+                     <span className="text-[9px] font-bold text-gray-400 uppercase mt-1">#{b.id}</span>
                   </div>
 
                   {/* Customer & Store Info */}
@@ -144,7 +144,7 @@ const BookingLedger = () => {
                       </div>
                       <div>
                         <p className="text-[12px] font-bold text-gray-800 leading-none">{b.merchant?.storeName || '—'}</p>
-                        <p className="text-[9px] text-gray-400 font-black uppercase tracking-tighter mt-0.5">{b.merchant?.category}</p>
+                        <p className="text-[9px] text-gray-400 font-bold uppercase tracking-tight mt-0.5">{b.merchant?.category}</p>
                       </div>
                     </div>
 
@@ -159,7 +159,7 @@ const BookingLedger = () => {
                 {/* Amount & Status */}
                 <div className="flex items-center gap-4 lg:gap-8">
                   <div className="text-right">
-                    <p className="text-[13px] font-black text-primary leading-none">₹{b.totals?.final}</p>
+                    <p className="text-[13px] font-bold text-primary leading-none">₹{b.totals?.final}</p>
                     <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest mt-1">Settled</p>
                   </div>
                   

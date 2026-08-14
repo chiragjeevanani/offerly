@@ -53,24 +53,24 @@ const About = () => {
 
   return (
     <PageTransition>
-      <div className="min-h-screen bg-[#F8F5FF] px-4 py-4 pb-24 space-y-8">
+      <div className="min-h-screen bg-background px-4 py-4 pb-24 space-y-8">
         
         {/* Hero Section - Premium Branding */}
-        <div className="bg-[#3D7A4F] rounded-[2.5rem] p-10 text-center relative overflow-hidden shadow-lg shadow-[#3D7A4F]/20">
+        <div className="bg-[#5EB929] rounded-[2.5rem] p-10 text-center relative overflow-hidden shadow-lg shadow-[#5EB929]/20">
           <div className="absolute top-0 right-0 w-40 h-40 bg-white/5 rounded-full -mr-20 -mt-20 blur-3xl" />
           
           <motion.div
             initial={{ scale: 0.8, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
-            className="w-20 h-20 bg-white/10 rounded-3xl flex items-center justify-center mx-auto mb-6 backdrop-blur-md border border-white/10"
+            className="w-20 h-20 bg-white/10 rounded-3xl flex items-center justify-center mx-auto mb-6 backdrop-blur-md border border-white/10 p-3"
           >
-            <CardGiftcardRoundedIcon sx={{ fontSize: 36 }} className="text-white" />
+            <img src="/offerly-logo-ring.png" alt="Offerly" className="w-full h-full object-contain" />
           </motion.div>
           
           <motion.h1
             initial={{ opacity: 0, y: 15 }}
             animate={{ opacity: 1, y: 0 }}
-            className="text-white font-black text-3xl uppercase tracking-tight leading-tight px-4"
+            className="text-white font-bold text-3xl uppercase tracking-tight leading-tight px-4"
           >
             Discover Amazing Deals Near You
           </motion.h1>
@@ -78,7 +78,7 @@ const About = () => {
             initial={{ opacity: 0, y: 15 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.1 }}
-            className="text-white/60 text-[11px] font-black uppercase tracking-widest mt-4 max-w-xs mx-auto leading-relaxed"
+            className="text-white/60 text-[11px] font-bold uppercase tracking-widest mt-4 max-w-xs mx-auto leading-relaxed"
           >
             Digital savings ledger for your favorite local services
           </motion.p>
@@ -86,8 +86,8 @@ const About = () => {
 
         {/* Narrative Section */}
         <div className="space-y-4 px-1">
-          <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Platform Vision</p>
-          <h2 className="text-gray-900 font-black text-2xl uppercase tracking-tighter">What is Offerly?</h2>
+          <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Platform Vision</p>
+          <h2 className="text-gray-900 font-bold text-2xl uppercase tracking-tight">What is Offerly?</h2>
           <p className="text-gray-600 text-[13px] font-medium leading-relaxed">
             Offerly is a high-utility platform designed to bridge the gap between premium local merchants and value-conscious customers. We provide a digital infrastructure for discovering and redeeming exclusive deals.
           </p>
@@ -95,7 +95,7 @@ const About = () => {
 
         {/* How It Works - Slim Steps */}
         <div className="space-y-4">
-           <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest px-1">Execution Flow</p>
+           <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest px-1">Execution Flow</p>
            <div className="space-y-3">
               {[
                 { n: '01', t: 'Browse Near You', d: 'Explore exclusive deals from verified local businesses in your immediate vicinity.' },
@@ -103,11 +103,11 @@ const About = () => {
                 { n: '03', t: 'Verify at Store', d: 'Show your pass at the merchant location to unlock your digital savings.' },
               ].map(step => (
                 <div key={step.n} className="bg-white rounded-3xl p-5 flex gap-5 border border-gray-50 shadow-sm">
-                   <div className="w-12 h-12 bg-[#3D7A4F]/5 rounded-2xl flex items-center justify-center flex-shrink-0 border border-[#3D7A4F]/10">
-                      <span className="text-[#3D7A4F] font-black text-sm">{step.n}</span>
+                   <div className="w-12 h-12 bg-[#5EB929]/5 rounded-2xl flex items-center justify-center flex-shrink-0 border border-[#5EB929]/10">
+                      <span className="text-[#5EB929] font-bold text-sm">{step.n}</span>
                    </div>
                    <div>
-                      <h3 className="text-gray-900 font-black text-sm uppercase tracking-tight mb-1">{step.t}</h3>
+                      <h3 className="text-gray-900 font-bold text-sm uppercase tracking-tight mb-1">{step.t}</h3>
                       <p className="text-gray-500 text-[11px] leading-relaxed font-medium">{step.d}</p>
                    </div>
                 </div>
@@ -117,7 +117,7 @@ const About = () => {
 
         {/* Features Micro-Grid */}
         <div className="space-y-4">
-           <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest px-1">Core Benefits</p>
+           <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest px-1">Core Benefits</p>
            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               {[
                 { i: LocalOfferRoundedIcon, t: 'Exclusive Deals', d: 'Access specialized offers with deep discounts.' },
@@ -126,10 +126,10 @@ const About = () => {
                 { i: QrCodeScannerRoundedIcon, t: 'Instant Digital', d: 'Zero friction pass generation system.' },
               ].map((feat, idx) => (
                 <div key={idx} className="bg-white rounded-2xl p-5 border border-gray-50 shadow-sm flex flex-col items-start text-left">
-                   <div className="w-10 h-10 bg-[#F8F5FF] rounded-xl flex items-center justify-center mb-4">
-                      <feat.i sx={{ fontSize: 18 }} className="text-[#3D7A4F]" />
+                   <div className="w-10 h-10 bg-background rounded-xl flex items-center justify-center mb-4">
+                      <feat.i sx={{ fontSize: 18 }} className="text-[#5EB929]" />
                    </div>
-                   <h4 className="text-gray-900 font-black text-[12px] uppercase tracking-tight mb-1">{feat.t}</h4>
+                   <h4 className="text-gray-900 font-bold text-[12px] uppercase tracking-tight mb-1">{feat.t}</h4>
                    <p className="text-gray-500 text-[10px] leading-relaxed font-medium">{feat.d}</p>
                 </div>
               ))}
@@ -138,11 +138,11 @@ const About = () => {
 
         {/* CTA Banner */}
         <div className="bg-white rounded-[2rem] p-8 text-center border border-gray-100 shadow-xl shadow-gray-200/20">
-           <h3 className="text-gray-900 font-black text-xl uppercase tracking-tighter mb-2">Ready to Start?</h3>
+           <h3 className="text-gray-900 font-bold text-xl uppercase tracking-tight mb-2">Ready to Start?</h3>
            <p className="text-gray-500 text-[11px] font-medium mb-6">Join thousands of users discovering digital savings every day.</p>
            <button
              onClick={() => navigate('/explore')}
-             className="w-full bg-[#3D7A4F] text-white font-black text-[11px] uppercase tracking-[0.2em] py-4 rounded-2xl shadow-lg shadow-[#3D7A4F]/20 active:scale-95 transition-all"
+             className="w-full bg-[#5EB929] text-white font-bold text-[11px] uppercase tracking-[0.2em] py-4 rounded-2xl shadow-lg shadow-[#5EB929]/20 active:scale-95 transition-all"
            >
              Explore Deals
            </button>

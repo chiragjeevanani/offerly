@@ -43,9 +43,9 @@ const PhoneEntry = () => {
             initial={{ scale: 0, rotate: -10 }}
             animate={{ scale: 1, rotate: 0 }}
             transition={{ type: 'spring', stiffness: 300, delay: 0.1 }}
-            className="w-16 h-16 bg-white/20 rounded-2xl flex items-center justify-center"
+            className="w-16 h-16 bg-white/20 backdrop-blur-sm rounded-2xl flex items-center justify-center p-2"
           >
-            <CardGiftcardRoundedIcon sx={{ fontSize: 36 }} className="text-white" />
+            <img src="/offerly-logo-ring.png" alt="Offerly" className="w-full h-full object-contain" />
           </motion.div>
           <motion.div
             initial={{ opacity: 0, y: 8 }}

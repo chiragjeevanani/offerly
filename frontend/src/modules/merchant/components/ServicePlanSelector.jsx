@@ -111,7 +111,7 @@ const ServicePlanSelector = ({
 
             {/* Plan Info */}
             <div className="flex-1 min-w-0">
-              <h4 className="font-black text-gray-900 text-lg leading-tight">
+              <h4 className="font-bold text-gray-900 text-lg leading-tight">
                 {selectedPlan.name}
               </h4>
               

@@ -11,13 +11,13 @@ const TermCard = ({ title, content, idx }) => (
     whileInView={{ opacity: 1, x: 0 }}
     viewport={{ once: true }}
     transition={{ delay: idx * 0.05 }}
-    className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm hover:border-[#3D7A4F]/20 transition-all group"
+    className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm hover:border-[#5EB929]/20 transition-all group"
   >
     <div className="flex items-center gap-3 mb-4">
-       <div className="w-8 h-8 rounded-lg bg-[#F8F5FF] text-[#3D7A4F] flex items-center justify-center font-black text-xs">
+       <div className="w-8 h-8 rounded-lg bg-background text-[#5EB929] flex items-center justify-center font-bold text-xs">
           {idx + 1}
        </div>
-       <h3 className="text-[14px] font-black text-gray-900 uppercase tracking-tight">{title}</h3>
+       <h3 className="text-[14px] font-bold text-gray-900 uppercase tracking-tight">{title}</h3>
     </div>
     <div className="text-[12px] text-gray-500 font-medium leading-relaxed space-y-3">
        {content}
@@ -64,26 +64,26 @@ const LegalTerms = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-[#F8F5FF] pb-24">
+    <div className="min-h-screen bg-background pb-24">
       {/* Premium Header */}
       <div className="sticky top-0 z-50 bg-white/80 backdrop-blur-xl border-b border-gray-100 px-4 py-3 flex items-center gap-3">
         <button onClick={() => navigate(-1)} className="w-9 h-9 flex items-center justify-center rounded-xl bg-gray-50 text-gray-400 hover:bg-gray-100 transition-all">
           <ArrowBackRoundedIcon sx={{ fontSize: 20 }} />
         </button>
-        <h1 className="text-[15px] font-black text-gray-900 uppercase tracking-widest">Legal Terminal</h1>
+        <h1 className="text-[15px] font-bold text-gray-900 uppercase tracking-widest">Legal Terminal</h1>
       </div>
 
       <div className="max-w-3xl mx-auto px-4 py-8 space-y-8">
         
         {/* Identity Strip (Hero) */}
         <div className="bg-gray-900 rounded-[2.5rem] p-6 sm:p-10 relative overflow-hidden shadow-2xl">
-           <div className="absolute top-0 right-0 w-80 h-80 bg-[#3D7A4F]/20 rounded-full blur-[90px] -translate-y-1/2 translate-x-1/2" />
+           <div className="absolute top-0 right-0 w-80 h-80 bg-[#5EB929]/20 rounded-full blur-[90px] -translate-y-1/2 translate-x-1/2" />
            <div className="relative z-10 flex flex-col sm:flex-row items-center gap-6 lg:gap-10">
               <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="w-16 h-16 bg-white/5 border border-white/10 rounded-2xl flex items-center justify-center flex-shrink-0">
-                 <PolicyRoundedIcon sx={{ fontSize: 32 }} className="text-[#3D7A4F]" />
+                 <PolicyRoundedIcon sx={{ fontSize: 32 }} className="text-[#5EB929]" />
               </motion.div>
               <div className="space-y-2 text-center sm:text-left">
-                 <motion.h2 initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="text-xl sm:text-2xl lg:text-3xl font-black text-white tracking-tighter leading-tight">Terms of <span className="text-[#3D7A4F]">Operation.</span></motion.h2>
+                 <motion.h2 initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="text-xl sm:text-2xl lg:text-3xl font-bold text-white tracking-tight leading-tight">Terms of <span className="text-[#5EB929]">Operation.</span></motion.h2>
                  <motion.p initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="text-gray-400 text-[12px] sm:text-sm font-medium leading-relaxed max-w-xl">Last Revision: April 16, 2026. Governing the interaction between merchants and the Offerly ecosystem.</motion.p>
               </div>
            </div>
@@ -99,19 +99,19 @@ const LegalTerms = () => {
         {/* Final Acceptance Card */}
         <motion.div 
           initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}
-          className="bg-[#3D7A4F] rounded-3xl p-8 text-white text-center relative overflow-hidden shadow-xl shadow-[#3D7A4F]/20"
+          className="bg-[#5EB929] rounded-3xl p-8 text-white text-center relative overflow-hidden shadow-xl shadow-[#5EB929]/20"
         >
            <div className="absolute top-0 right-0 w-48 h-48 bg-white/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
            <DescriptionRoundedIcon className="text-white/30 mb-4" sx={{ fontSize: 40 }} />
-           <h3 className="text-xl font-black mb-2">Architected for Fairness</h3>
+           <h3 className="text-xl font-bold mb-2">Architected for Fairness</h3>
            <p className="text-white/70 text-[12px] font-medium max-w-md mx-auto">By continuing your operations on the Offerly Terminal, you acknowledge and accept these governed protocols.</p>
-           <button onClick={() => navigate(-1)} className="mt-8 px-10 py-3 bg-white text-[#3D7A4F] rounded-xl font-black text-[11px] uppercase tracking-widest hover:scale-105 transition-all active:scale-95">
+           <button onClick={() => navigate(-1)} className="mt-8 px-10 py-3 bg-white text-[#5EB929] rounded-xl font-bold text-[11px] uppercase tracking-widest hover:scale-105 transition-all active:scale-95">
               Acknowledge
            </button>
         </motion.div>
 
         <div className="text-center py-6">
-           <p className="text-[10px] font-black text-gray-400 uppercase tracking-[0.4em]">Legal Architecture v2.0.4</p>
+           <p className="text-[10px] font-bold text-gray-400 uppercase tracking-[0.4em]">Legal Architecture v2.0.4</p>
         </div>
       </div>
     </div>

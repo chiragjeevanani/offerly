@@ -21,7 +21,7 @@ const StatBox = ({ icon: Icon, label, value, colorClass = "text-gray-900" }) => 
       <Icon sx={{ fontSize: 10 }} className="opacity-70" />
       {label}
     </div>
-    <div className={`text-xs font-black tracking-tight ${colorClass}`}>
+    <div className={`text-xs font-bold tracking-tight ${colorClass}`}>
       {value === '0' || value === '0.0' || value === '0%' ? (
         <span className="text-gray-300 font-medium">--</span>
       ) : value}
@@ -63,13 +63,13 @@ const AdminEntityCard = ({
       className="group"
     >
       {/* Desktop Card (Original Design Refined) */}
-      <div className="hidden lg:block bg-white border border-gray-100 rounded-[12px] p-2 shadow-sm hover:shadow-md hover:border-[#3D7A4F]/20 transition-all duration-300 relative overflow-hidden">
-        <div className="absolute top-0 right-0 w-24 h-24 bg-[#3D7A4F]/5 rounded-full blur-2xl -translate-y-1/2 translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+      <div className="hidden lg:block bg-white border border-gray-100 rounded-[12px] p-2 shadow-sm hover:shadow-md hover:border-[#5EB929]/20 transition-all duration-300 relative overflow-hidden">
+        <div className="absolute top-0 right-0 w-24 h-24 bg-[#5EB929]/5 rounded-full blur-2xl -translate-y-1/2 translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
 
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 relative z-10">
           <div className="flex items-center gap-4">
             <div className="relative">
-              <div className="w-12 h-12 rounded-[10px] bg-gray-50 flex items-center justify-center text-[#3D7A4F] font-semibold text-xl border border-gray-100 group-hover:scale-105 transition-all duration-300 overflow-hidden">
+              <div className="w-12 h-12 rounded-[10px] bg-gray-50 flex items-center justify-center text-[#5EB929] font-semibold text-xl border border-gray-100 group-hover:scale-105 transition-all duration-300 overflow-hidden">
                 {profileImg ? (
                   <img src={getOptimizedImageUrl(profileImg, 100, 100)} alt="" className="w-full h-full object-cover" />
                 ) : (
@@ -89,11 +89,11 @@ const AdminEntityCard = ({
 
             <div>
               <div className="flex flex-wrap items-center gap-2 mb-0.5">
-                <h3 className="text-gray-800 font-semibold text-[16px] leading-tight tracking-tight group-hover:text-[#3D7A4F] transition-colors">
+                <h3 className="text-gray-800 font-semibold text-[16px] leading-tight tracking-tight group-hover:text-[#5EB929] transition-colors">
                   {name}
                 </h3>
                 {ownerName && (
-                  <span className="text-[9px] font-medium text-[#3D7A4F] bg-[#3D7A4F]/5 px-2 py-0.5 rounded-full border border-[#3D7A4F]/10 uppercase tracking-widest">
+                  <span className="text-[9px] font-medium text-[#5EB929] bg-[#5EB929]/5 px-2 py-0.5 rounded-full border border-[#5EB929]/10 uppercase tracking-widest">
                     {ownerName}
                   </span>
                 )}
@@ -115,13 +115,13 @@ const AdminEntityCard = ({
           <div className="flex items-center gap-2 self-end sm:self-center">
             <button 
               onClick={() => setIsExpanded(!isExpanded)}
-              className={`p-2 rounded-lg transition-all ${isExpanded ? 'bg-[#3D7A4F]/10 text-[#3D7A4F]' : 'bg-gray-50 text-gray-400 hover:bg-gray-100'}`}
+              className={`p-2 rounded-lg transition-all ${isExpanded ? 'bg-[#5EB929]/10 text-[#5EB929]' : 'bg-gray-50 text-gray-400 hover:bg-gray-100'}`}
             >
               <KeyboardArrowDownRoundedIcon className={`transition-transform duration-300 ${isExpanded ? 'rotate-180' : ''}`} />
             </button>
             <button 
               onClick={() => onView(entity)}
-              className="flex items-center gap-2 px-3 py-1.5 rounded-[10px] bg-gray-50 text-gray-600 hover:bg-[#3D7A4F] hover:text-white transition-all duration-300 border border-gray-100 font-medium text-[11px] shadow-sm"
+              className="flex items-center gap-2 px-3 py-1.5 rounded-[10px] bg-gray-50 text-gray-600 hover:bg-[#5EB929] hover:text-white transition-all duration-300 border border-gray-100 font-medium text-[11px] shadow-sm"
             >
               <VisibilityRoundedIcon sx={{ fontSize: 14 }} />
               View Profile
@@ -187,7 +187,7 @@ const AdminEntityCard = ({
               </span>
               <ChevronRightRoundedIcon sx={{ fontSize: 16 }} className="text-gray-400" />
             </div>
-            <span className="text-[9px] text-gray-400 font-bold uppercase tracking-tighter">
+            <span className="text-[9px] text-gray-400 font-bold uppercase tracking-tight">
               {status === 'pending' ? (
                 `Pend: ${Math.max(1, Math.floor((new Date() - new Date(entity.createdAt)) / (1000 * 60 * 60 * 24)))}d`
               ) : (

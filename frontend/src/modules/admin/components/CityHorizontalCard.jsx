@@ -42,20 +42,20 @@ const CityHorizontalCard = ({ city, onExplore, onEdit, onDelete }) => {
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
       whileHover={{ scale: 1.002, backgroundColor: '#fcfcfc' }}
-      className="group bg-white rounded-2xl p-3 px-6 border border-gray-100 shadow-sm hover:shadow-md hover:border-[#3D7A4F]/20 transition-all cursor-pointer mb-3"
+      className="group bg-white rounded-2xl p-3 px-6 border border-gray-100 shadow-sm hover:shadow-md hover:border-[#5EB929]/20 transition-all cursor-pointer mb-3"
       onClick={() => onExplore(city)}
     >
       <div className="flex items-center justify-between gap-4">
         {/* Left Section: Icon & Identity */}
         <div className="flex items-center gap-4 flex-1">
-          <div className="w-11 h-11 bg-[#3D7A4F]/5 text-[#3D7A4F] rounded-xl flex items-center justify-center border border-[#3D7A4F]/5 group-hover:bg-[#3D7A4F] group-hover:text-white transition-all duration-300">
+          <div className="w-11 h-11 bg-[#5EB929]/5 text-[#5EB929] rounded-xl flex items-center justify-center border border-[#5EB929]/5 group-hover:bg-[#5EB929] group-hover:text-white transition-all duration-300">
             <MapRoundedIcon sx={{ fontSize: 22 }} />
           </div>
           <div>
-            <h3 className="text-base font-black text-gray-900 leading-tight">{city.name}</h3>
+            <h3 className="text-base font-bold text-gray-900 leading-tight">{city.name}</h3>
             <div className="flex items-center gap-1.5 mt-0.5">
                <span className={`w-1.5 h-1.5 rounded-full ${city.status === 'active' ? 'bg-green-500' : 'bg-gray-300'}`}></span>
-               <span className="text-[9px] font-black uppercase tracking-widest text-gray-400">
+               <span className="text-[9px] font-bold uppercase tracking-widest text-gray-400">
                   {city.status || 'Active'}
                </span>
             </div>
@@ -65,13 +65,13 @@ const CityHorizontalCard = ({ city, onExplore, onEdit, onDelete }) => {
         {/* Center Section: Stats Summary */}
         <div className="hidden md:flex items-center gap-10 flex-1">
           <div className="flex flex-col">
-            <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-0.5">Coverage</span>
+            <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-0.5">Coverage</span>
             <span className="text-xs font-bold text-gray-700">{city.zones?.length || 0} Zones</span>
           </div>
           <div className="flex flex-col">
-            <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-0.5">Active Partners</span>
+            <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-0.5">Active Partners</span>
             <div className="flex items-center gap-1.5">
-              <BusinessCenterRoundedIcon sx={{ fontSize: 14 }} className="text-[#3D7A4F]/70" />
+              <BusinessCenterRoundedIcon sx={{ fontSize: 14 }} className="text-[#5EB929]/70" />
               <span className="text-xs font-bold text-gray-700">{totalMerchants} Merchants</span>
             </div>
           </div>
@@ -81,7 +81,7 @@ const CityHorizontalCard = ({ city, onExplore, onEdit, onDelete }) => {
         <div className="flex items-center gap-3">
           <button 
             onClick={(e) => { e.stopPropagation(); onExplore(city); }}
-            className="flex items-center gap-1.5 bg-gray-50 hover:bg-[#3D7A4F] text-gray-500 hover:text-white px-4 py-1.5 rounded-lg font-bold text-xs transition-all group/btn"
+            className="flex items-center gap-1.5 bg-gray-50 hover:bg-[#5EB929] text-gray-500 hover:text-white px-4 py-1.5 rounded-lg font-bold text-xs transition-all group/btn"
           >
             Explore <ArrowForwardIosRoundedIcon sx={{ fontSize: 10 }} className="group-hover/btn:translate-x-0.5 transition-transform" />
           </button>

@@ -66,13 +66,13 @@ const Referral = () => {
 
   return (
     <PageTransition>
-      <div className="min-h-screen bg-[#F8F5FF] px-4 py-4 pb-24 space-y-5">
+      <div className="min-h-screen bg-background px-4 py-4 pb-24 space-y-5">
         
         {/* Hero Section - Compact High Density */}
         <motion.div
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
-          className="bg-[#3D7A4F] rounded-[2rem] p-5 text-center shadow-lg shadow-[#3D7A4F]/20 relative overflow-hidden"
+          className="bg-[#5EB929] rounded-[2rem] p-5 text-center shadow-lg shadow-[#5EB929]/20 relative overflow-hidden"
         >
           <div className="absolute top-0 right-0 w-24 h-24 bg-white/5 rounded-full -mr-12 -mt-12 blur-3xl" />
           
@@ -84,16 +84,16 @@ const Referral = () => {
             <CardGiftcardRoundedIcon sx={{ fontSize: 28 }} className="text-white" />
           </motion.div>
           
-          <h2 className="text-white font-black text-xl uppercase tracking-tight">Invite & Earn</h2>
-          <p className="text-white/70 text-[9px] font-black uppercase tracking-widest mt-1.5 leading-relaxed px-4">
+          <h2 className="text-white font-bold text-xl uppercase tracking-tight">Invite & Earn</h2>
+          <p className="text-white/70 text-[9px] font-bold uppercase tracking-widest mt-1.5 leading-relaxed px-4">
             Earn ₹50 credits for every friend joined
           </p>
 
           {/* Referral Code Terminal - Slim */}
           <div className="mt-5 bg-black/10 rounded-2xl px-4 py-3.5 flex items-center justify-between border border-white/5 backdrop-blur-md">
             <div className="text-left">
-              <p className="text-white/40 text-[8px] font-black uppercase tracking-widest">Your Code</p>
-              <p className="text-white font-black text-xl tracking-[0.2em] mt-0.5">{user?.referralCode || 'OFFER50'}</p>
+              <p className="text-white/40 text-[8px] font-bold uppercase tracking-widest">Your Code</p>
+              <p className="text-white font-bold text-xl tracking-[0.2em] mt-0.5">{user?.referralCode || 'OFFER50'}</p>
             </div>
             <div className="flex items-center gap-2">
               <motion.button
@@ -108,7 +108,7 @@ const Referral = () => {
                 onClick={handleShare}
                 className="w-9 h-9 bg-white rounded-xl flex items-center justify-center shadow-lg"
               >
-                <ShareRoundedIcon sx={{ fontSize: 14 }} className="text-[#3D7A4F]" />
+                <ShareRoundedIcon sx={{ fontSize: 14 }} className="text-[#5EB929]" />
               </motion.button>
             </div>
           </div>
@@ -117,29 +117,29 @@ const Referral = () => {
         {/* Stats Grid - Slim Cards */}
         <div className="grid grid-cols-2 gap-3">
           <div className="bg-white rounded-3xl p-5 shadow-[0_2px_12px_rgba(0,0,0,0.02)] border border-gray-50 text-center">
-            <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Friends Referred</p>
-            <p className="text-2xl font-black text-gray-900 tracking-tighter">{history.length}</p>
+            <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Friends Referred</p>
+            <p className="text-2xl font-bold text-gray-900 tracking-tight">{history.length}</p>
           </div>
           <div className="bg-white rounded-3xl p-5 shadow-[0_2px_12px_rgba(0,0,0,0.02)] border border-gray-50 text-center">
-            <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Total Rewards</p>
-            <p className="text-2xl font-black text-[#3D7A4F] tracking-tighter">₹{totalEarned}</p>
+            <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Total Rewards</p>
+            <p className="text-2xl font-bold text-[#5EB929] tracking-tight">₹{totalEarned}</p>
           </div>
         </div>
 
         {/* Balance Strip */}
         <div className="bg-white rounded-3xl p-4 flex items-center justify-between shadow-[0_2px_12px_rgba(0,0,0,0.02)] border border-gray-50">
           <div className="flex items-center gap-3">
-             <div className="w-10 h-10 bg-[#3D7A4F]/5 rounded-xl flex items-center justify-center">
+             <div className="w-10 h-10 bg-[#5EB929]/5 rounded-xl flex items-center justify-center">
                <span className="text-lg">💰</span>
              </div>
              <div>
-                <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest leading-none">Available Balance</p>
-                <p className="text-lg font-black text-gray-900 tracking-tighter mt-1">₹{user?.credits || 0}</p>
+                <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest leading-none">Available Balance</p>
+                <p className="text-lg font-bold text-gray-900 tracking-tight mt-1">₹{user?.credits || 0}</p>
              </div>
           </div>
           <button 
             onClick={handleRedeem}
-            className="text-[10px] font-black text-white uppercase tracking-widest bg-[#3D7A4F] px-5 py-2.5 rounded-xl shadow-lg shadow-[#3D7A4F]/10 active:scale-95 transition-all"
+            className="text-[10px] font-bold text-white uppercase tracking-widest bg-[#5EB929] px-5 py-2.5 rounded-xl shadow-lg shadow-[#5EB929]/10 active:scale-95 transition-all"
           >
             Redeem Now
           </button>
@@ -147,7 +147,7 @@ const Referral = () => {
 
         {/* How it Works - Slim Rows */}
         <div className="pt-2">
-           <p className="text-[11px] font-black text-gray-900 uppercase tracking-tighter mb-4 px-1">How it works</p>
+           <p className="text-[11px] font-bold text-gray-900 uppercase tracking-tight mb-4 px-1">How it works</p>
            <div className="space-y-2.5">
              {[
                { step: '01', label: 'Share your code with friends' },
@@ -155,8 +155,8 @@ const Referral = () => {
                { step: '03', label: 'Earn ₹50 credits instantly' },
              ].map((item) => (
                <div key={item.step} className="flex items-center gap-4 bg-white rounded-2xl p-3 border border-gray-50">
-                 <div className="w-8 h-8 bg-[#3D7A4F]/5 rounded-xl flex items-center justify-center flex-shrink-0">
-                    <span className="text-[10px] font-black text-[#3D7A4F]">{item.step}</span>
+                 <div className="w-8 h-8 bg-[#5EB929]/5 rounded-xl flex items-center justify-center flex-shrink-0">
+                    <span className="text-[10px] font-bold text-[#5EB929]">{item.step}</span>
                  </div>
                  <p className="text-[11px] font-bold text-gray-500 uppercase tracking-tight">{item.label}</p>
                </div>
@@ -167,7 +167,7 @@ const Referral = () => {
         {/* History - Slim Strips */}
         {history.length > 0 && (
           <div className="pt-2">
-            <p className="text-[11px] font-black text-gray-900 uppercase tracking-tighter mb-4 px-1">Success History</p>
+            <p className="text-[11px] font-bold text-gray-900 uppercase tracking-tight mb-4 px-1">Success History</p>
             <div className="space-y-2">
               {history.map((ref, idx) => (
                 <motion.div
@@ -177,16 +177,16 @@ const Referral = () => {
                   transition={{ delay: idx * 0.05 }}
                   className="bg-white rounded-2xl p-3 flex items-center gap-3 border border-gray-50"
                 >
-                  <div className="w-10 h-10 bg-[#3D7A4F]/5 rounded-xl flex items-center justify-center border border-[#3D7A4F]/10">
-                    <span className="text-[#3D7A4F] font-black text-[11px] uppercase">{ref.friendName.charAt(0)}</span>
+                  <div className="w-10 h-10 bg-[#5EB929]/5 rounded-xl flex items-center justify-center border border-[#5EB929]/10">
+                    <span className="text-[#5EB929] font-bold text-[11px] uppercase">{ref.friendName.charAt(0)}</span>
                   </div>
                   <div className="flex-1">
-                    <p className="text-[11px] font-black text-gray-900 uppercase tracking-tight">{ref.friendName}</p>
+                    <p className="text-[11px] font-bold text-gray-900 uppercase tracking-tight">{ref.friendName}</p>
                     <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest">{ref.date}</p>
                   </div>
-                  <div className="flex items-center gap-1.5 bg-[#3D7A4F]/5 px-2.5 py-1 rounded-lg">
-                    <CheckCircleRoundedIcon sx={{ fontSize: 10 }} className="text-[#3D7A4F]" />
-                    <span className="text-[10px] font-black text-[#3D7A4F] tracking-tighter">+₹{ref.credits}</span>
+                  <div className="flex items-center gap-1.5 bg-[#5EB929]/5 px-2.5 py-1 rounded-lg">
+                    <CheckCircleRoundedIcon sx={{ fontSize: 10 }} className="text-[#5EB929]" />
+                    <span className="text-[10px] font-bold text-[#5EB929] tracking-tight">+₹{ref.credits}</span>
                   </div>
                 </motion.div>
               ))}

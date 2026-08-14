@@ -85,16 +85,16 @@ const Products = ({ merchant }) => {
   const usagePercent = isUnlimited ? 0 : Math.round((products.length / maxProducts) * 100);
 
   return (
-    <div className="min-h-screen bg-[#F8F5FF] p-3 lg:p-10 -m-6 lg:-m-10">
+    <div className="min-h-screen bg-background p-3 lg:p-10 -m-6 lg:-m-10">
       <div className="max-w-7xl mx-auto space-y-6 pb-24">
         
         {/* Compact Header */}
         <div className="flex items-center justify-between gap-4">
           <div>
-            <h1 className="text-2xl font-black text-gray-900 leading-none uppercase tracking-tight">Catalog</h1>
+            <h1 className="text-2xl font-bold text-gray-900 leading-none uppercase tracking-tight">Catalog</h1>
             <div className="flex items-center gap-2 mt-1.5">
-               <div className="w-1.5 h-1.5 bg-[#3D7A4F] rounded-full" />
-               <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">{products.length} Items Listed</p>
+               <div className="w-1.5 h-1.5 bg-[#5EB929] rounded-full" />
+               <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">{products.length} Items Listed</p>
             </div>
           </div>
           <div className="flex gap-2">
@@ -109,7 +109,7 @@ const Products = ({ merchant }) => {
             </button>
             <button 
               onClick={() => { setQuickOfferProduct(null); setIsUnifiedBuilderOpen(true); }}
-              className="px-5 h-11 bg-[#3D7A4F] text-white rounded-2xl font-black text-[11px] uppercase tracking-widest shadow-xl shadow-[#3D7A4F]/20 hover:scale-105 transition-all flex items-center gap-2"
+              className="px-5 h-11 bg-[#5EB929] text-white rounded-2xl font-bold text-[11px] uppercase tracking-widest shadow-xl shadow-[#5EB929]/20 hover:scale-105 transition-all flex items-center gap-2"
             >
               <RocketLaunchRoundedIcon sx={{ fontSize: 18 }} />
               <span className="hidden sm:inline">Launch</span>
@@ -120,7 +120,7 @@ const Products = ({ merchant }) => {
         {/* High-Density Search & Stats */}
         <div className="grid grid-cols-1 md:grid-cols-12 gap-4 items-center bg-white p-3 rounded-[2rem] shadow-sm border border-gray-50">
            <div className="md:col-span-7 relative group">
-              <SearchRoundedIcon className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-300 group-focus-within:text-[#3D7A4F] transition-colors" sx={{ fontSize: 18 }} />
+              <SearchRoundedIcon className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-300 group-focus-within:text-[#5EB929] transition-colors" sx={{ fontSize: 18 }} />
               <input 
                 type="text" placeholder="Search menu, products..." 
                 value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)}
@@ -129,11 +129,11 @@ const Products = ({ merchant }) => {
            </div>
            <div className="md:col-span-5 px-2">
               <div className="flex justify-between items-center mb-1.5">
-                 <p className="text-[9px] font-black text-gray-400 uppercase tracking-[0.2em]">Storage Space</p>
-                 <p className="text-[9px] font-black text-gray-900 uppercase">{products.length} / {isUnlimited ? '∞' : maxProducts}</p>
+                 <p className="text-[9px] font-bold text-gray-400 uppercase tracking-[0.2em]">Storage Space</p>
+                 <p className="text-[9px] font-bold text-gray-900 uppercase">{products.length} / {isUnlimited ? '∞' : maxProducts}</p>
               </div>
               <div className="w-full h-1.5 bg-gray-100 rounded-full overflow-hidden">
-                 <motion.div initial={{ width: 0 }} animate={{ width: `${Math.min(usagePercent, 100)}%` }} className={`h-full rounded-full ${usagePercent > 85 ? 'bg-red-500' : 'bg-[#3D7A4F]'}`} />
+                 <motion.div initial={{ width: 0 }} animate={{ width: `${Math.min(usagePercent, 100)}%` }} className={`h-full rounded-full ${usagePercent > 85 ? 'bg-red-500' : 'bg-[#5EB929]'}`} />
               </div>
            </div>
         </div>
@@ -142,21 +142,21 @@ const Products = ({ merchant }) => {
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3">
           {loading ? (
              <div className="col-span-full py-24 flex flex-col items-center gap-4">
-                <div className="w-10 h-10 border-2 border-[#3D7A4F]/20 border-t-[#3D7A4F] rounded-full animate-spin" />
-                <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest animate-pulse">Syncing Inventory</p>
+                <div className="w-10 h-10 border-2 border-[#5EB929]/20 border-t-[#5EB929] rounded-full animate-spin" />
+                <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest animate-pulse">Syncing Inventory</p>
              </div>
           ) : (
             <AnimatePresence mode="popLayout">
               {filtered.length === 0 ? (
                 <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="col-span-full py-20 text-center bg-white rounded-[2.5rem] border border-dashed border-gray-100">
                   <Inventory2RoundedIcon sx={{ fontSize: 40 }} className="text-gray-100 mb-2" />
-                  <p className="text-[10px] font-black text-gray-300 uppercase tracking-widest">No Items Found</p>
+                  <p className="text-[10px] font-bold text-gray-300 uppercase tracking-widest">No Items Found</p>
                 </motion.div>
               ) : (
                 filtered.map((product, idx) => (
                   <motion.div 
                     key={product._id} layout initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: idx * 0.03 }}
-                    className="bg-white rounded-[2rem] p-3 border border-gray-50 hover:border-[#3D7A4F]/20 hover:shadow-xl transition-all group flex flex-col h-full relative"
+                    className="bg-white rounded-[2rem] p-3 border border-gray-50 hover:border-[#5EB929]/20 hover:shadow-xl transition-all group flex flex-col h-full relative"
                   >
                     {/* Compact Image & Quick Edit */}
                     <div className="relative aspect-square rounded-2xl overflow-hidden bg-gray-50 mb-3 group-hover:shadow-lg transition-all border border-gray-50">
@@ -189,24 +189,24 @@ const Products = ({ merchant }) => {
 
                        {/* Category Overlay */}
                        <div className="absolute bottom-2 left-2 right-2">
-                          <span className="px-2 py-1 bg-gray-900/80 backdrop-blur-md text-white text-[7px] font-black uppercase tracking-widest rounded-lg">
+                          <span className="px-2 py-1 bg-gray-900/80 backdrop-blur-md text-white text-[7px] font-bold uppercase tracking-widest rounded-lg">
                              {product.category}
                           </span>
                        </div>
                     </div>
 
                     <div className="flex flex-col flex-1">
-                       <h3 className="text-[12px] font-black text-gray-900 leading-tight mb-1 line-clamp-1">{product.name}</h3>
+                       <h3 className="text-[12px] font-bold text-gray-900 leading-tight mb-1 line-clamp-1">{product.name}</h3>
                        
                        <div className="mt-auto pt-2 border-t border-gray-50 flex items-center justify-between gap-2">
                           <div className="flex flex-col">
-                             <span className="text-sm font-black text-gray-900">₹{Math.round(product.offerPrice)}</span>
+                             <span className="text-sm font-bold text-gray-900">₹{Math.round(product.offerPrice)}</span>
                              {product.price > product.offerPrice && (
                                <span className="text-[9px] text-gray-400 font-bold line-through">₹{Math.round(product.price)}</span>
                              )}
                           </div>
                           {product.discount > 0 && (
-                             <span className="text-[8px] font-black bg-emerald-50 text-[#3D7A4F] px-1.5 py-0.5 rounded-md">
+                             <span className="text-[8px] font-bold bg-emerald-50 text-[#5EB929] px-1.5 py-0.5 rounded-md">
                                 -{product.discount}%
                              </span>
                           )}
@@ -214,7 +214,7 @@ const Products = ({ merchant }) => {
 
                        <button 
                         onClick={() => { setQuickOfferProduct(product); setIsUnifiedBuilderOpen(true); }}
-                        className="mt-3 w-full py-2 bg-[#F8F5FF] text-[#3D7A4F] rounded-xl font-black text-[9px] uppercase tracking-widest hover:bg-[#3D7A4F] hover:text-white transition-all active:scale-95"
+                        className="mt-3 w-full py-2 bg-background text-[#5EB929] rounded-xl font-bold text-[9px] uppercase tracking-widest hover:bg-[#5EB929] hover:text-white transition-all active:scale-95"
                        >
                           Rocket Launch 🚀
                        </button>

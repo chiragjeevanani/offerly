@@ -56,7 +56,10 @@ const buildMerchantPayload = (body) => {
 };
 
 const getMerchantForOwner = async (userId) => {
-  return Merchant.findById(userId);
+  if (!userId) return null;
+  return Merchant.findOne({
+    $or: [{ _id: userId }, { ownerId: userId }]
+  });
 };
 
 const getLatestSubscription = async (userId, merchantId = null) => {
@@ -1000,7 +1003,7 @@ export const requestAd = async (req, res) => {
 export const purchaseSubscription = async (req, res) => {
   try {
     const { planId } = req.body;
-    const merchant = await Merchant.findOne({ ownerId: req.user._id });
+    const merchant = await getMerchantForOwner(req.user._id);
     if (!merchant) return res.status(404).json({ success: false, error: 'Merchant not found' });
 
     const plan = await Plan.findById(planId);
@@ -1084,7 +1087,7 @@ export const verifySubscription = async (req, res) => {
       return res.status(400).json({ success: false, error: 'Invalid payment signature' });
     }
 
-    const merchant = await Merchant.findOne({ ownerId: req.user._id });
+    const merchant = await getMerchantForOwner(req.user._id);
     const plan = await Plan.findById(planId);
 
     if (!merchant || !plan) {

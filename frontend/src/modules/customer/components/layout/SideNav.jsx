@@ -8,6 +8,7 @@ import BookmarkRoundedIcon from '@mui/icons-material/BookmarkRounded';
 import ReceiptLongRoundedIcon from '@mui/icons-material/ReceiptLongRounded';
 import NotificationsRoundedIcon from '@mui/icons-material/NotificationsRounded';
 import CardGiftcardRoundedIcon from '@mui/icons-material/CardGiftcardRounded';
+import EmojiEventsRoundedIcon from '@mui/icons-material/EmojiEventsRounded';
 import MapRoundedIcon from '@mui/icons-material/MapRounded';
 import { useApp } from '../../context/AppContext';
 
@@ -15,6 +16,7 @@ const navItems = [
   { label: 'Home', icon: HomeRoundedIcon, path: '/home' },
   { label: 'Explore', icon: ExploreRoundedIcon, path: '/explore' },
   { label: 'Map', icon: MapRoundedIcon, path: '/map' },
+  { label: 'Rewards & Milestones', icon: EmojiEventsRoundedIcon, path: '/rewards' },
   { label: 'Saved Offers', icon: BookmarkRoundedIcon, path: '/saved' },
   { label: 'My Redemptions', icon: ReceiptLongRoundedIcon, path: '/redemptions' },
   { label: 'Notifications', icon: NotificationsRoundedIcon, path: '/notifications' },

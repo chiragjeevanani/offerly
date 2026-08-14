@@ -99,11 +99,11 @@ const Explore = () => {
 
   return (
     <PageTransition>
-      <div className="min-h-screen bg-[#F8F5FF] px-4 py-3 space-y-3 pb-24">
+      <div className="min-h-screen bg-background px-4 py-3 space-y-3 pb-24">
         
         {/* Slim Search bar */}
-        <div className="sticky top-0 z-20 -mx-4 px-4 pb-2 bg-[#F8F5FF]/80 backdrop-blur-md">
-          <div className="flex items-center gap-2 bg-white border border-gray-100 rounded-2xl px-4 py-2.5 shadow-[0_4px_12px_rgba(0,0,0,0.03)] focus-within:border-[#3D7A4F]/30 transition-all">
+        <div className="sticky top-0 z-20 -mx-4 px-4 pb-2 bg-background/80 backdrop-blur-md">
+          <div className="flex items-center gap-2 bg-white border border-gray-100 rounded-2xl px-4 py-2.5 shadow-[0_4px_12px_rgba(0,0,0,0.03)] focus-within:border-[#5EB929]/30 transition-all">
             <SearchRoundedIcon sx={{ fontSize: 18 }} className="text-gray-400" />
             <input
               type="text"
@@ -115,7 +115,7 @@ const Explore = () => {
             {searchText && (
               <button
                 onClick={() => setSearchText('')}
-                className="text-[10px] text-[#3D7A4F] font-black uppercase tracking-widest bg-[#3D7A4F]/5 px-2 py-1 rounded-lg"
+                className="text-[10px] text-[#5EB929] font-bold uppercase tracking-widest bg-[#5EB929]/5 px-2 py-1 rounded-lg"
               >
                 Clear
               </button>
@@ -129,10 +129,10 @@ const Explore = () => {
             <button
               key={cat}
               onClick={() => setSelectedCategory(cat)}
-              className={`whitespace-nowrap px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest transition-all ${
+              className={`whitespace-nowrap px-4 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-widest transition-all ${
                 selectedCategory === cat 
-                  ? 'bg-[#3D7A4F] text-white shadow-lg shadow-[#3D7A4F]/20' 
-                  : 'bg-white text-gray-400 border border-gray-100 hover:border-[#3D7A4F]/30'
+                  ? 'bg-[#5EB929] text-white shadow-lg shadow-[#5EB929]/20' 
+                  : 'bg-white text-gray-400 border border-gray-100 hover:border-[#5EB929]/30'
               }`}
             >
               {cat}
@@ -143,21 +143,21 @@ const Explore = () => {
         {/* View toggle + count - Sharp Typography */}
         <div className="flex items-center justify-between px-0.5">
           <div className="flex flex-col">
-            <p className="text-[9px] text-gray-400 font-black uppercase tracking-widest leading-none">Discovery Results</p>
-            <p className="text-[11px] text-gray-800 font-black mt-0.5">
+            <p className="text-[9px] text-gray-400 font-bold uppercase tracking-widest leading-none">Discovery Results</p>
+            <p className="text-[11px] text-gray-800 font-bold mt-0.5">
               {isOffersLoading ? 'FETCHING...' : `${offers.length} DEALS IN ${cityFilter?.toUpperCase() || 'OFFERLY'}`}
             </p>
           </div>
           <div className="flex items-center gap-1 bg-white rounded-xl border border-gray-100 p-1 shadow-sm">
             <button
               onClick={() => setViewMode('list')}
-              className={`p-1.5 rounded-lg transition-all ${viewMode === 'list' ? 'bg-[#3D7A4F] text-white' : 'text-gray-300'}`}
+              className={`p-1.5 rounded-lg transition-all ${viewMode === 'list' ? 'bg-[#5EB929] text-white' : 'text-gray-300'}`}
             >
               <ViewListRoundedIcon sx={{ fontSize: 16 }} />
             </button>
             <button
               onClick={() => setViewMode('grid')}
-              className={`p-1.5 rounded-lg transition-all ${viewMode === 'grid' ? 'bg-[#3D7A4F] text-white' : 'text-gray-300'}`}
+              className={`p-1.5 rounded-lg transition-all ${viewMode === 'grid' ? 'bg-[#5EB929] text-white' : 'text-gray-300'}`}
             >
               <GridViewRoundedIcon sx={{ fontSize: 16 }} />
             </button>
@@ -180,8 +180,8 @@ const Explore = () => {
             {trendingOffers.length > 0 && !searchText && (
               <section>
                 <div className="flex items-center gap-2 mb-3">
-                  <div className="h-1.5 w-1.5 rounded-full bg-[#3D7A4F] shadow-[0_0_8px_#3D7A4F]" />
-                  <h2 className="text-[11px] font-black text-gray-900 uppercase tracking-tighter">Trending Near You</h2>
+                  <div className="h-1.5 w-1.5 rounded-full bg-[#5EB929] shadow-[0_0_8px_#5EB929]" />
+                  <h2 className="text-[11px] font-bold text-gray-900 uppercase tracking-tight">Trending Near You</h2>
                 </div>
                 <div className={viewMode === 'grid' ? 'grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-3 gap-2' : 'grid grid-cols-1 md:grid-cols-2 gap-3'}>
                   {trendingOffers.map((offer) => (
@@ -196,7 +196,7 @@ const Explore = () => {
               <section>
                 <div className="flex items-center gap-2 mb-3">
                   <div className="h-1.5 w-1.5 rounded-full bg-blue-500 shadow-[0_0_8px_rgba(59,130,246,0.5)]" />
-                  <h2 className="text-[11px] font-black text-gray-900 uppercase tracking-tighter">New Arrivals</h2>
+                  <h2 className="text-[11px] font-bold text-gray-900 uppercase tracking-tight">New Arrivals</h2>
                 </div>
                 <div className={viewMode === 'grid' ? 'grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-3 gap-2' : 'grid grid-cols-1 md:grid-cols-2 gap-3'}>
                   {newOffers.map((offer) => (
@@ -211,7 +211,7 @@ const Explore = () => {
               <section>
                 <div className="flex items-center gap-2 mb-3">
                   <div className="h-1.5 w-1.5 rounded-full bg-gray-400" />
-                  <h2 className="text-[11px] font-black text-gray-900 uppercase tracking-tighter">
+                  <h2 className="text-[11px] font-bold text-gray-900 uppercase tracking-tight">
                     {searchText ? 'Search Results' : 'Recommended'}
                   </h2>
                 </div>
@@ -227,17 +227,17 @@ const Explore = () => {
                     <button
                       disabled={page === 1}
                       onClick={() => setPage(p => Math.max(1, p - 1))}
-                      className="px-4 py-2 bg-white rounded-xl text-[10px] font-black uppercase tracking-widest border border-gray-100 disabled:opacity-30 disabled:cursor-not-allowed transition-all active:scale-95 shadow-sm"
+                      className="px-4 py-2 bg-white rounded-xl text-[10px] font-bold uppercase tracking-widest border border-gray-100 disabled:opacity-30 disabled:cursor-not-allowed transition-all active:scale-95 shadow-sm"
                     >
                       Previous
                     </button>
-                    <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">
+                    <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">
                       Page {page} of {totalPages}
                     </span>
                     <button
                       disabled={page === totalPages}
                       onClick={() => setPage(p => p + 1)}
-                      className="px-4 py-2 bg-white rounded-xl text-[10px] font-black uppercase tracking-widest border border-gray-100 disabled:opacity-30 disabled:cursor-not-allowed transition-all active:scale-95 shadow-sm"
+                      className="px-4 py-2 bg-white rounded-xl text-[10px] font-bold uppercase tracking-widest border border-gray-100 disabled:opacity-30 disabled:cursor-not-allowed transition-all active:scale-95 shadow-sm"
                     >
                       Next
                     </button>
@@ -252,13 +252,13 @@ const Explore = () => {
                 <div className="w-16 h-16 bg-white rounded-2xl flex items-center justify-center mb-4 shadow-sm border border-gray-100">
                   <SearchRoundedIcon sx={{ fontSize: 32 }} className="text-gray-200" />
                 </div>
-                <h3 className="text-sm font-black text-gray-800 uppercase tracking-tight">No deals found</h3>
+                <h3 className="text-sm font-bold text-gray-800 uppercase tracking-tight">No deals found</h3>
                 <p className="text-[11px] text-gray-400 font-medium px-8 mt-1">
                   Try different keywords or check another city for the best offers.
                 </p>
                 <button 
                   onClick={() => { setSearchText(''); setSelectedCategory('All'); }}
-                  className="mt-6 text-[10px] font-black text-[#3D7A4F] uppercase tracking-widest bg-white border border-gray-100 px-6 py-2.5 rounded-xl shadow-sm active:scale-95 transition-all"
+                  className="mt-6 text-[10px] font-bold text-[#5EB929] uppercase tracking-widest bg-white border border-gray-100 px-6 py-2.5 rounded-xl shadow-sm active:scale-95 transition-all"
                 >
                   Reset Filters
                 </button>
@@ -271,21 +271,21 @@ const Explore = () => {
         {!searchText && !isOffersLoading && currentCityZones.length > 0 && (
           <section className="pt-2">
             <div className="flex items-center justify-between mb-3 px-0.5">
-              <h2 className="text-[11px] font-black text-gray-900 uppercase tracking-tighter">Browse Areas</h2>
+              <h2 className="text-[11px] font-bold text-gray-900 uppercase tracking-tight">Browse Areas</h2>
             </div>
             <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden divide-y divide-gray-50">
               {currentCityZones.map((zone) => (
                 <motion.button
                   key={zone._id || zone.id}
-                  whileTap={{ backgroundColor: 'rgba(61,122,79,0.02)' }}
+                  whileTap={{ backgroundColor: 'rgba(94, 185, 41,0.02)' }}
                   className="w-full flex items-center justify-between px-4 py-3.5 group"
                   onClick={() => setSearchText(zone.name)}
                 >
                   <div className="flex flex-col items-start transition-transform group-hover:translate-x-1">
-                    <span className="text-[13px] font-black text-gray-800">{zone.name}</span>
-                    <span className="text-[9px] font-bold text-[#3D7A4F] uppercase tracking-widest mt-0.5">{zone.merchantCount || 0} PARTNERS</span>
+                    <span className="text-[13px] font-bold text-gray-800">{zone.name}</span>
+                    <span className="text-[9px] font-bold text-[#5EB929] uppercase tracking-widest mt-0.5">{zone.merchantCount || 0} PARTNERS</span>
                   </div>
-                  <ChevronRightRoundedIcon sx={{ fontSize: 18 }} className="text-gray-200 group-hover:text-[#3D7A4F] transition-colors" />
+                  <ChevronRightRoundedIcon sx={{ fontSize: 18 }} className="text-gray-200 group-hover:text-[#5EB929] transition-colors" />
                 </motion.button>
               ))}
             </div>

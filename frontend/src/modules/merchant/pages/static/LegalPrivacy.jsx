@@ -12,13 +12,13 @@ const PrivacyStrip = ({ title, content, idx }) => (
     whileInView={{ opacity: 1, x: 0 }}
     viewport={{ once: true }}
     transition={{ delay: idx * 0.05 }}
-    className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm hover:border-[#3D7A4F]/20 transition-all group"
+    className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm hover:border-[#5EB929]/20 transition-all group"
   >
     <div className="flex items-center gap-3 mb-4">
-       <div className="w-8 h-8 rounded-lg bg-[#F8F5FF] text-[#3D7A4F] flex items-center justify-center">
+       <div className="w-8 h-8 rounded-lg bg-background text-[#5EB929] flex items-center justify-center">
           <ShieldRoundedIcon sx={{ fontSize: 16 }} />
        </div>
-       <h3 className="text-[14px] font-black text-gray-900 uppercase tracking-tight">{title}</h3>
+       <h3 className="text-[14px] font-bold text-gray-900 uppercase tracking-tight">{title}</h3>
     </div>
     <div className="text-[12px] text-gray-500 font-medium leading-relaxed space-y-3">
        {content}
@@ -61,26 +61,26 @@ const LegalPrivacy = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-[#F8F5FF] pb-24">
+    <div className="min-h-screen bg-background pb-24">
       {/* Premium Header */}
       <div className="sticky top-0 z-50 bg-white/80 backdrop-blur-xl border-b border-gray-100 px-4 py-3 flex items-center gap-3">
         <button onClick={() => navigate(-1)} className="w-9 h-9 flex items-center justify-center rounded-xl bg-gray-50 text-gray-400 hover:bg-gray-100 transition-all">
           <ArrowBackRoundedIcon sx={{ fontSize: 20 }} />
         </button>
-        <h1 className="text-[15px] font-black text-gray-900 uppercase tracking-widest">Privacy Protocol</h1>
+        <h1 className="text-[15px] font-bold text-gray-900 uppercase tracking-widest">Privacy Protocol</h1>
       </div>
 
       <div className="max-w-3xl mx-auto px-4 py-8 space-y-8">
         
         {/* Identity Strip (Hero) */}
         <div className="bg-gray-900 rounded-[2.5rem] p-6 sm:p-10 relative overflow-hidden shadow-2xl">
-           <div className="absolute top-0 right-0 w-80 h-80 bg-[#3D7A4F]/20 rounded-full blur-[90px] -translate-y-1/2 translate-x-1/2" />
+           <div className="absolute top-0 right-0 w-80 h-80 bg-[#5EB929]/20 rounded-full blur-[90px] -translate-y-1/2 translate-x-1/2" />
            <div className="relative z-10 flex flex-col sm:flex-row items-center gap-6 lg:gap-10">
               <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="w-16 h-16 bg-white/5 border border-white/10 rounded-2xl flex items-center justify-center flex-shrink-0">
-                 <SecurityRoundedIcon sx={{ fontSize: 32 }} className="text-[#3D7A4F]" />
+                 <SecurityRoundedIcon sx={{ fontSize: 32 }} className="text-[#5EB929]" />
               </motion.div>
               <div className="space-y-2 text-center sm:text-left">
-                 <motion.h2 initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="text-xl sm:text-2xl lg:text-3xl font-black text-white tracking-tighter leading-tight">Data <span className="text-[#3D7A4F]">Security Hub.</span></motion.h2>
+                 <motion.h2 initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="text-xl sm:text-2xl lg:text-3xl font-bold text-white tracking-tight leading-tight">Data <span className="text-[#5EB929]">Security Hub.</span></motion.h2>
                  <motion.p initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="text-gray-400 text-[12px] sm:text-sm font-medium leading-relaxed max-w-xl">Privacy by design. How we architect, shield, and manage your business intelligence within the ecosystem.</motion.p>
               </div>
            </div>
@@ -98,21 +98,21 @@ const LegalPrivacy = () => {
           initial={{ opacity: 0, scale: 0.95 }} whileInView={{ opacity: 1, scale: 1 }} viewport={{ once: true }}
           className="bg-white rounded-3xl p-8 border border-dashed border-gray-200 text-center space-y-4"
         >
-           <div className="w-12 h-12 rounded-full bg-[#F8F5FF] text-[#3D7A4F] flex items-center justify-center mx-auto">
+           <div className="w-12 h-12 rounded-full bg-background text-[#5EB929] flex items-center justify-center mx-auto">
               <LockRoundedIcon sx={{ fontSize: 24 }} />
            </div>
-           <h3 className="text-lg font-black text-gray-900 tracking-tight">Committed to Transparency</h3>
+           <h3 className="text-lg font-bold text-gray-900 tracking-tight">Committed to Transparency</h3>
            <p className="text-[12px] text-gray-500 font-medium max-w-md mx-auto leading-relaxed">
              We understand the value of your commercial data. Our security protocols are updated every 24 hours to ensure 
              the highest level of shielding against modern digital threats.
            </p>
-           <button onClick={() => navigate(-1)} className="px-10 py-3 bg-gray-900 text-white rounded-xl font-black text-[10px] uppercase tracking-widest hover:bg-[#3D7A4F] transition-all">
+           <button onClick={() => navigate(-1)} className="px-10 py-3 bg-gray-900 text-white rounded-xl font-bold text-[10px] uppercase tracking-widest hover:bg-[#5EB929] transition-all">
               Secure & Exit
            </button>
         </motion.div>
 
         <div className="text-center py-6">
-           <p className="text-[10px] font-black text-gray-400 uppercase tracking-[0.4em]">Privacy Architecture v2.0.4</p>
+           <p className="text-[10px] font-bold text-gray-400 uppercase tracking-[0.4em]">Privacy Architecture v2.0.4</p>
         </div>
       </div>
     </div>

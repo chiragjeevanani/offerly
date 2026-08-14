@@ -112,8 +112,8 @@ const ServiceOfferForm = ({ merchant, storeConfig, editingOffer, onSuccess, onCa
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
           <div className="bg-white rounded-xl border border-gray-100 p-3 lg:p-4 shadow-sm">
              <div className="flex items-center gap-2 mb-3">
-                <span className="w-5 h-5 rounded bg-[#3D7A4F] text-white flex items-center justify-center text-[9px] font-black">01</span>
-                <h3 className="text-[11px] font-black text-gray-900 uppercase tracking-widest">Plan</h3>
+                <span className="w-5 h-5 rounded bg-[#5EB929] text-white flex items-center justify-center text-[9px] font-bold">01</span>
+                <h3 className="text-[11px] font-bold text-gray-900 uppercase tracking-widest">Plan</h3>
              </div>
              <ProductSearchSelect
                filterType="service_based"
@@ -123,55 +123,55 @@ const ServiceOfferForm = ({ merchant, storeConfig, editingOffer, onSuccess, onCa
           </div>
           <div className="bg-white rounded-xl border border-gray-100 p-3 lg:p-4 shadow-sm">
              <div className="flex items-center gap-2 mb-3">
-                <span className="w-5 h-5 rounded bg-[#3D7A4F] text-white flex items-center justify-center text-[9px] font-black">02</span>
-                <h3 className="text-[11px] font-black text-gray-900 uppercase tracking-widest">Details</h3>
+                <span className="w-5 h-5 rounded bg-[#5EB929] text-white flex items-center justify-center text-[9px] font-bold">02</span>
+                <h3 className="text-[11px] font-bold text-gray-900 uppercase tracking-widest">Details</h3>
              </div>
              <div className="space-y-2.5">
-                <input type="text" value={formData.title} onChange={(e) => handleChange('title', e.target.value)} placeholder="Offer Headline *" className="w-full px-3 py-2 bg-[#F8F5FF] rounded-lg border border-transparent focus:border-[#3D7A4F]/20 outline-none text-[12px] font-bold" />
-                <input type="text" value={formData.description} onChange={(e) => handleChange('description', e.target.value)} placeholder="Short Description" className="w-full px-3 py-2 bg-[#F8F5FF] rounded-lg border border-transparent focus:border-[#3D7A4F]/20 outline-none text-[12px] font-bold" />
+                <input type="text" value={formData.title} onChange={(e) => handleChange('title', e.target.value)} placeholder="Offer Headline *" className="w-full px-3 py-2 bg-background rounded-lg border border-transparent focus:border-[#5EB929]/20 outline-none text-[12px] font-bold" />
+                <input type="text" value={formData.description} onChange={(e) => handleChange('description', e.target.value)} placeholder="Short Description" className="w-full px-3 py-2 bg-background rounded-lg border border-transparent focus:border-[#5EB929]/20 outline-none text-[12px] font-bold" />
              </div>
           </div>
           <div className="bg-white rounded-xl border border-gray-100 p-3 lg:p-4 shadow-sm">
              <div className="flex items-center gap-2 mb-3">
-                <span className="w-5 h-5 rounded bg-[#3D7A4F] text-white flex items-center justify-center text-[9px] font-black">03</span>
-                <h3 className="text-[11px] font-black text-gray-900 uppercase tracking-widest">Benefit</h3>
+                <span className="w-5 h-5 rounded bg-[#5EB929] text-white flex items-center justify-center text-[9px] font-bold">03</span>
+                <h3 className="text-[11px] font-bold text-gray-900 uppercase tracking-widest">Benefit</h3>
              </div>
              <div className="grid grid-cols-2 gap-2">
-                <select value={formData.discountType} onChange={(e) => handleChange('discountType', e.target.value)} className="px-3 py-2 bg-[#F8F5FF] rounded-lg border border-transparent text-[12px] font-bold outline-none">
+                <select value={formData.discountType} onChange={(e) => handleChange('discountType', e.target.value)} className="px-3 py-2 bg-background rounded-lg border border-transparent text-[12px] font-bold outline-none">
                    <option value="percentage">% Off</option>
                    <option value="flat">₹ Off</option>
                 </select>
-                <input type="number" value={formData.discountValue} onChange={(e) => handleChange('discountValue', e.target.value)} placeholder="Value *" className="w-full px-3 py-2 bg-[#F8F5FF] rounded-lg border border-transparent text-[12px] font-bold outline-none" />
+                <input type="number" value={formData.discountValue} onChange={(e) => handleChange('discountValue', e.target.value)} placeholder="Value *" className="w-full px-3 py-2 bg-background rounded-lg border border-transparent text-[12px] font-bold outline-none" />
              </div>
           </div>
           <div className="bg-white rounded-xl border border-gray-100 p-3 lg:p-4 shadow-sm">
              <div className="flex items-center gap-2 mb-3">
-                <span className="w-5 h-5 rounded bg-[#3D7A4F] text-white flex items-center justify-center text-[9px] font-black">04</span>
-                <h3 className="text-[11px] font-black text-gray-900 uppercase tracking-widest">Timeline</h3>
+                <span className="w-5 h-5 rounded bg-[#5EB929] text-white flex items-center justify-center text-[9px] font-bold">04</span>
+                <h3 className="text-[11px] font-bold text-gray-900 uppercase tracking-widest">Timeline</h3>
              </div>
              <div className="flex items-center gap-2">
-                <input type="date" value={formData.validTo} onChange={(e) => handleChange('validTo', e.target.value)} className="flex-1 px-3 py-2 bg-[#F8F5FF] rounded-lg border border-transparent text-[12px] font-bold outline-none" />
+                <input type="date" value={formData.validTo} onChange={(e) => handleChange('validTo', e.target.value)} className="flex-1 px-3 py-2 bg-background rounded-lg border border-transparent text-[12px] font-bold outline-none" />
                 <div className="flex gap-1">
                    {[7, 30].map(d => (
-                      <button key={d} type="button" onClick={() => setQuickValidity(d)} className="px-2 py-2 bg-[#3D7A4F]/10 text-[#3D7A4F] rounded-lg text-[9px] font-black uppercase">+{d}d</button>
+                      <button key={d} type="button" onClick={() => setQuickValidity(d)} className="px-2 py-2 bg-[#5EB929]/10 text-[#5EB929] rounded-lg text-[9px] font-bold uppercase">+{d}d</button>
                    ))}
                 </div>
              </div>
           </div>
-          <div className="lg:col-span-2 bg-[#3D7A4F]/5 rounded-xl border border-[#3D7A4F]/10 p-3 shadow-sm flex flex-col sm:flex-row items-center justify-between gap-3">
+          <div className="lg:col-span-2 bg-[#5EB929]/5 rounded-xl border border-[#5EB929]/10 p-3 shadow-sm flex flex-col sm:flex-row items-center justify-between gap-3">
              <div className="flex items-center gap-3">
                 <div className="flex items-center gap-2">
-                   <label className="text-[10px] font-black text-gray-400 uppercase">Limit</label>
+                   <label className="text-[10px] font-bold text-gray-400 uppercase">Limit</label>
                    <input type="number" value={formData.maxRedemptions} onChange={(e) => handleChange('maxRedemptions', e.target.value)} className="w-20 px-2 py-1.5 bg-white rounded-lg border border-gray-100 text-[12px] font-bold outline-none" />
                 </div>
                 <div className="flex items-center gap-2">
-                   <input type="checkbox" id="book" checked={formData.bookingRequired} onChange={(e) => handleChange('bookingRequired', e.target.checked)} className="w-4 h-4 rounded border-gray-300 text-[#3D7A4F] accent-[#3D7A4F]" />
-                   <label htmlFor="book" className="text-[10px] font-black text-gray-600 uppercase">Booking Required</label>
+                   <input type="checkbox" id="book" checked={formData.bookingRequired} onChange={(e) => handleChange('bookingRequired', e.target.checked)} className="w-4 h-4 rounded border-gray-300 text-[#5EB929] accent-[#5EB929]" />
+                   <label htmlFor="book" className="text-[10px] font-bold text-gray-600 uppercase">Booking Required</label>
                 </div>
              </div>
              <div className="flex items-center gap-2">
-                <button type="button" onClick={() => setShowPreviewMobile(true)} className="px-3 py-2 bg-white text-gray-500 rounded-lg text-[10px] font-black uppercase border border-gray-200 hover:bg-gray-50 transition-all">Preview</button>
-                <button type="submit" disabled={loading} className="px-6 py-2 bg-[#3D7A4F] text-white rounded-lg text-[10px] font-black uppercase shadow-lg shadow-[#3D7A4F]/20 active:scale-95 transition-all">
+                <button type="button" onClick={() => setShowPreviewMobile(true)} className="px-3 py-2 bg-white text-gray-500 rounded-lg text-[10px] font-bold uppercase border border-gray-200 hover:bg-gray-50 transition-all">Preview</button>
+                <button type="submit" disabled={loading} className="px-6 py-2 bg-[#5EB929] text-white rounded-lg text-[10px] font-bold uppercase shadow-lg shadow-[#5EB929]/20 active:scale-95 transition-all">
                    {loading ? 'Wait...' : editingOffer ? 'Save Changes' : 'Launch Campaign'}
                 </button>
              </div>
@@ -182,7 +182,7 @@ const ServiceOfferForm = ({ merchant, storeConfig, editingOffer, onSuccess, onCa
          <div className="fixed inset-0 z-[999999] bg-black/60 backdrop-blur-sm p-6 flex items-center justify-center" onClick={() => setShowPreviewMobile(false)}>
             <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="w-full max-w-sm" onClick={e => e.stopPropagation()}>
                <OfferPreviewCard offerData={previewData} merchant={merchant} offerType="service" />
-               <button onClick={() => setShowPreviewMobile(false)} className="w-full mt-4 py-3 bg-white text-gray-900 rounded-xl font-black text-[10px] uppercase tracking-widest">Close</button>
+               <button onClick={() => setShowPreviewMobile(false)} className="w-full mt-4 py-3 bg-white text-gray-900 rounded-xl font-bold text-[10px] uppercase tracking-widest">Close</button>
             </motion.div>
          </div>
       )}

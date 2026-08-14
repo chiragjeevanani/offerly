@@ -10,7 +10,7 @@ import { useApp } from '../../context/AppContext';
 import PageTransition from '../../components/ui/PageTransition';
 
 const typeConfig = {
-  redemption: { icon: ReceiptRoundedIcon, color: 'text-[#3D7A4F]', bg: 'bg-[#3D7A4F]/5' },
+  redemption: { icon: ReceiptRoundedIcon, color: 'text-[#5EB929]', bg: 'bg-[#5EB929]/5' },
   review: { icon: NotificationsRoundedIcon, color: 'text-amber-600', bg: 'bg-amber-50' },
   offer: { icon: LocalOfferRoundedIcon, color: 'text-blue-600', bg: 'bg-blue-50' },
   referral: { icon: CardGiftcardRoundedIcon, color: 'text-purple-600', bg: 'bg-purple-50' },
@@ -97,20 +97,20 @@ const Notifications = () => {
 
   return (
     <PageTransition>
-      <div className="min-h-screen bg-[#F8F5FF] px-4 py-4 pb-24 space-y-4">
+      <div className="min-h-screen bg-background px-4 py-4 pb-24 space-y-4">
         
         {/* Header Strip */}
         <div className="flex items-center justify-between px-0.5">
           <div className="flex flex-col">
-            <p className="text-[9px] text-gray-400 font-black uppercase tracking-widest leading-none">System Alerts</p>
-            <p className="text-[11px] text-gray-800 font-black mt-0.5 uppercase">
+            <p className="text-[9px] text-gray-400 font-bold uppercase tracking-widest leading-none">System Alerts</p>
+            <p className="text-[11px] text-gray-800 font-bold mt-0.5 uppercase">
               {unread.length > 0 ? `${unread.length} UNREAD NOTIFICATIONS` : 'ALL CAUGHT UP'}
             </p>
           </div>
           {unread.length > 0 && (
             <button
               onClick={handleMarkAllRead}
-              className="text-[10px] font-black text-[#3D7A4F] uppercase tracking-widest bg-[#3D7A4F]/5 px-3 py-1.5 rounded-xl active:scale-95 transition-all"
+              className="text-[10px] font-bold text-[#5EB929] uppercase tracking-widest bg-[#5EB929]/5 px-3 py-1.5 rounded-xl active:scale-95 transition-all"
             >
               Mark all read
             </button>
@@ -122,7 +122,7 @@ const Notifications = () => {
             <div className="w-20 h-20 bg-white rounded-3xl flex items-center justify-center mb-6 shadow-sm border border-gray-100">
               <NotificationsRoundedIcon sx={{ fontSize: 32 }} className="text-gray-200" />
             </div>
-            <h2 className="text-sm font-black text-gray-800 uppercase tracking-tight">Inbox is empty</h2>
+            <h2 className="text-sm font-bold text-gray-800 uppercase tracking-tight">Inbox is empty</h2>
             <p className="text-[11px] text-gray-400 font-medium px-10 mt-1 leading-relaxed">
               We'll notify you here about new offers, rewards, and redemption updates.
             </p>
@@ -132,8 +132,8 @@ const Notifications = () => {
             {unread.length > 0 && (
               <section>
                 <div className="flex items-center gap-2 mb-3">
-                  <div className="h-1.5 w-1.5 rounded-full bg-[#3D7A4F] shadow-[0_0_8px_#3D7A4F]" />
-                  <h3 className="text-[10px] font-black text-gray-900 uppercase tracking-widest">New Alerts</h3>
+                  <div className="h-1.5 w-1.5 rounded-full bg-[#5EB929] shadow-[0_0_8px_#5EB929]" />
+                  <h3 className="text-[10px] font-bold text-gray-900 uppercase tracking-widest">New Alerts</h3>
                 </div>
                 <div className="space-y-2">
                   {unread.map((n, idx) => (
@@ -154,7 +154,7 @@ const Notifications = () => {
               <section>
                 <div className="flex items-center gap-2 mb-3">
                   <div className="h-1.5 w-1.5 rounded-full bg-gray-300" />
-                  <h3 className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Earlier</h3>
+                  <h3 className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Earlier</h3>
                 </div>
                 <div className="space-y-2">
                   {read.map((n, idx) => (

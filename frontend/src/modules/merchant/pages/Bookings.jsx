@@ -31,8 +31,8 @@ const SlimStatCard = ({ title, value, icon: Icon, colorClass, delay = 0 }) => (
         <Icon className={colorClass.replace('bg-', 'text-')} sx={{ fontSize: 22 }} />
       </div>
       <div>
-        <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest leading-none">{title}</p>
-        <h3 className="text-xl font-black text-gray-900 mt-1.5">{value}</h3>
+        <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest leading-none">{title}</p>
+        <h3 className="text-xl font-bold text-gray-900 mt-1.5">{value}</h3>
       </div>
     </div>
   </motion.div>
@@ -77,7 +77,7 @@ const BookingDetailModal = ({ booking, onClose, onFulfilled }) => {
            <div className="w-16 h-16 bg-green-500 rounded-full flex items-center justify-center mx-auto mb-4 shadow-[0_4px_12px_rgba(34,197,94,0.3)]">
               <CheckCircleRoundedIcon className="text-white" sx={{ fontSize: 32 }} />
            </div>
-           <h2 className="text-xl font-black text-gray-900 mb-1">Success!</h2>
+           <h2 className="text-xl font-bold text-gray-900 mb-1">Success!</h2>
            <p className="text-sm text-gray-500 mb-6 font-medium">Payment confirmed and booking fulfilled.</p>
            <button onClick={onClose} className="w-full py-3 bg-primary text-white rounded-xl font-bold shadow-lg shadow-primary/20 hover:scale-105 transition-all">Done</button>
         </motion.div>
@@ -90,8 +90,8 @@ const BookingDetailModal = ({ booking, onClose, onFulfilled }) => {
       <motion.div initial={{ y: 20, opacity: 0 }} animate={{ y: 0, opacity: 1 }} className="bg-white rounded-2xl w-full max-w-md shadow-2xl overflow-hidden">
         <div className="p-5 border-b border-gray-50 flex items-center justify-between bg-gray-50/50">
           <div>
-            <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Order ID</p>
-            <h2 className="text-base font-black text-gray-900">#{booking.internalId || booking._id?.slice(-6)}</h2>
+            <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Order ID</p>
+            <h2 className="text-base font-bold text-gray-900">#{booking.internalId || booking._id?.slice(-6)}</h2>
           </div>
           <button onClick={onClose} className="w-8 h-8 rounded-lg bg-white border border-gray-100 flex items-center justify-center text-gray-400 hover:text-gray-600 transition-all">
             <CloseRoundedIcon sx={{ fontSize: 18 }} />
@@ -109,8 +109,8 @@ const BookingDetailModal = ({ booking, onClose, onFulfilled }) => {
              </div>
           </div>
 
-          <div className="bg-[#F8F5FF] rounded-xl p-4 border border-gray-100">
-             <h4 className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-3">Order Items</h4>
+          <div className="bg-background rounded-xl p-4 border border-gray-100">
+             <h4 className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-3">Order Items</h4>
              <div className="space-y-2">
                 {booking.items?.map((it, idx) => (
                   <div key={idx} className="flex justify-between items-center text-xs font-bold text-gray-700">
@@ -120,8 +120,8 @@ const BookingDetailModal = ({ booking, onClose, onFulfilled }) => {
                 ))}
              </div>
              <div className="mt-3 pt-3 border-t border-gray-200 flex justify-between items-center">
-                <span className="text-xs font-black text-gray-900 uppercase">Total to Collect</span>
-                <span className="text-lg font-black text-[#3D7A4F]">₹{(booking.totals?.final || 0).toLocaleString()}</span>
+                <span className="text-xs font-bold text-gray-900 uppercase">Total to Collect</span>
+                <span className="text-lg font-bold text-[#5EB929]">₹{(booking.totals?.final || 0).toLocaleString()}</span>
              </div>
           </div>
 
@@ -141,7 +141,7 @@ const BookingDetailModal = ({ booking, onClose, onFulfilled }) => {
              <button 
               onClick={handleFulfill}
               disabled={fulfilling}
-              className="flex-[2] py-3 bg-[#3D7A4F] text-white rounded-xl font-bold text-sm shadow-lg shadow-[#3D7A4F]/20 flex items-center justify-center gap-2 hover:scale-105 active:scale-95 transition-all shadow-[inset_0_-2px_4px_rgba(0,0,0,0.1)]"
+              className="flex-[2] py-3 bg-[#5EB929] text-white rounded-xl font-bold text-sm shadow-lg shadow-[#5EB929]/20 flex items-center justify-center gap-2 hover:scale-105 active:scale-95 transition-all shadow-[inset_0_-2px_4px_rgba(0,0,0,0.1)]"
              >
                 {fulfilling ? <div className="w-4 h-4 border-2 border-white/20 border-t-white rounded-full animate-spin" /> : <QrCodeScannerRoundedIcon sx={{ fontSize: 18 }} />}
                 Fulfill Booking
@@ -212,20 +212,20 @@ const Bookings = ({ merchant }) => {
   const totalRevenue = bookings.filter(b => b.status === 'completed' || b.status === 'fulfilled').reduce((sum, b) => sum + (b.totals?.final || 0), 0);
 
   return (
-    <div className="min-h-screen bg-[#F8F5FF] p-4 lg:p-8 -m-6 lg:-m-8">
+    <div className="min-h-screen bg-background p-4 lg:p-8 -m-6 lg:-m-8">
       <div className="max-w-7xl mx-auto space-y-6 pb-20">
         {/* Header */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
             <div className="flex items-center gap-2 mb-1">
                <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
-               <p className="text-[11px] font-black text-gray-400 uppercase tracking-widest">Live Booking Queue</p>
+               <p className="text-[11px] font-bold text-gray-400 uppercase tracking-widest">Live Booking Queue</p>
             </div>
-            <h1 className="text-xl lg:text-2xl font-black text-gray-900">Manage Requests</h1>
+            <h1 className="text-xl lg:text-2xl font-bold text-gray-900">Manage Requests</h1>
           </div>
           <button 
             onClick={() => navigate('/merchant/scanner')}
-            className="flex items-center justify-center gap-2 bg-[#3D7A4F] text-white px-5 py-2.5 rounded-xl font-bold shadow-[0_4px_12px_rgba(61,122,79,0.2),inset_0_-2px_4px_rgba(0,0,0,0.1)] hover:scale-105 transition-all text-xs active:scale-95"
+            className="flex items-center justify-center gap-2 bg-[#5EB929] text-white px-5 py-2.5 rounded-xl font-bold shadow-[0_4px_12px_rgba(94, 185, 41,0.2),inset_0_-2px_4px_rgba(0,0,0,0.1)] hover:scale-105 transition-all text-xs active:scale-95"
           >
             <QrCodeScannerRoundedIcon sx={{ fontSize: 18 }} />
             Open Scanner
@@ -248,7 +248,7 @@ const Bookings = ({ merchant }) => {
                 { key: 'completed', label: 'History', count: completedCount },
               ].map((tab) => (
                 <button key={tab.key} onClick={() => setActiveTab(tab.key)}
-                  className={`px-6 py-2 rounded-lg text-xs font-black uppercase tracking-widest transition-all flex items-center gap-2 ${
+                  className={`px-6 py-2 rounded-lg text-xs font-bold uppercase tracking-widest transition-all flex items-center gap-2 ${
                     activeTab === tab.key ? 'bg-primary text-white shadow-md' : 'text-gray-400 hover:bg-gray-50'
                   }`}>
                   {tab.label}
@@ -282,13 +282,13 @@ const Bookings = ({ merchant }) => {
                     className="flex items-center justify-between p-3.5 bg-white rounded-xl border border-gray-50 hover:border-primary/30 hover:shadow-md transition-all group cursor-pointer"
                   >
                     <div className="flex items-center gap-4">
-                      <div className="w-10 h-10 rounded-full bg-gray-50 flex items-center justify-center text-gray-400 font-black text-sm shadow-[inset_0_2px_4px_rgba(0,0,0,0.05)]">
+                      <div className="w-10 h-10 rounded-full bg-gray-50 flex items-center justify-center text-gray-400 font-bold text-sm shadow-[inset_0_2px_4px_rgba(0,0,0,0.05)]">
                         {booking.customerName?.[0]?.toUpperCase() || 'G'}
                       </div>
                       <div>
                         <div className="flex items-center gap-2">
                            <h4 className="text-[13px] font-bold text-gray-800 leading-tight">{booking.customerName || 'Guest Customer'}</h4>
-                           <span className={`text-[8px] font-black uppercase px-2 py-0.5 rounded-full ${booking.status === 'pending' ? 'bg-amber-50 text-amber-600' : 'bg-green-50 text-green-600'}`}>
+                           <span className={`text-[8px] font-bold uppercase px-2 py-0.5 rounded-full ${booking.status === 'pending' ? 'bg-amber-50 text-amber-600' : 'bg-green-50 text-green-600'}`}>
                               {booking.status}
                            </span>
                         </div>
@@ -300,8 +300,8 @@ const Bookings = ({ merchant }) => {
                     </div>
                     <div className="flex items-center gap-4">
                        <div className="text-right hidden sm:block">
-                          <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest leading-none mb-1">Total Bill</p>
-                          <p className="text-[14px] font-black text-[#3D7A4F]">₹{(booking.totals?.final || 0).toLocaleString()}</p>
+                          <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest leading-none mb-1">Total Bill</p>
+                          <p className="text-[14px] font-bold text-[#5EB929]">₹{(booking.totals?.final || 0).toLocaleString()}</p>
                        </div>
                        <div className="w-8 h-8 rounded-lg bg-gray-50 flex items-center justify-center text-gray-300 group-hover:bg-primary/10 group-hover:text-primary transition-all">
                           <ChevronRightRoundedIcon sx={{ fontSize: 18 }} />

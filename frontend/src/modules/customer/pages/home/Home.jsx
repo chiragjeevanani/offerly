@@ -16,6 +16,8 @@ import LocalCafeRoundedIcon from '@mui/icons-material/LocalCafeRounded';
 import MedicalServicesRoundedIcon from '@mui/icons-material/MedicalServicesRounded';
 import MoreHorizRoundedIcon from '@mui/icons-material/MoreHorizRounded';
 import LocalOfferRoundedIcon from '@mui/icons-material/LocalOfferRounded';
+import EmojiEventsRoundedIcon from '@mui/icons-material/EmojiEventsRounded';
+import CardGiftcardRoundedIcon from '@mui/icons-material/CardGiftcardRounded';
 
 import { useApp } from '../../context/AppContext';
 import BottomSheet from '../../components/ui/BottomSheet';
@@ -252,9 +254,9 @@ const Home = () => {
 
   return (
     <PageTransition>
-      <div className="px-4 md:px-6 py-2 space-y-3 pb-8 bg-[#F8F5FF] min-h-screen">
+      <div className="px-4 md:px-6 py-3 space-y-5 pb-8 bg-background min-h-screen">
 
-        {/* 1. Sharp Search Bar (Top Aligned) */}
+        {/* 1. Clean Search Bar */}
         <motion.section
           variants={itemVariants}
           initial="hidden"
@@ -263,11 +265,11 @@ const Home = () => {
         >
           <button
             onClick={() => navigate('/search')}
-            className="w-full flex items-center gap-3 bg-white border border-gray-100 rounded-2xl px-4 py-2.5 shadow-sm transition-all hover:border-primary/20 hover:shadow-md group active:scale-[0.99]"
+            className="w-full flex items-center gap-3 bg-white border border-gray-200/80 rounded-2xl px-4 py-3 shadow-sm transition-all hover:border-primary/40 hover:shadow-md group active:scale-[0.99]"
           >
-            <SearchRoundedIcon sx={{ fontSize: 18 }} className="text-primary group-hover:scale-110 transition-transform" />
+            <SearchRoundedIcon sx={{ fontSize: 20 }} className="text-gray-400 group-hover:text-primary transition-colors" />
             <div className="flex-1 text-left">
-               <p className="text-[11px] font-black text-gray-400 uppercase tracking-tight leading-none">Food, Salons, Cafes...</p>
+               <p className="text-sm font-normal text-gray-400">Search places, offers or services</p>
             </div>
           </button>
         </motion.section>
@@ -278,32 +280,32 @@ const Home = () => {
             animate={{ opacity: 1, y: 0 }}
             className="bg-amber-50 border border-amber-200 rounded-2xl p-4"
           >
-            <h3 className="text-sm font-bold text-amber-900">Select your city to see local offers</h3>
-            <p className="text-xs text-amber-800 mt-1">
+            <h3 className="text-sm font-semibold text-amber-900">Select your city to see local offers</h3>
+            <p className="text-xs text-amber-700 mt-1">
               Feed is city-based. Please choose your city to load Trending, Near You and Recommended offers.
             </p>
             <button
               onClick={() => setCitySheetOpen(true)}
-              className="mt-3 text-xs font-semibold bg-amber-600 text-white px-3 py-2 rounded-lg"
+              className="mt-3 text-xs font-semibold bg-amber-600 text-white px-3.5 py-2 rounded-xl"
             >
               Select City
             </button>
           </motion.section>
         )}
 
-        {/* 2. Categories Section (High-Density) */}
+        {/* 2. Categories Section */}
         <motion.section variants={containerVariants} initial="hidden" animate="visible">
-          <div className="flex items-center justify-between mb-1.5 px-1">
-             <h2 className="text-[14px] font-black text-gray-900 tracking-tight">Select services</h2>
-             <button onClick={() => navigate('/explore')} className="text-[10px] font-black text-[#3D7A4F] uppercase tracking-widest">View All</button>
+          <div className="flex items-center justify-between mb-3 px-0.5">
+             <h2 className="text-base font-bold text-gray-900 tracking-tight">Select Services</h2>
+             <button onClick={() => navigate('/explore')} className="text-xs font-semibold text-primary hover:underline">View All</button>
           </div>
-          <div className="flex gap-3 overflow-x-auto scrollbar-hide -mx-4 md:-mx-6 px-4 md:px-6 pb-2 snap-x min-h-[82px] items-start">
+          <div className="flex gap-3.5 overflow-x-auto scrollbar-hide -mx-4 md:-mx-6 px-4 md:px-6 pb-2 snap-x min-h-[82px] items-start">
             {/* Logic: Show 5 + More on mobile, 7 + More on desktop */}
             {categories.length > 0 ? (
               [...categories.slice(0, window.innerWidth < 768 ? 5 : 7), { _id: 'more', name: 'More' }].map((cat, idx) => {
                 const Icon = cat._id === 'more' ? MoreHorizRoundedIcon : getIconForCategory(cat.name);
                 const customColors = cat._id === 'more' 
-                  ? 'text-gray-500 bg-gray-50' 
+                  ? 'text-gray-500 bg-gray-100/80' 
                   : getColorForCategory(cat.name);
 
                 return (
@@ -311,15 +313,15 @@ const Home = () => {
                     key={cat._id || idx}
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
-                    transition={{ delay: idx * 0.05 }}
-                    whileTap={{ scale: 0.92 }}
+                    transition={{ delay: idx * 0.04 }}
+                    whileTap={{ scale: 0.94 }}
                     onClick={() => cat._id === 'more' ? navigate('/explore') : handleCategoryClick(cat.name)}
-                    className="flex flex-col items-center gap-1.5 flex-shrink-0 snap-start group w-[56px]"
+                    className="flex flex-col items-center gap-1.5 flex-shrink-0 snap-start group w-[60px]"
                   >
-                    <div className={`w-12 h-12 rounded-2xl shadow-sm flex items-center justify-center border border-gray-100 transition-all duration-300 group-hover:shadow-md ${customColors}`}>
-                      <Icon sx={{ fontSize: 20 }} className="transition-transform group-hover:scale-110" />
+                    <div className={`w-13 h-13 p-3 rounded-2xl shadow-sm flex items-center justify-center border border-gray-100 transition-all duration-300 group-hover:shadow-md group-hover:scale-105 ${customColors}`}>
+                      <Icon sx={{ fontSize: 22 }} className="transition-transform group-hover:scale-110" />
                     </div>
-                    <span className="text-[10px] font-black text-gray-900 text-center line-clamp-1 w-full px-0.5 uppercase tracking-tighter">
+                    <span className="text-xs font-medium text-gray-700 text-center line-clamp-1 w-full px-0.5 capitalize">
                       {cat.name}
                     </span>
                   </motion.button>
@@ -328,9 +330,41 @@ const Home = () => {
             ) : (
               // Placeholder to prevent layout shift
               [1, 2, 3, 4, 5, 6].map((i) => (
-                <div key={i} className="w-[56px] h-20 bg-gray-50/50 rounded-2xl animate-pulse flex-shrink-0" />
+                <div key={i} className="w-[60px] h-20 bg-gray-100/70 rounded-2xl animate-pulse flex-shrink-0" />
               ))
             )}
+          </div>
+        </motion.section>
+
+        {/* Claim Milestones & Scratch Cards Quick Banner */}
+        <motion.section
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.15 }}
+        >
+          <div
+            onClick={() => navigate('/rewards')}
+            className="flex items-center justify-between bg-gradient-to-r from-primary-50 via-emerald-50 to-primary-50/50 border border-primary/20 rounded-2xl p-3.5 shadow-sm hover:shadow-md cursor-pointer transition-all active:scale-[0.99] group"
+          >
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-primary text-white flex items-center justify-center shadow-md shadow-primary/25 group-hover:scale-105 transition-transform">
+                <EmojiEventsRoundedIcon sx={{ fontSize: 22 }} />
+              </div>
+              <div>
+                <h4 className="text-xs font-bold text-gray-900 leading-snug flex items-center gap-1.5">
+                  Claim Milestones & Rewards
+                  <span className="px-2 py-0.5 rounded-full text-[9px] font-bold bg-primary text-white uppercase">
+                    Win Cards
+                  </span>
+                </h4>
+                <p className="text-[11px] text-gray-500 mt-0.5">
+                  Level up with every claimed offer and scratch to win!
+                </p>
+              </div>
+            </div>
+            <div className="flex items-center text-primary font-semibold text-xs group-hover:translate-x-1 transition-transform">
+              <ChevronRightRoundedIcon sx={{ fontSize: 20 }} />
+            </div>
           </div>
         </motion.section>
 
@@ -342,32 +376,32 @@ const Home = () => {
             transition={{ delay: 0.2 }}
             className="relative"
           >
-            <div className="flex items-center justify-between mb-1.5 px-1">
-               <h2 className="text-[14px] font-black text-gray-900 tracking-tight flex items-center gap-2">
-                  <LocalOfferRoundedIcon sx={{ fontSize: 16 }} className="text-[#3D7A4F]" />
-                  Top offers
+            <div className="flex items-center justify-between mb-2 px-0.5">
+               <h2 className="text-base font-bold text-gray-900 tracking-tight flex items-center gap-2">
+                  <LocalOfferRoundedIcon sx={{ fontSize: 18 }} className="text-primary" />
+                  Top Offers
                </h2>
-               <div className="flex gap-1.5">
+               <div className="flex gap-1.5 items-center">
                   {featuredBanners.map((_, idx) => (
                     <button
                       key={idx}
                       onClick={() => setCurrentSlide(idx)}
-                      className={`h-1 rounded-full transition-all duration-300 ${
-                        idx === currentSlide ? 'bg-[#3D7A4F] w-6' : 'bg-gray-200 w-2 hover:bg-gray-300'
+                      className={`h-1.5 rounded-full transition-all duration-300 ${
+                        idx === currentSlide ? 'bg-primary w-6' : 'bg-gray-200 w-1.5 hover:bg-gray-300'
                       }`}
                     />
                   ))}
                </div>
             </div>
 
-            <div className="relative aspect-[16/9] md:aspect-[3/1] md:max-h-[400px] rounded-[1.5rem] overflow-hidden shadow-[0_15px_40px_rgba(0,0,0,0.1)] border border-gray-100 group">
+            <div className="relative aspect-[16/9] md:aspect-[3/1] md:max-h-[400px] rounded-3xl overflow-hidden shadow-card-hover border border-gray-100 group">
               <AnimatePresence mode="wait">
                   <motion.div
                   key={currentSlide}
-                  initial={{ opacity: 0, scale: 1.1 }}
+                  initial={{ opacity: 0, scale: 1.05 }}
                   animate={{ opacity: 1, scale: 1 }}
-                  exit={{ opacity: 0, scale: 0.95 }}
-                  transition={{ duration: 0.5, ease: "circOut" }}
+                  exit={{ opacity: 0, scale: 0.98 }}
+                  transition={{ duration: 0.45, ease: "circOut" }}
                   className="absolute inset-0 cursor-pointer"
                   onClick={() => {
                     const banner = featuredBanners[currentSlide];
@@ -376,19 +410,22 @@ const Home = () => {
                   }}
                 >
                   <img
-                    src={featuredBanners[currentSlide].image}
+                    src={featuredBanners[currentSlide].image || 'https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=1200&auto=format&fit=crop&q=80'}
                     alt={featuredBanners[currentSlide].title}
-                    className="w-full h-full object-cover transition-transform duration-[4000ms] group-hover:scale-110"
+                    className="w-full h-full object-cover transition-transform duration-[4000ms] group-hover:scale-105"
+                    onError={(e) => {
+                      e.currentTarget.src = 'https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=1200&auto=format&fit=crop&q=80';
+                    }}
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
                   
                   <div className="absolute inset-x-0 bottom-0 p-5 md:p-8">
                     <div className="flex items-center gap-2 mb-2">
-                       <span className="px-2.5 py-1 rounded-md text-[9px] font-black uppercase tracking-widest backdrop-blur-md border border-white/20 shadow-xl bg-[#3D7A4F]/90 text-white">
+                       <span className="px-3 py-1 rounded-full text-[10px] font-semibold tracking-wide backdrop-blur-md border border-white/20 shadow-lg bg-primary text-white">
                           Premium Offer
                        </span>
                     </div>
-                    <h3 className="text-white text-lg md:text-3xl font-black leading-tight line-clamp-1 drop-shadow-[0_2px_10px_rgba(0,0,0,0.5)] uppercase tracking-tighter">
+                    <h3 className="text-white text-lg md:text-2xl font-bold leading-tight line-clamp-1 drop-shadow-md">
                       {featuredBanners[currentSlide].title}
                     </h3>
                   </div>
@@ -405,16 +442,16 @@ const Home = () => {
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.3 }}
           >
-            <div className="flex items-center justify-between mb-1.5 px-1">
-               <h2 className="text-[14px] font-black text-gray-900 tracking-tight flex items-center gap-2">
-                  <TrendingUpRoundedIcon sx={{ fontSize: 16 }} className="text-[#3D7A4F]" />
-                  Trending offers
+            <div className="flex items-center justify-between mb-2.5 px-0.5">
+               <h2 className="text-base font-bold text-gray-900 tracking-tight flex items-center gap-2">
+                  <TrendingUpRoundedIcon sx={{ fontSize: 18 }} className="text-primary" />
+                  Trending Nearby
                </h2>
-               <button onClick={() => navigate('/explore')} className="text-[10px] font-black text-[#3D7A4F] uppercase tracking-widest">View All</button>
+               <button onClick={() => navigate('/explore')} className="text-xs font-semibold text-primary hover:underline">View All</button>
             </div>
-            <div className="flex overflow-x-auto scrollbar-hide gap-3 pb-4 snap-x px-1">
+            <div className="flex overflow-x-auto scrollbar-hide gap-3.5 pb-2 snap-x px-0.5">
               {trendingOffers.map((offer) => (
-                <div key={offer._id || offer.id} className="w-[120px] flex-shrink-0 snap-start">
+                <div key={offer._id || offer.id} className="w-[140px] flex-shrink-0 snap-start">
                   <OfferCard offer={offer} variant="grid" />
                 </div>
               ))}
@@ -429,12 +466,12 @@ const Home = () => {
              animate={{ opacity: 1, y: 0 }}
              transition={{ delay: 0.4 }}
           >
-            <div className="flex items-center justify-between mb-1.5 px-1">
-               <h2 className="text-[14px] font-black text-gray-900 tracking-tight flex items-center gap-2">
-                  <StorefrontRoundedIcon sx={{ fontSize: 16 }} className="text-[#3D7A4F]" />
-                  Nearby outlets
+            <div className="flex items-center justify-between mb-2.5 px-0.5">
+               <h2 className="text-base font-bold text-gray-900 tracking-tight flex items-center gap-2">
+                  <StorefrontRoundedIcon sx={{ fontSize: 18 }} className="text-primary" />
+                  Nearby Outlets
                </h2>
-               <button onClick={() => navigate('/explore')} className="text-[10px] font-black text-[#3D7A4F] uppercase tracking-widest">View All</button>
+               <button onClick={() => navigate('/explore')} className="text-xs font-semibold text-primary hover:underline">View All</button>
             </div>
             <div className="space-y-3">
               {mostPopulatedStores.map((merchant, idx) => (
@@ -442,7 +479,7 @@ const Home = () => {
                   key={merchant._id || merchant.id}
                   initial={{ opacity: 0, x: -8 }}
                   animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: 0.45 + idx * 0.07 }}
+                  transition={{ delay: 0.45 + idx * 0.05 }}
                 >
                   <StoreCard 
                     merchant={merchant} 

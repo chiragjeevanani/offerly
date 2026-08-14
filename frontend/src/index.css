@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Plus+Jakarta+Sans:wght@600;700;800&family=DM+Mono:wght@400;500&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,400;1,600&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -18,11 +18,13 @@
   * {
     box-sizing: border-box;
     -webkit-tap-highlight-color: transparent;
+    font-family: 'Poppins', system-ui, -apple-system, sans-serif;
   }
 
   html {
     scroll-behavior: smooth;
     height: 100%;
+    font-family: 'Poppins', system-ui, -apple-system, sans-serif;
   }
 
   body {
@@ -31,6 +33,7 @@
     overflow-x: hidden;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+    font-family: 'Poppins', system-ui, -apple-system, sans-serif;
   }
 
   #root {
@@ -266,7 +269,7 @@
 
   /* ─── Gradient Utilities ────────────────────────── */
   .gradient-green {
-    background: linear-gradient(135deg, #2D6A4F 0%, #52B788 100%);
+    background: linear-gradient(135deg, #5EB929 0%, #7AD032 100%);
   }
   .gradient-dark-sidebar {
     background: linear-gradient(180deg, #1F2937 0%, #111827 40%, #0D1117 100%);
@@ -284,7 +287,7 @@
     background: linear-gradient(135deg, #FFF1F2 0%, #FFE4E6 100%);
   }
   .gradient-hero-green {
-    background: linear-gradient(135deg, #1B4332 0%, #2D6A4F 50%, #40916C 100%);
+    background: linear-gradient(135deg, #2E6312 0%, #5EB929 50%, #4E9F1F 100%);
   }
 
   /* ─── Shimmer Loading ──────────────────────────── */

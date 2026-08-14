@@ -27,7 +27,7 @@ const TopBar = () => {
   const isNested = location.pathname.startsWith('/offer/') || location.pathname.startsWith('/store/');
 
   return (
-    <header className="sticky top-0 z-50 bg-[#F8F5FF]/95 backdrop-blur-xl border-b border-gray-100/50 px-4 py-2.5 flex items-center gap-3">
+    <header className="sticky top-0 z-50 bg-white/95 backdrop-blur-xl border-b border-gray-100 px-4 py-3 flex items-center gap-3">
       
       {/* Dynamic Back Button / Mobile Logo */}
       <div className="flex items-center gap-3">
@@ -37,7 +37,7 @@ const TopBar = () => {
             animate={{ opacity: 1, x: 0 }}
             whileTap={{ scale: 0.9 }}
             onClick={() => navigate(-1)}
-            className="w-9 h-9 flex items-center justify-center rounded-xl bg-white border border-gray-100 shadow-sm text-gray-400 hover:text-gray-900 transition-all"
+            className="w-9 h-9 flex items-center justify-center rounded-xl bg-gray-50 border border-gray-100 text-gray-500 hover:text-gray-900 transition-all"
           >
             <ArrowBackRoundedIcon sx={{ fontSize: 20 }} />
           </motion.button>
@@ -45,44 +45,36 @@ const TopBar = () => {
 
         {/* Logo + Location (Mobile) */}
         <div 
-          className="lg:hidden flex flex-col items-start gap-0 cursor-pointer group" 
+          className="lg:hidden flex items-center gap-2.5 cursor-pointer group" 
           onClick={() => navigate('/profile')}
         >
-          <div className="flex items-center gap-2">
-            {location.pathname === '/home' && (
-              <div className="w-8 h-8 bg-[#3D7A4F] rounded-xl flex items-center justify-center shadow-lg shadow-[#3D7A4F]/20">
-                <CardGiftcardRoundedIcon sx={{ fontSize: 18 }} className="text-white" />
-              </div>
-            )}
-            <span className="font-display text-[14px] font-black text-gray-900 tracking-tighter uppercase">Offerly</span>
-          </div>
-          <div className="flex items-center gap-1 mt-0.5 ml-1">
-             <LocationOnRoundedIcon sx={{ fontSize: 10 }} className="text-[#3D7A4F] group-hover:scale-125 transition-transform" />
-             <span className="text-[10px] font-black text-gray-400 uppercase tracking-tighter group-hover:text-[#3D7A4F] transition-colors">{selectedCity || 'Select City'}</span>
+          <img src="/offerly-logo-ring.png" alt="Offerly" className="w-9 h-9 object-contain drop-shadow-sm" />
+          <div className="flex flex-col">
+            <span className="font-bold text-base text-gray-900 leading-tight">Offerly</span>
+            <div className="flex items-center gap-1 mt-0.5">
+               <LocationOnRoundedIcon sx={{ fontSize: 13 }} className="text-primary" />
+               <span className="text-xs font-medium text-gray-500 group-hover:text-primary transition-colors">{selectedCity || 'Select City'}</span>
+            </div>
           </div>
         </div>
       </div>
 
       <div className="hidden lg:flex items-center gap-8 flex-1">
-        <div className="flex flex-col items-start gap-0 cursor-pointer group" onClick={() => navigate('/home')}>
-          <div className="flex items-center gap-2.5">
-            <div className="w-9 h-9 bg-[#3D7A4F] rounded-xl flex items-center justify-center shadow-lg shadow-[#3D7A4F]/20">
-              <CardGiftcardRoundedIcon sx={{ fontSize: 20 }} className="text-white" />
-            </div>
-            <span className="font-display text-lg font-black text-gray-900 tracking-tight">
-              OFFERLY
-            </span>
-          </div>
+        <div className="flex items-center gap-3 cursor-pointer group" onClick={() => navigate('/home')}>
+          <img src="/offerly-logo-ring.png" alt="Offerly" className="w-10 h-10 object-contain drop-shadow-sm" />
+          <span className="font-bold text-xl text-gray-900 tracking-tight">
+            Offerly
+          </span>
         </div>
 
         <div 
-          className="flex flex-col items-start gap-0 cursor-pointer group border-l border-gray-100 pl-8" 
+          className="flex flex-col items-start cursor-pointer group border-l border-gray-100 pl-6" 
           onClick={() => navigate('/profile')}
         >
-          <p className="text-[9px] font-black text-gray-300 uppercase tracking-widest leading-none mb-1">Current Location</p>
+          <p className="text-[11px] font-medium text-gray-400 mb-0.5">Current Location</p>
           <div className="flex items-center gap-1.5">
-             <LocationOnRoundedIcon sx={{ fontSize: 12 }} className="text-[#3D7A4F] group-hover:animate-bounce" />
-             <span className="text-[11px] font-black text-gray-400 uppercase tracking-widest group-hover:text-[#3D7A4F] transition-colors">{selectedCity || 'Select City'}</span>
+             <LocationOnRoundedIcon sx={{ fontSize: 14 }} className="text-primary" />
+             <span className="text-sm font-semibold text-gray-700 group-hover:text-primary transition-colors">{selectedCity || 'Select City'}</span>
           </div>
         </div>
       </div>
@@ -93,9 +85,9 @@ const TopBar = () => {
            <button
              key={item.path}
              onClick={() => navigate(item.path)}
-             className={`flex items-center gap-2 px-4 py-2 rounded-2xl transition-all font-black text-[11px] uppercase tracking-widest ${
+             className={`flex items-center gap-2 px-4 py-2 rounded-2xl transition-all font-bold text-[11px] uppercase tracking-widest ${
                location.pathname.startsWith(item.path)
-                 ? 'text-[#3D7A4F] bg-[#3D7A4F]/5 shadow-sm border border-[#3D7A4F]/10'
+                 ? 'text-[#5EB929] bg-[#5EB929]/5 shadow-sm border border-[#5EB929]/10'
                  : 'text-gray-400 hover:text-gray-900 hover:bg-white'
              }`}
            >
@@ -140,7 +132,7 @@ const TopBar = () => {
                 initial={{ scale: 0 }}
                 animate={{ scale: 1 }}
                 exit={{ scale: 0 }}
-                className="absolute top-1.5 right-1.5 w-1.5 h-1.5 bg-[#3D7A4F] rounded-full shadow-lg shadow-[#3D7A4F]/40"
+                className="absolute top-1.5 right-1.5 w-1.5 h-1.5 bg-[#5EB929] rounded-full shadow-lg shadow-[#5EB929]/40"
               />
             )}
           </AnimatePresence>
@@ -152,7 +144,7 @@ const TopBar = () => {
           onClick={() => navigate('/profile')}
           className="w-9 h-9 bg-white rounded-xl flex items-center justify-center border border-gray-100 shadow-sm hover:shadow-md cursor-pointer group transition-all"
         >
-          <span className="text-[#3D7A4F] font-black text-[12px] group-hover:scale-110 transition-transform">
+          <span className="text-[#5EB929] font-bold text-[12px] group-hover:scale-110 transition-transform">
             {user?.name?.charAt(0)?.toUpperCase() || 'U'}
           </span>
         </motion.button>

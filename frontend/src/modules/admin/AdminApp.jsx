@@ -22,9 +22,9 @@ import MenuRoundedIcon from '@mui/icons-material/MenuRounded';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 import ArrowBackRoundedIcon from '@mui/icons-material/ArrowBackRounded';
 import FilterListRoundedIcon from '@mui/icons-material/FilterListRounded';
-import PersonRoundedIcon from '@mui/icons-material/PersonRounded';
 import LocalOfferRoundedIcon from '@mui/icons-material/LocalOfferRounded';
 import MoreVertRoundedIcon from '@mui/icons-material/MoreVertRounded';
+import EmojiEventsRoundedIcon from '@mui/icons-material/EmojiEventsRounded';
 
 // Admin Pages (Lazy Loaded for performance and ad-blocker resilience)
 const AdminDashboard = lazy(() => import('./pages/Dashboard'));
@@ -36,6 +36,7 @@ const SubscriptionManagement = lazy(() => import('./pages/SubscriptionManagement
 const PromotionRequest = lazy(() => import('./pages/PromotionRequest'));
 const Analytics = lazy(() => import('./pages/Analytics'));
 const CategoryManagement = lazy(() => import('./pages/CategoryManagement'));
+const RewardsManagement = lazy(() => import('./pages/RewardsManagement'));
 const Notifications = lazy(() => import('./pages/Notifications'));
 const SearchResults = lazy(() => import('./pages/SearchResults'));
 const AdminLogin = lazy(() => import('./pages/AdminLogin'));
@@ -60,6 +61,7 @@ const AdminSidebar = ({ isMobileMenuOpen, setIsMobileMenuOpen }) => {
       path: '/admin/merchants',
     },
     { name: 'Customers', path: '/admin/users', icon: GroupRoundedIcon },
+    { name: 'Milestones & Rewards', path: '/admin/rewards', icon: EmojiEventsRoundedIcon },
     { name: 'Categories', path: '/admin/categories', icon: CategoryRoundedIcon },
     { name: 'Subscriptions', path: '/admin/plans', icon: PaymentsRoundedIcon },
     { name: 'Cities & Zones', path: '/admin/cities', icon: MapRoundedIcon },
@@ -89,13 +91,11 @@ const AdminSidebar = ({ isMobileMenuOpen, setIsMobileMenuOpen }) => {
         {/* Brand */}
         <div className="px-6 py-6 border-b border-[#1F232B]/50 flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-black tracking-tight text-white uppercase flex items-center gap-2">
-              <div className="w-8 h-8 rounded-md flex items-center justify-center bg-gradient-to-br from-[#3D7A4F] to-[#2B5738] shadow-lg shadow-[#3D7A4F]/20">
-                <span className="text-white text-base">O</span>
-              </div>
+            <h1 className="text-2xl font-bold tracking-tight text-white uppercase flex items-center gap-2.5">
+              <img src="/offerly-logo-ring.png" alt="Offerly" className="w-8 h-8 object-contain" />
               Offerly
             </h1>
-            <p className="text-[9px] font-bold text-[#3D7A4F] uppercase tracking-[.35em] mt-1.5 ml-10">Control Center</p>
+            <p className="text-[9px] font-bold text-[#5EB929] uppercase tracking-[.35em] mt-1.5 ml-10">Control Center</p>
           </div>
           <button 
             onClick={() => setIsMobileMenuOpen(false)}
@@ -107,7 +107,7 @@ const AdminSidebar = ({ isMobileMenuOpen, setIsMobileMenuOpen }) => {
 
       {/* Nav */}
       <nav className="flex-1 px-4 py-5 overflow-y-auto no-scrollbar space-y-1">
-        <p className="px-3 text-[10px] font-black uppercase tracking-widest text-gray-600 mb-3">Main Menu</p>
+        <p className="px-3 text-[10px] font-bold uppercase tracking-widest text-gray-600 mb-3">Main Menu</p>
         {navItems.map((item) => {
           if (item.expandable) {
             const isParentActive = location.pathname.includes('/admin/merchants');
@@ -122,7 +122,7 @@ const AdminSidebar = ({ isMobileMenuOpen, setIsMobileMenuOpen }) => {
                   }`}
                 >
                   <div className="flex items-center gap-3">
-                    <item.icon sx={{ fontSize: 20 }} className={isParentActive ? 'text-[#3D7A4F]' : 'opacity-70'} />
+                    <item.icon sx={{ fontSize: 20 }} className={isParentActive ? 'text-[#5EB929]' : 'opacity-70'} />
                     <span>{item.name}</span>
                   </div>
                   <KeyboardArrowDownRoundedIcon
@@ -140,12 +140,12 @@ const AdminSidebar = ({ isMobileMenuOpen, setIsMobileMenuOpen }) => {
                           to={child.path}
                           className={`block px-4 py-2.5 rounded-md text-xs font-bold transition-all relative ${
                             isChildActive
-                              ? 'text-white bg-[#3D7A4F]/10'
+                              ? 'text-white bg-[#5EB929]/10'
                               : 'text-gray-500 hover:text-gray-300 hover:bg-[#1A1D24]/50'
                           }`}
                         >
                           {isChildActive && (
-                            <div className="absolute left-[-18px] top-1/2 -translate-y-1/2 w-2 h-2 rounded-full bg-[#3D7A4F] shadow-[0_0_8px_rgba(61,122,79,0.8)]" />
+                            <div className="absolute left-[-18px] top-1/2 -translate-y-1/2 w-2 h-2 rounded-full bg-[#5EB929] shadow-[0_0_8px_rgba(94, 185, 41,0.8)]" />
                           )}
                           {child.name}
                         </Link>
@@ -164,13 +164,13 @@ const AdminSidebar = ({ isMobileMenuOpen, setIsMobileMenuOpen }) => {
               to={item.path}
               className={`flex items-center gap-3 px-4 py-3 rounded-md transition-all text-sm font-bold group relative overflow-hidden ${
                 active
-                  ? 'bg-gradient-to-r from-[#3D7A4F]/20 to-transparent text-white border-l-2 border-[#3D7A4F] shadow-[inset_4px_0_0_0_#3D7A4F]'
+                  ? 'bg-gradient-to-r from-[#5EB929]/20 to-transparent text-white border-l-2 border-[#5EB929] shadow-[inset_4px_0_0_0_#5EB929]'
                   : 'text-gray-400 hover:text-white hover:bg-[#1A1D24]/50 border-l-2 border-transparent'
               }`}
             >
               <item.icon
                 sx={{ fontSize: 20 }}
-                className={active ? 'text-[#3D7A4F]' : 'opacity-70 group-hover:text-white group-hover:opacity-100 transition-colors'}
+                className={active ? 'text-[#5EB929]' : 'opacity-70 group-hover:text-white group-hover:opacity-100 transition-colors'}
               />
               <span>{item.name}</span>
             </Link>
@@ -255,14 +255,14 @@ const AdminHeader = ({ onMenuToggle, pageTitle }) => {
 
       {/* Middle: Desktop Search Only */}
       <div className="hidden lg:block flex-1 max-w-lg mx-10 relative group">
-        <SearchRoundedIcon className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-[#3D7A4F] transition-colors" sx={{ fontSize: 20 }} />
+        <SearchRoundedIcon className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-[#5EB929] transition-colors" sx={{ fontSize: 20 }} />
         <input
           type="text"
           placeholder="Search merchants, users, or cities (Enter)..."
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
           onKeyDown={handleSearchKeyPress}
-          className="w-full bg-gray-100/80 border border-gray-200/50 rounded-xl py-2.5 pl-12 pr-4 text-xs font-bold text-gray-700 focus:bg-white focus:ring-2 focus:ring-[#3D7A4F]/20 focus:border-[#3D7A4F] transition-all outline-none shadow-inner shadow-gray-200/30"
+          className="w-full bg-gray-100/80 border border-gray-200/50 rounded-xl py-2.5 pl-12 pr-4 text-xs font-bold text-gray-700 focus:bg-white focus:ring-2 focus:ring-[#5EB929]/20 focus:border-[#5EB929] transition-all outline-none shadow-inner shadow-gray-200/30"
         />
         <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-1">
           <kbd className="hidden sm:inline-block px-1.5 py-0.5 text-[10px] font-bold text-gray-400 bg-white border border-gray-200 rounded font-mono">⌘</kbd>
@@ -293,7 +293,7 @@ const AdminHeader = ({ onMenuToggle, pageTitle }) => {
           >
             <NotificationsRoundedIcon sx={{ fontSize: 26 }} className="text-gray-600" />
             {pendingCount > 0 && (
-              <span className="absolute top-1.5 right-1.5 bg-red-500 text-white text-[9px] font-black rounded-full w-4 h-4 flex items-center justify-center ring-2 ring-white">
+              <span className="absolute top-1.5 right-1.5 bg-red-500 text-white text-[9px] font-bold rounded-full w-4 h-4 flex items-center justify-center ring-2 ring-white">
                 {pendingCount > 9 ? '9+' : pendingCount}
               </span>
             )}
@@ -303,10 +303,10 @@ const AdminHeader = ({ onMenuToggle, pageTitle }) => {
 
           <div className="flex items-center gap-3 cursor-pointer group">
             <div className="text-right">
-              <p className="text-sm font-black text-gray-900 leading-none group-hover:text-[#3D7A4F] transition-colors">Super Admin</p>
+              <p className="text-sm font-bold text-gray-900 leading-none group-hover:text-[#5EB929] transition-colors">Super Admin</p>
               <p className="text-[10px] text-gray-500 font-bold uppercase tracking-widest mt-1">System Owner</p>
             </div>
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-[#3D7A4F] to-emerald-400 text-white flex items-center justify-center shadow-lg shadow-[#3D7A4F]/20">
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-[#5EB929] to-emerald-400 text-white flex items-center justify-center shadow-lg shadow-[#5EB929]/20">
               <AccountCircleRoundedIcon sx={{ fontSize: 22 }} />
             </div>
           </div>
@@ -337,7 +337,7 @@ const BottomNav = () => {
             key={item.label}
             onClick={() => navigate(item.path)}
             className={`flex flex-col items-center gap-1 p-2 transition-all ${
-              isActive ? 'text-[#3D7A4F]' : 'text-gray-400'
+              isActive ? 'text-[#5EB929]' : 'text-gray-400'
             }`}
           >
             <item.icon sx={{ fontSize: 24 }} />
@@ -369,7 +369,7 @@ const AdminLayout = ({ children }) => {
   }, [location.pathname]);
 
   return (
-    <div className="flex h-screen bg-[#F8F5FF] overflow-hidden">
+    <div className="flex h-screen bg-background overflow-hidden">
       {/* Sidebar - Desktop Only */}
       <div className="hidden lg:block w-[260px] flex-shrink-0">
         <AdminSidebar isMobileMenuOpen={false} setIsMobileMenuOpen={() => {}} />
@@ -457,6 +457,7 @@ const AdminApp = () => {
           <Route path="/cities" element={<CityManagement />} />
           <Route path="/merchants" element={<MerchantManagement />} />
           <Route path="/users" element={<UserManagement />} />
+          <Route path="/rewards" element={<RewardsManagement />} />
           <Route path="/plans" element={<SubscriptionManagement />} />
           <Route path="/ads" element={<PromotionRequest />} />
           <Route path="/ledger" element={<BookingLedger />} />

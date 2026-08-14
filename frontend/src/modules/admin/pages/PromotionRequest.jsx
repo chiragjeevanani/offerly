@@ -20,7 +20,7 @@ const TabButton = ({ label, isActive, onClick, count }) => (
     onClick={onClick}
     className={`px-5 py-2 text-[12px] font-medium transition-all duration-300 rounded-[10px] flex items-center gap-2 ${
       isActive 
-        ? 'bg-[#3D7A4F] text-white shadow-md' 
+        ? 'bg-[#5EB929] text-white shadow-md' 
         : 'text-gray-500 hover:text-gray-700 hover:bg-white/80'
     }`}
   >
@@ -96,7 +96,7 @@ const PromotionRequest = () => {
 
 
   return (
-    <div className="min-h-[calc(100vh-80px)] bg-[#F8F5FF] p-4 lg:p-8 -m-6 lg:-m-8 font-sans text-gray-800 lg:rounded-tl-[32px]">
+    <div className="min-h-[calc(100vh-80px)] bg-background p-4 lg:p-8 -m-6 lg:-m-8 font-sans text-gray-800 lg:rounded-tl-[32px]">
       <div className="max-w-7xl mx-auto">
         {/* Header Section */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-2 mb-2">
@@ -133,7 +133,7 @@ const PromotionRequest = () => {
               placeholder="Search by store or type..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full bg-white border border-gray-100 rounded-[12px] py-2 pl-11 pr-4 text-[13px] text-gray-800 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-[#3D7A4F]/10 focus:border-[#3D7A4F]/30 transition-all shadow-sm"
+              className="w-full bg-white border border-gray-100 rounded-[12px] py-2 pl-11 pr-4 text-[13px] text-gray-800 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-[#5EB929]/10 focus:border-[#5EB929]/30 transition-all shadow-sm"
             />
           </div>
         </div>
@@ -162,7 +162,7 @@ const PromotionRequest = () => {
                   <div>
                     <h4 className="text-[14px] font-semibold text-gray-800 leading-tight">{ad.storeName}</h4>
                     <p className="text-[11px] text-gray-500 mt-0.5">
-                      <span className="font-bold text-indigo-500 uppercase tracking-tighter mr-2">{ad.type}</span>
+                      <span className="font-bold text-indigo-500 uppercase tracking-tight mr-2">{ad.type}</span>
                       • {new Date(ad.createdAt).toLocaleDateString()}
                     </p>
                   </div>
@@ -224,7 +224,7 @@ const PromotionRequest = () => {
                </div>
                <div className="flex justify-between items-center pb-3 border-b border-gray-200/50">
                   <span className="text-[11px] font-bold text-gray-400 uppercase tracking-widest">Campaign Type</span>
-                  <span className="text-xs font-black text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded uppercase">{selectedAd?.type}</span>
+                  <span className="text-xs font-bold text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded uppercase">{selectedAd?.type}</span>
                </div>
                <div className="flex justify-between items-center">
                   <span className="text-[11px] font-bold text-gray-400 uppercase tracking-widest">Request Date</span>
@@ -239,7 +239,7 @@ const PromotionRequest = () => {
                     <AccessTimeRoundedIcon sx={{ fontSize: 20 }} />
                  </div>
                  <div>
-                    <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Campaign Expiry</p>
+                    <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Campaign Expiry</p>
                     <p className="text-[13px] font-bold text-gray-800">{selectedAd?.expiryAt ? new Date(selectedAd.expiryAt).toLocaleDateString() : 'Continuous'}</p>
                  </div>
               </div>
@@ -268,7 +268,7 @@ const PromotionRequest = () => {
               </button>
               <button 
                 onClick={() => handleUpdateStatus(selectedAd.id, 'approved')}
-                className="flex-1 bg-[#3D7A4F] text-white py-3.5 rounded-xl font-semibold text-[14px] shadow-lg shadow-[#3D7A4F]/10 hover:bg-[#2d5a3a] transition-all"
+                className="flex-1 bg-[#5EB929] text-white py-3.5 rounded-xl font-semibold text-[14px] shadow-lg shadow-[#5EB929]/10 hover:bg-[#2d5a3a] transition-all"
               >
                 Approve Campaign
               </button>

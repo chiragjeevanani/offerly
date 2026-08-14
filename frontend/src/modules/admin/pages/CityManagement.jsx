@@ -81,7 +81,7 @@ const CityManagement = () => {
   };
 
   return (
-    <div className="min-h-[calc(100vh-80px)] bg-[#F8F5FF] p-4 lg:p-8 -m-6 lg:-m-8 font-sans text-gray-800 lg:rounded-tl-[32px]">
+    <div className="min-h-[calc(100vh-80px)] bg-background p-4 lg:p-8 -m-6 lg:-m-8 font-sans text-gray-800 lg:rounded-tl-[32px]">
       <div className="max-w-7xl mx-auto">
         {/* Header Section */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-2 mb-2">
@@ -101,7 +101,7 @@ const CityManagement = () => {
             </button>
             <button
               onClick={handleAdd}
-              className="flex items-center gap-2 bg-[#3D7A4F] hover:bg-[#2d5a3a] text-white px-4 py-2 rounded-[10px] transition-all text-[12px] font-medium shadow-md shadow-[#3D7A4F]/10 active:scale-95"
+              className="flex items-center gap-2 bg-[#5EB929] hover:bg-[#2d5a3a] text-white px-4 py-2 rounded-[10px] transition-all text-[12px] font-medium shadow-md shadow-[#5EB929]/10 active:scale-95"
             >
               <AddRoundedIcon sx={{ fontSize: 18 }} />
               Add City
@@ -118,7 +118,7 @@ const CityManagement = () => {
               placeholder="Search regions..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full bg-white border border-gray-100 rounded-[12px] py-2 pl-11 pr-4 text-[13px] text-gray-800 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-[#3D7A4F]/10 focus:border-[#3D7A4F]/30 transition-all shadow-sm"
+              className="w-full bg-white border border-gray-100 rounded-[12px] py-2 pl-11 pr-4 text-[13px] text-gray-800 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-[#5EB929]/10 focus:border-[#5EB929]/30 transition-all shadow-sm"
             />
           </div>
           
@@ -233,7 +233,7 @@ const CityManagement = () => {
           <div className="absolute bottom-0 left-0 right-0 p-4 bg-white border-t border-gray-100 flex gap-3 z-20">
             <button 
               type="submit"
-              className="flex-1 bg-[#3D7A4F] text-white py-3.5 rounded-xl font-semibold text-[14px] shadow-lg shadow-[#3D7A4F]/10 hover:bg-[#2d5a3a] transition-all"
+              className="flex-1 bg-[#5EB929] text-white py-3.5 rounded-xl font-semibold text-[14px] shadow-lg shadow-[#5EB929]/10 hover:bg-[#2d5a3a] transition-all"
             >
               {selectedCity ? 'Update Registry' : 'Deploy Region'}
             </button>

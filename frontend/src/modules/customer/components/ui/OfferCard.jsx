@@ -81,32 +81,35 @@ const OfferCard = ({ offer, variant = 'list', onSaveToggle }) => {
             alt={offer.title}
             className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
             loading="lazy"
+            onError={(e) => {
+              e.currentTarget.src = 'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=500&auto=format&fit=crop&q=60';
+            }}
           />
           <div className="absolute top-2 left-2 flex flex-col gap-1">
-             <span className="bg-[#3D7A4F] text-white text-[9px] font-black px-2 py-1 rounded-md shadow-lg uppercase tracking-widest">
+             <span className="bg-primary text-white text-[10px] font-semibold px-2 py-0.5 rounded-md shadow-md">
                {discountLabel}
              </span>
           </div>
           <motion.button
             whileTap={{ scale: 0.8 }}
             onClick={handleSave}
-            className="absolute top-2 right-2 w-7 h-7 bg-white/90 backdrop-blur-md rounded-full flex items-center justify-center shadow-lg border border-white/20"
+            className="absolute top-2 right-2 w-7 h-7 bg-white/90 backdrop-blur-md rounded-full flex items-center justify-center shadow-md border border-white/20"
           >
             {isSaved
-              ? <BookmarkRoundedIcon sx={{ fontSize: 14 }} className="text-[#3D7A4F]" />
-              : <BookmarkBorderRoundedIcon sx={{ fontSize: 14 }} className="text-gray-400" />
+              ? <BookmarkRoundedIcon sx={{ fontSize: 15 }} className="text-primary" />
+              : <BookmarkBorderRoundedIcon sx={{ fontSize: 15 }} className="text-gray-400" />
             }
           </motion.button>
         </div>
         <div className="p-2.5 flex flex-col justify-between flex-1 space-y-1">
           <div className="space-y-0.5">
-            <p className="text-[8px] font-black text-[#3D7A4F] uppercase tracking-widest line-clamp-1">{merchant?.storeName}</p>
-            <h3 className="text-[10px] font-black text-gray-900 leading-tight line-clamp-2 uppercase tracking-tight">{offer.title}</h3>
+            <p className="text-[11px] font-semibold text-primary line-clamp-1">{merchant?.storeName}</p>
+            <h3 className="text-xs font-semibold text-gray-900 leading-tight line-clamp-2">{offer.title}</h3>
           </div>
           <div className="flex items-center justify-between pt-1 border-t border-gray-50 mt-auto">
             <div className="flex items-center gap-1">
-               <LocationOnRoundedIcon sx={{ fontSize: 8 }} className="text-gray-300" />
-               <span className="text-[8px] font-black text-gray-400 uppercase tracking-tighter">{merchant?.distance || 'N/A'}</span>
+               <LocationOnRoundedIcon sx={{ fontSize: 12 }} className="text-gray-400" />
+               <span className="text-[11px] font-normal text-gray-500">{merchant?.distance || 'N/A'}</span>
             </div>
           </div>
         </div>
@@ -121,16 +124,19 @@ const OfferCard = ({ offer, variant = 'list', onSaveToggle }) => {
       onClick={() => navigate(`/offer/${offerId}`)}
       className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden cursor-pointer active:bg-gray-50 transition-colors"
     >
-      <div className="flex gap-3 p-2">
-        <div className="relative flex-shrink-0 w-16 h-16 overflow-hidden rounded-xl border border-gray-100">
+      <div className="flex gap-3 p-2.5">
+        <div className="relative flex-shrink-0 w-18 h-18 overflow-hidden rounded-xl border border-gray-100 bg-gray-100">
           <img
             src={optimizedImage}
             alt={offer.title}
             className="w-full h-full object-cover"
             loading="lazy"
+            onError={(e) => {
+              e.currentTarget.src = 'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=500&auto=format&fit=crop&q=60';
+            }}
           />
           <div className="absolute top-0 left-0">
-             <span className="bg-[#3D7A4F] text-white text-[7px] font-black px-1.5 py-0.5 rounded-br-lg shadow-md uppercase">
+             <span className="bg-primary text-white text-[9px] font-semibold px-1.5 py-0.5 rounded-br-lg shadow-sm">
                {discountLabel}
              </span>
           </div>
@@ -138,7 +144,7 @@ const OfferCard = ({ offer, variant = 'list', onSaveToggle }) => {
         <div className="flex-1 min-w-0 flex flex-col justify-center py-0.5">
           <div className="space-y-0.5">
              <div className="flex items-start justify-between gap-2">
-               <p className="text-[11px] font-black text-gray-900 line-clamp-1 uppercase tracking-tight flex-1">
+               <p className="text-sm font-semibold text-gray-900 line-clamp-1 flex-1">
                  {offer.title}
                </p>
                <motion.button
@@ -147,17 +153,17 @@ const OfferCard = ({ offer, variant = 'list', onSaveToggle }) => {
                  className="pt-0.5"
                >
                  {isSaved
-                   ? <BookmarkRoundedIcon sx={{ fontSize: 16 }} className="text-[#3D7A4F]" />
-                   : <BookmarkBorderRoundedIcon sx={{ fontSize: 16 }} className="text-gray-300" />
+                   ? <BookmarkRoundedIcon sx={{ fontSize: 18 }} className="text-primary" />
+                   : <BookmarkBorderRoundedIcon sx={{ fontSize: 18 }} className="text-gray-300" />
                  }
                </motion.button>
              </div>
              <div className="flex items-center gap-2">
-                <p className="text-[9px] font-black text-[#3D7A4F] uppercase tracking-widest">{merchant?.storeName}</p>
-                <div className="w-1 h-1 bg-gray-100 rounded-full" />
+                <p className="text-xs font-semibold text-primary">{merchant?.storeName}</p>
+                <div className="w-1 h-1 bg-gray-300 rounded-full" />
                 <div className="flex items-center gap-1">
-                  <LocationOnRoundedIcon sx={{ fontSize: 10 }} className="text-gray-300" />
-                  <span className="text-[9px] font-black text-gray-400 uppercase tracking-tighter">{merchant?.distance}</span>
+                  <LocationOnRoundedIcon sx={{ fontSize: 12 }} className="text-gray-400" />
+                  <span className="text-xs font-normal text-gray-500">{merchant?.distance}</span>
                 </div>
              </div>
           </div>

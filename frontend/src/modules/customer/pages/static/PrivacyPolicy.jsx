@@ -55,10 +55,10 @@ const PrivacyPolicy = () => {
 
   return (
     <PageTransition>
-      <div className="min-h-screen bg-[#F8F5FF] px-4 py-4 pb-24 space-y-8">
+      <div className="min-h-screen bg-background px-4 py-4 pb-24 space-y-8">
         
         {/* Privacy Identity Strip */}
-        <div className="bg-[#3D7A4F] rounded-[2.5rem] p-8 text-center relative overflow-hidden shadow-lg shadow-[#3D7A4F]/20">
+        <div className="bg-[#5EB929] rounded-[2.5rem] p-8 text-center relative overflow-hidden shadow-lg shadow-[#5EB929]/20">
            <div className="absolute top-0 right-0 w-32 h-32 bg-white/5 rounded-full -mr-16 -mt-16 blur-3xl" />
            <motion.div
              initial={{ scale: 0.8 }}
@@ -67,20 +67,20 @@ const PrivacyPolicy = () => {
            >
              <SecurityRoundedIcon sx={{ fontSize: 28 }} className="text-white" />
            </motion.div>
-           <h1 className="text-white font-black text-2xl uppercase tracking-tight">Privacy Policy</h1>
-           <p className="text-white/60 text-[10px] font-black uppercase tracking-widest mt-2 max-w-xs mx-auto leading-relaxed">
+           <h1 className="text-white font-bold text-2xl uppercase tracking-tight">Privacy Policy</h1>
+           <p className="text-white/60 text-[10px] font-bold uppercase tracking-widest mt-2 max-w-xs mx-auto leading-relaxed">
              Data governance protocols for the Offerly digital network
            </p>
         </div>
 
         <div className="space-y-6">
           <div className="bg-white rounded-2xl p-4 border border-gray-50 shadow-sm flex items-center justify-between">
-             <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Data Protection v1.0</p>
-             <p className="text-[10px] font-black text-[#3D7A4F] uppercase tracking-widest">Active Status</p>
+             <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Data Protection v1.0</p>
+             <p className="text-[10px] font-bold text-[#5EB929] uppercase tracking-widest">Active Status</p>
           </div>
 
           <div className="space-y-3">
-             <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest px-1">Privacy Protocols</p>
+             <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest px-1">Privacy Protocols</p>
              
              <Section title="Data Collection" icon={SecurityRoundedIcon}>
                <p><strong>Personal Data:</strong> We collect only essential identification markers including phone numbers and digital profiles.</p>
@@ -109,7 +109,7 @@ const PrivacyPolicy = () => {
 
           {/* commitment strip */}
           <div className="bg-white rounded-[2rem] p-8 text-center border border-gray-100 shadow-sm">
-             <p className="text-gray-400 text-[10px] font-black uppercase tracking-[0.2em] leading-relaxed">
+             <p className="text-gray-400 text-[10px] font-bold uppercase tracking-[0.2em] leading-relaxed">
                Your trust is our primary asset. We adhere to a strict 'Zero-Sale' policy for your personal identification data.
              </p>
           </div>

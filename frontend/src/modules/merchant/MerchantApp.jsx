@@ -107,20 +107,20 @@ const MerchantSidebar = ({ merchant, isMobileMenuOpen, setIsMobileMenuOpen }) =>
         to={item.path}
         onClick={handleNavClick}
         className={`flex items-center gap-3 px-4 py-2.5 rounded-xl transition-all duration-200 group relative ${isActive
-            ? 'bg-[#3D7A4F]/10 text-white font-bold'
+            ? 'bg-[#5EB929]/10 text-white font-bold'
             : 'text-gray-400 hover:text-white hover:bg-white/[0.04] font-bold'
           }`}
       >
         {/* Active accent stripe */}
         {isActive && (
-          <div className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-5 bg-[#3D7A4F] rounded-r-full shadow-[0_0_10px_rgba(61,122,79,0.5)]" />
+          <div className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-5 bg-[#5EB929] rounded-r-full shadow-[0_0_10px_rgba(94, 185, 41,0.5)]" />
         )}
         {item.badge && (
-          <span className="absolute -top-1 -right-1 px-1.5 py-0.5 bg-amber-400 text-black text-[7px] font-black rounded-md shadow-lg scale-90">
+          <span className="absolute -top-1 -right-1 px-1.5 py-0.5 bg-amber-400 text-black text-[7px] font-bold rounded-md shadow-lg scale-90">
             {item.badge}
           </span>
         )}
-        <item.icon sx={{ fontSize: 18 }} className={isActive ? 'text-[#3D7A4F]' : 'text-gray-500 group-hover:text-[#3D7A4F] transition-colors'} />
+        <item.icon sx={{ fontSize: 18 }} className={isActive ? 'text-[#5EB929]' : 'text-gray-500 group-hover:text-[#5EB929] transition-colors'} />
         <span className="text-[12px] uppercase tracking-wide">{item.name}</span>
       </Link>
     );
@@ -140,22 +140,25 @@ const MerchantSidebar = ({ merchant, isMobileMenuOpen, setIsMobileMenuOpen }) =>
 
       {/* ── Brand + Store Info ─────────────────── */}
       <div className="p-6 pb-5">
-        <h1 className="text-xl font-display font-black text-white tracking-tighter uppercase">
-           OFFERLY<span className="text-[#3D7A4F] italic">BIZ</span>
-        </h1>
+        <div className="flex items-center gap-2.5">
+          <img src="/offerly-logo-ring.png" alt="Offerly" className="w-7 h-7 object-contain" />
+          <h1 className="text-xl font-display font-bold text-white tracking-tight uppercase">
+             OFFERLY<span className="text-[#5EB929] italic">BIZ</span>
+          </h1>
+        </div>
         <div className="mt-6 flex items-center gap-3">
           <div className="w-10 h-10 rounded-xl overflow-hidden bg-white/5 border border-white/10 p-0.5 flex-shrink-0 shadow-2xl">
             {merchant?.logo ? (
               <img src={merchant?.logo} className="w-full h-full object-cover rounded-lg" alt="" />
             ) : (
-              <div className="w-full h-full bg-[#3D7A4F]/20 flex items-center justify-center text-[#3D7A4F] font-black text-lg rounded-lg">
+              <div className="w-full h-full bg-[#5EB929]/20 flex items-center justify-center text-[#5EB929] font-bold text-lg rounded-lg">
                 {merchant?.storeName?.charAt(0)}
               </div>
             )}
           </div>
           <div className="flex-1 min-w-0">
-            <p className="text-[13px] font-black text-white truncate leading-tight tracking-tight">{merchant?.storeName}</p>
-            <p className="text-[9px] font-black text-[#3D7A4F] uppercase mt-1 tracking-widest opacity-80">{merchant?.category}</p>
+            <p className="text-[13px] font-bold text-white truncate leading-tight tracking-tight">{merchant?.storeName}</p>
+            <p className="text-[9px] font-bold text-[#5EB929] uppercase mt-1 tracking-widest opacity-80">{merchant?.category}</p>
           </div>
         </div>
       </div>
@@ -182,10 +185,10 @@ const MerchantSidebar = ({ merchant, isMobileMenuOpen, setIsMobileMenuOpen }) =>
       <div className="p-4 space-y-2">
         {/* Subscription Badge */}
         {merchant?.subscription?.plan?.name && (
-          <div className="mx-2 mb-2 p-3.5 rounded-2xl bg-[#3D7A4F]/10 border border-[#3D7A4F]/20 shadow-lg shadow-[#3D7A4F]/5">
+          <div className="mx-2 mb-2 p-3.5 rounded-2xl bg-[#5EB929]/10 border border-[#5EB929]/20 shadow-lg shadow-[#5EB929]/5">
             <div className="flex items-center gap-2">
-              <WorkspacePremiumRoundedIcon sx={{ fontSize: 16 }} className="text-[#3D7A4F]" />
-              <span className="text-[10px] font-black text-[#3D7A4F] uppercase tracking-widest">{merchant.subscription.plan.name}</span>
+              <WorkspacePremiumRoundedIcon sx={{ fontSize: 16 }} className="text-[#5EB929]" />
+              <span className="text-[10px] font-bold text-[#5EB929] uppercase tracking-widest">{merchant.subscription.plan.name}</span>
             </div>
             {merchant.remainingDays !== undefined && (
               <p className="text-[9px] font-bold text-gray-500 mt-1 pl-6 uppercase tracking-tight">{merchant.remainingDays} Days Active</p>
@@ -234,11 +237,11 @@ const MerchantBottomNav = ({ unreadCount }) => {
                 return (
                    <button 
                       key={item.label} onClick={() => navigate(item.path)}
-                      className="relative -top-5 w-16 h-16 bg-gray-900 text-white rounded-2xl flex items-center justify-center shadow-2xl shadow-black/40 group active:scale-90 transition-all border-4 border-[#F8F5FF]"
+                      className="relative -top-5 w-16 h-16 bg-gray-900 text-white rounded-2xl flex items-center justify-center shadow-2xl shadow-black/40 group active:scale-90 transition-all border-4 border-[#F8FAFC]"
                    >
-                      <div className="absolute inset-0 bg-[#3D7A4F] rounded-2xl opacity-0 group-active:opacity-100 transition-opacity" />
+                      <div className="absolute inset-0 bg-[#5EB929] rounded-2xl opacity-0 group-active:opacity-100 transition-opacity" />
                       <Icon sx={{ fontSize: 32 }} className="relative z-10 text-white" />
-                      <div className="absolute -top-1 -right-1 w-3.5 h-3.5 bg-[#3D7A4F] rounded-full border-2 border-white animate-pulse shadow-[0_0_10px_rgba(61,122,79,0.5)]" />
+                      <div className="absolute -top-1 -right-1 w-3.5 h-3.5 bg-[#5EB929] rounded-full border-2 border-white animate-pulse shadow-[0_0_10px_rgba(94, 185, 41,0.5)]" />
                    </button>
                 );
              }
@@ -251,17 +254,17 @@ const MerchantBottomNav = ({ unreadCount }) => {
                    <div className="relative">
                       <Icon 
                         sx={{ fontSize: 24 }} 
-                        className={`transition-all duration-300 ${isActive ? 'text-[#3D7A4F]' : 'text-gray-400 group-active:scale-90'}`} 
+                        className={`transition-all duration-300 ${isActive ? 'text-[#5EB929]' : 'text-gray-400 group-active:scale-90'}`} 
                       />
                       {item.label === 'Account' && unreadCount > 0 && (
-                         <div className="absolute -top-0.5 -right-0.5 w-2 h-2 bg-[#3D7A4F] rounded-full border-2 border-white" />
+                         <div className="absolute -top-0.5 -right-0.5 w-2 h-2 bg-[#5EB929] rounded-full border-2 border-white" />
                       )}
                    </div>
-                   <span className={`text-[9px] font-black uppercase tracking-tight transition-colors ${isActive ? 'text-[#3D7A4F]' : 'text-gray-400'}`}>
+                   <span className={`text-[9px] font-bold uppercase tracking-tight transition-colors ${isActive ? 'text-[#5EB929]' : 'text-gray-400'}`}>
                       {item.label}
                    </span>
                    {isActive && (
-                      <motion.div layoutId="nav-pill" className="absolute bottom-0 w-8 h-1 bg-[#3D7A4F] rounded-t-full shadow-[0_0_10px_rgba(61,122,79,0.4)]" />
+                      <motion.div layoutId="nav-pill" className="absolute bottom-0 w-8 h-1 bg-[#5EB929] rounded-t-full shadow-[0_0_10px_rgba(94, 185, 41,0.4)]" />
                    )}
                 </button>
              );
@@ -360,8 +363,8 @@ const MerchantApp = () => {
   }, [socket, merchant?._id]);
 
   if (loading) return (
-    <div className="min-h-screen grid place-items-center bg-[#F8F5FF]">
-      <div className="w-10 h-10 border-2 border-[#3D7A4F]/20 border-t-[#3D7A4F] rounded-full animate-spin" />
+    <div className="min-h-screen grid place-items-center bg-background">
+      <div className="w-10 h-10 border-2 border-[#5EB929]/20 border-t-[#5EB929] rounded-full animate-spin" />
     </div>
   );
 
@@ -402,12 +405,12 @@ const MerchantApp = () => {
 
   if (merchant?.status === 'approved') {
     return (
-      <div className="flex bg-[#F8F5FF] min-h-screen font-sans">
+      <div className="flex bg-background min-h-screen font-sans">
         <MerchantSidebar merchant={merchant} />
         
         {/* Premium Mobile Top Nav */}
         <div className="lg:hidden fixed top-0 left-0 right-0 z-[9999] bg-white/80 backdrop-blur-2xl border-b border-gray-100 h-14 flex items-center justify-between px-4">
-           <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2.5">
               {location.pathname !== '/merchant' && (
                 <button 
                   onClick={() => navigate(-1)}
@@ -416,17 +419,18 @@ const MerchantApp = () => {
                   <ArrowBackIosNewRoundedIcon sx={{ fontSize: 16 }} />
                 </button>
               )}
-              <h1 className="text-[15px] font-black text-gray-900 tracking-tighter uppercase">
-                 OFFERLY<span className="text-[#3D7A4F] italic">BIZ</span>
+              <img src="/offerly-logo-ring.png" alt="Offerly" className="w-6 h-6 object-contain" />
+              <h1 className="text-[15px] font-bold text-gray-900 tracking-tight uppercase">
+                 OFFERLY<span className="text-[#5EB929] italic">BIZ</span>
               </h1>
-           </div>
+            </div>
            <button 
              onClick={() => navigate('/merchant/notifications')}
              className="relative w-9 h-9 flex items-center justify-center rounded-xl bg-gray-50 text-gray-400 active:scale-95 transition-all"
            >
               <NotificationsRoundedIcon sx={{ fontSize: 20 }} />
               {unreadCount > 0 && (
-                <div className="absolute top-2 right-2 w-2 h-2 bg-[#3D7A4F] rounded-full border-2 border-white animate-pulse" />
+                <div className="absolute top-2 right-2 w-2 h-2 bg-[#5EB929] rounded-full border-2 border-white animate-pulse" />
               )}
            </button>
         </div>
@@ -435,7 +439,7 @@ const MerchantApp = () => {
         <MerchantBottomNav unreadCount={unreadCount} />
 
         <main className="flex-1 lg:ml-[260px] p-4 lg:p-8 pt-20 pb-24 lg:pb-8 relative overflow-hidden">
-          <div className="absolute -top-32 -right-32 w-[500px] h-[500px] bg-[#3D7A4F]/[0.03] rounded-full blur-3xl pointer-events-none" />
+          <div className="absolute -top-32 -right-32 w-[500px] h-[500px] bg-[#5EB929]/[0.03] rounded-full blur-3xl pointer-events-none" />
           
           <div className="relative z-10 w-full max-w-7xl mx-auto">
             <Suspense fallback={<PageLoader />}>
@@ -487,7 +491,7 @@ const Placeholder = ({ title }) => (
     <div className="w-20 h-20 bg-primary/5 text-primary rounded-3xl flex items-center justify-center mx-auto mb-6">
       <Inventory2RoundedIcon sx={{ fontSize: 40 }} />
     </div>
-    <h1 className="text-3xl font-black text-gray-900 mb-2 uppercase">{title}</h1>
+    <h1 className="text-3xl font-bold text-gray-900 mb-2 uppercase">{title}</h1>
     <p className="text-gray-500 font-medium max-w-sm mx-auto">This section is being architected with full CRUD support for {title.toLowerCase()}. Stay tuned!</p>
   </div>
 );

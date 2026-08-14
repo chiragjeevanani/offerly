@@ -1,7 +1,15 @@
+import dns from 'dns';
 import mongoose from 'mongoose';
 import dotenv from 'dotenv';
 
 dotenv.config();
+
+// Ensure Node.js can resolve MongoDB Atlas SRV records even if local ISP DNS fails
+try {
+    dns.setServers(['8.8.8.8', '8.8.4.4', '1.1.1.1']);
+} catch (e) {
+    // Keep system default if setting servers fails
+}
 
 const connectDB = async () => {
     try {

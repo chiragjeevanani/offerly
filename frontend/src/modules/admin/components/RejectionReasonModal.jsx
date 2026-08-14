@@ -101,7 +101,7 @@ const RejectionReasonModal = ({ isOpen, merchantName, onClose, onConfirm }) => {
                   <WarningRoundedIcon className="text-red-600" sx={{ fontSize: 24 }} />
                 </div>
                 <div>
-                  <h2 id="rejection-modal-title" className="text-xl font-black text-gray-900 leading-tight">
+                  <h2 id="rejection-modal-title" className="text-xl font-bold text-gray-900 leading-tight">
                     Reject {merchantName}?
                   </h2>
                   <p id="rejection-modal-description" className="text-xs text-gray-500 font-medium mt-0.5">
@@ -122,7 +122,7 @@ const RejectionReasonModal = ({ isOpen, merchantName, onClose, onConfirm }) => {
             <div className="p-8">
               <label 
                 htmlFor="rejection-reason"
-                className="block text-xs font-black text-gray-400 uppercase tracking-widest mb-3"
+                className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-3"
               >
                 Rejection Reason (Optional)
               </label>

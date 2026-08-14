@@ -42,14 +42,14 @@ const AdminDataTable = ({
       {/* Page Header */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-4">
         <div>
-          <h1 className="text-3xl font-black text-gray-900 leading-tight tracking-tight">{title}</h1>
+          <h1 className="text-3xl font-bold text-gray-900 leading-tight tracking-tight">{title}</h1>
           {description && <p className="text-sm font-medium text-gray-500 mt-1">{description}</p>}
         </div>
         
         {onAdd && (
           <button 
             onClick={onAdd}
-            className="bg-[#3D7A4F] hover:bg-[#2B5738] text-white px-5 py-2.5 rounded-md font-bold text-sm flex items-center gap-2 shadow-lg shadow-[#3D7A4F]/25 transition-all whitespace-nowrap active:scale-95"
+            className="bg-[#5EB929] hover:bg-[#489A1B] text-white px-5 py-2.5 rounded-md font-bold text-sm flex items-center gap-2 shadow-lg shadow-[#5EB929]/25 transition-all whitespace-nowrap active:scale-95"
           >
             <AddRoundedIcon sx={{ fontSize: 20 }} />
             {addLabel}
@@ -62,13 +62,13 @@ const AdminDataTable = ({
         {/* Action Bar */}
         <div className="p-4 border-b border-gray-100 flex items-center justify-between gap-4 bg-gray-50/50">
           <div className="relative w-full max-w-sm group">
-            <SearchRoundedIcon className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-[#3D7A4F] transition-colors" sx={{ fontSize: 18 }} />
+            <SearchRoundedIcon className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-[#5EB929] transition-colors" sx={{ fontSize: 18 }} />
             <input 
               type="text" 
               placeholder={searchPlaceholder}
               value={searchQuery}
               onChange={(e) => { setSearchQuery(e.target.value); setCurrentPage(1); }}
-              className="w-full bg-white border border-gray-200 rounded-md py-2.5 pl-10 pr-4 text-sm font-bold text-gray-700 focus:ring-2 focus:ring-[#3D7A4F]/20 focus:border-[#3D7A4F] transition-all outline-none shadow-sm"
+              className="w-full bg-white border border-gray-200 rounded-md py-2.5 pl-10 pr-4 text-sm font-bold text-gray-700 focus:ring-2 focus:ring-[#5EB929]/20 focus:border-[#5EB929] transition-all outline-none shadow-sm"
             />
           </div>
           
@@ -91,13 +91,13 @@ const AdminDataTable = ({
                 {columns.map((col, idx) => (
                   <th 
                     key={idx} 
-                    className={`px-6 py-4 text-[11px] font-black text-gray-400 uppercase tracking-[0.15em] ${col.className || ''}`}
+                    className={`px-6 py-4 text-[11px] font-bold text-gray-400 uppercase tracking-[0.15em] ${col.className || ''}`}
                   >
                     {col.header}
                   </th>
                 ))}
                 {(onEdit || onDelete) && (
-                  <th className="px-6 py-4 text-[11px] font-black text-gray-400 uppercase tracking-[0.15em] text-right">Actions</th>
+                  <th className="px-6 py-4 text-[11px] font-bold text-gray-400 uppercase tracking-[0.15em] text-right">Actions</th>
                 )}
               </tr>
             </thead>
@@ -117,7 +117,7 @@ const AdminDataTable = ({
                   <tr 
                     key={row._id || row.id || rowIdx} 
                     onClick={() => onRowClick && onRowClick(row)}
-                    className={`transition-colors ${onRowClick ? 'cursor-pointer hover:bg-[#3D7A4F]/[0.02]' : 'hover:bg-gray-50/50'}`}
+                    className={`transition-colors ${onRowClick ? 'cursor-pointer hover:bg-[#5EB929]/[0.02]' : 'hover:bg-gray-50/50'}`}
                   >
                     {columns.map((col, colIdx) => (
                       <td key={colIdx} className={`px-6 py-4 align-middle ${col.className || ''}`}>
@@ -133,7 +133,7 @@ const AdminDataTable = ({
                           {onEdit && (
                             <button 
                               onClick={() => onEdit(row)}
-                              className="p-1.5 hover:bg-[#3D7A4F]/10 text-gray-400 hover:text-[#3D7A4F] rounded-md transition-colors"
+                              className="p-1.5 hover:bg-[#5EB929]/10 text-gray-400 hover:text-[#5EB929] rounded-md transition-colors"
                               title="Edit"
                             >
                               <EditRoundedIcon sx={{ fontSize: 18 }} />

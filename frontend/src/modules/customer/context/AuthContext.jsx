@@ -5,27 +5,34 @@ import { userAPI } from '../../../api/user.api';
 const AuthContext = createContext(null);
 
 export const AuthProvider = ({ children }) => {
-  const [user, setUser] = useState(null);
-  const [authStatus, setAuthStatus] = useState('loading');
+  const [user, setUser] = useState(() => storage.getUser());
+  const [authStatus, setAuthStatus] = useState(() => (storage.getToken() ? 'authenticated' : 'unauthenticated'));
 
-  // Load user on mount if token exists
+  // Validate user on mount if token exists
   useEffect(() => {
     const initAuth = async () => {
       const token = storage.getToken();
       if (!token) {
         setAuthStatus('unauthenticated');
+        setUser(null);
         return;
       }
 
       try {
-        const { user: profile } = await userAPI.getProfile();
+        const response = await userAPI.getProfile();
+        const profile = response.user || response;
         setUser(profile);
         setAuthStatus('authenticated');
         storage.setUser(profile);
       } catch (error) {
-        console.error('Auth initialization failed:', error);
-        storage.clearAuth();
-        setAuthStatus('unauthenticated');
+        console.error('Auth verification failed:', error);
+        // Only clear storage if token was invalid/expired (401)
+        const isUnauthorized = error?.statusCode === 401 || error?.response?.status === 401;
+        if (isUnauthorized) {
+          storage.clearAuth();
+          setUser(null);
+          setAuthStatus('unauthenticated');
+        }
       }
     };
 

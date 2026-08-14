@@ -265,16 +265,16 @@ const QrScreen = () => {
               className="bg-white w-full p-8 rounded-[2.5rem] shadow-2xl relative overflow-hidden"
             >
               {/* Decorative Header */}
-              <div className="absolute top-0 left-0 right-0 h-2 bg-gradient-to-r from-gray-100 via-[#3D7A4F]/20 to-gray-100" />
+              <div className="absolute top-0 left-0 right-0 h-2 bg-gradient-to-r from-gray-100 via-[#5EB929]/20 to-gray-100" />
               
               <div className="text-center mt-2 mb-6">
                 <div className="inline-block px-3 py-1 bg-[#F8FAFC] border border-gray-100 rounded-lg mb-3">
-                   <p className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] leading-none">Booking Preview</p>
+                   <p className="text-[10px] font-bold text-gray-400 uppercase tracking-[0.2em] leading-none">Booking Preview</p>
                 </div>
-                <h2 className="text-2xl font-black text-gray-900 leading-tight uppercase tracking-tight">{merchant.storeName}</h2>
+                <h2 className="text-2xl font-bold text-gray-900 leading-tight uppercase tracking-tight">{merchant.storeName}</h2>
                 <div className="flex items-center justify-center gap-1.5 mt-2">
-                   <div className="w-1.5 h-1.5 bg-[#3D7A4F] rounded-full animate-pulse" />
-                   <p className="text-[9px] font-black text-[#3D7A4F] uppercase tracking-widest">Awaiting Reservation</p>
+                   <div className="w-1.5 h-1.5 bg-[#5EB929] rounded-full animate-pulse" />
+                   <p className="text-[9px] font-bold text-[#5EB929] uppercase tracking-widest">Awaiting Reservation</p>
                 </div>
               </div>
 
@@ -290,10 +290,10 @@ const QrScreen = () => {
                   return (
                   <div key={idx} className="flex justify-between items-center group">
                     <div className="flex-1">
-                       <p className="text-[13px] font-black text-gray-800 leading-tight">{productName}</p>
+                       <p className="text-[13px] font-bold text-gray-800 leading-tight">{productName}</p>
                        <p className="text-[10px] font-bold text-gray-400 mt-1 uppercase tracking-tight">{it.qty} Unit(s)</p>
                     </div>
-                    <span className="text-[14px] font-black text-gray-900">₹{Math.round(it.qty * productPrice)}</span>
+                    <span className="text-[14px] font-bold text-gray-900">₹{Math.round(it.qty * productPrice)}</span>
                   </div>
                   );
                 })}
@@ -301,12 +301,12 @@ const QrScreen = () => {
 
               <div className="bg-[#F8FAFC] rounded-3xl p-6 border border-gray-50 mb-6">
                 <div className="flex justify-between items-center mb-1">
-                   <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Total Payable</p>
-                   <p className="text-[10px] font-black text-[#3D7A4F] uppercase tracking-widest">At Store</p>
+                   <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Total Payable</p>
+                   <p className="text-[10px] font-bold text-[#5EB929] uppercase tracking-widest">At Store</p>
                 </div>
                 <div className="flex justify-between items-end">
                    <p className="text-[12px] font-bold text-gray-400">Net Amount</p>
-                   <span className="text-3xl font-black text-[#3D7A4F] leading-none tracking-tighter">₹{Math.round(draftData?.totals?.final)}</span>
+                   <span className="text-3xl font-bold text-[#5EB929] leading-none tracking-tight">₹{Math.round(draftData?.totals?.final)}</span>
                 </div>
               </div>
 
@@ -321,7 +321,7 @@ const QrScreen = () => {
                   whileTap={{ scale: 0.98 }}
                   onClick={handleSendRequest}
                   disabled={isRequesting}
-                  className="w-full h-14 bg-gray-900 text-white rounded-2xl font-black text-[12px] uppercase tracking-[0.25em] flex items-center justify-center gap-3 shadow-2xl shadow-black/20 active:scale-95 transition-all"
+                  className="w-full h-14 bg-gray-900 text-white rounded-2xl font-bold text-[12px] uppercase tracking-[0.25em] flex items-center justify-center gap-3 shadow-2xl shadow-black/20 active:scale-95 transition-all"
                 >
                   {isRequesting ? (
                     <div className="w-5 h-5 border-2 border-white/20 border-t-white rounded-full animate-spin" />
@@ -342,13 +342,13 @@ const QrScreen = () => {
               className="bg-white w-full rounded-[2rem] shadow-2xl relative overflow-hidden flex flex-col border border-gray-50"
             >
               {/* Header Area - Ultra Compact */}
-              <div className="bg-[#3D7A4F]/5 p-4 flex items-center justify-center gap-3 border-b border-[#3D7A4F]/10">
-                <div className="w-8 h-8 bg-[#3D7A4F] rounded-full flex items-center justify-center shrink-0 shadow-lg shadow-[#3D7A4F]/20">
+              <div className="bg-[#5EB929]/5 p-4 flex items-center justify-center gap-3 border-b border-[#5EB929]/10">
+                <div className="w-8 h-8 bg-[#5EB929] rounded-full flex items-center justify-center shrink-0 shadow-lg shadow-[#5EB929]/20">
                    <CheckCircleRoundedIcon className="text-white" sx={{ fontSize: 18 }} />
                 </div>
                 <div className="text-left">
-                   <h1 className="text-sm font-black text-gray-900 uppercase leading-none tracking-tight">Reservation Confirmed</h1>
-                   <p className="text-[8px] font-black text-gray-400 mt-1 uppercase tracking-[0.1em]">Pass ID: <span className="text-gray-900">{booking.internalId || booking.id || booking._id}</span></p>
+                   <h1 className="text-sm font-bold text-gray-900 uppercase leading-none tracking-tight">Reservation Confirmed</h1>
+                   <p className="text-[8px] font-bold text-gray-400 mt-1 uppercase tracking-[0.1em]">Pass ID: <span className="text-gray-900">{booking.internalId || booking.id || booking._id}</span></p>
                 </div>
               </div>
 
@@ -358,7 +358,7 @@ const QrScreen = () => {
                 <div className="absolute top-1/2 left-0 -translate-x-1/2 -translate-y-1/2 w-5 h-5 rounded-full bg-gray-950" />
                 <div className="absolute top-1/2 right-0 translate-x-1/2 -translate-y-1/2 w-5 h-5 rounded-full bg-gray-950" />
 
-                <div className="bg-white p-3 rounded-2xl shadow-xl shadow-[#3D7A4F]/5 border border-gray-50">
+                <div className="bg-white p-3 rounded-2xl shadow-xl shadow-[#5EB929]/5 border border-gray-50">
                   <QRCodeSVG
                     value={booking.qrToken || booking.id || booking._id}
                     size={140}
@@ -367,7 +367,7 @@ const QrScreen = () => {
                     level="H"
                   />
                 </div>
-                <div className="mt-4 bg-[#F8FAFC] flex items-center gap-2 px-3 py-1 rounded-md border border-gray-100 text-[9px] font-black tracking-[0.2em] text-gray-900">
+                <div className="mt-4 bg-[#F8FAFC] flex items-center gap-2 px-3 py-1 rounded-md border border-gray-100 text-[9px] font-bold tracking-[0.2em] text-gray-900">
                   {booking.internalId || booking.id || booking._id}
                 </div>
               </div>
@@ -377,10 +377,10 @@ const QrScreen = () => {
                 <div className="bg-white rounded-2xl p-4 border border-gray-50 shadow-sm">
                   <div className="flex justify-between items-start mb-3 border-b border-gray-50 pb-2">
                      <div>
-                        <h3 className="text-[11px] font-black text-gray-900 leading-none">{merchant.storeName}</h3>
+                        <h3 className="text-[11px] font-bold text-gray-900 leading-none">{merchant.storeName}</h3>
                         <p className="text-[8px] font-bold text-gray-400 mt-1 uppercase truncate max-w-[150px]">{merchant.locality || merchant.address}</p>
                      </div>
-                     <div className="px-2 py-0.5 bg-green-50 text-green-600 rounded text-[7px] font-black uppercase tracking-wider">Verified</div>
+                     <div className="px-2 py-0.5 bg-green-50 text-green-600 rounded text-[7px] font-bold uppercase tracking-wider">Verified</div>
                   </div>
 
                   {booking.items && booking.items.length > 0 && (
@@ -391,7 +391,7 @@ const QrScreen = () => {
                         return (
                           <div key={idx} className="flex justify-between items-center text-[10px]">
                             <span className="font-bold text-gray-500">{it.qty} × {productName}</span>
-                            <span className="font-black text-gray-900">₹{Math.round(it.qty * productPrice)}</span>
+                            <span className="font-bold text-gray-900">₹{Math.round(it.qty * productPrice)}</span>
                           </div>
                         );
                       })}
@@ -400,8 +400,8 @@ const QrScreen = () => {
 
                   {booking.totals && (
                     <div className="pt-2 flex justify-between items-end border-t border-dashed border-gray-100">
-                      <p className="text-[8px] font-black text-gray-400 uppercase tracking-widest leading-none">Total Offline Pay</p>
-                      <span className="text-lg font-black text-[#3D7A4F] leading-none tracking-tighter">₹{Math.round(booking.totals.total || booking.totals.final)}</span>
+                      <p className="text-[8px] font-bold text-gray-400 uppercase tracking-widest leading-none">Total Offline Pay</p>
+                      <span className="text-lg font-bold text-[#5EB929] leading-none tracking-tight">₹{Math.round(booking.totals.total || booking.totals.final)}</span>
                     </div>
                   )}
                 </div>
@@ -409,7 +409,7 @@ const QrScreen = () => {
                 {/* Compact Instruction */}
                 <div className="mt-3 flex items-center justify-center gap-2">
                    <div className="w-1.5 h-1.5 bg-orange-400 rounded-full animate-pulse" />
-                   <p className="text-[8px] font-black text-gray-400 uppercase tracking-widest">
+                   <p className="text-[8px] font-bold text-gray-400 uppercase tracking-widest">
                      {isExpired ? 'Pass Expired' : `Expires in ${timeLeft}`} — Show to merchant
                    </p>
                 </div>
@@ -436,18 +436,18 @@ const QrScreen = () => {
                   initial={{ scale: 0 }}
                   animate={{ scale: 1 }}
                   transition={{ type: 'spring', stiffness: 300, damping: 15, delay: 0.4 }}
-                  className="w-24 h-24 bg-[#3D7A4F]/10 rounded-full flex items-center justify-center mx-auto mb-8 shadow-inner"
+                  className="w-24 h-24 bg-[#5EB929]/10 rounded-full flex items-center justify-center mx-auto mb-8 shadow-inner"
                 >
-                  <CheckCircleRoundedIcon className="text-[#3D7A4F]" sx={{ fontSize: 48 }} />
+                  <CheckCircleRoundedIcon className="text-[#5EB929]" sx={{ fontSize: 48 }} />
                 </motion.div>
-                <h2 className="text-2xl font-black text-gray-900 mb-3 uppercase tracking-tight">Booking Fulfilled!</h2>
+                <h2 className="text-2xl font-bold text-gray-900 mb-3 uppercase tracking-tight">Booking Fulfilled!</h2>
                 <p className="text-[13px] text-gray-500 font-medium mb-8 leading-relaxed">
-                  Your reservation <span className="font-black text-gray-900">#{booking?.internalId || booking?._id}</span> has been verified and completed successfully.
+                  Your reservation <span className="font-bold text-gray-900">#{booking?.internalId || booking?._id}</span> has been verified and completed successfully.
                 </p>
                 <motion.button
                   whileTap={{ scale: 0.98 }}
                   onClick={() => navigate('/home')}
-                  className="w-full py-4.5 bg-gray-900 text-white rounded-2xl font-black text-[12px] uppercase tracking-[0.2em] shadow-xl shadow-black/10 active:scale-95 transition-all"
+                  className="w-full py-4.5 bg-gray-900 text-white rounded-2xl font-bold text-[12px] uppercase tracking-[0.2em] shadow-xl shadow-black/10 active:scale-95 transition-all"
                 >
                   Return to Home
                 </motion.button>

@@ -13,7 +13,7 @@ import RefreshRoundedIcon from '@mui/icons-material/RefreshRounded';
 import ChevronRightRoundedIcon from '@mui/icons-material/ChevronRightRounded';
 import toast from 'react-hot-toast';
 
-const COLORS = ['#3D7A4F', '#4ADE80', '#FBBF24', '#F87171', '#818CF8', '#F472B6'];
+const COLORS = ['#5EB929', '#4ADE80', '#FBBF24', '#F87171', '#818CF8', '#F472B6'];
 
 const Analytics = () => {
   const { data: rawStats, isLoading: loading, refetch, isFetching } = useQuery({
@@ -81,15 +81,15 @@ const Analytics = () => {
         <Icon sx={{ fontSize: 24 }} />
       </div>
       <div>
-        <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest leading-none mb-1">{title}</p>
-        <h3 className="text-xl font-black text-gray-800 leading-none">{value}</h3>
+        <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest leading-none mb-1">{title}</p>
+        <h3 className="text-xl font-bold text-gray-800 leading-none">{value}</h3>
         {subtitle && <p className="text-[10px] text-gray-500 mt-1 font-medium">{subtitle}</p>}
       </div>
     </div>
   );
 
   return (
-    <div className="min-h-[calc(100vh-80px)] bg-[#F8F5FF] p-4 lg:p-8 -m-6 lg:-m-8 font-sans text-gray-800 lg:rounded-tl-[32px]">
+    <div className="min-h-[calc(100vh-80px)] bg-background p-4 lg:p-8 -m-6 lg:-m-8 font-sans text-gray-800 lg:rounded-tl-[32px]">
       <div className="max-w-7xl mx-auto">
         {/* Header Section */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-2 mb-6">
@@ -158,8 +158,8 @@ const Analytics = () => {
                 <LineChart data={bookingsByDate}>
                   <defs>
                     <linearGradient id="colorCount" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#3D7A4F" stopOpacity={0.1}/>
-                      <stop offset="95%" stopColor="#3D7A4F" stopOpacity={0}/>
+                      <stop offset="5%" stopColor="#5EB929" stopOpacity={0.1}/>
+                      <stop offset="95%" stopColor="#5EB929" stopOpacity={0}/>
                     </linearGradient>
                   </defs>
                   <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f3f4f6" />
@@ -167,9 +167,9 @@ const Analytics = () => {
                   <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: '#9ca3af' }} />
                   <Tooltip 
                     contentStyle={{ border: 'none', borderRadius: '12px', boxShadow: '0 4px 12px rgba(0,0,0,0.05)', fontSize: '11px', fontWeight: 'bold' }}
-                    cursor={{ stroke: '#3D7A4F', strokeWidth: 1 }}
+                    cursor={{ stroke: '#5EB929', strokeWidth: 1 }}
                   />
-                  <Line type="monotone" dataKey="count" stroke="#3D7A4F" strokeWidth={3} dot={{ r: 4, fill: '#3D7A4F', strokeWidth: 2, stroke: '#fff' }} activeDot={{ r: 6 }} />
+                  <Line type="monotone" dataKey="count" stroke="#5EB929" strokeWidth={3} dot={{ r: 4, fill: '#5EB929', strokeWidth: 2, stroke: '#fff' }} activeDot={{ r: 6 }} />
                 </LineChart>
               </ResponsiveContainer>
             </div>
@@ -232,7 +232,7 @@ const Analytics = () => {
                     className="flex items-center justify-between p-3 bg-gray-50 hover:bg-gray-100 transition-all rounded-xl border border-gray-50 group"
                   >
                     <div className="flex items-center gap-4">
-                       <div className={`w-8 h-8 rounded-lg flex items-center justify-center text-[13px] font-black ${
+                       <div className={`w-8 h-8 rounded-lg flex items-center justify-center text-[13px] font-bold ${
                          idx === 0 ? 'bg-amber-100 text-amber-600' : 
                          idx === 1 ? 'bg-gray-200 text-gray-600' :
                          idx === 2 ? 'bg-orange-100 text-orange-600' :
@@ -242,13 +242,13 @@ const Analytics = () => {
                        </div>
                        <div>
                          <p className="text-[13px] font-bold text-gray-800 leading-none">{merchant.storeName}</p>
-                         <p className="text-[10px] text-gray-400 font-black uppercase tracking-widest mt-1">{merchant.category}</p>
+                         <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest mt-1">{merchant.category}</p>
                        </div>
                     </div>
 
                     <div className="flex items-center gap-6">
                        <div className="text-right">
-                          <p className="text-[14px] font-black text-primary leading-none">{merchant.totalRedemptions}</p>
+                          <p className="text-[14px] font-bold text-primary leading-none">{merchant.totalRedemptions}</p>
                           <p className="text-[9px] text-gray-400 font-bold uppercase tracking-widest mt-1">Bookings</p>
                        </div>
                        <ChevronRightRoundedIcon sx={{ fontSize: 16 }} className="text-gray-300 group-hover:text-primary" />

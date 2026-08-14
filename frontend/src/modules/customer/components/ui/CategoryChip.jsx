@@ -56,7 +56,7 @@ export const CategoryChip = ({ label, isActive, onClick }) => {
 // ── Grid card variant ─────────────────────────────────────────────────────────
 export const CategoryCard = ({ label, onClick }) => {
   const Icon = iconMap[label] || StorefrontRoundedIcon;
-  const color = colorMap[label] || '#3D7A4F';
+  const color = colorMap[label] || '#5EB929';
 
   return (
     <motion.button

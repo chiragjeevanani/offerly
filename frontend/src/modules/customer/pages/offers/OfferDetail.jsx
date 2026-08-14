@@ -299,16 +299,16 @@ const OfferDetail = () => {
       {/* Floating Booking Bar - Premium & Responsive */}
       <div className="fixed bottom-20 lg:bottom-6 left-0 right-0 lg:left-auto lg:right-1/2 lg:translate-x-1/2 lg:w-full lg:max-w-2xl z-30 px-4 lg:px-0">
         <div className="bg-white/90 backdrop-blur-xl border border-gray-100 lg:rounded-3xl shadow-[0_20px_50px_rgba(0,0,0,0.15)] p-3.5 flex items-center gap-6 relative overflow-hidden">
-          <div className="absolute top-0 left-0 w-1.5 h-full bg-[#3D7A4F]" />
+          <div className="absolute top-0 left-0 w-1.5 h-full bg-[#5EB929]" />
           <div className="flex-1 pl-2">
-            <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest leading-none mb-1">Benefit</p>
-            <p className="text-xl font-black text-[#3D7A4F] leading-none tracking-tight">{discountLabel}</p>
+            <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest leading-none mb-1">Benefit</p>
+            <p className="text-xl font-bold text-[#5EB929] leading-none tracking-tight">{discountLabel}</p>
           </div>
           <motion.button
             whileTap={{ scale: 0.98 }}
             onClick={handleRedeem}
             disabled={isRedeeming}
-            className="flex items-center justify-center gap-3 bg-[#3D7A4F] text-white font-black text-[11px] uppercase tracking-[0.2em] px-8 py-3.5 rounded-xl shadow-lg shadow-[#3D7A4F]/20 active:scale-95 transition-all"
+            className="flex items-center justify-center gap-3 bg-[#5EB929] text-white font-bold text-[11px] uppercase tracking-[0.2em] px-8 py-3.5 rounded-xl shadow-lg shadow-[#5EB929]/20 active:scale-95 transition-all"
           >
             {isRedeeming ? (
               <div className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" />

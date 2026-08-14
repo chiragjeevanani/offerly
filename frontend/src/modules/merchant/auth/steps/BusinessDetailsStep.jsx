@@ -119,12 +119,12 @@ const BusinessDetailsStep = ({ data, onSubmit, onBack, loading }) => {
         animate={{ y: 0, opacity: 1 }}
         className="bg-white rounded-[2.5rem] p-6 md:p-10 shadow-2xl shadow-gray-200/50 border border-white relative overflow-hidden"
       >
-        <div className="absolute top-0 right-0 w-32 h-32 bg-[#3D7A4F]/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
+        <div className="absolute top-0 right-0 w-32 h-32 bg-[#5EB929]/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
         
         <div className="relative z-10 space-y-8">
           {/* Header */}
           <div className="space-y-1">
-            <h2 className="text-gray-900 font-black text-xl tracking-tight">Business Details</h2>
+            <h2 className="text-gray-900 font-bold text-xl tracking-tight">Business Details</h2>
             <p className="text-gray-400 text-[10px] font-bold tracking-tight">Configure your store identity and profile</p>
           </div>
 
@@ -134,14 +134,14 @@ const BusinessDetailsStep = ({ data, onSubmit, onBack, loading }) => {
               <motion.div 
                 whileTap={{ scale: 0.95 }}
                 onClick={() => logoInputRef.current?.click()}
-                className="w-24 h-24 rounded-[2rem] bg-[#F8F5FF] border border-gray-100 flex items-center justify-center relative cursor-pointer group hover:border-[#3D7A4F]/30 transition-all"
+                className="w-24 h-24 rounded-[2rem] bg-background border border-gray-100 flex items-center justify-center relative cursor-pointer group hover:border-[#5EB929]/30 transition-all"
               >
                 {formData.logo ? (
                   <img src={formData.logo} className="w-full h-full object-cover rounded-[1.8rem]" alt="" />
                 ) : (
-                  <StorefrontRoundedIcon sx={{ fontSize: 40 }} className="text-[#3D7A4F]/20" />
+                  <StorefrontRoundedIcon sx={{ fontSize: 40 }} className="text-[#5EB929]/20" />
                 )}
-                <div className="absolute bottom-0 right-0 w-8 h-8 bg-[#3D7A4F] text-white rounded-xl flex items-center justify-center shadow-lg border-2 border-white scale-90">
+                <div className="absolute bottom-0 right-0 w-8 h-8 bg-[#5EB929] text-white rounded-xl flex items-center justify-center shadow-lg border-2 border-white scale-90">
                   <CameraAltRoundedIcon sx={{ fontSize: 14 }} />
                 </div>
               </motion.div>
@@ -154,8 +154,8 @@ const BusinessDetailsStep = ({ data, onSubmit, onBack, loading }) => {
               <div className="space-y-1.5">
                 <label className="text-[10px] font-bold text-gray-400 px-1">Store Name</label>
                 <div className="relative group">
-                  <StorefrontRoundedIcon className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-300 group-focus-within:text-[#3D7A4F] transition-colors" sx={{ fontSize: 18 }} />
-                  <input name="storeName" value={formData.storeName} onChange={handleChange} placeholder="e.g. FitZone Gym" className="w-full h-12 pl-11 pr-4 bg-[#F8F5FF] rounded-2xl border border-gray-50 text-sm font-bold outline-none focus:bg-white focus:border-[#3D7A4F]/30 transition-all" />
+                  <StorefrontRoundedIcon className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-300 group-focus-within:text-[#5EB929] transition-colors" sx={{ fontSize: 18 }} />
+                  <input name="storeName" value={formData.storeName} onChange={handleChange} placeholder="e.g. FitZone Gym" className="w-full h-12 pl-11 pr-4 bg-background rounded-2xl border border-gray-50 text-sm font-bold outline-none focus:bg-white focus:border-[#5EB929]/30 transition-all" />
                 </div>
               </div>
 
@@ -163,8 +163,8 @@ const BusinessDetailsStep = ({ data, onSubmit, onBack, loading }) => {
               <div className="space-y-1.5">
                 <label className="text-[10px] font-bold text-gray-400 px-1">Category</label>
                 <div className="relative group">
-                  <CategoryRoundedIcon className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-300 group-focus-within:text-[#3D7A4F] transition-colors z-10" sx={{ fontSize: 18 }} />
-                  <select name="category" value={formData.category} onChange={handleChange} className="w-full h-12 pl-11 pr-4 bg-[#F8F5FF] rounded-2xl border border-gray-50 text-xs font-bold outline-none focus:bg-white focus:border-[#3D7A4F]/30 appearance-none transition-all cursor-pointer">
+                  <CategoryRoundedIcon className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-300 group-focus-within:text-[#5EB929] transition-colors z-10" sx={{ fontSize: 18 }} />
+                  <select name="category" value={formData.category} onChange={handleChange} className="w-full h-12 pl-11 pr-4 bg-background rounded-2xl border border-gray-50 text-xs font-bold outline-none focus:bg-white focus:border-[#5EB929]/30 appearance-none transition-all cursor-pointer">
                     <option value="">Select</option>
                     {categories.map(c => <option key={c._id} value={c.name}>{c.name}</option>)}
                   </select>
@@ -175,12 +175,12 @@ const BusinessDetailsStep = ({ data, onSubmit, onBack, loading }) => {
               <div className="md:col-span-2 space-y-1.5">
                 <label className="text-[10px] font-bold text-gray-400 px-1">Store Description</label>
                 <div className="relative group">
-                  <DescriptionRoundedIcon className="absolute left-4 top-4 text-gray-300 group-focus-within:text-[#3D7A4F] transition-colors" sx={{ fontSize: 18 }} />
-                  <textarea name="description" value={formData.description} onChange={handleChange} rows="3" placeholder="Tell consumers what makes your store unique..." className="w-full pl-11 pr-4 py-3 bg-[#F8F5FF] rounded-2xl border border-gray-50 text-sm font-bold outline-none focus:bg-white focus:border-[#3D7A4F]/30 transition-all resize-none" />
+                  <DescriptionRoundedIcon className="absolute left-4 top-4 text-gray-300 group-focus-within:text-[#5EB929] transition-colors" sx={{ fontSize: 18 }} />
+                  <textarea name="description" value={formData.description} onChange={handleChange} rows="3" placeholder="Tell consumers what makes your store unique..." className="w-full pl-11 pr-4 py-3 bg-background rounded-2xl border border-gray-50 text-sm font-bold outline-none focus:bg-white focus:border-[#5EB929]/30 transition-all resize-none" />
                 </div>
                 <div className="flex justify-between px-1">
                    <p className="text-[9px] font-bold text-gray-300">Min 10 words required</p>
-                   <p className={`text-[9px] font-bold ${formData.description.split(' ').length < 10 ? 'text-red-400' : 'text-[#3D7A4F]'}`}>{formData.description.split(' ').filter(x => x).length} Words</p>
+                   <p className={`text-[9px] font-bold ${formData.description.split(' ').length < 10 ? 'text-red-400' : 'text-[#5EB929]'}`}>{formData.description.split(' ').filter(x => x).length} Words</p>
                 </div>
               </div>
 
@@ -188,8 +188,8 @@ const BusinessDetailsStep = ({ data, onSubmit, onBack, loading }) => {
               <div className="space-y-1.5">
                 <label className="text-[10px] font-bold text-gray-400 px-1">Business Email</label>
                 <div className="relative group">
-                  <EmailRoundedIcon className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-300 group-focus-within:text-[#3D7A4F] transition-colors" sx={{ fontSize: 18 }} />
-                  <input type="email" name="businessEmail" value={formData.businessEmail} onChange={handleChange} placeholder="contact@store.com" className="w-full h-12 pl-11 pr-4 bg-[#F8F5FF] rounded-2xl border border-gray-50 text-sm font-bold outline-none focus:bg-white focus:border-[#3D7A4F]/30 transition-all" />
+                  <EmailRoundedIcon className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-300 group-focus-within:text-[#5EB929] transition-colors" sx={{ fontSize: 18 }} />
+                  <input type="email" name="businessEmail" value={formData.businessEmail} onChange={handleChange} placeholder="contact@store.com" className="w-full h-12 pl-11 pr-4 bg-background rounded-2xl border border-gray-50 text-sm font-bold outline-none focus:bg-white focus:border-[#5EB929]/30 transition-all" />
                 </div>
               </div>
 
@@ -197,10 +197,10 @@ const BusinessDetailsStep = ({ data, onSubmit, onBack, loading }) => {
               <div className="space-y-1.5">
                 <label className="text-[10px] font-bold text-gray-400 px-1">Support Phone</label>
                 <div className="flex gap-2">
-                  <div className="h-12 w-14 bg-[#F8F5FF] rounded-2xl border border-gray-50 flex items-center justify-center text-[11px] font-black text-gray-400">🇮🇳</div>
+                  <div className="h-12 w-14 bg-background rounded-2xl border border-gray-50 flex items-center justify-center text-[11px] font-bold text-gray-400">🇮🇳</div>
                   <div className="relative flex-1 group">
-                    <PhoneRoundedIcon className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-300 group-focus-within:text-[#3D7A4F] transition-colors" sx={{ fontSize: 18 }} />
-                    <input type="tel" name="businessPhone" value={formData.businessPhone} onChange={handlePhoneChange} placeholder="Phone" className="w-full h-12 pl-11 pr-4 bg-[#F8F5FF] rounded-2xl border border-gray-50 text-sm font-bold outline-none focus:bg-white focus:border-[#3D7A4F]/30 transition-all" />
+                    <PhoneRoundedIcon className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-300 group-focus-within:text-[#5EB929] transition-colors" sx={{ fontSize: 18 }} />
+                    <input type="tel" name="businessPhone" value={formData.businessPhone} onChange={handlePhoneChange} placeholder="Phone" className="w-full h-12 pl-11 pr-4 bg-background rounded-2xl border border-gray-50 text-sm font-bold outline-none focus:bg-white focus:border-[#5EB929]/30 transition-all" />
                   </div>
                 </div>
               </div>
@@ -213,11 +213,11 @@ const BusinessDetailsStep = ({ data, onSubmit, onBack, loading }) => {
                 {formData.photos.map((photo, index) => (
                   <motion.div key={index} initial={{ scale: 0.8, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="relative aspect-square">
                     <img src={photo} className="w-full h-full object-cover rounded-2xl border border-gray-100" alt="" />
-                    <button type="button" onClick={() => removePhoto(index)} className="absolute -top-1.5 -right-1.5 w-6 h-6 bg-red-500 text-white rounded-lg flex items-center justify-center shadow-lg border-2 border-white active:scale-90"><span className="text-xs font-black">×</span></button>
+                    <button type="button" onClick={() => removePhoto(index)} className="absolute -top-1.5 -right-1.5 w-6 h-6 bg-red-500 text-white rounded-lg flex items-center justify-center shadow-lg border-2 border-white active:scale-90"><span className="text-xs font-bold">×</span></button>
                   </motion.div>
                 ))}
                 {formData.photos.length < 4 && (
-                  <motion.button type="button" whileTap={{ scale: 0.95 }} onClick={() => photosInputRef.current?.click()} className="aspect-square rounded-2xl bg-[#F8F5FF] border-2 border-dashed border-gray-100 flex flex-col items-center justify-center gap-1 hover:border-[#3D7A4F]/30 transition-all">
+                  <motion.button type="button" whileTap={{ scale: 0.95 }} onClick={() => photosInputRef.current?.click()} className="aspect-square rounded-2xl bg-background border-2 border-dashed border-gray-100 flex flex-col items-center justify-center gap-1 hover:border-[#5EB929]/30 transition-all">
                     <CameraAltRoundedIcon sx={{ fontSize: 20 }} className="text-gray-300" />
                     <span className="text-[8px] font-bold text-gray-400">Add</span>
                   </motion.button>
@@ -237,13 +237,13 @@ const BusinessDetailsStep = ({ data, onSubmit, onBack, loading }) => {
             <div className="flex gap-4 pt-6 border-t border-gray-50">
                <motion.button 
                  type="button" whileTap={{ scale: 0.98 }} onClick={onBack}
-                 className="flex-1 h-14 bg-gray-50 text-gray-400 rounded-2xl font-black text-[12px] flex items-center justify-center gap-2 border border-gray-100"
+                 className="flex-1 h-14 bg-gray-50 text-gray-400 rounded-2xl font-bold text-[12px] flex items-center justify-center gap-2 border border-gray-100"
                >
                  <ArrowBackRoundedIcon sx={{ fontSize: 16 }} /> Back
                </motion.button>
                <motion.button 
                  type="submit" whileTap={{ scale: 0.98 }} disabled={loading}
-                 className="flex-[2] h-14 bg-[#3D7A4F] text-white rounded-2xl font-black text-[12px] shadow-lg shadow-[#3D7A4F]/20 flex items-center justify-center gap-2"
+                 className="flex-[2] h-14 bg-[#5EB929] text-white rounded-2xl font-bold text-[12px] shadow-lg shadow-[#5EB929]/20 flex items-center justify-center gap-2"
                >
                  {loading ? <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : <>Continue Architecture <ArrowForwardRoundedIcon sx={{ fontSize: 16 }} /></>}
                </motion.button>

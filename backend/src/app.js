@@ -15,6 +15,7 @@ import variantRoutes from "./modules/merchant/routes/variantRoutes.js";
 import paymentRoutes from "./modules/payment/routes/paymentRoutes.js";
 import authRoutes from "./modules/user/routes/authRoutes.js";
 import userRoutes from "./modules/user/routes/userRoutes.js";
+import rewardRoutes from "./modules/rewards/routes/rewardRoutes.js";
 import categoryRoutes from "./routes/categoryRoutes.js";
 import uploadRoutes from "./routes/uploadRoutes.js";
 
@@ -73,6 +74,7 @@ app.use("/api/categories", categoryRoutes);
 app.use("/api/cities", cityRoutes);
 app.use("/api/plans", planRoutes);
 app.use("/api/payments", paymentRoutes);
+app.use("/api/rewards", rewardRoutes);
 app.use("/api/upload", uploadRoutes);
 
 app.use((req, res) => {

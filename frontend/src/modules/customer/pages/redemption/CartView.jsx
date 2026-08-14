@@ -111,10 +111,10 @@ const CartView = () => {
               <ArrowBackRoundedIcon sx={{ fontSize: 20 }} />
             </button>
             <div>
-               <h1 className="text-lg font-black text-gray-900 leading-none uppercase tracking-tight">Review Booking</h1>
+               <h1 className="text-lg font-bold text-gray-900 leading-none uppercase tracking-tight">Review Booking</h1>
                <div className="flex items-center gap-1.5 mt-1.5">
-                  <div className="w-1.5 h-1.5 bg-[#3D7A4F] rounded-full" />
-                  <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">{merchant.storeName}</p>
+                  <div className="w-1.5 h-1.5 bg-[#5EB929] rounded-full" />
+                  <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">{merchant.storeName}</p>
                </div>
             </div>
           </div>
@@ -129,14 +129,14 @@ const CartView = () => {
              <div className="absolute top-0 bottom-0 left-1/2 -translate-x-1/2 w-[1px] bg-gray-50" />
              
              <div>
-               <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-2">Customer</p>
-               <h3 className="text-sm font-black text-gray-900 leading-none mb-1">{user?.name || 'Guest'}</h3>
+               <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest mb-2">Customer</p>
+               <h3 className="text-sm font-bold text-gray-900 leading-none mb-1">{user?.name || 'Guest'}</h3>
                <p className="text-[11px] font-bold text-gray-400">{user?.phone || 'No phone'}</p>
              </div>
 
              <div className="pl-4">
-               <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-2">Merchant</p>
-               <h3 className="text-sm font-black text-[#3D7A4F] leading-none mb-1">{merchant.storeName}</h3>
+               <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest mb-2">Merchant</p>
+               <h3 className="text-sm font-bold text-[#5EB929] leading-none mb-1">{merchant.storeName}</h3>
                <p className="text-[11px] font-bold text-gray-400 truncate">{merchant.locality}</p>
              </div>
           </div>
@@ -148,9 +148,9 @@ const CartView = () => {
                  <div className="w-8 h-8 bg-gray-50 rounded-lg flex items-center justify-center text-gray-400">
                    <ReceiptLongRoundedIcon sx={{ fontSize: 18 }} />
                  </div>
-                 <h3 className="text-xs font-black text-gray-900 uppercase tracking-widest">Service Items</h3>
+                 <h3 className="text-xs font-bold text-gray-900 uppercase tracking-widest">Service Items</h3>
                </div>
-               <span className="text-[10px] font-black text-gray-400">{cart.items.length} Items</span>
+               <span className="text-[10px] font-bold text-gray-400">{cart.items.length} Items</span>
              </div>
              
              <div className="space-y-6">
@@ -164,7 +164,7 @@ const CartView = () => {
                  return (
                   <div key={idx} className="flex justify-between items-center gap-4 relative">
                     <div className="flex-1">
-                      <p className="text-[13px] font-black text-gray-900 mb-2">{product.name}</p>
+                      <p className="text-[13px] font-bold text-gray-900 mb-2">{product.name}</p>
                       
                       <div className="flex items-center gap-3">
                          <div className="flex items-center bg-[#F8FAFC] rounded-xl border border-gray-100 p-0.5">
@@ -175,7 +175,7 @@ const CartView = () => {
                             >
                               <RemoveRoundedIcon sx={{ fontSize: 14 }} />
                             </motion.button>
-                            <span className="w-6 text-center text-[12px] font-black text-gray-900">{item.qty}</span>
+                            <span className="w-6 text-center text-[12px] font-bold text-gray-900">{item.qty}</span>
                             <motion.button 
                               whileTap={{ scale: 0.9 }} 
                               onClick={() => handleUpdateQty(product, item.qty + 1)}
@@ -189,11 +189,11 @@ const CartView = () => {
                     </div>
 
                     <div className="text-right">
-                      <p className="text-sm font-black text-gray-900">₹{itemTotal}</p>
+                      <p className="text-sm font-bold text-gray-900">₹{itemTotal}</p>
                       {savings > 0 && (
                          <div className="mt-1 flex items-center justify-end gap-1">
                             <div className="w-1 h-1 bg-green-500 rounded-full" />
-                            <p className="text-[9px] font-black text-green-600 uppercase">Save ₹{savings}</p>
+                            <p className="text-[9px] font-bold text-green-600 uppercase">Save ₹{savings}</p>
                          </div>
                       )}
                     </div>
@@ -205,38 +205,38 @@ const CartView = () => {
 
           {/* Payment Summary - Structured Receipt */}
           <div className="bg-white rounded-[2rem] p-6 shadow-sm border border-gray-50 relative overflow-hidden">
-             <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-gray-100 via-[#3D7A4F]/20 to-gray-100" />
+             <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-gray-100 via-[#5EB929]/20 to-gray-100" />
 
-             <h3 className="text-[11px] font-black text-gray-400 uppercase tracking-widest mb-5">Bill Summary</h3>
+             <h3 className="text-[11px] font-bold text-gray-400 uppercase tracking-widest mb-5">Bill Summary</h3>
              
              <div className="space-y-3 mb-6">
                <div className="flex justify-between items-center">
                  <span className="text-[12px] font-bold text-gray-400 uppercase tracking-tight">Base Amount</span>
-                 <span className="text-[13px] font-black text-gray-900">₹{totalBasePrice}</span>
+                 <span className="text-[13px] font-bold text-gray-900">₹{totalBasePrice}</span>
                </div>
                <div className="flex justify-between items-center">
                  <div className="flex items-center gap-1.5">
                     <span className="text-[12px] font-bold text-gray-400 uppercase tracking-tight">Offer Benefit</span>
-                    <div className="px-1.5 py-0.5 bg-green-50 text-green-600 rounded text-[8px] font-black uppercase">Apply</div>
+                    <div className="px-1.5 py-0.5 bg-green-50 text-green-600 rounded text-[8px] font-bold uppercase">Apply</div>
                  </div>
-                 <span className="text-[13px] font-black text-green-600">- ₹{totalDiscount}</span>
+                 <span className="text-[13px] font-bold text-green-600">- ₹{totalDiscount}</span>
                </div>
              </div>
 
              <div className="pt-5 border-t border-dashed border-gray-100 flex justify-between items-end">
                 <div>
-                   <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Total Payable</p>
+                   <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Total Payable</p>
                    <p className="text-[12px] font-bold text-gray-400 leading-none">Net Amount</p>
                 </div>
                 <div className="text-right">
-                   <p className="text-2xl font-black text-[#3D7A4F] leading-none tracking-tighter">₹{totalOfferPrice}</p>
+                   <p className="text-2xl font-bold text-[#5EB929] leading-none tracking-tight">₹{totalOfferPrice}</p>
                 </div>
              </div>
 
              {/* Dynamic Disclaimer */}
              <div className="mt-6 p-4 bg-[#FFF8F1] rounded-2xl border border-[#FFE8D1] flex gap-3">
                <InfoOutlinedIcon className="text-[#B56D24]" sx={{ fontSize: 16 }} />
-               <p className="text-[10px] text-[#8C541B] font-black uppercase tracking-wide leading-relaxed">
+               <p className="text-[10px] text-[#8C541B] font-bold uppercase tracking-wide leading-relaxed">
                  Pay at store directly. This is a digital reservation, not an online payment.
                </p>
              </div>
@@ -249,7 +249,7 @@ const CartView = () => {
               <motion.button
                 whileTap={{ scale: 0.98 }}
                 onClick={handleProceed}
-                className="w-full bg-gray-900 text-white rounded-xl py-4 font-black text-[11px] uppercase tracking-[0.25em] flex items-center justify-center gap-3 shadow-2xl shadow-black/20 active:scale-95 transition-all"
+                className="w-full bg-gray-900 text-white rounded-xl py-4 font-bold text-[11px] uppercase tracking-[0.25em] flex items-center justify-center gap-3 shadow-2xl shadow-black/20 active:scale-95 transition-all"
               >
                 <QrCode2RoundedIcon sx={{ fontSize: 18 }} />
                 Generate Booking QR

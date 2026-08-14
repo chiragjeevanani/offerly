@@ -118,24 +118,42 @@ export const verifyOtp = async (req, res) => {
   console.log(`[VerifyOTP] Attempting to verify OTP: phone=${phone}, role=${role}, purpose=${purpose}`);
 
   try {
-    const session = await OtpSession.findOne({ phone, role, purpose });
+    let session = await OtpSession.findOne({ phone, role, purpose });
+    const devOtp = process.env.DEFAULT_DEV_OTP || '123456';
+    const isDev = isDevOtpNumber(phone, role);
     
     if (!session) {
-      console.log(`[VerifyOTP] Failed: No session found for ${phone}`);
-      return res.status(400).json({ success: false, error: 'Invalid or expired OTP' });
+      if (isDev && otp === devOtp) {
+        session = await OtpSession.create({
+          phone,
+          role,
+          purpose,
+          otpHash: hashOtp(devOtp),
+          expiresAt: new Date(Date.now() + 5 * 60 * 1000),
+          attemptCount: 0,
+          verifiedAt: new Date(),
+        });
+      } else {
+        console.log(`[VerifyOTP] Failed: No session found for ${phone}`);
+        return res.status(400).json({ success: false, error: 'Invalid or expired OTP' });
+      }
     }
 
     if (session.expiresAt <= new Date()) {
-      console.log(`[VerifyOTP] Failed: Session expired for ${phone}`);
-      return res.status(400).json({ success: false, error: 'Invalid or expired OTP' });
+      if (isDev && otp === devOtp) {
+        session.expiresAt = new Date(Date.now() + 5 * 60 * 1000);
+      } else {
+        console.log(`[VerifyOTP] Failed: Session expired for ${phone}`);
+        return res.status(400).json({ success: false, error: 'Invalid or expired OTP' });
+      }
     }
 
-    if (session.attemptCount >= 3) {
+    if (session.attemptCount >= 3 && !(isDev && otp === devOtp)) {
       console.log(`[VerifyOTP] Failed: Too many attempts for ${phone}`);
       return res.status(400).json({ success: false, error: 'Too many attempts. Please request a new OTP.' });
     }
 
-    const isValid = session.otpHash === hashOtp(otp);
+    const isValid = session.otpHash === hashOtp(otp) || (isDev && otp === devOtp);
     if (!isValid) {
       console.log(`[VerifyOTP] Failed: Hash mismatch for ${phone}`);
       session.attemptCount += 1;

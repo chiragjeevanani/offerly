@@ -60,7 +60,7 @@ const AdminDashboard = () => {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
-        <div className="w-8 h-8 border-4 border-[#3D7A4F] border-t-transparent rounded-full animate-spin" />
+        <div className="w-8 h-8 border-4 border-[#5EB929] border-t-transparent rounded-full animate-spin" />
       </div>
     );
   }
@@ -74,7 +74,7 @@ const AdminDashboard = () => {
   }
 
   return (
-    <div className="min-h-[calc(100vh-80px)] bg-[#F8F5FF] p-6 lg:p-10 -m-6 lg:-m-8 font-sans text-gray-800 lg:rounded-tl-[32px]">
+    <div className="min-h-[calc(100vh-80px)] bg-background p-6 lg:p-10 -m-6 lg:-m-8 font-sans text-gray-800 lg:rounded-tl-[32px]">
       <div className="max-w-7xl mx-auto">
       {/* Header Section */}
       <div className="mb-5">
@@ -161,7 +161,7 @@ const AdminDashboard = () => {
                 onClick={() => navigate('/admin/merchants')}
                 className="flex items-center gap-2.5 bg-white rounded-[10px] px-3.5 py-3 lg:p-4 shadow-sm border border-gray-100 hover:bg-gray-50 transition-colors group"
               >
-                <StorefrontRoundedIcon sx={{ fontSize: 16 }} className="text-[#3D7A4F] group-hover:scale-110 transition-transform" />
+                <StorefrontRoundedIcon sx={{ fontSize: 16 }} className="text-[#5EB929] group-hover:scale-110 transition-transform" />
                 <span className="text-[12px] font-medium text-gray-500 group-hover:text-gray-700 transition-colors text-left leading-tight">Manage Merchants</span>
               </button>
 
@@ -169,7 +169,7 @@ const AdminDashboard = () => {
                 onClick={() => navigate('/admin/categories')}
                 className="flex items-center gap-2.5 bg-white rounded-[10px] px-3.5 py-3 lg:p-4 shadow-sm border border-gray-100 hover:bg-gray-50 transition-colors group"
               >
-                <LocalOfferRoundedIcon sx={{ fontSize: 16 }} className="text-[#3D7A4F] group-hover:scale-110 transition-transform" />
+                <LocalOfferRoundedIcon sx={{ fontSize: 16 }} className="text-[#5EB929] group-hover:scale-110 transition-transform" />
                 <span className="text-[12px] font-medium text-gray-500 group-hover:text-gray-700 transition-colors text-left leading-tight">Manage Offers</span>
               </button>
 
@@ -177,14 +177,14 @@ const AdminDashboard = () => {
                 onClick={() => navigate('/admin/users')}
                 className="flex items-center gap-2.5 bg-white rounded-[10px] px-3.5 py-3 lg:p-4 shadow-sm border border-gray-100 hover:bg-gray-50 transition-colors group"
               >
-                <GroupRoundedIcon sx={{ fontSize: 16 }} className="text-[#3D7A4F] group-hover:scale-110 transition-transform" />
+                <GroupRoundedIcon sx={{ fontSize: 16 }} className="text-[#5EB929] group-hover:scale-110 transition-transform" />
                 <span className="text-[12px] font-medium text-gray-500 group-hover:text-gray-700 transition-colors text-left leading-tight">User Management</span>
               </button>
 
               <button 
                 className="flex items-center gap-2.5 bg-white rounded-[10px] px-3.5 py-3 lg:p-4 shadow-sm border border-gray-100 hover:bg-gray-50 transition-colors group"
               >
-                <SecurityRoundedIcon sx={{ fontSize: 16 }} className="text-[#3D7A4F] group-hover:scale-110 transition-transform" />
+                <SecurityRoundedIcon sx={{ fontSize: 16 }} className="text-[#5EB929] group-hover:scale-110 transition-transform" />
                 <span className="text-[12px] font-medium text-gray-500 group-hover:text-gray-700 transition-colors text-left leading-tight">Reports & Safety</span>
               </button>
 
@@ -211,7 +211,7 @@ const AdminDashboard = () => {
                     )}
                     
                     <div className="mt-1">
-                      <CircleRoundedIcon sx={{ fontSize: 12 }} className={activity.type === 'merchant' ? 'text-indigo-400' : 'text-[#3D7A4F]'} />
+                      <CircleRoundedIcon sx={{ fontSize: 12 }} className={activity.type === 'merchant' ? 'text-indigo-400' : 'text-[#5EB929]'} />
                     </div>
                     <div>
                       <p className="text-[14px] text-gray-700 font-medium leading-snug mb-0.5">

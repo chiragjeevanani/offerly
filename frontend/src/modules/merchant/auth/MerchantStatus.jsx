@@ -134,7 +134,7 @@ const MerchantStatus = ({ merchant, onStatusChange }) => {
                 )}
               </motion.div>
               
-              <h1 className="text-4xl font-black text-white leading-none uppercase tracking-tighter mb-2">
+              <h1 className="text-4xl font-bold text-white leading-none uppercase tracking-tight mb-2">
                 {isRejected ? 'Rejected' : isApproved ? 'Approved' : 'Pending'}
               </h1>
               <div className="flex items-center gap-2 px-4 py-1.5 bg-black/20 backdrop-blur-md rounded-full border border-white/10">
@@ -159,7 +159,7 @@ const MerchantStatus = ({ merchant, onStatusChange }) => {
                      step.status === 'failed' ? <ErrorOutlineRoundedIcon sx={{fontSize: 20}} /> :
                      <span className="text-sm font-bold">{idx + 1}</span>}
                   </div>
-                  <span className={`text-[10px] font-black uppercase tracking-widest ${
+                  <span className={`text-[10px] font-bold uppercase tracking-widest ${
                     step.status === 'completed' || step.status === 'current' ? 'text-primary-700' : 
                     step.status === 'failed' ? 'text-red-600' : 'text-gray-400'
                   }`}>{step.label}</span>
@@ -211,7 +211,7 @@ const MerchantStatus = ({ merchant, onStatusChange }) => {
               <div className="bg-gray-50 rounded-3xl p-8 border border-gray-200">
                 <div className="flex items-center gap-2 mb-3">
                   <ErrorOutlineRoundedIcon className="text-red-500" sx={{fontSize: 20}} />
-                  <span className="text-xs font-black text-gray-500 uppercase tracking-widest">Reason for Rejection</span>
+                  <span className="text-xs font-bold text-gray-500 uppercase tracking-widest">Reason for Rejection</span>
                 </div>
                 <p className="text-gray-900 font-bold leading-relaxed italic">
                   "{merchant.rejectionReason}"
@@ -226,7 +226,7 @@ const MerchantStatus = ({ merchant, onStatusChange }) => {
                   <div className="w-8 h-8 rounded-xl bg-gray-50 flex items-center justify-center text-gray-400">
                     <CategoryRoundedIcon sx={{fontSize: 18}} />
                   </div>
-                  <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Category</span>
+                  <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Category</span>
                 </div>
                 <p className="text-sm font-bold text-gray-900 ml-1">{merchant?.category}</p>
               </div>
@@ -236,7 +236,7 @@ const MerchantStatus = ({ merchant, onStatusChange }) => {
                   <div className="w-8 h-8 rounded-xl bg-gray-50 flex items-center justify-center text-gray-400">
                     <LocationOnRoundedIcon sx={{fontSize: 18}} />
                   </div>
-                  <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Location</span>
+                  <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Location</span>
                 </div>
                 <p className="text-sm font-bold text-gray-900 ml-1">{merchant?.city}</p>
               </div>
@@ -302,7 +302,7 @@ const MerchantStatus = ({ merchant, onStatusChange }) => {
               {/* Minimalist Sign-out */}
               <button 
                 onClick={() => { logout(); navigate('/merchant'); }}
-                className="mt-4 flex items-center justify-center gap-2 text-xs font-black text-gray-400 hover:text-gray-600 uppercase tracking-widest transition-colors py-2"
+                className="mt-4 flex items-center justify-center gap-2 text-xs font-bold text-gray-400 hover:text-gray-600 uppercase tracking-widest transition-colors py-2"
               >
                 <ExitToAppRoundedIcon sx={{fontSize: 14}} />
                 Sign out from this account
@@ -317,7 +317,7 @@ const MerchantStatus = ({ merchant, onStatusChange }) => {
             <div className="w-6 h-6 bg-gray-900 rounded flex items-center justify-center">
               <span className="text-white text-[10px] font-bold">O</span>
             </div>
-            <span className="text-xs font-black tracking-widest text-gray-900 uppercase">OFFERLY<span className="text-primary-700">BIZ</span></span>
+            <span className="text-xs font-bold tracking-widest text-gray-900 uppercase">OFFERLY<span className="text-primary-700">BIZ</span></span>
           </div>
           <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Secured Merchant Portal v2.0</p>
         </div>

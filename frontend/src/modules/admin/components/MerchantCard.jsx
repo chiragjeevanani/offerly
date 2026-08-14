@@ -49,7 +49,7 @@ const MerchantCard = ({ merchant, onApprove, onReject, onClick }) => {
           {/* Merchant Details */}
           <div className="flex-1 min-w-0">
             {/* Store Name */}
-            <h3 className="text-xl font-black text-gray-900 group-hover:text-primary transition-colors leading-tight mb-2">
+            <h3 className="text-xl font-bold text-gray-900 group-hover:text-primary transition-colors leading-tight mb-2">
               {merchant.storeName}
             </h3>
 
@@ -67,7 +67,7 @@ const MerchantCard = ({ merchant, onApprove, onReject, onClick }) => {
 
             {/* Status Badge */}
             <span 
-              className={`inline-flex items-center px-3 py-1.5 rounded-full text-xs font-black uppercase tracking-widest ${
+              className={`inline-flex items-center px-3 py-1.5 rounded-full text-xs font-bold uppercase tracking-widest ${
                 merchant.status === 'pending' 
                   ? 'bg-amber-50 text-amber-700 border-2 border-amber-200' 
                   : merchant.status === 'approved'
