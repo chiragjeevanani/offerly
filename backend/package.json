@@ -1,0 +1,49 @@
+{
+  "name": "backend",
+  "version": "1.0.0",
+  "main": "src/server.js",
+  "type": "module",
+  "scripts": {
+    "start": "node src/server.js",
+    "dev": "nodemon src/server.js",
+    "test": "vitest run",
+    "seed": "node src/seeders/masterSeeder.js",
+    "seed:force": "node src/seeders/masterSeeder.js --force",
+    "seed:categories": "node src/seeders/categorySeeder.js",
+    "seed:plans": "node src/seeders/planSeeder.js",
+    "seed:merchants": "node src/seeders/merchantSeeder.js",
+    "seed:products": "node src/seeders/productSeeder.js",
+    "seed:offers": "node src/seeders/offerSeeder.js",
+    "seed:ads": "node src/seeders/adRequestSeeder.js",
+    "normalize:phones": "node src/scripts/normalizePhoneNumbers.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "dependencies": {
+    "bcryptjs": "^3.0.3",
+    "cloudinary": "^1.41.3",
+    "cors": "^2.8.6",
+    "dotenv": "^17.4.1",
+    "express": "^5.2.1",
+    "express-rate-limit": "^8.3.2",
+    "helmet": "^8.1.0",
+    "hpp": "^0.2.3",
+    "joi": "^18.1.2",
+    "jsonwebtoken": "^9.0.3",
+    "mongoose": "^9.4.1",
+    "morgan": "^1.10.1",
+    "multer": "^2.1.1",
+    "multer-storage-cloudinary": "^4.0.0",
+    "node-cron": "^4.2.1",
+    "razorpay": "^2.9.6",
+    "socket.io": "^4.8.3"
+  },
+  "devDependencies": {
+    "cross-env": "^10.1.0",
+    "nodemon": "^3.1.14",
+    "supertest": "^7.2.2",
+    "vitest": "^4.1.5"
+  }
+}

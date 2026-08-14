@@ -1,0 +1,164 @@
+import { useNavigate, useLocation } from 'react-router-dom';
+import { motion, AnimatePresence } from 'framer-motion';
+import NotificationsRoundedIcon from '@mui/icons-material/NotificationsRounded';
+import ArrowBackRoundedIcon from '@mui/icons-material/ArrowBackRounded';
+import SearchRoundedIcon from '@mui/icons-material/SearchRounded';
+import CardGiftcardRoundedIcon from '@mui/icons-material/CardGiftcardRounded';
+import ExploreRoundedIcon from '@mui/icons-material/ExploreRounded';
+import BookmarkRoundedIcon from '@mui/icons-material/BookmarkRounded';
+import MapRoundedIcon from '@mui/icons-material/MapRounded';
+import ShoppingCartRoundedIcon from '@mui/icons-material/ShoppingCartRounded';
+import LocationOnRoundedIcon from '@mui/icons-material/LocationOnRounded';
+import { useApp } from '../../context/AppContext';
+
+// Nav links to display in the new top bar (desktop only)
+const navLinks = [
+  { label: 'Explore', icon: ExploreRoundedIcon, path: '/explore' },
+  { label: 'Saved Objects', icon: BookmarkRoundedIcon, path: '/saved' },
+  { label: 'Locations', icon: MapRoundedIcon, path: '/map' },
+];
+
+const TopBar = () => {
+  const navigate = useNavigate();
+  const location = useLocation();
+  const { user, unreadCount, selectedCity } = useApp();
+
+  // Determine back navigation context if deeply nested (though mainly handled gracefully by browser)
+  const isNested = location.pathname.startsWith('/offer/') || location.pathname.startsWith('/store/');
+
+  return (
+    <header className="sticky top-0 z-50 bg-[#F8F5FF]/95 backdrop-blur-xl border-b border-gray-100/50 px-4 py-2.5 flex items-center gap-3">
+      
+      {/* Dynamic Back Button / Mobile Logo */}
+      <div className="flex items-center gap-3">
+        {location.pathname !== '/home' && (
+          <motion.button
+            initial={{ opacity: 0, x: -10 }}
+            animate={{ opacity: 1, x: 0 }}
+            whileTap={{ scale: 0.9 }}
+            onClick={() => navigate(-1)}
+            className="w-9 h-9 flex items-center justify-center rounded-xl bg-white border border-gray-100 shadow-sm text-gray-400 hover:text-gray-900 transition-all"
+          >
+            <ArrowBackRoundedIcon sx={{ fontSize: 20 }} />
+          </motion.button>
+        )}
+
+        {/* Logo + Location (Mobile) */}
+        <div 
+          className="lg:hidden flex flex-col items-start gap-0 cursor-pointer group" 
+          onClick={() => navigate('/profile')}
+        >
+          <div className="flex items-center gap-2">
+            {location.pathname === '/home' && (
+              <div className="w-8 h-8 bg-[#3D7A4F] rounded-xl flex items-center justify-center shadow-lg shadow-[#3D7A4F]/20">
+                <CardGiftcardRoundedIcon sx={{ fontSize: 18 }} className="text-white" />
+              </div>
+            )}
+            <span className="font-display text-[14px] font-black text-gray-900 tracking-tighter uppercase">Offerly</span>
+          </div>
+          <div className="flex items-center gap-1 mt-0.5 ml-1">
+             <LocationOnRoundedIcon sx={{ fontSize: 10 }} className="text-[#3D7A4F] group-hover:scale-125 transition-transform" />
+             <span className="text-[10px] font-black text-gray-400 uppercase tracking-tighter group-hover:text-[#3D7A4F] transition-colors">{selectedCity || 'Select City'}</span>
+          </div>
+        </div>
+      </div>
+
+      <div className="hidden lg:flex items-center gap-8 flex-1">
+        <div className="flex flex-col items-start gap-0 cursor-pointer group" onClick={() => navigate('/home')}>
+          <div className="flex items-center gap-2.5">
+            <div className="w-9 h-9 bg-[#3D7A4F] rounded-xl flex items-center justify-center shadow-lg shadow-[#3D7A4F]/20">
+              <CardGiftcardRoundedIcon sx={{ fontSize: 20 }} className="text-white" />
+            </div>
+            <span className="font-display text-lg font-black text-gray-900 tracking-tight">
+              OFFERLY
+            </span>
+          </div>
+        </div>
+
+        <div 
+          className="flex flex-col items-start gap-0 cursor-pointer group border-l border-gray-100 pl-8" 
+          onClick={() => navigate('/profile')}
+        >
+          <p className="text-[9px] font-black text-gray-300 uppercase tracking-widest leading-none mb-1">Current Location</p>
+          <div className="flex items-center gap-1.5">
+             <LocationOnRoundedIcon sx={{ fontSize: 12 }} className="text-[#3D7A4F] group-hover:animate-bounce" />
+             <span className="text-[11px] font-black text-gray-400 uppercase tracking-widest group-hover:text-[#3D7A4F] transition-colors">{selectedCity || 'Select City'}</span>
+          </div>
+        </div>
+      </div>
+
+      {/* Desktop Quick Nav Links (Center) */}
+      <div className="hidden lg:flex flex-1 justify-center items-center gap-6">
+         {navLinks.map((item) => (
+           <button
+             key={item.path}
+             onClick={() => navigate(item.path)}
+             className={`flex items-center gap-2 px-4 py-2 rounded-2xl transition-all font-black text-[11px] uppercase tracking-widest ${
+               location.pathname.startsWith(item.path)
+                 ? 'text-[#3D7A4F] bg-[#3D7A4F]/5 shadow-sm border border-[#3D7A4F]/10'
+                 : 'text-gray-400 hover:text-gray-900 hover:bg-white'
+             }`}
+           >
+             <item.icon sx={{ fontSize: 16 }} />
+             {item.label}
+           </button>
+         ))}
+      </div>
+
+      {/* Right User Actions (Cart, Notifications, Profile) */}
+      <div className="flex items-center gap-2 ml-auto">
+        {/* Search Icon (Desktop only, not on home) */}
+        {location.pathname !== '/home' && (
+          <motion.button
+            whileTap={{ scale: 0.9 }}
+            onClick={() => navigate('/search')}
+            className="hidden sm:flex w-9 h-9 items-center justify-center rounded-xl bg-white border border-gray-100 shadow-sm hover:shadow-md text-gray-400 hover:text-gray-900 transition-all"
+          >
+            <SearchRoundedIcon sx={{ fontSize: 20 }} />
+          </motion.button>
+        )}
+
+        {/* Cart Icon (Mobile & Desktop) */}
+        <motion.button
+          whileTap={{ scale: 0.9 }}
+          onClick={() => navigate('/cart')}
+          className="w-9 h-9 flex items-center justify-center rounded-xl bg-white border border-gray-100 shadow-sm hover:shadow-md text-gray-400 hover:text-gray-900 transition-all"
+        >
+          <ShoppingCartRoundedIcon sx={{ fontSize: 20 }} />
+        </motion.button>
+
+        {/* Notifications Icon (Mobile & Desktop) */}
+        <motion.button
+          whileTap={{ scale: 0.9 }}
+          onClick={() => navigate('/notifications')}
+          className="w-9 h-9 flex items-center justify-center rounded-xl bg-white border border-gray-100 shadow-sm hover:shadow-md relative text-gray-400 hover:text-gray-900 transition-all"
+        >
+          <NotificationsRoundedIcon sx={{ fontSize: 20 }} />
+          <AnimatePresence>
+            {unreadCount > 0 && (
+              <motion.span
+                initial={{ scale: 0 }}
+                animate={{ scale: 1 }}
+                exit={{ scale: 0 }}
+                className="absolute top-1.5 right-1.5 w-1.5 h-1.5 bg-[#3D7A4F] rounded-full shadow-lg shadow-[#3D7A4F]/40"
+              />
+            )}
+          </AnimatePresence>
+        </motion.button>
+
+        {/* Profile Avatar (Mobile & Desktop) */}
+        <motion.button
+          whileTap={{ scale: 0.9 }}
+          onClick={() => navigate('/profile')}
+          className="w-9 h-9 bg-white rounded-xl flex items-center justify-center border border-gray-100 shadow-sm hover:shadow-md cursor-pointer group transition-all"
+        >
+          <span className="text-[#3D7A4F] font-black text-[12px] group-hover:scale-110 transition-transform">
+            {user?.name?.charAt(0)?.toUpperCase() || 'U'}
+          </span>
+        </motion.button>
+      </div>
+    </header>
+  );
+};
+
+export default TopBar;

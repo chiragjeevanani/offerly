@@ -1,0 +1,86 @@
+# ===============================
+# Dependencies
+# ===============================
+node_modules/
+jspm_packages/
+
+# ===============================
+# Environment Variables & Secrets
+# ===============================
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+*.env
+!.env.example
+
+# ===============================
+# Production & Build Outputs
+# ===============================
+dist/
+dist-ssr/
+build/
+out/
+*.tsbuildinfo
+
+# ===============================
+# Logs & Diagnostic Dumps
+# ===============================
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+*_log.txt
+*_output.txt
+lint_output.txt
+build_output.txt
+seeder_log.txt
+
+# ===============================
+# Testing & Coverage
+# ===============================
+coverage/
+.nyc_output/
+
+# ===============================
+# Cache & Temporary Files
+# ===============================
+.cache/
+.npm/
+.eslintcache
+.parcel-cache
+.turbo/
+scratch/
+
+# ===============================
+# OS Generated Files
+# ===============================
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+desktop.ini
+
+# ===============================
+# IDE & Editor Settings
+# ===============================
+.idea/
+*.sublime-project
+*.sublime-workspace
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
