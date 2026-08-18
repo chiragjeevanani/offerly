@@ -40,25 +40,22 @@ const highlights = [
 
 const formVariants = {
   enter: (direction) => ({
-    x: direction > 0 ? 40 : -40,
+    x: direction > 0 ? 30 : -30,
     opacity: 0,
-    scale: 0.98,
   }),
   center: {
     x: 0,
     opacity: 1,
-    scale: 1,
     transition: {
-      duration: 0.35,
+      duration: 0.3,
       ease: [0.16, 1, 0.3, 1],
     },
   },
   exit: (direction) => ({
-    x: direction > 0 ? -40 : 40,
+    x: direction > 0 ? -30 : 30,
     opacity: 0,
-    scale: 0.98,
     transition: {
-      duration: 0.25,
+      duration: 0.2,
       ease: [0.4, 0, 1, 1],
     },
   }),
@@ -385,29 +382,28 @@ const CustomerLogin = () => {
   return (
     <PageTransition>
       <div 
-        className="w-full min-h-[100dvh] bg-[#070809] flex flex-col justify-center items-center font-sans antialiased select-none md:p-6 lg:p-10"
+        className="w-full h-[100dvh] max-h-[100dvh] bg-[#070809] flex flex-col justify-center items-center font-sans antialiased select-none overflow-hidden md:p-6 lg:p-10"
         style={{
           paddingTop: 'env(safe-area-inset-top, 0px)',
           paddingBottom: 'env(safe-area-inset-bottom, 0px)',
         }}
       >
-        {/* Main Responsive Wrapper */}
-        <div className="w-full max-w-full md:max-w-5xl lg:max-w-6xl min-h-[100dvh] md:min-h-[640px] lg:min-h-[720px] md:h-auto bg-[#070707] md:bg-[#0B0F0C] flex flex-col md:flex-row justify-between relative md:rounded-[32px] shadow-2xl overflow-hidden md:border md:border-white/10">
+        {/* Main Responsive Container: Strictly 100dvh on mobile (no scroll), split-card on desktop */}
+        <div className="w-full max-w-full md:max-w-5xl lg:max-w-6xl h-full md:h-auto md:min-h-[620px] lg:min-h-[680px] bg-[#070707] md:bg-[#0B0F0C] flex flex-col md:flex-row justify-between relative md:rounded-[32px] shadow-2xl overflow-hidden md:border md:border-white/10">
           
           {/* ========================================================================= */}
-          {/* LEFT / TOP SECTION: Brand Hero with Dynamic 3D Badge & Carousel           */}
+          {/* TOP (MOBILE) / LEFT (DESKTOP) SECTION: Brand Hero Banner                  */}
           {/* ========================================================================= */}
-          <div className={`relative flex-1 md:w-7/12 lg:w-3/5 min-h-0 flex flex-col justify-between items-center md:items-start p-6 sm:p-8 md:p-10 lg:p-12 overflow-hidden bg-gradient-to-b md:bg-gradient-to-br from-[#060806] via-[#090F08] to-[#040504] transition-all duration-300 ${
-            isKeyboardOpen ? 'max-h-[180px] md:max-h-none' : ''
-          }`}>
+          <div className={`relative w-full md:w-7/12 lg:w-3/5 flex flex-col justify-between items-center md:items-start p-3 sm:p-5 md:p-10 lg:p-12 overflow-hidden bg-gradient-to-b md:bg-gradient-to-br from-[#060806] via-[#090F08] to-[#040504] shrink-0 ${
+            isKeyboardOpen ? 'h-[14vh] md:h-auto' : 'h-[28vh] sm:h-[32vh] md:h-auto md:flex-1'
+          } transition-all duration-300`}>
             
-            {/* Ambient Background Glows */}
-            <div className="absolute top-1/4 left-1/2 md:left-1/3 -translate-x-1/2 -translate-y-1/2 w-80 md:w-96 h-80 md:h-96 bg-[#5EB929]/20 rounded-full blur-[90px] pointer-events-none" />
-            <div className="absolute bottom-0 right-0 w-64 h-64 bg-[#5EB929]/10 rounded-full blur-[80px] pointer-events-none" />
-            <div className="absolute top-0 inset-x-0 h-32 bg-gradient-to-b from-black/60 to-transparent pointer-events-none" />
+            {/* Ambient Glows */}
+            <div className="absolute top-1/2 left-1/2 md:left-1/3 -translate-x-1/2 -translate-y-1/2 w-64 sm:w-80 md:w-96 h-64 sm:h-80 md:h-96 bg-[#5EB929]/20 rounded-full blur-[80px] pointer-events-none" />
+            <div className="absolute bottom-0 right-0 w-48 md:w-64 h-48 md:h-64 bg-[#5EB929]/10 rounded-full blur-[70px] pointer-events-none" />
 
-            {/* Top Brand Identity */}
-            <div className="relative z-10 w-full flex items-center justify-between">
+            {/* Desktop Brand Identity (Visible only on Desktop) */}
+            <div className="hidden md:flex relative z-10 w-full items-center justify-between">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 md:w-11 md:h-11 rounded-2xl bg-white/5 border border-white/10 backdrop-blur-md p-2 flex items-center justify-center shadow-lg shadow-black/40">
                   <img src="/offerly-logo-ring.png" alt="Offerly Logo" className="w-full h-full object-contain" />
@@ -421,26 +417,23 @@ const CustomerLogin = () => {
                 </div>
               </div>
 
-              {/* Desktop Tag */}
-              <div className="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/5 border border-white/10 backdrop-blur-md">
+              <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/5 border border-white/10 backdrop-blur-md">
                 <span className="w-2 h-2 rounded-full bg-[#5EB929] animate-pulse" />
                 <span className="text-xs font-semibold text-gray-300">Live in your city</span>
               </div>
             </div>
 
-            {/* Middle Section: Floating 3D Badge + Dynamic Copy */}
-            <div className="relative z-10 w-full flex-1 flex flex-col md:flex-row items-center justify-center md:justify-between gap-4 md:gap-8 my-auto py-2 md:py-6">
+            {/* Middle Section: Floating Scalloped Badge + Dynamic Copy */}
+            <div className="relative z-10 w-full h-full md:h-auto flex flex-col md:flex-row items-center justify-center md:justify-between gap-2 md:gap-8 my-auto">
               
-              {/* Text Headline & Carousel Content */}
-              <div className="w-full md:max-w-md text-center md:text-left flex flex-col justify-center">
-                
-                {/* Active Category Badge */}
-                <div className="hidden md:inline-flex items-center gap-2 self-start px-3 py-1 rounded-full bg-[#5EB929]/15 border border-[#5EB929]/30 text-[#67C72E] text-xs font-bold uppercase tracking-wider mb-4">
+              {/* Desktop Headline & Carousel Copy */}
+              <div className="hidden md:flex w-full md:max-w-md text-left flex-col justify-center">
+                <div className="inline-flex items-center gap-2 self-start px-3 py-1 rounded-full bg-[#5EB929]/15 border border-[#5EB929]/30 text-[#67C72E] text-xs font-bold uppercase tracking-wider mb-4">
                   <span>★</span>
                   <span>{slides[activeSlide].badge}</span>
                 </div>
 
-                <div className="min-h-[56px] sm:min-h-[68px] md:min-h-[96px] flex items-center md:items-start justify-center md:justify-start">
+                <div className="min-h-[96px] flex items-start justify-start">
                   <AnimatePresence mode="wait">
                     <motion.div
                       key={activeSlide}
@@ -450,12 +443,10 @@ const CustomerLogin = () => {
                       transition={{ duration: 0.3 }}
                       className="space-y-2"
                     >
-                      <h1 className={`text-white font-black tracking-tight leading-[1.15] uppercase font-sans drop-shadow-md whitespace-pre-line ${
-                        isKeyboardOpen ? 'text-lg' : 'text-xl sm:text-2xl md:text-3xl lg:text-4xl'
-                      }`}>
+                      <h1 className="text-white font-black tracking-tight leading-[1.15] uppercase font-sans drop-shadow-md whitespace-pre-line text-2xl md:text-3xl lg:text-4xl">
                         {slides[activeSlide].title}
                       </h1>
-                      <p className="hidden md:block text-sm lg:text-base text-gray-400 font-normal leading-relaxed">
+                      <p className="text-sm lg:text-base text-gray-400 font-normal leading-relaxed">
                         {slides[activeSlide].subtitle}
                       </p>
                     </motion.div>
@@ -464,16 +455,16 @@ const CustomerLogin = () => {
               </div>
 
               {/* 3D Scalloped Badge Graphic */}
-              <div className="relative flex items-center justify-center max-w-[240px] sm:max-w-[280px] md:max-w-[260px] lg:max-w-[320px] aspect-square w-full">
+              <div className="relative flex items-center justify-center h-full max-h-[160px] sm:max-h-[190px] md:max-h-none md:max-w-[260px] lg:max-w-[300px] aspect-square w-auto">
                 <motion.div
-                  animate={{ y: [0, -6, 0] }}
-                  transition={{ duration: 4.5, repeat: Infinity, ease: 'easeInOut' }}
+                  animate={{ y: [0, -5, 0] }}
+                  transition={{ duration: 4, repeat: Infinity, ease: 'easeInOut' }}
                   className="relative z-10 w-full h-full flex items-center justify-center"
                 >
                   <img
                     src="/offerly-green-medal-nobg.png"
-                    alt="Offerly Best Deals"
-                    className="max-h-full max-w-full object-contain drop-shadow-[0_20px_40px_rgba(94,185,41,0.3)] select-none pointer-events-none"
+                    alt="Offerly Deals"
+                    className="max-h-full max-w-full object-contain drop-shadow-[0_12px_28px_rgba(94,185,41,0.35)] select-none pointer-events-none"
                     onError={(e) => {
                       e.currentTarget.src = '/offerly-badge-clean.png';
                     }}
@@ -484,7 +475,7 @@ const CustomerLogin = () => {
             </div>
 
             {/* Bottom Hero Highlights & Carousel Indicators */}
-            <div className="relative z-10 w-full flex flex-col md:flex-row items-center justify-between gap-4 pt-2">
+            <div className="relative z-10 w-full flex items-center justify-center md:justify-between pt-1">
               <div className="hidden md:flex items-center gap-3">
                 {highlights.map((h, i) => (
                   <div key={i} className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/5 border border-white/5 text-xs font-semibold text-gray-300">
@@ -494,7 +485,8 @@ const CustomerLogin = () => {
                 ))}
               </div>
 
-              <div className="flex items-center gap-1.5">
+              {/* Carousel Indicators */}
+              <div className="flex items-center gap-1.5 pb-1 md:pb-0">
                 {slides.map((_, idx) => (
                   <button
                     key={idx}
@@ -514,9 +506,9 @@ const CustomerLogin = () => {
           </div>
 
           {/* ========================================================================= */}
-          {/* RIGHT / BOTTOM SECTION: Animated White Auth Panel                         */}
+          {/* BOTTOM (MOBILE) / RIGHT (DESKTOP) SECTION: White Auth Panel               */}
           {/* ========================================================================= */}
-          <div className="w-full md:w-5/12 lg:w-2/5 bg-white rounded-t-[32px] md:rounded-t-none md:rounded-r-[32px] p-6 sm:p-8 md:p-10 lg:p-12 flex flex-col justify-between z-30 shadow-[0_-10px_30px_rgba(0,0,0,0.2)] md:shadow-none shrink-0 border-t md:border-t-0 md:border-l border-gray-100 overflow-hidden min-h-[460px] md:min-h-[640px]">
+          <div className="w-full md:w-5/12 lg:w-2/5 bg-white rounded-t-[30px] md:rounded-t-none md:rounded-r-[32px] px-5 py-4 sm:px-8 sm:py-6 md:p-10 lg:p-12 flex flex-col justify-between z-30 shadow-[0_-10px_30px_rgba(0,0,0,0.2)] md:shadow-none border-t md:border-t-0 md:border-l border-gray-100 overflow-hidden flex-1 md:flex-initial">
             
             <AnimatePresence mode="wait" custom={direction}>
               {step === 'phone' ? (
@@ -530,36 +522,36 @@ const CustomerLogin = () => {
                   initial="enter"
                   animate="center"
                   exit="exit"
-                  className="flex flex-col justify-between flex-1"
+                  className="flex flex-col justify-between h-full flex-1"
                 >
                   {/* Header */}
-                  <div className="mb-6 text-center md:text-left">
-                    <h2 className="text-gray-900 font-extrabold text-2xl lg:text-3xl tracking-tight">
+                  <div className="mb-2.5 sm:mb-4 text-center md:text-left">
+                    <h2 className="text-gray-900 font-extrabold text-xl sm:text-2xl lg:text-3xl tracking-tight leading-tight">
                       Get Started
                     </h2>
-                    <p className="text-gray-500 text-sm font-normal mt-1.5">
+                    <p className="text-gray-500 text-xs sm:text-sm font-normal mt-0.5 sm:mt-1">
                       Enter your mobile number to log in or create your Offerly account.
                     </p>
                   </div>
 
                   {/* Phone Input Form */}
-                  <form onSubmit={handleLogin} className="space-y-4">
-                    <div className="space-y-1.5">
-                      <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider">
+                  <form onSubmit={handleLogin} className="space-y-2.5 sm:space-y-3.5">
+                    <div className="space-y-1">
+                      <label className="block text-[11px] sm:text-xs font-bold text-gray-700 uppercase tracking-wider">
                         Mobile Number
                       </label>
 
                       {/* Phone Input Row */}
-                      <div className="flex items-center gap-2.5">
+                      <div className="flex items-center gap-2">
                         {/* Flag / Country Code Picker */}
                         <div className="relative" ref={countryPickerRef}>
                           <button
                             type="button"
                             onClick={() => setShowCountryPicker((prev) => !prev)}
-                            className="h-[52px] px-3.5 bg-gray-50 hover:bg-gray-100 border border-gray-200 focus:border-[#5EB929] rounded-2xl flex items-center gap-1.5 shadow-sm transition-all text-gray-800 active:scale-95 cursor-pointer"
+                            className="h-[46px] sm:h-[50px] px-3 bg-gray-50 hover:bg-gray-100 border border-gray-200 focus:border-[#5EB929] rounded-2xl flex items-center gap-1 shadow-xs transition-all text-gray-800 active:scale-95 cursor-pointer"
                             aria-expanded={showCountryPicker}
                           >
-                            <span className="text-xl sm:text-2xl leading-none">{selectedCountry.flag}</span>
+                            <span className="text-lg sm:text-xl leading-none">{selectedCountry.flag}</span>
                             <svg className="w-3.5 h-3.5 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
                               <path
                                 fillRule="evenodd"
@@ -576,7 +568,7 @@ const CustomerLogin = () => {
                                 initial={{ opacity: 0, y: 8, scale: 0.95 }}
                                 animate={{ opacity: 1, y: 0, scale: 1 }}
                                 exit={{ opacity: 0, y: 8, scale: 0.95 }}
-                                className="absolute left-0 bottom-full md:bottom-auto md:top-full mb-2 md:mb-0 md:mt-2 bg-white rounded-2xl shadow-2xl border border-gray-200 py-2 w-52 z-50 overflow-hidden"
+                                className="absolute left-0 bottom-full md:bottom-auto md:top-full mb-2 md:mb-0 md:mt-2 bg-white rounded-2xl shadow-2xl border border-gray-200 py-2 w-48 z-50 overflow-hidden"
                               >
                                 {countryList.map((item) => (
                                   <button
@@ -586,10 +578,10 @@ const CustomerLogin = () => {
                                       setCountryCode(item.code);
                                       setShowCountryPicker(false);
                                     }}
-                                    className="w-full px-4 py-2.5 flex items-center justify-between hover:bg-gray-50 text-left text-xs font-semibold text-gray-800 active:bg-gray-100 cursor-pointer"
+                                    className="w-full px-3.5 py-2 flex items-center justify-between hover:bg-gray-50 text-left text-xs font-semibold text-gray-800 active:bg-gray-100 cursor-pointer"
                                   >
-                                    <span className="flex items-center gap-2.5">
-                                      <span className="text-lg">{item.flag}</span>
+                                    <span className="flex items-center gap-2">
+                                      <span className="text-base">{item.flag}</span>
                                       <span>{item.country}</span>
                                     </span>
                                     <span className="text-gray-400 font-bold">{item.code}</span>
@@ -601,8 +593,8 @@ const CustomerLogin = () => {
                         </div>
 
                         {/* Mobile Number Input Box */}
-                        <div className="flex-1 relative flex items-center h-[52px] bg-gray-50 border border-gray-200 focus-within:border-[#5EB929] focus-within:bg-white focus-within:ring-4 focus-within:ring-[#5EB929]/15 rounded-2xl px-4 shadow-sm transition-all">
-                          <span className="text-gray-900 font-bold text-base sm:text-[15px] mr-2 select-none">
+                        <div className="flex-1 relative flex items-center h-[46px] sm:h-[50px] bg-gray-50 border border-gray-200 focus-within:border-[#5EB929] focus-within:bg-white focus-within:ring-3 focus-within:ring-[#5EB929]/15 rounded-2xl px-3.5 shadow-xs transition-all">
+                          <span className="text-gray-900 font-bold text-sm sm:text-[15px] mr-1.5 select-none">
                             {countryCode}
                           </span>
                           <input
@@ -626,7 +618,7 @@ const CustomerLogin = () => {
                               if (error) setError('');
                             }}
                             placeholder="00000 00000"
-                            className="w-full bg-transparent text-gray-900 font-medium text-base sm:text-[15px] placeholder:text-gray-400 placeholder:font-normal outline-none border-none tracking-normal"
+                            className="w-full bg-transparent text-gray-900 font-medium text-sm sm:text-[15px] placeholder:text-gray-400 placeholder:font-normal outline-none border-none tracking-normal"
                             autoFocus={!Boolean(phone)}
                           />
                         </div>
@@ -635,7 +627,7 @@ const CustomerLogin = () => {
 
                     {/* Error Message */}
                     {error && (
-                      <p className="text-xs font-medium text-rose-500 px-1">
+                      <p className="text-[11px] font-medium text-rose-500 px-1">
                         {error}
                       </p>
                     )}
@@ -643,22 +635,22 @@ const CustomerLogin = () => {
                     {/* Remember Login Checkbox Row */}
                     <div
                       onClick={() => setRememberLogin(!rememberLogin)}
-                      className="flex items-center gap-2.5 pt-1 cursor-pointer select-none"
+                      className="flex items-center gap-2 pt-0.5 cursor-pointer select-none"
                     >
                       <div
-                        className={`w-5 h-5 rounded-md flex items-center justify-center transition-all ${
+                        className={`w-4 h-4 sm:w-4.5 sm:h-4.5 rounded-md flex items-center justify-center transition-all ${
                           rememberLogin
-                            ? 'bg-[#5EB929] text-white shadow-sm shadow-[#5EB929]/40'
+                            ? 'bg-[#5EB929] text-white shadow-xs shadow-[#5EB929]/40'
                             : 'border border-gray-300 bg-white'
                         }`}
                       >
                         {rememberLogin && (
-                          <svg className="w-3.5 h-3.5 text-white stroke-[3]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <svg className="w-3 h-3 text-white stroke-[3]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3.5} d="M5 13l4 4L19 7" />
                           </svg>
                         )}
                       </div>
-                      <span className="text-xs sm:text-sm font-medium text-gray-700">
+                      <span className="text-xs font-medium text-gray-700">
                         Keep me signed in on this device
                       </span>
                     </div>
@@ -669,10 +661,10 @@ const CustomerLogin = () => {
                       whileHover={{ scale: 1.01 }}
                       type="submit"
                       disabled={isLoading || phone.length < 10}
-                      className="w-full bg-gradient-to-r from-[#62B82B] via-[#5EB929] to-[#4E9F1F] hover:brightness-105 text-white font-bold text-base h-[52px] rounded-2xl shadow-lg shadow-[#5EB929]/30 disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center justify-center mt-2 cursor-pointer"
+                      className="w-full bg-gradient-to-r from-[#62B82B] via-[#5EB929] to-[#4E9F1F] hover:brightness-105 text-white font-bold text-sm sm:text-base h-[46px] sm:h-[50px] rounded-2xl shadow-md shadow-[#5EB929]/25 disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center justify-center mt-1.5 cursor-pointer"
                     >
                       {isLoading ? (
-                        <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                        <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
                       ) : (
                         'Continue with OTP'
                       )}
@@ -680,23 +672,23 @@ const CustomerLogin = () => {
                   </form>
 
                   {/* Social Logins */}
-                  <div className="my-6">
-                    <div className="relative flex items-center justify-center mb-4">
+                  <div className="my-2 sm:my-3">
+                    <div className="relative flex items-center justify-center mb-2 sm:mb-2.5">
                       <div className="absolute inset-0 flex items-center">
                         <div className="w-full border-t border-gray-200" />
                       </div>
-                      <span className="relative px-3 bg-white text-xs font-semibold text-gray-400 uppercase tracking-wider">
+                      <span className="relative px-2.5 bg-white text-[10px] sm:text-xs font-semibold text-gray-400 uppercase tracking-wider">
                         or continue with
                       </span>
                     </div>
 
-                    <div className="grid grid-cols-2 gap-3">
+                    <div className="grid grid-cols-2 gap-2 sm:gap-3">
                       <button
                         type="button"
                         onClick={() => handleSocialClick('Google')}
-                        className="h-[46px] rounded-xl border border-gray-200 bg-white hover:bg-gray-50 flex items-center justify-center gap-2.5 shadow-sm active:scale-95 transition-all text-xs font-bold text-gray-700 cursor-pointer"
+                        className="h-[40px] sm:h-[44px] rounded-xl border border-gray-200 bg-white hover:bg-gray-50 flex items-center justify-center gap-2 shadow-xs active:scale-95 transition-all text-xs font-bold text-gray-700 cursor-pointer"
                       >
-                        <svg className="w-4 h-4" viewBox="0 0 24 24">
+                        <svg className="w-3.5 h-3.5" viewBox="0 0 24 24">
                           <path
                             fill="#4285F4"
                             d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
@@ -720,10 +712,10 @@ const CustomerLogin = () => {
                       <button
                         type="button"
                         onClick={() => handleSocialClick('Email')}
-                        className="h-[46px] rounded-xl border border-gray-200 bg-white hover:bg-gray-50 flex items-center justify-center gap-2.5 shadow-sm active:scale-95 transition-all text-xs font-bold text-gray-700 cursor-pointer"
+                        className="h-[40px] sm:h-[44px] rounded-xl border border-gray-200 bg-white hover:bg-gray-50 flex items-center justify-center gap-2 shadow-xs active:scale-95 transition-all text-xs font-bold text-gray-700 cursor-pointer"
                       >
                         <svg
-                          className="w-4 h-4 text-[#5EB929]"
+                          className="w-3.5 h-3.5 text-[#5EB929]"
                           fill="currentColor"
                           viewBox="0 0 24 24"
                         >
@@ -735,9 +727,9 @@ const CustomerLogin = () => {
                   </div>
 
                   {/* Terms & Privacy Footer */}
-                  <div className="text-center text-xs text-gray-500 leading-relaxed pt-2 border-t border-gray-100">
+                  <div className="text-center text-[11px] text-gray-500 leading-tight pt-1.5 border-t border-gray-100">
                     <p>By continuing, you agree to Offerly&apos;s</p>
-                    <div className="flex items-center justify-center gap-2 mt-1 font-medium text-gray-700 flex-wrap">
+                    <div className="flex items-center justify-center gap-1.5 mt-0.5 font-medium text-gray-700 flex-wrap">
                       <button
                         type="button"
                         onClick={() => navigate('/terms')}
@@ -767,45 +759,45 @@ const CustomerLogin = () => {
                   initial="enter"
                   animate="center"
                   exit="exit"
-                  className="flex flex-col justify-between flex-1"
+                  className="flex flex-col justify-between h-full flex-1"
                 >
-                  {/* Top Header with Back/Close indicator */}
-                  <div>
-                    <div className="flex items-center justify-between mb-4">
+                  {/* Top Header & Navigation */}
+                  <div className="space-y-2 sm:space-y-3">
+                    <div className="flex items-center justify-between">
                       <button
                         type="button"
                         onClick={handleEditPhone}
-                        className="inline-flex items-center gap-1.5 text-xs font-bold text-gray-500 hover:text-gray-900 transition-colors p-1 -ml-1 rounded-lg hover:bg-gray-100 cursor-pointer"
+                        className="inline-flex items-center gap-1 text-[11px] sm:text-xs font-bold text-gray-500 hover:text-gray-900 transition-colors p-1 -ml-1 rounded-lg hover:bg-gray-100 cursor-pointer"
                       >
-                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15 19l-7-7 7-7" />
                         </svg>
                         <span>Change Number</span>
                       </button>
 
-                      <span className="px-2.5 py-1 rounded-full bg-[#5EB929]/10 text-[#4E9F1F] text-[11px] font-extrabold tracking-wide uppercase">
+                      <span className="px-2 py-0.5 rounded-full bg-[#5EB929]/10 text-[#4E9F1F] text-[10px] font-extrabold tracking-wide uppercase">
                         Step 2 of 2
                       </span>
                     </div>
 
-                    <div className="text-center md:text-left mb-5">
-                      <h2 className="text-gray-900 font-extrabold text-2xl lg:text-3xl tracking-tight">
+                    <div className="text-center md:text-left">
+                      <h2 className="text-gray-900 font-extrabold text-xl sm:text-2xl lg:text-3xl tracking-tight leading-tight">
                         Verify Code
                       </h2>
-                      <p className="text-gray-500 text-sm font-normal mt-1.5">
-                        Enter the 6-digit verification code sent to your mobile number.
+                      <p className="text-gray-500 text-xs sm:text-sm font-normal mt-0.5">
+                        Enter the 6-digit code sent to your number.
                       </p>
                     </div>
 
-                    {/* Editable Phone Number Card (Directly above Enter OTP) */}
-                    <div className="bg-gradient-to-r from-gray-50 to-gray-50/60 border border-gray-200/90 rounded-2xl p-3 sm:p-3.5 mb-5 flex items-center justify-between shadow-xs hover:border-[#5EB929]/40 transition-all">
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-xl bg-white border border-gray-200/80 flex items-center justify-center text-xl shadow-xs shrink-0">
+                    {/* Editable Phone Number Card */}
+                    <div className="bg-gradient-to-r from-gray-50 to-gray-50/60 border border-gray-200/90 rounded-2xl p-2.5 sm:p-3 flex items-center justify-between shadow-xs hover:border-[#5EB929]/40 transition-all">
+                      <div className="flex items-center gap-2.5 min-w-0">
+                        <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-white border border-gray-200/80 flex items-center justify-center text-base sm:text-lg shadow-xs shrink-0">
                           {selectedCountry.flag}
                         </div>
                         <div className="min-w-0">
-                          <p className="text-[10px] font-bold uppercase tracking-wider text-gray-400">Mobile Number</p>
-                          <p className="text-sm sm:text-base font-extrabold text-gray-900 tracking-wide font-mono truncate">
+                          <p className="text-[9px] sm:text-[10px] font-bold uppercase tracking-wider text-gray-400 leading-none">Mobile</p>
+                          <p className="text-xs sm:text-sm font-extrabold text-gray-900 tracking-wide font-mono truncate mt-0.5">
                             {countryCode} {phone.length === 10 ? `${phone.slice(0, 5)} ${phone.slice(5)}` : phone}
                           </p>
                         </div>
@@ -816,9 +808,9 @@ const CustomerLogin = () => {
                         whileTap={{ scale: 0.95 }}
                         type="button"
                         onClick={handleEditPhone}
-                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white hover:bg-emerald-50 text-[#4E9F1F] hover:text-[#3B8014] border border-gray-200 hover:border-[#5EB929]/40 text-xs font-bold shadow-xs transition-colors cursor-pointer shrink-0"
+                        className="inline-flex items-center gap-1 px-2.5 py-1 rounded-xl bg-white hover:bg-emerald-50 text-[#4E9F1F] hover:text-[#3B8014] border border-gray-200 hover:border-[#5EB929]/40 text-[11px] font-bold shadow-xs transition-colors cursor-pointer shrink-0"
                       >
-                        <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
                         </svg>
                         <span>Edit</span>
@@ -827,10 +819,10 @@ const CustomerLogin = () => {
 
                     {/* Dev Mode Auto-Fill Helper Banner */}
                     {devMode && (
-                      <div className="mb-4 bg-emerald-50 border border-emerald-200/70 rounded-2xl p-2.5 sm:p-3 flex items-center justify-between gap-2">
-                        <div className="flex items-center gap-2">
-                          <span className="w-2 h-2 rounded-full bg-[#5EB929] animate-pulse" />
-                          <span className="text-xs font-bold text-emerald-800">
+                      <div className="bg-emerald-50 border border-emerald-200/70 rounded-xl p-2 flex items-center justify-between gap-2">
+                        <div className="flex items-center gap-1.5">
+                          <span className="w-1.5 h-1.5 rounded-full bg-[#5EB929] animate-pulse" />
+                          <span className="text-[11px] font-bold text-emerald-800">
                             Dev Code: <strong className="font-mono text-emerald-900 tracking-wider">123456</strong>
                           </span>
                         </div>
@@ -841,7 +833,7 @@ const CustomerLogin = () => {
                             setOtp(devDigits);
                             handleVerifyOtp('123456');
                           }}
-                          className="px-2.5 py-1 bg-[#5EB929] hover:bg-[#4E9F1F] text-white rounded-lg text-[11px] font-bold transition-all shadow-xs active:scale-95 cursor-pointer"
+                          className="px-2 py-0.5 bg-[#5EB929] hover:bg-[#4E9F1F] text-white rounded-lg text-[10px] font-bold transition-all shadow-xs active:scale-95 cursor-pointer"
                         >
                           Auto-Fill
                         </button>
@@ -849,13 +841,13 @@ const CustomerLogin = () => {
                     )}
 
                     {/* OTP 6-Digit Inputs Grid */}
-                    <div className="space-y-4">
-                      <div className="space-y-1.5">
+                    <div className="space-y-2 sm:space-y-3">
+                      <div className="space-y-1">
                         <div className="flex items-center justify-between px-1">
-                          <label className="text-xs font-bold text-gray-700 uppercase tracking-wider">
+                          <label className="text-[11px] sm:text-xs font-bold text-gray-700 uppercase tracking-wider">
                             Enter OTP
                           </label>
-                          <span className="text-[11px] font-semibold text-gray-400">
+                          <span className="text-[10px] font-semibold text-gray-400">
                             6-digit code
                           </span>
                         </div>
@@ -863,7 +855,7 @@ const CustomerLogin = () => {
                         <motion.div
                           animate={otpShake ? { x: [-8, 8, -6, 6, -3, 3, 0] } : {}}
                           transition={{ duration: 0.4 }}
-                          className="flex items-center justify-between gap-1.5 sm:gap-2.5 pt-1"
+                          className="flex items-center justify-between gap-1.5 sm:gap-2.5 pt-0.5"
                         >
                           {otp.map((digit, index) => (
                             <input
@@ -878,11 +870,11 @@ const CustomerLogin = () => {
                               onChange={(e) => handleOtpChange(index, e)}
                               onKeyDown={(e) => handleOtpKeyDown(index, e)}
                               onPaste={handleOtpPaste}
-                              className={`w-11 sm:w-12 h-13 sm:h-14 text-center text-xl sm:text-2xl font-black rounded-2xl border-2 transition-all outline-none font-mono select-none ${
+                              className={`w-10 sm:w-12 h-11 sm:h-13 text-center text-lg sm:text-2xl font-black rounded-2xl border-2 transition-all outline-none font-mono select-none ${
                                 digit
-                                  ? 'border-[#5EB929] bg-[#5EB929]/5 text-gray-900 ring-2 ring-[#5EB929]/20 shadow-sm'
+                                  ? 'border-[#5EB929] bg-[#5EB929]/5 text-gray-900 ring-2 ring-[#5EB929]/20 shadow-xs'
                                   : 'border-gray-200 bg-gray-50 text-gray-900 hover:border-gray-300'
-                              } focus:border-[#5EB929] focus:bg-white focus:ring-4 focus:ring-[#5EB929]/15`}
+                              } focus:border-[#5EB929] focus:bg-white focus:ring-3 focus:ring-[#5EB929]/15`}
                             />
                           ))}
                         </motion.div>
@@ -893,14 +885,14 @@ const CustomerLogin = () => {
                         <motion.p
                           initial={{ opacity: 0, y: -4 }}
                           animate={{ opacity: 1, y: 0 }}
-                          className="text-xs font-medium text-rose-500 px-1"
+                          className="text-[11px] font-medium text-rose-500 px-1"
                         >
                           {error}
                         </motion.p>
                       )}
 
                       {/* Resend OTP Row */}
-                      <div className="flex items-center justify-between text-xs pt-1 px-1">
+                      <div className="flex items-center justify-between text-[11px] sm:text-xs pt-0.5 px-1">
                         <span className="text-gray-500">
                           {resendCooldown > 0 ? (
                             <>
@@ -932,10 +924,10 @@ const CustomerLogin = () => {
                         type="button"
                         onClick={() => handleVerifyOtp()}
                         disabled={isVerifying || otp.join('').length < 6}
-                        className="w-full bg-gradient-to-r from-[#62B82B] via-[#5EB929] to-[#4E9F1F] hover:brightness-105 text-white font-bold text-base h-[52px] rounded-2xl shadow-lg shadow-[#5EB929]/30 disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center justify-center mt-3 cursor-pointer"
+                        className="w-full bg-gradient-to-r from-[#62B82B] via-[#5EB929] to-[#4E9F1F] hover:brightness-105 text-white font-bold text-sm sm:text-base h-[46px] sm:h-[50px] rounded-2xl shadow-md shadow-[#5EB929]/25 disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center justify-center mt-2 cursor-pointer"
                       >
                         {isVerifying ? (
-                          <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                          <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
                         ) : (
                           'Verify & Continue'
                         )}
@@ -944,9 +936,9 @@ const CustomerLogin = () => {
                   </div>
 
                   {/* Terms & Privacy Footer */}
-                  <div className="text-center text-xs text-gray-500 leading-relaxed pt-4 mt-6 border-t border-gray-100">
+                  <div className="text-center text-[10px] sm:text-[11px] text-gray-400 leading-tight pt-2 border-t border-gray-100">
                     <p>Secured with Offerly instant OTP verification</p>
-                    <div className="flex items-center justify-center gap-2 mt-1 font-medium text-gray-700 flex-wrap">
+                    <div className="flex items-center justify-center gap-1.5 mt-0.5 font-medium text-gray-600 flex-wrap">
                       <button
                         type="button"
                         onClick={() => navigate('/terms')}
