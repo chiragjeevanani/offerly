@@ -25,6 +25,7 @@ import FilterListRoundedIcon from '@mui/icons-material/FilterListRounded';
 import LocalOfferRoundedIcon from '@mui/icons-material/LocalOfferRounded';
 import MoreVertRoundedIcon from '@mui/icons-material/MoreVertRounded';
 import EmojiEventsRoundedIcon from '@mui/icons-material/EmojiEventsRounded';
+import PersonRoundedIcon from '@mui/icons-material/PersonRounded';
 
 // Admin Pages (Lazy Loaded for performance and ad-blocker resilience)
 const AdminDashboard = lazy(() => import('./pages/Dashboard'));
