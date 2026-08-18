@@ -25,6 +25,27 @@ window.addEventListener('error', (e) => {
   }
 });
 
+// Prevent pinch-to-zoom and gesture zoom on mobile WebViews/browsers
+if (typeof window !== 'undefined') {
+  document.addEventListener('gesturestart', (e) => e.preventDefault(), { passive: false });
+  document.addEventListener('gesturechange', (e) => e.preventDefault(), { passive: false });
+  document.addEventListener('gestureend', (e) => e.preventDefault(), { passive: false });
+
+  // Prevent double-tap to zoom on mobile touch devices
+  let lastTouchEnd = 0;
+  document.addEventListener(
+    'touchend',
+    (event) => {
+      const now = Date.now();
+      if (now - lastTouchEnd <= 300) {
+        event.preventDefault();
+      }
+      lastTouchEnd = now;
+    },
+    { passive: false }
+  );
+}
+
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {

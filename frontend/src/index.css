@@ -15,16 +15,25 @@
 }
 
 @layer base {
-  * {
+  *, *::before, *::after {
     box-sizing: border-box;
     -webkit-tap-highlight-color: transparent;
     font-family: 'Poppins', system-ui, -apple-system, sans-serif;
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    -khtml-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
   }
 
   html {
     scroll-behavior: smooth;
     height: 100%;
     font-family: 'Poppins', system-ui, -apple-system, sans-serif;
+    touch-action: manipulation;
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
   }
 
   body {
@@ -34,15 +43,43 @@
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     font-family: 'Poppins', system-ui, -apple-system, sans-serif;
+    touch-action: manipulation;
+    -webkit-user-select: none;
+    user-select: none;
   }
 
   #root {
     height: 100%;
+    -webkit-user-select: none;
+    user-select: none;
   }
 
-  input, textarea, select {
+  /* Ensure inputs and textareas remain fully editable and selectable */
+  input, textarea, select, [contenteditable="true"], .allow-select {
     outline: none;
     -webkit-appearance: none;
+    -webkit-user-select: text !important;
+    -moz-user-select: text !important;
+    -ms-user-select: text !important;
+    user-select: text !important;
+    -webkit-touch-callout: default !important;
+  }
+
+  /* Prevent auto-zoom on iOS Safari when focusing inputs (< 16px triggers zoom) */
+  @media screen and (max-width: 768px) {
+    input, select, textarea {
+      font-size: 16px !important;
+    }
+  }
+
+  /* Disable image dragging / long-press preview */
+  img {
+    -webkit-user-drag: none;
+    -khtml-user-drag: none;
+    -moz-user-drag: none;
+    -o-user-drag: none;
+    user-drag: none;
+    pointer-events: auto;
   }
 
   /* Leaflet map styles */
