@@ -135,7 +135,7 @@ const SearchResults = () => {
                       animate={{ opacity: 1, scale: 1 }}
                       transition={{ delay: idx * 0.05 }}
                     >
-                      <OfferCard offer={offer} variant="list" />
+                      <OfferCard offer={offer} variant="list" viewSource="search" />
                     </motion.div>
                   ))}
                 </div>
@@ -189,7 +189,7 @@ const SearchResults = () => {
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ delay: idx * 0.05 }}
                     >
-                      <OfferCard offer={offer} variant="list" />
+                      <OfferCard offer={offer} variant="list" viewSource="search" />
                     </motion.div>
                   ))}
                 </div>

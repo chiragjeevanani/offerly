@@ -9,6 +9,13 @@ import Offer from "../models/Offer.js";
 import Product from "../models/Product.js";
 import AdRequest from "../../admin/models/AdRequest.js";
 import { calculateDistance, formatDistance } from "../../../utils/distance.js";
+import {
+  COMPLETED_STATUSES,
+  PENDING_STATUSES,
+  localDayGroup,
+  startOfLocalDay,
+  addDays,
+} from "../../../utils/analytics.js";
 
 const escapeRegex = (value = "") => value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 
@@ -647,10 +654,86 @@ export const getMerchantDashboard = async (req, res) => {
     return res.status(404).json({ message: "Merchant profile not found" });
   }
 
-  const [productsCount, offersCount, redemptions, latestSubscription, adRequests, adSubscriptions] = await Promise.all([
+  // 7-day window, anchored to the local calendar day rather than "now minus 7 * 24h",
+  // so the chart's leftmost bucket is a whole day.
+  const todayStart = startOfLocalDay();
+  const weekStart = addDays(todayStart, -6);
+
+  const [
+    productsCount,
+    offersCount,
+    totals,
+    weeklyRevenueData,
+    topOffersData,
+    recentBookings,
+    latestSubscription,
+    adRequests,
+    adSubscriptions,
+  ] = await Promise.all([
     Product.countDocuments({ merchantId: merchant._id }),
     Offer.countDocuments({ merchantId: merchant._id }),
-    Redemption.find({ merchantId: merchant._id }).sort({ createdAt: -1 }),
+    // Totals in one pass on the server instead of pulling the whole history into memory.
+    Redemption.aggregate([
+      { $match: { merchantId: merchant._id } },
+      {
+        $group: {
+          _id: null,
+          bookingsCount: { $sum: 1 },
+          pendingBookingsCount: {
+            $sum: { $cond: [{ $in: ["$status", PENDING_STATUSES] }, 1, 0] },
+          },
+          revenue: {
+            $sum: {
+              $cond: [
+                { $in: ["$status", COMPLETED_STATUSES] },
+                { $toDouble: { $ifNull: ["$totals.final", 0] } },
+                0,
+              ],
+            },
+          },
+          customerIds: { $addToSet: "$customerId" },
+        },
+      },
+      {
+        $project: {
+          bookingsCount: 1,
+          pendingBookingsCount: 1,
+          revenue: 1,
+          customersCount: { $size: "$customerIds" },
+        },
+      },
+    ]),
+    Redemption.aggregate([
+      {
+        $match: {
+          merchantId: merchant._id,
+          status: { $in: COMPLETED_STATUSES },
+          createdAt: { $gte: weekStart },
+        },
+      },
+      {
+        $group: {
+          _id: localDayGroup("$createdAt"),
+          revenue: { $sum: { $toDouble: { $ifNull: ["$totals.final", 0] } } },
+        },
+      },
+      { $sort: { _id: 1 } },
+    ]),
+    Redemption.aggregate([
+      { $match: { merchantId: merchant._id, status: { $in: COMPLETED_STATUSES } } },
+      {
+        $group: {
+          _id: "$offerId",
+          count: { $sum: 1 },
+          revenue: { $sum: { $toDouble: { $ifNull: ["$totals.final", 0] } } },
+        },
+      },
+      { $sort: { count: -1 } },
+      { $limit: 3 },
+      { $lookup: { from: "offers", localField: "_id", foreignField: "_id", as: "offerDetails" } },
+      { $unwind: { path: "$offerDetails", preserveNullAndEmptyArrays: true } },
+    ]),
+    Redemption.find({ merchantId: merchant._id }).sort({ createdAt: -1 }).limit(10),
     getLatestSubscription(req.user._id, merchant._id),
     AdRequest.find({ merchantId: merchant._id }),
     MerchantSubscription.find({ merchantId: merchant._id, planType: 'advertisement', status: 'active' })
@@ -660,59 +743,21 @@ export const getMerchantDashboard = async (req, res) => {
   const activeAdsCount = adRequests.filter(ad => ad.status === 'approved' && (!ad.expiryAt || new Date(ad.expiryAt) > now)).length;
   const pendingAdsCount = adRequests.filter(ad => ad.status === 'pending').length; const expiredAdsCount = adRequests.filter(ad => ad.status === 'approved' && ad.expiryAt && new Date(ad.expiryAt) <= now).length; const availableAdSlots = Math.max(0, adSubscriptions.length - adRequests.length);
 
-  const revenue = redemptions
-    .filter((item) => ["redeemed", "completed"].includes(item.status))
-    .reduce((sum, item) => sum + Number(item?.totals?.final || 0), 0);
-
-  const customersCount = new Set(
-    redemptions.map((item) => item.customerId?.toString()).filter(Boolean),
-  ).size;
+  const summary = totals[0] || {};
 
   const remainingDays = latestSubscription?.endDate
     ? Math.max(0, Math.ceil((new Date(latestSubscription.endDate) - new Date()) / (1000 * 60 * 60 * 24)))
     : 0;
-
-  // Calculate 7-day daily revenue accurately
-  const sevenDaysAgo = new Date();
-  sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
-  sevenDaysAgo.setHours(0, 0, 0, 0);
-
-  const weeklyRevenueData = await Redemption.aggregate([
-    {
-      $match: {
-        merchantId: merchant._id,
-        status: { $in: ["redeemed", "completed"] },
-        createdAt: { $gte: sevenDaysAgo }
-      }
-    },
-    {
-      $group: {
-        _id: { $dateToString: { format: "%Y-%m-%d", date: "$createdAt" } },
-        revenue: { $sum: { $toDouble: "$totals.final" } }
-      }
-    },
-    { $sort: { _id: 1 } }
-  ]);
-
-  // Calculate top performing offers
-  const topOffersData = await Redemption.aggregate([
-    { $match: { merchantId: merchant._id, status: { $in: ["redeemed", "completed"] } } },
-    { $group: { _id: "$offerId", count: { $sum: 1 }, revenue: { $sum: { $toDouble: "$totals.final" } } } },
-    { $sort: { count: -1 } },
-    { $limit: 3 },
-    { $lookup: { from: 'offers', localField: '_id', foreignField: '_id', as: 'offerDetails' } },
-    { $unwind: { path: '$offerDetails', preserveNullAndEmptyArrays: true } }
-  ]);
 
   return res.status(200).json({
     merchant: serializeMerchant(merchant),
     stats: {
       productsCount,
       offersCount,
-      bookingsCount: redemptions.length,
-      revenue,
-      customersCount,
-      pendingBookingsCount: redemptions.filter((item) => item.status === "active").length,
+      bookingsCount: summary.bookingsCount || 0,
+      revenue: summary.revenue || 0,
+      customersCount: summary.customersCount || 0,
+      pendingBookingsCount: summary.pendingBookingsCount || 0,
       remainingDays,
       weeklyRevenue: weeklyRevenueData,
       topOffers: topOffersData.map(item => ({
@@ -728,7 +773,7 @@ export const getMerchantDashboard = async (req, res) => {
       availableAdSlots,
       totalAdPackages: adSubscriptions.length
     },
-    recentBookings: redemptions.slice(0, 10).map(serializeRedemption),
+    recentBookings: recentBookings.map(serializeRedemption),
     subscription: latestSubscription,
     adSubscriptions // Including full ad subs for detailed UI
   });
@@ -741,44 +786,60 @@ export const getMerchantCustomers = async (req, res) => {
     return res.status(404).json({ message: "Merchant profile not found" });
   }
 
-  const bookings = await Redemption.find({ merchantId: merchant._id }).populate(
-    "customerId",
-    "name phone email",
-  );
+  // Rolled up in the database - this used to load every redemption plus a populated
+  // user document per row, which does not survive a merchant with real volume.
+  const customers = await Redemption.aggregate([
+    { $match: { merchantId: merchant._id, customerId: { $ne: null } } },
+    { $sort: { createdAt: 1 } },
+    {
+      $group: {
+        _id: "$customerId",
+        visits: { $sum: 1 },
+        completedVisits: {
+          $sum: { $cond: [{ $in: ["$status", COMPLETED_STATUSES] }, 1, 0] },
+        },
+        spend: {
+          $sum: {
+            $cond: [
+              { $in: ["$status", COMPLETED_STATUSES] },
+              { $toDouble: { $ifNull: ["$totals.final", 0] } },
+              0,
+            ],
+          },
+        },
+        firstVisit: { $min: "$createdAt" },
+        lastVisit: { $max: "$createdAt" },
+        fallbackName: { $last: "$customerName" },
+      },
+    },
+    { $sort: { lastVisit: -1 } },
+    {
+      $lookup: {
+        from: "users",
+        localField: "_id",
+        foreignField: "_id",
+        as: "customer",
+        pipeline: [{ $project: { name: 1, phone: 1, email: 1 } }],
+      },
+    },
+    { $unwind: { path: "$customer", preserveNullAndEmptyArrays: true } },
+    {
+      $project: {
+        _id: 0,
+        id: { $toString: "$_id" },
+        name: { $ifNull: ["$customer.name", { $ifNull: ["$fallbackName", ""] }] },
+        phone: { $ifNull: ["$customer.phone", ""] },
+        email: { $ifNull: ["$customer.email", ""] },
+        visits: 1,
+        completedVisits: 1,
+        spend: 1,
+        firstVisit: 1,
+        lastVisit: 1,
+      },
+    },
+  ]);
 
-  const customers = new Map();
-
-  for (const booking of bookings) {
-    if (!booking.customerId) {
-      continue;
-    }
-
-    const key = booking.customerId._id.toString();
-    const current = customers.get(key) || {
-      id: key,
-      name: booking.customerName || booking.customerId.name || "",
-      phone: booking.customerId.phone || "",
-      email: booking.customerId.email || "",
-      visits: 0,
-      spend: 0,
-      lastVisit: booking.createdAt,
-    };
-
-    current.visits += 1;
-    current.spend += Number(booking?.totals?.final || 0);
-    current.lastVisit =
-      new Date(current.lastVisit) > new Date(booking.createdAt)
-        ? current.lastVisit
-        : booking.createdAt;
-
-    customers.set(key, current);
-  }
-
-  return res.status(200).json({
-    customers: [...customers.values()].sort(
-      (left, right) => new Date(right.lastVisit) - new Date(left.lastVisit),
-    ),
-  });
+  return res.status(200).json({ customers });
 };
 
 export const getMySubscription = async (req, res) => {

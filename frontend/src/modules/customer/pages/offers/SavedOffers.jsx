@@ -85,7 +85,7 @@ const SavedOffers = () => {
                     exit={{ opacity: 0, x: -20 }}
                     transition={{ delay: idx * 0.05 }}
                   >
-                    <OfferCard offer={offer} variant="list" onSaveToggle={loadSaved} />
+                    <OfferCard offer={offer} variant="list" viewSource="saved" onSaveToggle={loadSaved} />
                   </motion.div>
                 ))}
               </div>

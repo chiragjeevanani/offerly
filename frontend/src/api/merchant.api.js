@@ -64,6 +64,18 @@ export const merchantAPI = {
     return axiosInstance.get('/merchants/me/customers');
   },
 
+  // Today's headline numbers (acquired / redemptions / sales / views)
+  getTodayAnalytics: async () => {
+    return axiosInstance.get('/merchants/me/analytics/today');
+  },
+
+  // Full monthly insights report. `month` is YYYY-MM; omit for the current month.
+  getMonthlyAnalytics: async (month) => {
+    return axiosInstance.get('/merchants/me/analytics/monthly', {
+      params: month ? { month } : {},
+    });
+  },
+
   // Search products for offer creation
   searchProducts: async (query) => {
     try {

@@ -22,6 +22,10 @@ import {
   purchaseSubscription,
   verifySubscription,
 } from "../controllers/merchantController.js";
+import {
+  getTodayAnalytics,
+  getMonthlyAnalytics,
+} from "../controllers/analyticsController.js";
 import { deleteMerchant } from "../../admin/controllers/adminController.js";
 
 const router = express.Router();
@@ -38,6 +42,11 @@ router.post("/me/registration/location-hours", protect, authorize("merchant"), u
 
 router.get("/me/dashboard", protect, authorize("merchant", "admin"), getMerchantDashboard);
 router.get("/me/customers", protect, authorize("merchant", "admin"), getMerchantCustomers);
+
+// Insights
+router.get("/me/analytics/today", protect, authorize("merchant", "admin"), getTodayAnalytics);
+router.get("/me/analytics/monthly", protect, authorize("merchant", "admin"), getMonthlyAnalytics);
+
 router.get("/me/subscription", protect, authorize("merchant", "admin"), getMySubscription);
 
 // Subscription & Ad Requests

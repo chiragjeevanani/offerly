@@ -10,12 +10,17 @@ import { useApp } from '../../context/AppContext';
 import toast from 'react-hot-toast';
 
 import { getOptimizedImageUrl } from '../../../../utils/cloudinaryUtils';
+import { useOfferImpression } from '../../../../hooks/useOfferImpression';
 
-const OfferCard = ({ offer, variant = 'list', onSaveToggle }) => {
+const OfferCard = ({ offer, variant = 'list', onSaveToggle, viewSource = 'feed' }) => {
   const navigate = useNavigate();
   const { user, isLoggedIn, refreshUser } = useApp();
   const offerId = offer._id || offer.id;
-  
+
+  // Counts towards the merchant's "offer views" once the card has been half visible
+  // for a second - see hooks/useOfferImpression.
+  const impressionRef = useOfferImpression(offerId, viewSource);
+
   // Optimize image URL
   const optimizedImage = getOptimizedImageUrl(offer.image, { width: 400, height: 300 });
 
@@ -71,6 +76,7 @@ const OfferCard = ({ offer, variant = 'list', onSaveToggle }) => {
   if (variant === 'grid') {
     return (
       <motion.div
+        ref={impressionRef}
         whileTap={{ scale: 0.97 }}
         onClick={() => navigate(`/offer/${offerId}`)}
         className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden cursor-pointer w-full h-[160px] flex flex-col group active:bg-gray-50 transition-colors"
@@ -120,6 +126,7 @@ const OfferCard = ({ offer, variant = 'list', onSaveToggle }) => {
   // ── List variant (Nearby/Deals) ─────────────────────────────────────────────
   return (
     <motion.div
+      ref={impressionRef}
       whileTap={{ scale: 0.98 }}
       onClick={() => navigate(`/offer/${offerId}`)}
       className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden cursor-pointer active:bg-gray-50 transition-colors"

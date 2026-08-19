@@ -12,6 +12,7 @@ export const serializeUser = (user) => ({
   phone: user?.phone || '',
   age: user?.age ?? '',
   gender: user?.gender || '',
+  dob: user?.dob || null,
   address: user?.address || '',
   city: user?.city || '',
   profilePhoto: user?.profilePhoto || user?.avatar || '',

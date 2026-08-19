@@ -185,7 +185,7 @@ const Explore = () => {
                 </div>
                 <div className={viewMode === 'grid' ? 'grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-3 gap-2' : 'grid grid-cols-1 md:grid-cols-2 gap-3'}>
                   {trendingOffers.map((offer) => (
-                    <OfferCard key={offer._id || offer.id} offer={offer} variant={viewMode === 'grid' ? 'grid' : 'list'} />
+                    <OfferCard key={offer._id || offer.id} offer={offer} viewSource="feed" variant={viewMode === 'grid' ? 'grid' : 'list'} />
                   ))}
                 </div>
               </section>
@@ -200,7 +200,7 @@ const Explore = () => {
                 </div>
                 <div className={viewMode === 'grid' ? 'grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-3 gap-2' : 'grid grid-cols-1 md:grid-cols-2 gap-3'}>
                   {newOffers.map((offer) => (
-                    <OfferCard key={offer._id || offer.id} offer={offer} variant={viewMode === 'grid' ? 'grid' : 'list'} />
+                    <OfferCard key={offer._id || offer.id} offer={offer} viewSource="feed" variant={viewMode === 'grid' ? 'grid' : 'list'} />
                   ))}
                 </div>
               </section>
@@ -217,7 +217,7 @@ const Explore = () => {
                 </div>
                 <div className={viewMode === 'grid' ? 'grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-3 gap-2' : 'grid grid-cols-1 md:grid-cols-2 gap-3'}>
                   {offers.map((offer) => (
-                    <OfferCard key={offer._id || offer.id} offer={offer} variant={viewMode === 'grid' ? 'grid' : 'list'} />
+                    <OfferCard key={offer._id || offer.id} offer={offer} viewSource="feed" variant={viewMode === 'grid' ? 'grid' : 'list'} />
                   ))}
                 </div>
                 

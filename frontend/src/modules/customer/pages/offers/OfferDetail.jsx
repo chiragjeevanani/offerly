@@ -18,10 +18,15 @@ import { cartAPI } from '../../../../api/cart.api';
 import { reviewAPI } from '../../../../api/review.api';
 import PageTransition from '../../components/ui/PageTransition';
 import { useApp } from '../../context/AppContext';
+import { useOfferViewOnMount } from '../../../../hooks/useOfferImpression';
 import toast from 'react-hot-toast';
 
 const OfferDetail = () => {
   const { id } = useParams();
+
+  // Opening the detail page is the strongest view signal there is, so it counts
+  // immediately rather than waiting on a visibility threshold.
+  useOfferViewOnMount(id, 'detail');
   const navigate = useNavigate();
   const { isLoggedIn, user, refreshUser } = useApp();
 

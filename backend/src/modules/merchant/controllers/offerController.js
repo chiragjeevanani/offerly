@@ -5,8 +5,11 @@ import MerchantSubscription from "../../payment/models/MerchantSubscription.js";
 import { serializeOffer, serializeMerchant } from "../../../utils/serializers.js";
 import { calculateDistance, formatDistance } from "../../../utils/distance.js";
 import { getFeedCache, setFeedCache, invalidateFeedCache } from "../../../utils/feedCache.js";
+import mongoose from "mongoose";
 import Merchant from "../models/Merchant.js";
 import Offer from "../models/Offer.js";
+import OfferView from "../models/OfferView.js";
+import { viewBucketFor } from "../../../utils/analytics.js";
 
 const escapeRegex = (value = "") => value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 
@@ -1017,4 +1020,96 @@ export const deleteOffer = async (req, res) => {
   invalidateFeedCache({ city: merchant.city });
 
   return res.status(200).json({ success: true });
+};
+
+const MAX_VIEWS_PER_BATCH = 25;
+const VIEW_SOURCES = new Set(["feed", "detail", "store", "search", "saved", "other"]);
+
+// @desc    Record offer views (batched from the customer app)
+// @route   POST /api/offers/views
+// @access  Public (optionalAuth - anonymous views still count)
+export const recordOfferViews = async (req, res) => {
+  const incoming = Array.isArray(req.body?.views) ? req.body.views : [];
+
+  if (incoming.length === 0) {
+    return res.status(200).json({ recorded: 0 });
+  }
+
+  // Signed-in viewers key on their user id so the same person is deduped across
+  // devices; everyone else falls back to the anonymous session id the client mints.
+  const sessionKey = String(req.body?.sessionKey || "").trim().slice(0, 64);
+  const viewerKey = req.user?._id ? req.user._id.toString() : sessionKey;
+
+  if (!viewerKey) {
+    return res.status(400).json({ message: "sessionKey is required for anonymous views" });
+  }
+
+  const bucket = viewBucketFor();
+
+  // Collapse repeats inside the payload itself before touching the database.
+  const unique = new Map();
+  for (const entry of incoming.slice(0, MAX_VIEWS_PER_BATCH)) {
+    const offerId = String(entry?.offerId || "");
+    if (!mongoose.Types.ObjectId.isValid(offerId)) continue;
+
+    const source = VIEW_SOURCES.has(entry?.source) ? entry.source : "other";
+    if (!unique.has(offerId)) {
+      unique.set(offerId, source);
+    }
+  }
+
+  if (unique.size === 0) {
+    return res.status(200).json({ recorded: 0 });
+  }
+
+  // Only count views of offers that actually exist, and resolve the owning merchant
+  // so the analytics queries never have to join back through Offer.
+  const offers = await Offer.find({ _id: { $in: [...unique.keys()] } })
+    .select("_id merchantId")
+    .lean();
+
+  if (offers.length === 0) {
+    return res.status(200).json({ recorded: 0 });
+  }
+
+  const documents = offers.map((offer) => ({
+    insertOne: {
+      document: {
+        offerId: offer._id,
+        merchantId: offer.merchantId,
+        userId: req.user?._id || null,
+        viewerKey,
+        source: unique.get(offer._id.toString()) || "other",
+        bucket,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      },
+    },
+  }));
+
+  let recordedIds = [];
+
+  try {
+    const result = await OfferView.bulkWrite(documents, { ordered: false });
+    // Duplicates are the expected case, not an error - they mean the viewer already
+    // counted for this offer inside the current dedupe window.
+    recordedIds = offers
+      .filter((_, index) => !(result.getWriteErrors?.() || []).some((e) => e.index === index))
+      .map((offer) => offer._id);
+  } catch (error) {
+    if (error?.code !== 11000 && !Array.isArray(error?.writeErrors)) {
+      throw error;
+    }
+
+    const failedIndexes = new Set((error.writeErrors || []).map((entry) => entry.index));
+    recordedIds = offers.filter((_, index) => !failedIndexes.has(index)).map((offer) => offer._id);
+  }
+
+  if (recordedIds.length > 0) {
+    // Keep the lifetime counter on the offer in step, so the feed and offer list can
+    // show impressions without hitting the events collection.
+    await Offer.updateMany({ _id: { $in: recordedIds } }, { $inc: { impressions: 1 } });
+  }
+
+  return res.status(200).json({ recorded: recordedIds.length });
 };

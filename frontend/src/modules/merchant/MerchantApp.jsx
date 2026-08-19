@@ -20,6 +20,7 @@ import HelpRoundedIcon from '@mui/icons-material/HelpRounded';
 import NotificationsRoundedIcon from '@mui/icons-material/NotificationsRounded';
 import PersonRoundedIcon from '@mui/icons-material/PersonRounded';
 import CampaignRoundedIcon from '@mui/icons-material/CampaignRounded';
+import InsightsRoundedIcon from '@mui/icons-material/InsightsRounded';
 
 import { useApp } from '../customer/context/AppContext';
 import { merchantAPI } from '../../api/merchant.api';
@@ -40,6 +41,7 @@ const Offers = lazy(() => import('./pages/Offers'));
 const Customers = lazy(() => import('./pages/Customers'));
 const ScannerEntry = lazy(() => import('./pages/ScannerEntry'));
 const Advertise = lazy(() => import('./pages/Advertise'));
+const Insights = lazy(() => import('./pages/Insights'));
 
 // Static Pages (Risk for Ad-Blockers)
 const About = lazy(() => import('./pages/static/About'));
@@ -68,6 +70,7 @@ const MerchantSidebar = ({ merchant, isMobileMenuOpen, setIsMobileMenuOpen }) =>
 
   const mainNavItems = [
     { name: 'Dashboard', path: '/merchant', icon: DashboardRoundedIcon },
+    { name: 'Insights', path: '/merchant/insights', icon: InsightsRoundedIcon },
     { name: 'Live Bookings', path: '/merchant/bookings', icon: ReceiptLongRoundedIcon },
     { name: 'Verify QR', path: '/merchant/scanner', icon: QrCodeScannerRoundedIcon },
   ];
@@ -450,6 +453,7 @@ const MerchantApp = () => {
                 <Route path="/products" element={<Products merchant={merchant} />} />
                 <Route path="/offers" element={<Offers merchant={merchant} />} />
                 <Route path="/customers" element={<Customers merchant={merchant} />} />
+                <Route path="/insights" element={<Insights merchant={merchant} />} />
                 <Route path="/advertise" element={<Advertise merchant={merchant} />} />
                 <Route path="/subscription" element={<SubscriptionRenewal merchant={merchant} />} />
                 <Route path="/notifications" element={<Notifications />} />

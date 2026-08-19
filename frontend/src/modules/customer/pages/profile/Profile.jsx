@@ -54,6 +54,16 @@ const menuSections = [
   },
 ];
 
+const PROFILE_PROMPT_DISMISSED = 'offerly_profile_prompt_dismissed';
+
+// Gender and birth date are optional, so most profiles never fill them in - which
+// leaves merchant demographics reports too thin to be useful. This nudge asks once,
+// and stays dismissed once the customer says no.
+const isProfileDetailed = (user) => Boolean(user?.gender) && Boolean(user?.dob) && Boolean(user?.city);
+
+// <input type="date"> wants YYYY-MM-DD; the API returns an ISO timestamp.
+const toDateInput = (value) => (value ? String(value).slice(0, 10) : '');
+
 const Profile = () => {
   const navigate = useNavigate();
   const { user, logout, refreshUser } = useApp();
@@ -61,11 +71,23 @@ const Profile = () => {
   const [editSheetOpen, setEditSheetOpen] = useState(false);
   const [availableCities, setAvailableCities] = useState([]);
   const [saving, setSaving] = useState(false);
+  const [promptDismissed, setPromptDismissed] = useState(
+    () => localStorage.getItem(PROFILE_PROMPT_DISMISSED) === '1'
+  );
   const [editForm, setEditForm] = useState({
     name: '',
     address: '',
     city: '',
+    gender: '',
+    dob: '',
   });
+
+  const showProfilePrompt = !promptDismissed && user && !isProfileDetailed(user);
+
+  const dismissPrompt = () => {
+    localStorage.setItem(PROFILE_PROMPT_DISMISSED, '1');
+    setPromptDismissed(true);
+  };
 
   useEffect(() => {
     const fetchStats = async () => {
@@ -100,6 +122,8 @@ const Profile = () => {
         name: user.name || '',
         address: user.address || '',
         city: user.city || '',
+        gender: user.gender || '',
+        dob: toDateInput(user.dob),
       });
     }
   }, [user, editSheetOpen]);
@@ -172,6 +196,10 @@ const Profile = () => {
         name: editForm.name.trim(),
         address: editForm.address.trim(),
         city: editForm.city,
+        // Optional - only sent when the customer has actually chosen something, so
+        // saving the sheet never blanks out a detail they set earlier.
+        ...(editForm.gender ? { gender: editForm.gender } : {}),
+        ...(editForm.dob ? { dob: editForm.dob } : {}),
       });
 
       if (response && response.user) {
@@ -243,6 +271,43 @@ const Profile = () => {
                </div>
              ))}
           </div>
+
+          {/* Profile completion nudge */}
+          {showProfilePrompt && (
+            <motion.div
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="bg-white rounded-[2rem] p-5 border border-[#5EB929]/20 shadow-[0_8px_30px_rgba(0,0,0,0.04)]"
+            >
+              <div className="flex items-start gap-3">
+                <div className="w-9 h-9 bg-[#5EB929]/10 rounded-xl flex items-center justify-center flex-shrink-0">
+                  <PersonRoundedIcon sx={{ fontSize: 18 }} className="text-[#5EB929]" />
+                </div>
+                <div className="flex-1">
+                  <p className="text-[11px] font-bold text-gray-900 uppercase tracking-tight">
+                    Finish your profile
+                  </p>
+                  <p className="text-[10px] font-medium text-gray-500 mt-1 leading-relaxed">
+                    Add your city, birth date and gender so stores near you can tailor their offers.
+                  </p>
+                  <div className="flex items-center gap-2 mt-3">
+                    <button
+                      onClick={handleEditProfile}
+                      className="bg-[#5EB929] text-white text-[9px] font-bold uppercase tracking-widest px-4 py-2.5 rounded-xl active:scale-95 transition-all"
+                    >
+                      Add details
+                    </button>
+                    <button
+                      onClick={dismissPrompt}
+                      className="text-gray-400 text-[9px] font-bold uppercase tracking-widest px-3 py-2.5"
+                    >
+                      Not now
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </motion.div>
+          )}
 
           {/* Referral Mini Terminal */}
           {user?.referralCode && (
@@ -373,6 +438,40 @@ const Profile = () => {
               ))}
             </select>
           </div>
+
+          {/* Birth date & gender - optional, powers nearby stores' offer targeting */}
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2 px-1">
+                Birth Date
+              </label>
+              <input
+                type="date"
+                value={editForm.dob}
+                max={new Date().toISOString().slice(0, 10)}
+                onChange={(e) => setEditForm({ ...editForm, dob: e.target.value })}
+                className="w-full px-4 py-3.5 rounded-xl border border-gray-100 bg-background/50 focus:bg-white focus:border-[#5EB929] outline-none transition-all text-sm font-bold"
+              />
+            </div>
+            <div>
+              <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2 px-1">
+                Gender
+              </label>
+              <select
+                value={editForm.gender}
+                onChange={(e) => setEditForm({ ...editForm, gender: e.target.value })}
+                className="w-full px-4 py-3.5 rounded-xl border border-gray-100 bg-white focus:border-[#5EB929] outline-none transition-all text-sm font-bold uppercase tracking-tight"
+              >
+                <option value="">Prefer not to say</option>
+                <option value="female">Female</option>
+                <option value="male">Male</option>
+                <option value="other">Other</option>
+              </select>
+            </div>
+          </div>
+          <p className="text-[8px] font-bold text-gray-300 uppercase tracking-widest -mt-1 px-1">
+            Optional · shared with stores only as anonymous totals
+          </p>
 
           {/* Phone (Read-only) */}
           <div>

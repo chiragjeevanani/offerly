@@ -23,6 +23,22 @@ import { offerAPI } from '../../../../api/offer.api';
 import { reviewAPI } from '../../../../api/review.api';
 import { cartAPI } from '../../../../api/cart.api';
 import PageTransition from '../../components/ui/PageTransition';
+import { useOfferImpression } from '../../../../hooks/useOfferImpression';
+
+// Offer chips in the store header. Split out so each one can carry its own
+// impression observer - a customer who lands here has genuinely seen these offers.
+const StoreOfferTag = ({ offer }) => {
+  const ref = useOfferImpression(offer._id || offer.id, 'store');
+
+  return (
+    <div
+      ref={ref}
+      className="whitespace-nowrap px-3 py-1.5 bg-green-50 text-green-700 rounded-lg text-xs font-bold border border-green-100"
+    >
+      ✨ {offer.title}
+    </div>
+  );
+};
 
 const StoreProfile = () => {
   const { id } = useParams();
@@ -310,9 +326,7 @@ const StoreProfile = () => {
             {offers.length > 0 && (
               <div className="mt-5 pt-4 border-t border-gray-100 flex gap-2 overflow-x-auto pb-1 no-scrollbar">
                  {offers.map(off => (
-                   <div key={off._id || off.id} className="whitespace-nowrap px-3 py-1.5 bg-green-50 text-green-700 rounded-lg text-xs font-bold border border-green-100">
-                     ✨ {off.title}
-                   </div>
+                   <StoreOfferTag key={off._id || off.id} offer={off} />
                  ))}
               </div>
             )}

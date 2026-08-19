@@ -11,8 +11,53 @@ import PeopleRoundedIcon from '@mui/icons-material/PeopleRounded';
 import ShoppingBagRoundedIcon from '@mui/icons-material/ShoppingBagRounded';
 import CampaignRoundedIcon from '@mui/icons-material/CampaignRounded';
 import ChevronRightRoundedIcon from '@mui/icons-material/ChevronRightRounded';
+import PersonAddAlt1RoundedIcon from '@mui/icons-material/PersonAddAlt1Rounded';
+import RedeemRoundedIcon from '@mui/icons-material/RedeemRounded';
+import CurrencyRupeeRoundedIcon from '@mui/icons-material/CurrencyRupeeRounded';
+import VisibilityRoundedIcon from '@mui/icons-material/VisibilityRounded';
+import ArrowUpwardRoundedIcon from '@mui/icons-material/ArrowUpwardRounded';
+import ArrowDownwardRoundedIcon from '@mui/icons-material/ArrowDownwardRounded';
+import InsightsRoundedIcon from '@mui/icons-material/InsightsRounded';
 import { merchantAPI } from '../../../api/merchant.api';
 import SubscriptionRenewal from '../components/SubscriptionRenewal';
+
+// Change against the same figure yesterday. A null change means there was no
+// baseline to compare against, which reads as "new" rather than a bogus +100%.
+const DeltaChip = ({ value }) => {
+  if (value === null || value === undefined) {
+    return <span className="text-[9px] font-bold text-gray-300 uppercase tracking-widest">New</span>;
+  }
+
+  if (value === 0) {
+    return <span className="text-[9px] font-bold text-gray-400 uppercase tracking-widest">Flat</span>;
+  }
+
+  const up = value > 0;
+  const Icon = up ? ArrowUpwardRoundedIcon : ArrowDownwardRoundedIcon;
+
+  return (
+    <span className={`inline-flex items-center gap-0.5 text-[9px] font-bold uppercase tracking-widest ${up ? 'text-[#5EB929]' : 'text-rose-500'}`}>
+      <Icon sx={{ fontSize: 11 }} />
+      {Math.abs(value)}%
+    </span>
+  );
+};
+
+const TodayTile = (props) => (
+  <div className="bg-white rounded-2xl p-4 border border-gray-50 shadow-sm flex flex-col gap-2.5">
+    <div className="flex items-center justify-between">
+      <div className={`w-8 h-8 rounded-xl flex items-center justify-center ${props.tone}`}>
+        <props.icon sx={{ fontSize: 17 }} />
+      </div>
+      <DeltaChip value={props.change} />
+    </div>
+    <div>
+      <p className="text-2xl font-bold text-gray-900 leading-none tabular-nums">{props.value}</p>
+      <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest mt-1.5">{props.label}</p>
+      {props.hint && <p className="text-[9px] font-bold text-gray-300 mt-1">{props.hint}</p>}
+    </div>
+  </div>
+);
 
 const ChartTooltip = ({ active, payload, label }) => {
   if (!active || !payload?.length) return null;
@@ -32,6 +77,20 @@ const MerchantDashboard = ({ merchant }) => {
     queryFn: () => merchantAPI.getDashboard(),
     enabled: !!merchant?._id
   });
+
+  const { data: todayData } = useQuery({
+    queryKey: ['merchantToday', merchant?._id],
+    queryFn: () => merchantAPI.getTodayAnalytics(),
+    enabled: !!merchant?._id,
+    // Today's numbers move through the day; refresh them without a page reload.
+    refetchInterval: 5 * 60 * 1000,
+  });
+
+  const today = todayData?.today;
+  const todayChange = todayData?.change || {};
+  const hasTodayActivity = Boolean(
+    today && (today.customersAcquired || today.redemptions || today.sales || today.views)
+  );
 
   const stats = useMemo(() => {
     if (!dashboardData) return {
@@ -99,6 +158,65 @@ const MerchantDashboard = ({ merchant }) => {
              <QrCodeScannerRoundedIcon sx={{ fontSize: 18 }} />
              Quick Scan
           </button>
+        </div>
+
+        {/* Today - the four numbers a merchant checks first thing */}
+        <div>
+          <div className="flex items-end justify-between mb-3 px-1">
+            <div>
+              <h2 className="text-sm font-bold text-gray-900 tracking-tight">Today</h2>
+              <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest">
+                Compared with yesterday
+              </p>
+            </div>
+            <button
+              onClick={() => navigate('/merchant/insights')}
+              className="flex items-center gap-1.5 text-[9px] font-bold text-[#5EB929] uppercase tracking-widest hover:underline"
+            >
+              <InsightsRoundedIcon sx={{ fontSize: 13 }} />
+              Monthly Insights
+            </button>
+          </div>
+
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+            <TodayTile
+              icon={PersonAddAlt1RoundedIcon}
+              tone="bg-indigo-50 text-indigo-500"
+              label="Customers Acquired"
+              value={today?.customersAcquired ?? 0}
+              change={todayChange.customersAcquired}
+              hint="First-time visitors"
+            />
+            <TodayTile
+              icon={RedeemRoundedIcon}
+              tone="bg-[#5EB929]/10 text-[#5EB929]"
+              label="Offer Redemptions"
+              value={today?.redemptions ?? 0}
+              change={todayChange.redemptions}
+            />
+            <TodayTile
+              icon={CurrencyRupeeRoundedIcon}
+              tone="bg-amber-50 text-amber-500"
+              label="Sales Generated"
+              value={`₹${(today?.sales ?? 0).toLocaleString('en-IN')}`}
+              change={todayChange.sales}
+              hint={today?.discountGiven ? `₹${today.discountGiven.toLocaleString('en-IN')} discount given` : null}
+            />
+            <TodayTile
+              icon={VisibilityRoundedIcon}
+              tone="bg-sky-50 text-sky-500"
+              label="Offer Views"
+              value={(today?.views ?? 0).toLocaleString('en-IN')}
+              change={todayChange.views}
+              hint={today?.uniqueViewers ? `${today.uniqueViewers} unique` : null}
+            />
+          </div>
+
+          {!hasTodayActivity && (
+            <p className="text-[10px] font-bold text-gray-400 mt-3 px-1">
+              No activity yet today — numbers update as customers view and redeem your offers.
+            </p>
+          )}
         </div>
 
         {/* Dynamic Analytics Grid */}

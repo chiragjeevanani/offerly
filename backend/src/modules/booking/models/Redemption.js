@@ -107,5 +107,10 @@ redemptionSchema.index({ merchantId: 1, status: 1, createdAt: -1 });
 redemptionSchema.index({ offerId: 1, status: 1, createdAt: -1 });
 redemptionSchema.index({ customerId: 1, createdAt: -1 });
 redemptionSchema.index({ status: 1, createdAt: -1 });
+// Backs the acquisition and repeat-customer aggregations, which group by customer
+// within a merchant before filtering on date.
+redemptionSchema.index({ merchantId: 1, customerId: 1, status: 1, createdAt: 1 });
+// Backs the per-offer performance rollup.
+redemptionSchema.index({ merchantId: 1, offerId: 1, status: 1, createdAt: -1 });
 
 export default mongoose.model('Redemption', redemptionSchema);

@@ -449,7 +449,7 @@ const Home = () => {
             <div className="flex overflow-x-auto scrollbar-hide gap-3.5 pb-2 snap-x px-0.5">
               {trendingOffers.map((offer) => (
                 <div key={offer._id || offer.id} className="w-[140px] flex-shrink-0 snap-start">
-                  <OfferCard offer={offer} variant="grid" />
+                  <OfferCard offer={offer} variant="grid" viewSource="feed" />
                 </div>
               ))}
             </div>
@@ -505,7 +505,7 @@ const Home = () => {
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.5 + idx * 0.07 }}
                 >
-                  <OfferCard offer={offer} variant="list" />
+                  <OfferCard offer={offer} variant="list" viewSource="feed" />
                 </motion.div>
               ))}
             </div>
@@ -528,7 +528,7 @@ const Home = () => {
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.52 + idx * 0.06 }}
                 >
-                  <OfferCard offer={offer} variant="list" />
+                  <OfferCard offer={offer} variant="list" viewSource="feed" />
                 </motion.div>
               ))}
             </div>
