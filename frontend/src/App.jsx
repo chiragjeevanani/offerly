@@ -4,6 +4,7 @@ import { Toaster } from 'react-hot-toast';
 import { AppProvider, useApp } from './modules/customer/context/AppContext';
 import { SocketProvider } from './context/SocketContext';
 import AppLayout from './modules/customer/components/layout/AppLayout';
+import ScrollToTop from './components/common/ScrollToTop';
 
 // Loading Component
 const PageLoader = () => (
@@ -120,6 +121,7 @@ const AppRoutes = () => {
 
 const App = () => (
   <BrowserRouter>
+    <ScrollToTop />
     <AppProvider>
       <SocketProvider>
         <AppRoutes />

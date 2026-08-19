@@ -38,7 +38,11 @@ if (typeof window !== 'undefined') {
     (event) => {
       const now = Date.now();
       if (now - lastTouchEnd <= 300) {
-        event.preventDefault();
+        // Only prevent default on non-interactive double taps to avoid zoom
+        const target = event.target;
+        if (target && !['INPUT', 'TEXTAREA', 'SELECT'].includes(target.tagName)) {
+          event.preventDefault();
+        }
       }
       lastTouchEnd = now;
     },
