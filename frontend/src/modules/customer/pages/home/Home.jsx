@@ -351,11 +351,8 @@ const Home = () => {
                 <EmojiEventsRoundedIcon sx={{ fontSize: 22 }} />
               </div>
               <div>
-                <h4 className="text-xs font-bold text-gray-900 leading-snug flex items-center gap-1.5">
+                <h4 className="text-xs font-bold text-gray-900 leading-snug">
                   Claim Milestones & Rewards
-                  <span className="px-2 py-0.5 rounded-full text-[9px] font-bold bg-primary text-white uppercase">
-                    Win Cards
-                  </span>
                 </h4>
                 <p className="text-[11px] text-gray-500 mt-0.5">
                   Level up with every claimed offer and scratch to win!
