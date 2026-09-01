@@ -319,11 +319,50 @@ export const deleteMerchant = async (req, res) => {
 
 export const saveCity = async (req, res) => {
   try {
+    const existing = await City.findOne({ name: req.body.name });
+
+    if (existing && Array.isArray(req.body.zones)) {
+      const incomingZoneIds = new Set(
+        req.body.zones
+          .map((zone) => zone._id || zone.id)
+          .filter(Boolean)
+          .map(String)
+      );
+      const removedZoneIds = existing.zones
+        .map((zone) => String(zone._id))
+        .filter((id) => !incomingZoneIds.has(id));
+
+      if (removedZoneIds.length) {
+        const merchantsInRemovedZones = await Merchant.countDocuments({
+          zone: { $in: removedZoneIds },
+        });
+        if (merchantsInRemovedZones > 0) {
+          return res.status(400).json({
+            success: false,
+            error: `Cannot remove zone(s) still assigned to ${merchantsInRemovedZones} merchant(s). Deactivate the zone instead.`,
+          });
+        }
+      }
+    }
+
     const city = await City.findOneAndUpdate(
       { name: req.body.name },
       req.body,
       { upsert: true, new: true }
     );
+
+    if (city.zones?.length) {
+      const counts = await Merchant.aggregate([
+        { $match: { zone: { $in: city.zones.map((zone) => String(zone._id)) } } },
+        { $group: { _id: '$zone', count: { $sum: 1 } } },
+      ]);
+      const countByZoneId = new Map(counts.map((entry) => [String(entry._id), entry.count]));
+      city.zones.forEach((zone) => {
+        zone.merchantCount = countByZoneId.get(String(zone._id)) || 0;
+      });
+      await city.save();
+    }
+
     res.status(200).json({ success: true, data: city });
   } catch (err) {
     res.status(500).json({ success: false, error: 'Operation failed' });
@@ -332,10 +371,25 @@ export const saveCity = async (req, res) => {
 
 export const deleteCity = async (req, res) => {
   try {
-    const city = await City.findByIdAndDelete(req.params.id);
+    const city = await City.findById(req.params.id);
     if (!city) {
       return res.status(404).json({ success: false, error: 'City not found' });
     }
+
+    const zoneIds = city.zones.map((zone) => String(zone._id));
+    const merchantsInCity = await Merchant.countDocuments(
+      zoneIds.length
+        ? { $or: [{ city: city.name }, { zone: { $in: zoneIds } }] }
+        : { city: city.name }
+    );
+    if (merchantsInCity > 0) {
+      return res.status(400).json({
+        success: false,
+        error: `Cannot delete city. ${merchantsInCity} merchant(s) are using this city or its zones.`,
+      });
+    }
+
+    await city.deleteOne();
     res.status(200).json({ success: true, message: 'City deleted successfully' });
   } catch (err) {
     res.status(500).json({ success: false, error: 'Operation failed' });

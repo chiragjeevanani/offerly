@@ -55,6 +55,11 @@ const userSchema = new mongoose.Schema(
       type: String,
       default: "",
     },
+    // References a zone subdocument _id nested under City.zones (City model).
+    zone: {
+      type: String,
+      default: "",
+    },
     gender: {
       type: String,
       enum: [

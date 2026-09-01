@@ -78,6 +78,7 @@ const Profile = () => {
     name: '',
     address: '',
     city: '',
+    zone: '',
     gender: '',
     dob: '',
   });
@@ -122,11 +123,16 @@ const Profile = () => {
         name: user.name || '',
         address: user.address || '',
         city: user.city || '',
+        zone: user.zone || '',
         gender: user.gender || '',
         dob: toDateInput(user.dob),
       });
     }
   }, [user, editSheetOpen]);
+
+  const selectedCityZones = availableCities
+    .find((city) => city.name === editForm.city)
+    ?.zones?.filter((zone) => (zone.status || 'active') === 'active') || [];
 
   const savedCount = user?.savedOffers?.length || 0;
 
@@ -196,6 +202,7 @@ const Profile = () => {
         name: editForm.name.trim(),
         address: editForm.address.trim(),
         city: editForm.city,
+        zone: editForm.zone,
         // Optional - only sent when the customer has actually chosen something, so
         // saving the sheet never blanks out a detail they set earlier.
         ...(editForm.gender ? { gender: editForm.gender } : {}),
@@ -427,7 +434,7 @@ const Profile = () => {
             </label>
             <select
               value={editForm.city}
-              onChange={(e) => setEditForm({ ...editForm, city: e.target.value })}
+              onChange={(e) => setEditForm({ ...editForm, city: e.target.value, zone: '' })}
               className="w-full px-4 py-3.5 rounded-xl border border-gray-100 bg-white focus:border-[#5EB929] outline-none transition-all text-sm font-bold uppercase tracking-tight"
             >
               <option value="">Select City</option>
@@ -438,6 +445,27 @@ const Profile = () => {
               ))}
             </select>
           </div>
+
+          {/* Zone Field - narrows the feed to offers from merchants in this zone */}
+          {selectedCityZones.length > 0 && (
+            <div>
+              <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2 px-1">
+                Zone / Locality
+              </label>
+              <select
+                value={editForm.zone}
+                onChange={(e) => setEditForm({ ...editForm, zone: e.target.value })}
+                className="w-full px-4 py-3.5 rounded-xl border border-gray-100 bg-white focus:border-[#5EB929] outline-none transition-all text-sm font-bold uppercase tracking-tight"
+              >
+                <option value="">All zones in city</option>
+                {selectedCityZones.map((zone) => (
+                  <option key={zone._id || zone.id} value={zone._id || zone.id}>
+                    {zone.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
 
           {/* Birth date & gender - optional, powers nearby stores' offer targeting */}
           <div className="grid grid-cols-2 gap-3">

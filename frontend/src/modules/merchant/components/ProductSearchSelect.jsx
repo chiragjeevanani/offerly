@@ -219,8 +219,8 @@ const ProductSearchSelect = ({ onSelect, selectedProduct, filterType = 'product_
                   <span className="text-sm text-gray-400 line-through">₹{selectedProduct.price}</span>
                 )}
               </div>
-              {selectedProduct.category && (
-                <span className="text-xs text-gray-500 mt-1 block">{selectedProduct.category}</span>
+              {selectedProduct.categoryName && (
+                <span className="text-xs text-gray-500 mt-1 block">{selectedProduct.categoryName}</span>
               )}
             </div>
 

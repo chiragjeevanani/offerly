@@ -1,5 +1,8 @@
 import cors from "cors";
 import express from "express";
+import helmet from "helmet";
+import hpp from "hpp";
+import errorHandler from "./middlewares/error.js";
 import adminRoutes from "./modules/admin/routes/adminRoutes.js";
 import adminCategoryRoutes from "./modules/admin/routes/categoryRoutes.js";
 import cityRoutes from "./modules/admin/routes/cityRoutes.js";
@@ -9,6 +12,7 @@ import cartRoutes from "./modules/booking/routes/cartRoutes.js";
 import merchantRoutes from "./modules/merchant/routes/merchantRoutes.js";
 import offerRoutes from "./modules/merchant/routes/offerRoutes.js";
 import productRoutes from "./modules/merchant/routes/productRoutes.js";
+import productCategoryRoutes from "./modules/merchant/routes/productCategoryRoutes.js";
 import reviewRoutes from "./modules/merchant/routes/reviewRoutes.js";
 import servicePlanRoutes from "./modules/merchant/routes/servicePlanRoutes.js";
 import variantRoutes from "./modules/merchant/routes/variantRoutes.js";
@@ -20,6 +24,8 @@ import categoryRoutes from "./routes/categoryRoutes.js";
 import uploadRoutes from "./routes/uploadRoutes.js";
 
 const app = express();
+
+app.use(helmet());
 
 app.use(
   cors({
@@ -37,6 +43,7 @@ app.use(
   }),
 );
 app.use(express.urlencoded({ extended: true, limit: "30mb" }));
+app.use(hpp());
 
 const enableRequestLogs = process.env.ENABLE_REQUEST_LOGS === "true";
 const logRequestBody = process.env.LOG_REQUEST_BODY === "true";
@@ -62,6 +69,7 @@ app.use("/api/auth", authRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/merchants", merchantRoutes);
 app.use("/api/products", productRoutes);
+app.use("/api/product-categories", productCategoryRoutes);
 app.use("/api/reviews", reviewRoutes);
 app.use("/api/service-plans", servicePlanRoutes);
 app.use("/api/variants", variantRoutes);
@@ -81,10 +89,6 @@ app.use((req, res) => {
   return res.status(404).json({ message: `Route not found: ${req.method} ${req.originalUrl}` });
 });
 
-app.use((error, _req, res, _next) => {
-  return res.status(error.statusCode || 500).json({
-    message: error.message || "Internal server error",
-  });
-});
+app.use(errorHandler);
 
 export default app;

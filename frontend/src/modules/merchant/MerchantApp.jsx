@@ -21,6 +21,7 @@ import NotificationsRoundedIcon from '@mui/icons-material/NotificationsRounded';
 import PersonRoundedIcon from '@mui/icons-material/PersonRounded';
 import CampaignRoundedIcon from '@mui/icons-material/CampaignRounded';
 import InsightsRoundedIcon from '@mui/icons-material/InsightsRounded';
+import CategoryRoundedIcon from '@mui/icons-material/CategoryRounded';
 
 import { useApp } from '../customer/context/AppContext';
 import { merchantAPI } from '../../api/merchant.api';
@@ -31,12 +32,12 @@ import toast from 'react-hot-toast';
 // Sub-modules (Lazy Loaded to prevent ad-blockers from crashing the app)
 const MerchantLogin = lazy(() => import('./auth/MerchantLogin'));
 const MerchantSignup = lazy(() => import('./auth/MerchantSignup'));
-const StoreRegistration = lazy(() => import('./auth/StoreRegistration'));
 const MerchantStatus = lazy(() => import('./auth/MerchantStatus'));
 const MerchantRegistrationFlow = lazy(() => import('./auth/MerchantRegistrationFlow'));
 const MerchantDashboard = lazy(() => import('./pages/Dashboard'));
 const Bookings = lazy(() => import('./pages/Bookings'));
 const Products = lazy(() => import('./pages/Products'));
+const ProductCategories = lazy(() => import('./pages/ProductCategories'));
 const Offers = lazy(() => import('./pages/Offers'));
 const Customers = lazy(() => import('./pages/Customers'));
 const ScannerEntry = lazy(() => import('./pages/ScannerEntry'));
@@ -77,6 +78,7 @@ const MerchantSidebar = ({ merchant, isMobileMenuOpen, setIsMobileMenuOpen }) =>
 
   const storeNavItems = [
     { name: 'Store Products', path: '/merchant/products', icon: Inventory2RoundedIcon },
+    { name: 'Categories & Discounts', path: '/merchant/categories', icon: CategoryRoundedIcon },
     { name: 'Active Offers', path: '/merchant/offers', icon: LocalOfferRoundedIcon },
     { name: 'Customers', path: '/merchant/customers', icon: PeopleAltRoundedIcon },
     { name: 'Advertise', path: '/merchant/advertise', icon: CampaignRoundedIcon, badge: 'BOOST' },
@@ -447,10 +449,11 @@ const MerchantApp = () => {
           <div className="relative z-10 w-full max-w-7xl mx-auto">
             <Suspense fallback={<PageLoader />}>
               <Routes>
-                <Route path="/" element={<MerchantDashboard merchant={merchant} />} />
+                <Route path="/" element={<MerchantDashboard merchant={merchant} onMerchantUpdate={fetchMerchant} />} />
                 <Route path="/bookings" element={<Bookings merchant={merchant} />} />
                 <Route path="/scanner" element={<ScannerEntry merchant={merchant} />} />
                 <Route path="/products" element={<Products merchant={merchant} />} />
+                <Route path="/categories" element={<ProductCategories merchant={merchant} />} />
                 <Route path="/offers" element={<Offers merchant={merchant} />} />
                 <Route path="/customers" element={<Customers merchant={merchant} />} />
                 <Route path="/insights" element={<Insights merchant={merchant} />} />
@@ -472,18 +475,15 @@ const MerchantApp = () => {
     );
   }
 
-  // Case: Store Not Approved (Pending or Rejected)
+  // Fallback: any merchant state the branches above don't explicitly cover
+  // (status is only ever pending/rejected/approved, all handled higher up,
+  // so this is just a safety net against unexpected data).
   return (
     <div className="min-h-screen bg-[#F8FAFC] flex flex-col items-center justify-center p-0">
       <div className="w-full max-w-7xl mx-auto px-4 py-8">
         <Routes>
           <Route path="/status" element={<MerchantStatus merchant={merchant} onStatusChange={fetchMerchant} />} />
-          <Route path="/" element={
-            merchant?.hasRequestedStore 
-              ? <Navigate to="/merchant/status" replace /> 
-              : <StoreRegistration merchant={merchant} onStatusChange={fetchMerchant} />
-          } />
-          <Route path="*" element={<Navigate to="/merchant" replace />} />
+          <Route path="*" element={<Navigate to="/merchant/status" replace />} />
         </Routes>
       </div>
     </div>

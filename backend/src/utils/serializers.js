@@ -15,6 +15,7 @@ export const serializeUser = (user) => ({
   dob: user?.dob || null,
   address: user?.address || '',
   city: user?.city || '',
+  zone: user?.zone || '',
   profilePhoto: user?.profilePhoto || user?.avatar || '',
   type: user?.role || user?.type || 'customer',
   status: user?.status || 'active',
@@ -45,6 +46,7 @@ export const serializeCity = (city) => ({
     id: objectIdToString(zone?._id ?? zone?.id),
     name: zone?.name || '',
     merchantCount: zone?.merchantCount || 0,
+    status: zone?.status || 'active',
   })),
 });
 
@@ -55,6 +57,7 @@ export const serializeMerchant = (merchant) => ({
   storeName: merchant?.storeName || '',
   category: merchant?.category || '',
   city: merchant?.city || '',
+  zone: merchant?.zone || '',
   locality: merchant?.locality || '',
   address: merchant?.address || '',
   phone: merchant?.phone || '',
@@ -67,6 +70,7 @@ export const serializeMerchant = (merchant) => ({
   logo: merchant?.logo || '',
   photos: merchant?.photos || [],
   verified: Boolean(merchant?.verified),
+  isOpen: merchant?.isOpen !== false,
   status: merchant?.status || 'pending',
   subscriptionPlanId: objectIdToString(merchant?.subscriptionPlanId),
   distance: merchant?.distance || '',
@@ -113,7 +117,10 @@ export const serializeOffer = (offer) => ({
   
   // Merchant info (populated)
   merchantName: offer?.merchantName || offer?.merchantId?.businessName || offer?.merchantId?.storeName || null,
-  
+  // Passed through as-is when a caller has already built one (e.g. the feed
+  // and offer-list endpoints attach distance/isOpen before serializing).
+  merchant: offer?.merchant || undefined,
+
   // Common fields
   title: offer?.title || '',
   description: offer?.description || '',
@@ -139,7 +146,7 @@ export const serializeOffer = (offer) => ({
         : []),
   category: offer?.category || '',
   isTrending: Boolean(offer?.isTrending),
-  isNew: Boolean(offer?.isNew),
+  isNew: Boolean(offer?.isNewOffer),
   createdAt: offer?.createdAt || null,
   updatedAt: offer?.updatedAt || null,
 });
@@ -149,7 +156,9 @@ export const serializeProduct = (product) => ({
   _id: objectIdToString(product?._id ?? product?.id),
   merchantId: objectIdToString(product?.merchantId),
   categoryType: product?.categoryType || 'product_based',
-  category: product?.category || 'General',
+  categoryId: objectIdToString(product?.categoryId?._id ?? product?.categoryId),
+  categoryName: product?.categoryId?.name || 'Uncategorized',
+  categoryDiscountPercent: product?.categoryId?.discountPercent ?? 0,
   name: product?.name || '',
   description: product?.description || '',
   price: product?.price || 0,
@@ -164,6 +173,17 @@ export const serializeProduct = (product) => ({
   isActive: product?.isActive ?? true,
   createdAt: product?.createdAt || null,
   updatedAt: product?.updatedAt || null,
+});
+
+export const serializeProductCategory = (category) => ({
+  id: objectIdToString(category?._id ?? category?.id),
+  merchantId: objectIdToString(category?.merchantId),
+  name: category?.name || '',
+  discountPercent: category?.discountPercent ?? 0,
+  isActive: category?.isActive ?? true,
+  isDefault: Boolean(category?.isDefault),
+  order: category?.order ?? 0,
+  productCount: category?.productCount ?? 0,
 });
 
 export const serializeReview = (review) => ({

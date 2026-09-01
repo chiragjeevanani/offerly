@@ -30,6 +30,7 @@ const Explore = () => {
   const { user, selectedCity, selectedCategory, setSelectedCategory, userLocation } = useApp();
   const [viewMode, setViewMode] = useState('grid');
   const [searchText, setSearchText] = useState('');
+  const [selectedZone, setSelectedZone] = useState(null);
   const [page, setPage] = useState(1);
   const cityFilter = selectedCity !== 'Select City' ? selectedCity : (user?.city || undefined);
   
@@ -57,7 +58,7 @@ const Explore = () => {
 
   // 2. Fetch Offers based on filters
   const { data, isLoading: isOffersLoading } = useQuery({
-    queryKey: ['offers', cityFilter || 'no-city', selectedCategory, debouncedSearch, page, userLocation?.lat],
+    queryKey: ['offers', cityFilter || 'no-city', selectedCategory, selectedZone, debouncedSearch, page, userLocation?.lat],
     queryFn: async () => {
       if (!cityFilter) {
         return { offers: [], totalPages: 1 };
@@ -66,6 +67,7 @@ const Explore = () => {
       const params = {
         status: 'active',
         city: cityFilter,
+        zone: selectedZone || undefined,
         category: selectedCategory !== 'All' ? selectedCategory : undefined,
         search: debouncedSearch.trim() || undefined,
         page,
@@ -94,8 +96,15 @@ const Explore = () => {
   const currentCityZones = useMemo(() => {
     const cityName = cityFilter || selectedCity;
     const cityObj = allCities.find(c => c.name === cityName);
-    return cityObj?.zones || [];
+    return (cityObj?.zones || []).filter((zone) => (zone.status || 'active') === 'active');
   }, [allCities, cityFilter, selectedCity]);
+
+  // Reset zone filter if it stops belonging to the current city (city switch).
+  useEffect(() => {
+    if (selectedZone && !currentCityZones.some((z) => (z._id || z.id) === selectedZone)) {
+      setSelectedZone(null);
+    }
+  }, [currentCityZones, selectedZone]);
 
   return (
     <PageTransition>
@@ -139,6 +148,16 @@ const Explore = () => {
             </button>
           ))}
         </div>
+
+        {/* Active zone filter pill */}
+        {selectedZone && (
+          <div className="flex items-center gap-2 px-0.5">
+            <span className="inline-flex items-center gap-1.5 bg-[#5EB929]/10 text-[#5EB929] text-[10px] font-bold uppercase tracking-widest px-3 py-1.5 rounded-full">
+              {currentCityZones.find((z) => (z._id || z.id) === selectedZone)?.name || 'Zone'}
+              <button onClick={() => setSelectedZone(null)} className="text-[#5EB929]/60 hover:text-[#5EB929]">✕</button>
+            </span>
+          </div>
+        )}
 
         {/* View toggle + count - Sharp Typography */}
         <div className="flex items-center justify-between px-0.5">
@@ -268,7 +287,7 @@ const Explore = () => {
         )}
 
         {/* Browse by area - Slim Strip Design */}
-        {!searchText && !isOffersLoading && currentCityZones.length > 0 && (
+        {!searchText && !selectedZone && !isOffersLoading && currentCityZones.length > 0 && (
           <section className="pt-2">
             <div className="flex items-center justify-between mb-3 px-0.5">
               <h2 className="text-[11px] font-bold text-gray-900 uppercase tracking-tight">Browse Areas</h2>
@@ -279,7 +298,7 @@ const Explore = () => {
                   key={zone._id || zone.id}
                   whileTap={{ backgroundColor: 'rgba(94, 185, 41,0.02)' }}
                   className="w-full flex items-center justify-between px-4 py-3.5 group"
-                  onClick={() => setSearchText(zone.name)}
+                  onClick={() => setSelectedZone(zone._id || zone.id)}
                 >
                   <div className="flex flex-col items-start transition-transform group-hover:translate-x-1">
                     <span className="text-[13px] font-bold text-gray-800">{zone.name}</span>

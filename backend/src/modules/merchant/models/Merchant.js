@@ -75,6 +75,11 @@ const merchantSchema = new mongoose.Schema(
       type: String,
       default: '',
     },
+    // References a zone subdocument _id nested under City.zones (City model).
+    zone: {
+      type: String,
+      default: '',
+    },
     phone: {
       type: String,
       required: [true, 'Please add a phone number'],
@@ -114,6 +119,12 @@ const merchantSchema = new mongoose.Schema(
       type: String,
       enum: ['pending', 'approved', 'rejected'],
       default: 'pending',
+    },
+    // Manual open/closed toggle the merchant flips themselves - independent
+    // of businessHours (that's a schedule; this is "are we taking orders right now").
+    isOpen: {
+      type: Boolean,
+      default: true,
     },
     subscriptionPlanId: {
       type: mongoose.Schema.Types.ObjectId,
@@ -242,9 +253,10 @@ merchantSchema.index({ city: 1, status: 1 });
 merchantSchema.index({ category: 1, status: 1 });
 merchantSchema.index({ totalRedemptions: -1 });
 merchantSchema.index({ status: 1, createdAt: -1 });
-merchantSchema.index({ phone: 1 });
+// `phone` already gets a unique index from the schema field above.
 merchantSchema.index({ coordinates: '2d' }); // For geospatial queries
 merchantSchema.index({ status: 1, city: 1, avgRating: -1 });
 merchantSchema.index({ status: 1, city: 1, totalRedemptions: -1 });
+merchantSchema.index({ status: 1, zone: 1 });
 
 export default mongoose.model('Merchant', merchantSchema);

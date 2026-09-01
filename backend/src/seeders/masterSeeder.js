@@ -14,6 +14,7 @@ import Category from '../modules/admin/models/Category.js';
 import Plan from '../modules/admin/models/Plan.js';
 import Merchant from '../modules/merchant/models/Merchant.js';
 import Product from '../modules/merchant/models/Product.js';
+import ProductCategory from '../modules/merchant/models/ProductCategory.js';
 import Offer from '../modules/merchant/models/Offer.js';
 import AdRequest from '../modules/admin/models/AdRequest.js';
 import User from '../modules/user/models/User.js';
@@ -119,6 +120,7 @@ const clearAllData = async () => {
   await AdRequest.deleteMany({});
   await Offer.deleteMany({});
   await Product.deleteMany({});
+  await ProductCategory.deleteMany({});
   await Merchant.deleteMany({});
   
   // Drop indexes specifically for merchants to avoid geo index conflicts

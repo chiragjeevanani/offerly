@@ -38,9 +38,11 @@ const productSchema = new mongoose.Schema(
     },
     
     // Product-based specific fields
-    category: {
-      type: String,
-      default: '',
+    categoryId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'ProductCategory',
+      required: [true, 'Category is required'],
+      index: true,
     },
     isVeg: {
       type: Boolean,

@@ -162,4 +162,9 @@ export const merchantAPI = {
       throw error;
     }
   },
+
+  // Update store profile fields (name, address, isOpen toggle, etc.)
+  updateStore: async (data) => {
+    return axiosInstance.put('/merchants/me', data);
+  },
 };

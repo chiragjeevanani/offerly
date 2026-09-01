@@ -8,7 +8,9 @@ import Merchant from "../models/Merchant.js";
 import Offer from "../models/Offer.js";
 import Product from "../models/Product.js";
 import AdRequest from "../../admin/models/AdRequest.js";
+import City from "../../admin/models/City.js";
 import { calculateDistance, formatDistance } from "../../../utils/distance.js";
+import { invalidateFeedCache } from "../../../utils/feedCache.js";
 import {
   COMPLETED_STATUSES,
   PENDING_STATUSES,
@@ -82,20 +84,24 @@ const getLatestSubscription = async (userId, merchantId = null) => {
 export const getMerchants = async (req, res) => {
   const query = {};
 
-  // Existing: Filter by city
-  if (req.query.city) {
+  // Raw req.query values are attacker-controlled and Express's query parser
+  // will turn e.g. ?category[$ne]=x into an object rather than a string -
+  // assigning that straight into a Mongo filter is a NoSQL operator-injection
+  // hole (and calling .trim() on it would just crash the request). Require
+  // an actual string before any of these reach the query.
+  if (typeof req.query.city === "string" && req.query.city.trim()) {
     query.city = new RegExp(`^${escapeRegex(req.query.city.trim())}$`, "i");
   }
 
   // Existing: Filter by category
-  if (req.query.category) {
+  if (typeof req.query.category === "string" && req.query.category) {
     query.category = req.query.category;
   }
 
   // Existing: Filter by status (only approved for non-admin)
   // Fix: Admins should see the filtered status even if it's not "approved"
   if (req.user && req.user.role === "admin") {
-    if (req.query.status && req.query.status !== 'all') {
+    if (typeof req.query.status === "string" && req.query.status && req.query.status !== 'all') {
       query.status = req.query.status;
     }
   } else {
@@ -103,7 +109,7 @@ export const getMerchants = async (req, res) => {
   }
 
   // Handle search query (q)
-  if (req.query.q) {
+  if (typeof req.query.q === "string" && req.query.q.trim()) {
     const searchRegex = new RegExp(escapeRegex(req.query.q.trim()), "i");
     query.$or = [
       { storeName: searchRegex },
@@ -533,7 +539,7 @@ export const updateLocationHours = async (req, res) => {
       return res.status(404).json({ success: false, message: 'Merchant not found' });
     }
 
-    const { address, city, state, pincode, latitude, longitude, businessHours } = req.body;
+    const { address, city, zone, state, pincode, latitude, longitude, businessHours } = req.body;
 
     // Validate required fields (latitude and longitude are now optional)
     if (!address || !city || !state || !pincode || !businessHours) {
@@ -543,9 +549,21 @@ export const updateLocationHours = async (req, res) => {
       });
     }
 
+    // Zone must actually belong to the submitted city — never trust the client pairing.
+    if (zone) {
+      const cityDoc = await City.findOne({ name: city.trim(), 'zones._id': zone });
+      if (!cityDoc) {
+        return res.status(400).json({
+          success: false,
+          message: 'Selected zone does not belong to the selected city',
+        });
+      }
+    }
+
     // Update location
     merchant.address = address.trim();
     merchant.city = city.trim();
+    merchant.zone = zone || '';
     merchant.state = state.trim();
     merchant.pincode = pincode.trim();
     
@@ -642,7 +660,13 @@ export const updateMyStore = async (req, res) => {
     }
   }
 
+  if ("isOpen" in req.body) {
+    merchant.isOpen = Boolean(req.body.isOpen);
+  }
+
   await merchant.save();
+
+  invalidateFeedCache({ city: merchant.city });
 
   return res.status(200).json({ merchant: serializeMerchant(merchant) });
 };

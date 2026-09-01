@@ -18,7 +18,7 @@ const offers = [
     status: 'active',
     category: 'Food',
     isTrending: true,
-    isNew: false,
+    isNewOffer: false,
     impressions: 2340,
     saves: 128,
     terms: [
@@ -43,7 +43,7 @@ const offers = [
     status: 'active',
     category: 'Saloon',
     isTrending: true,
-    isNew: false,
+    isNewOffer: false,
     impressions: 1820,
     saves: 89,
     terms: [
@@ -67,7 +67,7 @@ const offers = [
     status: 'active',
     category: 'Gym',
     isTrending: true,
-    isNew: false,
+    isNewOffer: false,
     impressions: 3100,
     saves: 245,
     terms: [
@@ -91,7 +91,7 @@ const offers = [
     status: 'active',
     category: 'Shops',
     isTrending: false,
-    isNew: true,
+    isNewOffer: true,
     impressions: 980,
     saves: 67,
     terms: [
@@ -114,7 +114,7 @@ const offers = [
     status: 'active',
     category: 'Cafe',
     isTrending: false,
-    isNew: true,
+    isNewOffer: true,
     impressions: 2100,
     saves: 156,
     terms: [
@@ -138,7 +138,7 @@ const offers = [
     status: 'active',
     category: 'Food',
     isTrending: true,
-    isNew: true,
+    isNewOffer: true,
     impressions: 4500,
     saves: 890,
     terms: ['One platter per person', 'Valid for dine-in only'],
@@ -158,7 +158,7 @@ const offers = [
     status: 'active',
     category: 'Saloon',
     isTrending: true,
-    isNew: true,
+    isNewOffer: true,
     impressions: 1200,
     saves: 230,
     terms: ['Prior booking required', 'Valid till May 31st'],

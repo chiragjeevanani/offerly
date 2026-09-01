@@ -100,13 +100,20 @@ const OfferDetail = () => {
     }
   };
 
+  const isMerchantOpen = merchant?.isOpen !== false;
+
   const handleRedeem = async () => {
     if (!isLoggedIn) {
       toast.error('Please login to redeem offers');
       navigate('/login');
       return;
     }
-    
+
+    if (!isMerchantOpen) {
+      toast.error('This store is closed for now');
+      return;
+    }
+
     setIsRedeeming(true);
     try {
       const merchantId = merchant?._id || merchant?.id || offer.merchantId;
@@ -154,8 +161,15 @@ const OfferDetail = () => {
       <div className="pb-32">
         {/* Hero image */}
         <div className="relative h-56 sm:h-64 md:h-72 lg:h-80 max-w-4xl mx-auto rounded-b-[2.5rem] overflow-hidden shadow-lg">
-          <img src={offer.image} alt={offer.title} className="w-full h-full object-cover" />
+          <img src={offer.image} alt={offer.title} className={`w-full h-full object-cover ${!isMerchantOpen ? 'grayscale' : ''}`} />
           <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
+          {!isMerchantOpen && (
+            <div className="absolute inset-x-0 top-1/2 -translate-y-1/2 flex justify-center">
+              <span className="bg-gray-900/90 text-white text-sm font-bold uppercase tracking-widest px-5 py-2.5 rounded-2xl shadow-lg">
+                Closed for now
+              </span>
+            </div>
+          )}
           {/* Discount badge */}
           <div className="absolute top-4 left-4">
             <span className="bg-primary text-white text-xl font-bold px-4 py-2 rounded-2xl shadow-lg">
@@ -310,13 +324,19 @@ const OfferDetail = () => {
             <p className="text-xl font-bold text-[#5EB929] leading-none tracking-tight">{discountLabel}</p>
           </div>
           <motion.button
-            whileTap={{ scale: 0.98 }}
+            whileTap={{ scale: isMerchantOpen ? 0.98 : 1 }}
             onClick={handleRedeem}
-            disabled={isRedeeming}
-            className="flex items-center justify-center gap-3 bg-[#5EB929] text-white font-bold text-[11px] uppercase tracking-[0.2em] px-8 py-3.5 rounded-xl shadow-lg shadow-[#5EB929]/20 active:scale-95 transition-all"
+            disabled={isRedeeming || !isMerchantOpen}
+            className={`flex items-center justify-center gap-3 font-bold text-[11px] uppercase tracking-[0.2em] px-8 py-3.5 rounded-xl shadow-lg transition-all ${
+              isMerchantOpen
+                ? 'bg-[#5EB929] text-white shadow-[#5EB929]/20 active:scale-95'
+                : 'bg-gray-200 text-gray-400 shadow-none cursor-not-allowed'
+            }`}
           >
             {isRedeeming ? (
               <div className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" />
+            ) : !isMerchantOpen ? (
+              'Store Closed'
             ) : (
               <>
                 <ReceiptLongRoundedIcon sx={{ fontSize: 18 }} />

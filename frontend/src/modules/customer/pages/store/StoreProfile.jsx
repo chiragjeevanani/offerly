@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'react-hot-toast';
@@ -23,6 +23,7 @@ import { offerAPI } from '../../../../api/offer.api';
 import { reviewAPI } from '../../../../api/review.api';
 import { cartAPI } from '../../../../api/cart.api';
 import PageTransition from '../../components/ui/PageTransition';
+import ConfirmDialog from '../../../../components/ui/ConfirmDialog';
 import { useOfferImpression } from '../../../../hooks/useOfferImpression';
 
 // Offer chips in the store header. Split out so each one can carry its own
@@ -51,6 +52,7 @@ const StoreProfile = () => {
   const [activeTab, setActiveTab] = useState('menu');
   const [loading, setLoading] = useState(true);
   const [showHours, setShowHours] = useState(false);
+  const [pendingCartAction, setPendingCartAction] = useState(null);
 
   const getStatus = () => {
     if (!merchant || !merchant.businessHours) return { isOpen: false, label: 'Hours Not Set' };
@@ -134,21 +136,12 @@ const StoreProfile = () => {
     loadStoreData();
   }, [id, navigate]);
 
-  const handleUpdateQty = async (product, newQty) => {
+  const applyCartUpdate = async (product, newQty) => {
     const merchantId = merchant._id || merchant.id;
-    const cartMerchantId = cart.merchantId;
-    
-    // Only allow updating cart for the current merchant
-    if (cartMerchantId && cartMerchantId !== merchantId && newQty > 0) {
-      if (!window.confirm("You have items from another store in your cart. Starting a new cart will clear them. Continue?")) {
-        return;
-      }
-    }
-
     try {
       const productId = product._id || product.id;
       const response = await cartAPI.updateCart(merchantId, productId, newQty);
-      
+
       if (response && response.data) {
         setCart({
           merchantId: response.data.merchantId._id || response.data.merchantId,
@@ -161,6 +154,27 @@ const StoreProfile = () => {
       console.error('Failed to update cart:', error);
       toast.error('Failed to update cart');
     }
+  };
+
+  const handleUpdateQty = (product, newQty) => {
+    const merchantId = merchant._id || merchant.id;
+    const cartMerchantId = cart.merchantId;
+
+    // Adding from a different merchant than the one already in the cart
+    // requires confirming the old cart gets cleared first.
+    if (cartMerchantId && cartMerchantId !== merchantId && newQty > 0) {
+      setPendingCartAction({ product, newQty });
+      return;
+    }
+
+    applyCartUpdate(product, newQty);
+  };
+
+  const confirmMerchantSwitch = () => {
+    if (pendingCartAction) {
+      applyCartUpdate(pendingCartAction.product, pendingCartAction.newQty);
+    }
+    setPendingCartAction(null);
   };
 
   const getQty = (productId) => {
@@ -178,6 +192,23 @@ const StoreProfile = () => {
   const cartTotalPrice = cart.merchantId === merchantId
     ? cart.items.reduce((sum, item) => sum + (item.product.offerPrice * item.qty), 0)
     : 0;
+
+  const productsByCategory = useMemo(() => {
+    const groups = new Map();
+    products.forEach((product) => {
+      const key = product.categoryId || 'uncategorized';
+      if (!groups.has(key)) {
+        groups.set(key, {
+          categoryId: key,
+          categoryName: product.categoryName || 'Uncategorized',
+          categoryDiscountPercent: product.categoryDiscountPercent || 0,
+          products: [],
+        });
+      }
+      groups.get(key).products.push(product);
+    });
+    return Array.from(groups.values());
+  }, [products]);
 
   if (loading) {
     return (
@@ -354,78 +385,91 @@ const StoreProfile = () => {
         {/* Tab content */}
         <div className="px-4 mt-6">
           {activeTab === 'menu' && (
-            <div className="space-y-4">
+            <div className="space-y-6">
               {products.length === 0 ? (
                 <div className="text-center py-12 bg-gray-50 rounded-2xl border border-gray-100">
                    <ShoppingCartRoundedIcon className="text-gray-300 mb-2" sx={{fontSize: 40}} />
                    <p className="text-gray-500 font-medium">No products listed</p>
                 </div>
               ) : (
-                products.map((product, idx) => {
-                  const productId = product._id || product.id;
-                  const qty = getQty(productId);
-                  return (
-                    <motion.div
-                      key={productId}
-                      initial={{ opacity: 0, y: 15 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: idx * 0.05 }}
-                      className="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 flex gap-4"
-                    >
-                      <div className="flex-1">
-                        {product.isVeg !== undefined && (
-                          <div className={`w-3 h-3 border grid place-items-center mb-1 ${product.isVeg ? 'border-green-600' : 'border-red-600'}`}>
-                            <div className={`w-1.5 h-1.5 rounded-full ${product.isVeg ? 'bg-green-600' : 'bg-red-600'}`} />
-                          </div>
-                        )}
-                        <h3 className="font-bold text-gray-800 text-base">{product.name}</h3>
-                        <p className="text-xs text-gray-500 mb-2">{product.category}</p>
-                        <div className="flex items-center gap-2">
-                           <span className="font-bold text-gray-900">₹{product.offerPrice}</span>
-                           {product.price > product.offerPrice && (
-                             <span className="text-xs text-gray-400 line-through">₹{product.price}</span>
-                           )}
-                           {product.price > product.offerPrice && (
-                             <span className="text-xs font-bold text-green-600 bg-green-50 px-1.5 py-0.5 rounded">
-                               Save ₹{product.price - product.offerPrice}
-                             </span>
-                           )}
-                        </div>
-                      </div>
-                      
-                      {/* Quantity Controller */}
-                      <div className="flex items-end">
-                        {qty === 0 ? (
-                          <motion.button
-                            whileTap={{scale:0.95}}
-                            onClick={() => handleUpdateQty(product, 1)}
-                            className="px-6 py-2 bg-primary-50 text-primary font-bold rounded-lg border border-primary-200"
+                productsByCategory.map((group) => (
+                  <div key={group.categoryId}>
+                    <div className="flex items-center gap-2 mb-3">
+                      <h2 className="text-sm font-bold text-gray-800 uppercase tracking-wide">{group.categoryName}</h2>
+                      {group.categoryDiscountPercent > 0 && (
+                        <span className="text-[11px] font-bold text-green-600 bg-green-50 px-2 py-0.5 rounded-full border border-green-100">
+                          {group.categoryDiscountPercent}% OFF
+                        </span>
+                      )}
+                    </div>
+                    <div className="space-y-4">
+                      {group.products.map((product, idx) => {
+                        const productId = product._id || product.id;
+                        const qty = getQty(productId);
+                        return (
+                          <motion.div
+                            key={productId}
+                            initial={{ opacity: 0, y: 15 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ delay: idx * 0.05 }}
+                            className="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 flex gap-4"
                           >
-                            ADD
-                          </motion.button>
-                        ) : (
-                          <div className="flex items-center bg-primary text-white rounded-lg overflow-hidden shadow-md">
-                            <motion.button 
-                              whileTap={{backgroundColor:'rgba(0,0,0,0.1)'}} 
-                              className="px-3 py-2"
-                              onClick={() => handleUpdateQty(product, qty - 1)}
-                            >
-                              <RemoveRoundedIcon sx={{fontSize: 18}} />
-                            </motion.button>
-                            <span className="px-2 font-bold w-8 text-center">{qty}</span>
-                            <motion.button 
-                              whileTap={{backgroundColor:'rgba(0,0,0,0.1)'}} 
-                              className="px-3 py-2"
-                              onClick={() => handleUpdateQty(product, qty + 1)}
-                            >
-                              <AddRoundedIcon sx={{fontSize: 18}} />
-                            </motion.button>
-                          </div>
-                        )}
-                      </div>
-                    </motion.div>
-                  );
-                })
+                            <div className="flex-1">
+                              {product.isVeg !== undefined && (
+                                <div className={`w-3 h-3 border grid place-items-center mb-1 ${product.isVeg ? 'border-green-600' : 'border-red-600'}`}>
+                                  <div className={`w-1.5 h-1.5 rounded-full ${product.isVeg ? 'bg-green-600' : 'bg-red-600'}`} />
+                                </div>
+                              )}
+                              <h3 className="font-bold text-gray-800 text-base">{product.name}</h3>
+                              <div className="flex items-center gap-2 mt-2">
+                                 <span className="font-bold text-gray-900">₹{product.offerPrice}</span>
+                                 {product.price > product.offerPrice && (
+                                   <span className="text-xs text-gray-400 line-through">₹{product.price}</span>
+                                 )}
+                                 {product.price > product.offerPrice && (
+                                   <span className="text-xs font-bold text-green-600 bg-green-50 px-1.5 py-0.5 rounded">
+                                     Save ₹{product.price - product.offerPrice}
+                                   </span>
+                                 )}
+                              </div>
+                            </div>
+
+                            {/* Quantity Controller */}
+                            <div className="flex items-end">
+                              {qty === 0 ? (
+                                <motion.button
+                                  whileTap={{scale:0.95}}
+                                  onClick={() => handleUpdateQty(product, 1)}
+                                  className="px-6 py-2 bg-primary-50 text-primary font-bold rounded-lg border border-primary-200"
+                                >
+                                  ADD
+                                </motion.button>
+                              ) : (
+                                <div className="flex items-center bg-primary text-white rounded-lg overflow-hidden shadow-md">
+                                  <motion.button
+                                    whileTap={{backgroundColor:'rgba(0,0,0,0.1)'}}
+                                    className="px-3 py-2"
+                                    onClick={() => handleUpdateQty(product, qty - 1)}
+                                  >
+                                    <RemoveRoundedIcon sx={{fontSize: 18}} />
+                                  </motion.button>
+                                  <span className="px-2 font-bold w-8 text-center">{qty}</span>
+                                  <motion.button
+                                    whileTap={{backgroundColor:'rgba(0,0,0,0.1)'}}
+                                    className="px-3 py-2"
+                                    onClick={() => handleUpdateQty(product, qty + 1)}
+                                  >
+                                    <AddRoundedIcon sx={{fontSize: 18}} />
+                                  </motion.button>
+                                </div>
+                              )}
+                            </div>
+                          </motion.div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                ))
               )}
             </div>
           )}
@@ -507,6 +551,16 @@ const StoreProfile = () => {
            </motion.div>
          )}
       </AnimatePresence>
+
+      <ConfirmDialog
+        isOpen={!!pendingCartAction}
+        title="Start a new cart?"
+        message="You have items from another store in your cart. Adding this item will clear them."
+        confirmText="Clear & Add"
+        confirmColor="primary"
+        onConfirm={confirmMerchantSwitch}
+        onCancel={() => setPendingCartAction(null)}
+      />
     </PageTransition>
   );
 };

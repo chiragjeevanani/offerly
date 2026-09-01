@@ -15,7 +15,8 @@
     "seed:products": "node src/seeders/productSeeder.js",
     "seed:offers": "node src/seeders/offerSeeder.js",
     "seed:ads": "node src/seeders/adRequestSeeder.js",
-    "normalize:phones": "node src/scripts/normalizePhoneNumbers.js"
+    "normalize:phones": "node src/scripts/normalizePhoneNumbers.js",
+    "backfill:product-categories": "node src/scripts/backfillProductCategories.js"
   },
   "keywords": [],
   "author": "",

@@ -1,9 +1,11 @@
 import Product from '../models/Product.js';
 import Merchant from '../models/Merchant.js';
+import ProductCategory from '../models/ProductCategory.js';
 import Plan from '../../admin/models/Plan.js';
 import MerchantSubscription from '../../payment/models/MerchantSubscription.js';
 import mongoose from 'mongoose';
 import { serializeProduct } from '../../../utils/serializers.js';
+import { getOrCreateUncategorized } from './productCategoryController.js';
 
 // Get all products for a merchant
 export const getProductsByMerchant = async (req, res) => {
@@ -39,10 +41,12 @@ export const getProductsByMerchant = async (req, res) => {
       }
     }
 
-    const products = await Product.find({ 
+    const products = await Product.find({
       merchantId,
-      isActive: true 
-    }).sort({ createdAt: -1 });
+      isActive: true
+    })
+      .populate('categoryId', 'name discountPercent isActive order')
+      .sort({ createdAt: -1 });
 
     return res.status(200).json({
       success: true,
@@ -62,7 +66,7 @@ export const getProductsByMerchant = async (req, res) => {
 // Get single product by ID
 export const getProductById = async (req, res) => {
   try {
-    const product = await Product.findById(req.params.id);
+    const product = await Product.findById(req.params.id).populate('categoryId', 'name discountPercent isActive order');
 
     if (!product) {
       return res.status(404).json({
@@ -155,16 +159,33 @@ export const createProduct = async (req, res) => {
       });
     }
 
-    // Calculate discount
-    const discount = req.body.price && req.body.offerPrice 
-      ? Math.round(((req.body.price - req.body.offerPrice) / req.body.price) * 100)
-      : 0;
+    // Resolve category (falls back to the merchant's default "Uncategorized" bucket)
+    let category;
+    if (req.body.categoryId) {
+      category = await ProductCategory.findOne({ _id: req.body.categoryId, merchantId });
+      if (!category) {
+        return res.status(400).json({
+          success: false,
+          message: 'Category not found or does not belong to this store'
+        });
+      }
+    } else {
+      category = await getOrCreateUncategorized(merchantId);
+    }
+
+    // Discount is always derived from the category, never merchant-entered
+    const price = Number(req.body.price);
+    const discount = category.discountPercent;
+    const offerPrice = Math.round((price * (100 - discount)) / 100 * 100) / 100;
 
     // Create product
     const product = await Product.create({
       ...req.body,
       merchantId,
-      discount
+      categoryId: category._id,
+      price,
+      discount,
+      offerPrice,
     });
 
     return res.status(201).json({
@@ -211,11 +232,29 @@ export const updateProduct = async (req, res) => {
       });
     }
 
-    // Calculate discount if prices are updated
-    if (req.body.price || req.body.offerPrice) {
-      const price = req.body.price || product.price;
-      const offerPrice = req.body.offerPrice || product.offerPrice;
-      req.body.discount = Math.round(((price - offerPrice) / price) * 100);
+    // Resolve category if it's being changed, and validate ownership
+    let category = null;
+    if (req.body.categoryId && req.body.categoryId !== product.categoryId.toString()) {
+      category = await ProductCategory.findOne({ _id: req.body.categoryId, merchantId: product.merchantId });
+      if (!category) {
+        return res.status(400).json({
+          success: false,
+          message: 'Category not found or does not belong to this store'
+        });
+      }
+    }
+
+    // Discount is always derived from the (possibly new) category, never merchant-entered
+    delete req.body.discount;
+    delete req.body.offerPrice;
+    if (req.body.price || category) {
+      const price = req.body.price ? Number(req.body.price) : product.price;
+      if (!category) {
+        category = await ProductCategory.findById(product.categoryId);
+      }
+      req.body.price = price;
+      req.body.discount = category.discountPercent;
+      req.body.offerPrice = Math.round((price * (100 - category.discountPercent)) / 100 * 100) / 100;
     }
 
     // Update product
@@ -388,7 +427,8 @@ export const searchProducts = async (req, res) => {
       isActive: true,
       name: { $regex: searchQuery, $options: 'i' }
     })
-    .select('name price offerPrice images discount category')
+    .select('name price offerPrice images discount categoryId')
+    .populate('categoryId', 'name discountPercent')
     .limit(10)
     .sort({ name: 1 });
 

@@ -9,6 +9,8 @@ import Inventory2RoundedIcon from '@mui/icons-material/Inventory2Rounded';
 import WarningRoundedIcon from '@mui/icons-material/WarningRounded';
 import AccessTimeRoundedIcon from '@mui/icons-material/AccessTimeRounded';
 import RocketLaunchRoundedIcon from '@mui/icons-material/RocketLaunchRounded';
+import CategoryRoundedIcon from '@mui/icons-material/CategoryRounded';
+import { Link } from 'react-router-dom';
 import toast from 'react-hot-toast';
 
 import AddProductModal from '../components/AddProductModal';
@@ -98,7 +100,14 @@ const Products = ({ merchant }) => {
             </div>
           </div>
           <div className="flex gap-2">
-            <button 
+            <Link
+              to="/merchant/categories"
+              className="w-11 h-11 flex items-center justify-center rounded-2xl bg-white text-gray-900 border border-gray-100 hover:scale-105 transition-all shadow-lg"
+              title="Manage Categories & Discounts"
+            >
+              <CategoryRoundedIcon />
+            </Link>
+            <button
               onClick={() => { setEditingProduct(null); setIsModalOpen(true); }}
               disabled={!isUnlimited && products.length >= maxProducts}
               className={`w-11 h-11 flex items-center justify-center rounded-2xl transition-all shadow-lg ${
@@ -190,7 +199,7 @@ const Products = ({ merchant }) => {
                        {/* Category Overlay */}
                        <div className="absolute bottom-2 left-2 right-2">
                           <span className="px-2 py-1 bg-gray-900/80 backdrop-blur-md text-white text-[7px] font-bold uppercase tracking-widest rounded-lg">
-                             {product.category}
+                             {product.categoryName}
                           </span>
                        </div>
                     </div>

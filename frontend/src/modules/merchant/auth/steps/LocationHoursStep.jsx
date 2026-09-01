@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import ArrowForwardRoundedIcon from '@mui/icons-material/ArrowForwardRounded';
 import ArrowBackRoundedIcon from '@mui/icons-material/ArrowBackRounded';
@@ -6,6 +6,7 @@ import LocationOnRoundedIcon from '@mui/icons-material/LocationOnRounded';
 import MyLocationRoundedIcon from '@mui/icons-material/MyLocationRounded';
 import AccessTimeRoundedIcon from '@mui/icons-material/AccessTimeRounded';
 import MapRoundedIcon from '@mui/icons-material/MapRounded';
+import { cityAPI } from '../../../../api/city.api';
 import toast from 'react-hot-toast';
 
 const days = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
@@ -34,6 +35,7 @@ const LocationHoursStep = ({ data, onSubmit, onBack, loading }) => {
   const [formData, setFormData] = useState({
     address: data.address || '',
     city: data.city || '',
+    zone: data.zone || '',
     state: data.state || '',
     pincode: data.pincode || '',
     latitude: data.latitude || null,
@@ -43,11 +45,38 @@ const LocationHoursStep = ({ data, onSubmit, onBack, loading }) => {
 
   const [errors, setErrors] = useState({});
   const [locationLoading, setLocationLoading] = useState(false);
+  const [cities, setCities] = useState([]);
+
+  useEffect(() => {
+    const fetchCities = async () => {
+      try {
+        const response = await cityAPI.getAll();
+        const realCities = (response.cities || []).filter(
+          (c) => c._id && !String(c._id).startsWith('merchant-city-')
+        );
+        setCities(realCities);
+      } catch (error) {
+        toast.error('Failed to load cities');
+      }
+    };
+    fetchCities();
+  }, []);
+
+  const selectedCityZones = useMemo(() => {
+    const city = cities.find((c) => c.name === formData.city);
+    return (city?.zones || []).filter((zone) => (zone.status || 'active') === 'active');
+  }, [cities, formData.city]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData({ ...formData, [name]: value });
     if (errors[name]) setErrors({ ...errors, [name]: '' });
+  };
+
+  const handleCityChange = (e) => {
+    const { value } = e.target;
+    setFormData({ ...formData, city: value, zone: '' });
+    if (errors.city) setErrors({ ...errors, city: '' });
   };
 
   const handleUseLocation = () => {
@@ -61,9 +90,11 @@ const LocationHoursStep = ({ data, onSubmit, onBack, loading }) => {
             const res = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${latitude}&lon=${longitude}&format=json`);
             const data = await res.json();
             if (data.address) {
+               const detectedCity = data.address.city || data.address.town || data.address.village || '';
                setFormData(prev => ({
                  ...prev,
-                 city: data.address.city || data.address.town || data.address.village || '',
+                 city: cities.some((c) => c.name === detectedCity) ? detectedCity : prev.city,
+                 zone: '',
                  state: data.address.state || '',
                  pincode: data.address.postcode || ''
                }));
@@ -104,6 +135,7 @@ const LocationHoursStep = ({ data, onSubmit, onBack, loading }) => {
     const newErrors = {};
     if (!formData.address.trim()) newErrors.address = 'Full address required';
     if (!formData.city) newErrors.city = 'City required';
+    if (selectedCityZones.length > 0 && !formData.zone) newErrors.zone = 'Zone required';
     if (!formData.pincode) newErrors.pincode = 'Pincode required';
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -156,7 +188,10 @@ const LocationHoursStep = ({ data, onSubmit, onBack, loading }) => {
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div className="space-y-1.5">
                     <label className="text-[10px] font-bold text-gray-400 px-1">City</label>
-                    <input name="city" value={formData.city} onChange={handleChange} placeholder="City" className="w-full h-12 px-4 bg-background rounded-2xl border border-gray-50 text-sm font-bold outline-none focus:bg-white focus:border-[#5EB929]/30 transition-all" />
+                    <select name="city" value={formData.city} onChange={handleCityChange} className="w-full h-12 px-4 bg-background rounded-2xl border border-gray-50 text-sm font-bold outline-none focus:bg-white focus:border-[#5EB929]/30 transition-all appearance-none cursor-pointer">
+                      <option value="">Select City</option>
+                      {cities.map((c) => <option key={c._id} value={c.name}>{c.name}</option>)}
+                    </select>
                   </div>
                   <div className="space-y-1.5">
                     <label className="text-[10px] font-bold text-gray-400 px-1">State</label>
@@ -167,6 +202,17 @@ const LocationHoursStep = ({ data, onSubmit, onBack, loading }) => {
                     <input name="pincode" value={formData.pincode} onChange={(e) => setFormData({...formData, pincode: e.target.value.replace(/\D/g, '').slice(0,6)})} placeholder="000000" className="w-full h-12 px-4 bg-background rounded-2xl border border-gray-50 text-sm font-bold outline-none focus:bg-white focus:border-[#5EB929]/30 transition-all" />
                   </div>
                 </div>
+
+                {selectedCityZones.length > 0 && (
+                  <div className="space-y-1.5">
+                    <label className="text-[10px] font-bold text-gray-400 px-1">Zone</label>
+                    <select name="zone" value={formData.zone} onChange={handleChange} className="w-full h-12 px-4 bg-background rounded-2xl border border-gray-50 text-sm font-bold outline-none focus:bg-white focus:border-[#5EB929]/30 transition-all appearance-none cursor-pointer">
+                      <option value="">Select Zone</option>
+                      {selectedCityZones.map((zone) => <option key={zone._id} value={zone._id}>{zone.name}</option>)}
+                    </select>
+                    <p className="text-[9px] font-bold text-gray-300 px-1">Your offers will only be shown to customers browsing this zone.</p>
+                  </div>
+                )}
               </div>
             </div>
 

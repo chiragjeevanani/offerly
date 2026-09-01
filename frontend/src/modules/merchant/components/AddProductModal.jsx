@@ -6,6 +6,7 @@ import Inventory2RoundedIcon from '@mui/icons-material/Inventory2Rounded';
 import SpaRoundedIcon from '@mui/icons-material/SpaRounded';
 import AddPhotoAlternateRoundedIcon from '@mui/icons-material/AddPhotoAlternateRounded';
 import toast from 'react-hot-toast';
+import { productCategoryAPI } from '../../../api/productCategory.api';
 
 const CATEGORY_BEHAVIOURS = {
   'Food': { type: 'product_based', icon: '🍔', showVeg: true },
@@ -28,26 +29,40 @@ const AddProductModal = ({ isOpen, onClose, merchant, editingProduct, onSave }) 
   const isProductBased = behaviour.type === 'product_based';
 
   const [formData, setFormData] = useState({
-    name: '', description: '', price: '', offerPrice: '',
-    category: '', isVeg: false, stock: '', sku: '',
+    name: '', description: '', price: '',
+    categoryId: '', isVeg: false, stock: '', sku: '',
     duration: '30 mins', inclusions: [''], maxBookings: '',
     validityDays: '30', images: [], imagePreview: null,
   });
-  
+
   const [isSaving, setIsSaving] = useState(false);
   const [uploadingImage, setUploadingImage] = useState(false);
+  const [categories, setCategories] = useState([]);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    productCategoryAPI.getMine()
+      .then((res) => setCategories(res?.categories || []))
+      .catch(() => setCategories([]));
+  }, [isOpen]);
 
   useEffect(() => {
     if (editingProduct) setFormData({ ...editingProduct });
     else setFormData({
-        name: '', description: '', price: '', offerPrice: '', category: '', 
-        isVeg: false, stock: '', sku: '', duration: '30 mins', inclusions: [''], 
+        name: '', description: '', price: '', categoryId: '',
+        isVeg: false, stock: '', sku: '', duration: '30 mins', inclusions: [''],
         maxBookings: '', validityDays: '30', images: [], imagePreview: null,
     });
     setIsSaving(false);
   }, [editingProduct, isOpen]);
 
   const handleChange = (field, value) => setFormData(prev => ({ ...prev, [field]: value }));
+
+  const selectedCategory = categories.find((c) => c.id === formData.categoryId);
+  const discountPercent = selectedCategory?.discountPercent || 0;
+  const previewPrice = formData.price
+    ? Math.round((parseFloat(formData.price) * (100 - discountPercent)) / 100 * 100) / 100
+    : null;
 
   const handleImageUpload = async (e) => {
     const file = e.target.files?.[0];
@@ -67,13 +82,12 @@ const AddProductModal = ({ isOpen, onClose, merchant, editingProduct, onSave }) 
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!formData.name.trim() || !formData.price || !formData.offerPrice) return toast.error('Fill required fields');
+    if (!formData.name.trim() || !formData.price || !formData.categoryId) return toast.error('Fill required fields');
     setIsSaving(true);
     try {
       const payload = {
         ...formData, merchantId: merchant._id, categoryType: behaviour.type,
-        price: parseFloat(formData.price), offerPrice: parseFloat(formData.offerPrice),
-        discount: Math.round(((formData.price - formData.offerPrice) / formData.price) * 100),
+        price: parseFloat(formData.price),
       };
       await onSave(payload);
     } catch (err) { setIsSaving(false); }
@@ -131,20 +145,28 @@ const AddProductModal = ({ isOpen, onClose, merchant, editingProduct, onSave }) 
               </div>
               <div className="grid grid-cols-2 gap-4">
                  <div className="bg-white p-3 rounded-xl border border-gray-100 shadow-sm">
-                    <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2 block">Regular Price</label>
+                    <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2 block">Price</label>
                     <div className="flex items-center gap-2">
                        <span className="text-[13px] font-bold text-gray-300">₹</span>
                        <input type="number" value={formData.price} onChange={(e) => handleChange('price', e.target.value)} placeholder="0.00" className="w-full text-base font-bold text-gray-900 outline-none" />
                     </div>
                  </div>
-                 <div className="bg-[#5EB929]/5 p-3 rounded-xl border border-[#5EB929]/10 shadow-sm">
-                    <label className="text-[10px] font-bold text-[#5EB929] uppercase tracking-widest mb-2 block">Offer Price</label>
-                    <div className="flex items-center gap-2">
-                       <span className="text-[13px] font-bold text-[#5EB929]/40">₹</span>
-                       <input type="number" value={formData.offerPrice} onChange={(e) => handleChange('offerPrice', e.target.value)} placeholder="0.00" className="w-full text-base font-bold text-[#5EB929] outline-none bg-transparent" />
-                    </div>
+                 <div className="bg-white p-3 rounded-xl border border-gray-100 shadow-sm">
+                    <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2 block">Category *</label>
+                    <select value={formData.categoryId} onChange={(e) => handleChange('categoryId', e.target.value)} className="w-full text-[13px] font-bold text-gray-900 outline-none bg-transparent">
+                       <option value="">Select category</option>
+                       {categories.map((c) => (
+                         <option key={c.id} value={c.id}>{c.name}{c.discountPercent > 0 ? ` — ${c.discountPercent}% off` : ''}</option>
+                       ))}
+                    </select>
                  </div>
               </div>
+              {previewPrice !== null && discountPercent > 0 && (
+                <div className="bg-[#5EB929]/5 p-3 rounded-xl border border-[#5EB929]/10 shadow-sm flex items-center justify-between">
+                   <span className="text-[10px] font-bold text-[#5EB929] uppercase tracking-widest">Customer pays (after {discountPercent}% category discount)</span>
+                   <span className="text-base font-bold text-[#5EB929]">₹{previewPrice}</span>
+                </div>
+              )}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                  {isProductBased ? (
                     <>
@@ -183,9 +205,9 @@ const AddProductModal = ({ isOpen, onClose, merchant, editingProduct, onSave }) 
               </div>
               <div className="flex items-center justify-between gap-4 pt-4 border-t border-gray-100">
                  <div className="hidden sm:block">
-                    {formData.price && formData.offerPrice && (
+                    {discountPercent > 0 && (
                        <span className="text-[10px] font-bold text-[#5EB929] uppercase tracking-widest bg-[#5EB929]/10 px-3 py-1.5 rounded-lg">
-                          Save {Math.round(((formData.price - formData.offerPrice) / formData.price) * 100)}%
+                          Save {discountPercent}%
                        </span>
                     )}
                  </div>

@@ -164,8 +164,11 @@ const CartView = () => {
                  return (
                   <div key={idx} className="flex justify-between items-center gap-4 relative">
                     <div className="flex-1">
-                      <p className="text-[13px] font-bold text-gray-900 mb-2">{product.name}</p>
-                      
+                      <p className="text-[13px] font-bold text-gray-900 mb-1">{product.name}</p>
+                      {product.categoryId?.name && (
+                        <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wide mb-1">{product.categoryId.name}</p>
+                      )}
+
                       <div className="flex items-center gap-3">
                          <div className="flex items-center bg-[#F8FAFC] rounded-xl border border-gray-100 p-0.5">
                             <motion.button 

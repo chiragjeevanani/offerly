@@ -25,10 +25,21 @@ export const updateMyProfile = async (req, res) => {
     "avatar",
     "address",
     "city",
+    "zone",
     "gender",
     "dob",
     "isProfileComplete",
   ];
+
+  if (req.body.zone) {
+    const city = req.body.city || req.user.city;
+    const cityDoc = city
+      ? await City.findOne({ name: city, "zones._id": req.body.zone })
+      : null;
+    if (!cityDoc) {
+      return res.status(400).json({ message: "Selected zone does not belong to the selected city" });
+    }
+  }
 
   for (const field of allowedFields) {
     if (field in req.body) {

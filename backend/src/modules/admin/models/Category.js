@@ -64,8 +64,8 @@ const categorySchema = new mongoose.Schema(
   }
 );
 
-// Index for faster queries
+// Index for faster queries. `name` already gets a unique index from the
+// schema field above - a second explicit index({ name: 1 }) is redundant.
 categorySchema.index({ status: 1, order: 1 });
-categorySchema.index({ name: 1 });
 
 export default mongoose.model('Category', categorySchema);

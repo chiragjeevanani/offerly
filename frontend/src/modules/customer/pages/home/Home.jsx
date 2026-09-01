@@ -163,9 +163,12 @@ const Home = () => {
 
         setCityRequired(false);
 
-        // Base query parameters
-        const baseParams = { 
+        // Base query parameters. Zone only applies when browsing the profile's
+        // own city — switching city for browsing shouldn't carry over a zone
+        // that belongs to a different city's zone list.
+        const baseParams = {
           city: resolvedCity,
+          ...(resolvedCity === user?.city && user?.zone ? { zone: user.zone } : {}),
           userLat: userCoords?.lat,
           userLng: userCoords?.lng
         };
@@ -234,7 +237,7 @@ const Home = () => {
     };
 
     loadData();
-  }, [selectedCity, user?.city, userCoords, useUnifiedFeed]);
+  }, [selectedCity, user?.city, user?.zone, userCoords, useUnifiedFeed]);
 
   // 4. Auto-sliding Carousel interval
   useEffect(() => {

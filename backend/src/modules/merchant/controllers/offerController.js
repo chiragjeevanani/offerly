@@ -107,6 +107,22 @@ const resolveFeedCity = (req) => {
   return "";
 };
 
+const resolveFeedZone = (req) => {
+  const queryZone =
+    typeof req.query.zone === "string" && req.query.zone.trim() ? req.query.zone.trim() : "";
+  if (queryZone) {
+    return queryZone;
+  }
+
+  const profileZone =
+    typeof req.user?.zone === "string" && req.user.zone.trim() ? req.user.zone.trim() : "";
+  if (profileZone) {
+    return profileZone;
+  }
+
+  return "";
+};
+
 const parseLimit = (value, fallback) => {
   const parsed = Number.parseInt(value, 10);
   if (!Number.isFinite(parsed)) {
@@ -229,6 +245,7 @@ export const getOffersFeed = async (req, res) => {
   }
 
   const normalizedCityKey = normalizeCity(selectedCity);
+  const selectedZone = resolveFeedZone(req);
   const userLat = parseCoordinate(req.query.userLat);
   const userLng = parseCoordinate(req.query.userLng);
 
@@ -245,7 +262,7 @@ export const getOffersFeed = async (req, res) => {
     userLat !== null && userLng !== null
       ? `${userLat.toFixed(2)}:${userLng.toFixed(2)}`
       : "no-coords";
-  const cacheKey = `${normalizedCityKey}|${coordsKey}|${affinity.hash}`;
+  const cacheKey = `${normalizedCityKey}|zone:${selectedZone || "any"}|${coordsKey}|${affinity.hash}`;
   const cachedPayload = getFeedCache(cacheKey);
 
   if (cachedPayload) {
@@ -267,7 +284,7 @@ export const getOffersFeed = async (req, res) => {
     city: exactCityRegex,
   })
     .select(
-      "_id storeName businessName verified coordinates city totalRedemptions avgRating totalReviews logo coverImage category",
+      "_id storeName businessName verified coordinates city zone isOpen totalRedemptions avgRating totalReviews logo coverImage category",
     )
     .lean();
 
@@ -277,9 +294,18 @@ export const getOffersFeed = async (req, res) => {
       city: fuzzyCityRegex,
     })
       .select(
-        "_id storeName businessName verified coordinates city totalRedemptions avgRating totalReviews logo coverImage category",
+        "_id storeName businessName verified coordinates city zone isOpen totalRedemptions avgRating totalReviews logo coverImage category",
       )
       .lean();
+  }
+
+  // Narrow to the customer's zone when possible, but never let zone under-adoption
+  // (most merchants/customers still have no zone set) produce an empty feed.
+  if (selectedZone) {
+    const zoneMerchants = cityMerchants.filter((merchant) => merchant.zone === selectedZone);
+    if (zoneMerchants.length) {
+      cityMerchants = zoneMerchants;
+    }
   }
 
   const merchantIds = cityMerchants.map((merchant) => merchant._id);
@@ -324,7 +350,7 @@ export const getOffersFeed = async (req, res) => {
       $or: [{ validTo: { $gte: now } }, { validTo: null }],
     })
       .select(
-        "_id merchantId offerType productId variantId applyToAllVariants servicePlanId bookingRequired bookingWindowDays title description discountType discountValue validFrom validTo maxRedemptions currentRedemptions image customImage useCustomImage status impressions saves terms category isTrending isNew createdAt updatedAt",
+        "_id merchantId offerType productId variantId applyToAllVariants servicePlanId bookingRequired bookingWindowDays title description discountType discountValue validFrom validTo maxRedemptions currentRedemptions image customImage useCustomImage status impressions saves terms category isTrending isNewOffer createdAt updatedAt",
       )
       .lean(),
     Redemption.aggregate([
@@ -416,10 +442,11 @@ export const getOffersFeed = async (req, res) => {
     rankedOffers.push({
       id: offerId,
       offer: offerData,
+      isOpen: merchant.isOpen !== false,
       distanceKm,
       redemptions30d,
       recencyScore,
-      trendingScore: finalTrendingScore, 
+      trendingScore: finalTrendingScore,
       recommendationScore,
       nearYouScore,
       affinityScore: categoryAffinity,
@@ -431,6 +458,9 @@ export const getOffersFeed = async (req, res) => {
 
   const trendingOffers = pickUniqueOffers(
     [...rankedOffers].sort((left, right) => {
+      if (left.isOpen !== right.isOpen) {
+        return left.isOpen ? -1 : 1;
+      }
       if (right.trendingScore !== left.trendingScore) {
         return right.trendingScore - left.trendingScore;
       }
@@ -445,6 +475,9 @@ export const getOffersFeed = async (req, res) => {
 
   const nearYouOffers = pickUniqueOffers(
     [...rankedOffers].sort((left, right) => {
+      if (left.isOpen !== right.isOpen) {
+        return left.isOpen ? -1 : 1;
+      }
       if (left.distanceKm !== null && right.distanceKm !== null && left.distanceKm !== right.distanceKm) {
         return left.distanceKm - right.distanceKm;
       }
@@ -465,6 +498,9 @@ export const getOffersFeed = async (req, res) => {
 
   const recommendedOffers = pickUniqueOffers(
     [...rankedOffers].sort((left, right) => {
+      if (left.isOpen !== right.isOpen) {
+        return left.isOpen ? -1 : 1;
+      }
       if (right.recommendationScore !== left.recommendationScore) {
         return right.recommendationScore - left.recommendationScore;
       }
@@ -565,11 +601,20 @@ export const getOffers = async (req, res) => {
   // - only approved merchants
   // - only active offers
   // Admin can bypass via explicit filters.
-  if (req.query.merchantId) {
-    query.merchantId = req.query.merchantId;
+  // Raw req.query values are attacker-controlled and Express's query parser
+  // will happily turn e.g. ?merchantId[$ne]=x into an object, not a string -
+  // assigning that straight into a Mongo filter is a NoSQL operator-injection
+  // hole. Coerce/validate everything before it reaches a query.
+  const queryMerchantId =
+    typeof req.query.merchantId === "string" && mongoose.Types.ObjectId.isValid(req.query.merchantId)
+      ? req.query.merchantId
+      : "";
+
+  if (queryMerchantId) {
+    query.merchantId = queryMerchantId;
     if (!isAdmin) {
       const merchant = await Merchant.findOne({
-        _id: req.query.merchantId,
+        _id: queryMerchantId,
         status: "approved",
       })
         .select("_id")
@@ -583,7 +628,7 @@ export const getOffers = async (req, res) => {
     }
   } else {
     if (isAdmin) {
-      if (req.query.status) {
+      if (typeof req.query.status === "string" && req.query.status) {
         query.status = req.query.status;
       }
     } else {
@@ -596,7 +641,7 @@ export const getOffers = async (req, res) => {
   }
 
   // Existing: Filter by category
-  if (req.query.category) {
+  if (typeof req.query.category === "string" && req.query.category) {
     query.category = req.query.category;
   }
 
@@ -623,7 +668,7 @@ export const getOffers = async (req, res) => {
 
   // NEW: Filter by isNew
   if (req.query.isNew === 'true') {
-    query.isNew = true;
+    query.isNewOffer = true;
   }
 
   // NEW: Filter by isTrending
@@ -638,7 +683,7 @@ export const getOffers = async (req, res) => {
       city: new RegExp(`^${escapeRegex(normalizedCity)}$`, "i"),
       status: "approved",
     })
-      .select("_id")
+      .select("_id zone")
       .lean();
 
     // Fallback for slightly different city spellings/stored formats.
@@ -647,8 +692,17 @@ export const getOffers = async (req, res) => {
         city: new RegExp(escapeRegex(normalizedCity), "i"),
         status: "approved",
       })
-        .select("_id")
+        .select("_id zone")
         .lean();
+    }
+
+    const normalizedZone =
+      typeof req.query.zone === "string" && req.query.zone.trim() ? req.query.zone.trim() : "";
+    if (normalizedZone) {
+      const zoneMerchants = cityMerchants.filter((merchant) => merchant.zone === normalizedZone);
+      if (zoneMerchants.length) {
+        cityMerchants = zoneMerchants;
+      }
     }
 
     const cityMerchantIds = cityMerchants.map(m => m._id);
@@ -675,7 +729,7 @@ export const getOffers = async (req, res) => {
   }
 
   const offersQuery = Offer.find(query)
-    .populate('merchantId', 'storeName businessName verified coordinates city totalRedemptions subscriptionPlanId')
+    .populate('merchantId', 'storeName businessName verified coordinates city isOpen totalRedemptions subscriptionPlanId')
     .populate('productId', 'name price')
     .populate('servicePlanId', 'name price')
     .sort(sortObj)
@@ -713,6 +767,7 @@ export const getOffers = async (req, res) => {
         verified: offerObj.merchantId.verified || false,
         coordinates: offerObj.merchantId.coordinates,
         city: offerObj.merchantId.city,
+        isOpen: offerObj.merchantId.isOpen !== false,
         totalRedemptions: offerObj.merchantId.totalRedemptions || 0,
         planBoost: planBoost
       };
@@ -745,9 +800,11 @@ export const getOffers = async (req, res) => {
     return offerObj;
   }));
 
-  // Re-sort if nearby is requested or by plan boost
+  // Re-sort if nearby is requested or by plan boost. Open stores always sort
+  // ahead of closed ones, regardless of the requested sort mode.
   if (req.query.sortBy === 'distance') {
     enrichedOffers.sort((a, b) => {
+      if (a.merchant?.isOpen !== b.merchant?.isOpen) return a.merchant?.isOpen ? -1 : 1;
       // 1. Distance First
       if (a.distanceKm !== b.distanceKm) return a.distanceKm - b.distanceKm;
       // 2. Plan Boost Second
@@ -755,7 +812,10 @@ export const getOffers = async (req, res) => {
     });
   } else {
     // Default boost for general view
-    enrichedOffers.sort((a, b) => (b.planBoost || 0) - (a.planBoost || 0));
+    enrichedOffers.sort((a, b) => {
+      if (a.merchant?.isOpen !== b.merchant?.isOpen) return a.merchant?.isOpen ? -1 : 1;
+      return (b.planBoost || 0) - (a.planBoost || 0);
+    });
   }
 
   return res.status(200).json({ 
@@ -919,7 +979,7 @@ export const createOffer = async (req, res) => {
     status: req.body.status || "active",
     category: req.body.category || merchant.category || "General",
     isTrending: Boolean(req.body.isTrending),
-    isNew: "isNew" in req.body ? Boolean(req.body.isNew) : true,
+    isNewOffer: "isNew" in req.body ? Boolean(req.body.isNew) : true,
     terms: Array.isArray(req.body.terms)
       ? req.body.terms
       : (typeof req.body.terms === "string" && req.body.terms.trim()
@@ -978,7 +1038,6 @@ export const updateOffer = async (req, res) => {
     "status",
     "category",
     "isTrending",
-    "isNew",
     "terms",
     // NEW fields (backward compatible)
     "offerType",
@@ -996,6 +1055,12 @@ export const updateOffer = async (req, res) => {
     if (field in req.body) {
       offer[field] = req.body[field];
     }
+  }
+
+  // Schema field is isNewOffer (see Offer.js) - request/response still use
+  // the public "isNew" name, so this can't go through the plain whitelist above.
+  if ("isNew" in req.body) {
+    offer.isNewOffer = Boolean(req.body.isNew);
   }
 
   await offer.save();

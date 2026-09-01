@@ -36,6 +36,7 @@ const MerchantRegistrationFlow = () => {
   const [locationData, setLocationData] = useState({
     address: '',
     city: '',
+    zone: '',
     state: '',
     pincode: '',
     latitude: null,

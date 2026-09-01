@@ -7,6 +7,19 @@ import MerchantApplicationDraft from "../models/MerchantApplicationDraft.js";
 import MerchantSubscription from "../models/MerchantSubscription.js";
 import Payment from "../models/Payment.js";
 
+// Plain `!==` on signatures leaks timing information an attacker can use to
+// guess the correct value byte-by-byte. Compare in constant time instead.
+const safeCompare = (a, b) => {
+  const bufferA = Buffer.from(String(a || ""));
+  const bufferB = Buffer.from(String(b || ""));
+
+  if (bufferA.length !== bufferB.length) {
+    return false;
+  }
+
+  return crypto.timingSafeEqual(bufferA, bufferB);
+};
+
 const getRazorpayAuthHeader = () => {
   const keyId = process.env.RAZORPAY_KEY_ID;
   const keySecret = process.env.RAZORPAY_KEY_SECRET;
@@ -190,7 +203,7 @@ export const verifyMerchantPlanPayment = async (req, res) => {
     .update(`${razorpayOrderId}|${razorpayPaymentId}`)
     .digest("hex");
 
-  if (expectedSignature !== razorpaySignature) {
+  if (!safeCompare(expectedSignature, razorpaySignature)) {
     return res.status(400).json({ message: "Invalid Razorpay payment signature" });
   }
 
@@ -234,6 +247,7 @@ export const razorpayWebhook = async (req, res) => {
   const secret = process.env.RAZORPAY_WEBHOOK_SECRET;
 
   if (!secret) {
+    console.error("RAZORPAY_WEBHOOK_SECRET is not configured - ignoring incoming webhook");
     return res.status(200).json({ success: true });
   }
 
@@ -242,7 +256,7 @@ export const razorpayWebhook = async (req, res) => {
     .update(req.rawBody || JSON.stringify(req.body))
     .digest("hex");
 
-  if (signature !== expectedSignature) {
+  if (!safeCompare(signature, expectedSignature)) {
     return res.status(400).json({ message: "Invalid webhook signature" });
   }
 

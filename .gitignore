@@ -84,3 +84,9 @@ desktop.ini
 *.njsproj
 *.sln
 *.sw?
+
+# ===============================
+# AI Assistant Context (local only)
+# ===============================
+CLAUDE.md
+.claude/

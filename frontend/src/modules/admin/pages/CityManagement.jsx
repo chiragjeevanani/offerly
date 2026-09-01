@@ -58,13 +58,23 @@ const CityManagement = () => {
       toast.error('City name is required');
       return;
     }
+
+    const zones = (formData.zones || [])
+      .map((zone) => ({ ...zone, name: zone.name.trim() }))
+      .filter((zone) => zone.name);
+    const zoneNames = zones.map((zone) => zone.name.toLowerCase());
+    if (new Set(zoneNames).size !== zoneNames.length) {
+      toast.error('Zone names must be unique within a city');
+      return;
+    }
+
     try {
-      await adminAPI.saveCity({ ...formData, id: selectedCity?._id || selectedCity?.id });
+      await adminAPI.saveCity({ ...formData, zones, id: selectedCity?._id || selectedCity?.id });
       toast.success(selectedCity ? 'Region updated' : 'Region added');
       setIsSlideOverOpen(false);
       queryClient.invalidateQueries(['adminCities']);
     } catch (error) {
-      toast.error('Failed to save region');
+      toast.error(error?.response?.data?.error || 'Failed to save region');
     }
   };
 
@@ -202,18 +212,64 @@ const CityManagement = () => {
               </div>
 
               <div>
-                <label className="block text-[11px] font-bold text-gray-400 uppercase tracking-widest mb-1.5 ml-1">Associated Zones</label>
-                <textarea 
-                  rows="5"
-                  value={formData.zones?.map(z => z.name).join(', ')}
-                  onChange={(e) => {
-                    const names = e.target.value.split(',').map(s => s.trim()).filter(s => !!s);
-                    setFormData({ ...formData, zones: names.map((n, i) => ({ id: `z_${i}`, name: n, merchantCount: 0 })) });
-                  }}
-                  placeholder="e.g. Beltola, GS Road, Six Mile (Comma separated)"
-                  className="w-full bg-white border border-gray-200 rounded-xl py-3 px-4 text-sm font-medium focus:ring-2 focus:ring-primary/10 focus:border-primary outline-none transition-all resize-none"
-                />
-                <p className="mt-1.5 text-[10px] text-gray-400 px-1 italic">Enter local areas or zones to help merchants pin their exact location.</p>
+                <div className="flex items-center justify-between mb-1.5 ml-1">
+                  <label className="block text-[11px] font-bold text-gray-400 uppercase tracking-widest">Associated Zones</label>
+                  <button
+                    type="button"
+                    onClick={() => setFormData({
+                      ...formData,
+                      zones: [...(formData.zones || []), { name: '', merchantCount: 0, status: 'active' }],
+                    })}
+                    className="text-[10px] font-bold text-[#5EB929] uppercase tracking-wide"
+                  >
+                    + Add Zone
+                  </button>
+                </div>
+                <div className="space-y-2">
+                  {(formData.zones || []).map((zone, index) => (
+                    <div key={zone._id || zone.id || `new-${index}`} className="flex items-center gap-2">
+                      <input
+                        type="text"
+                        value={zone.name}
+                        onChange={(e) => {
+                          const zones = [...formData.zones];
+                          zones[index] = { ...zones[index], name: e.target.value };
+                          setFormData({ ...formData, zones });
+                        }}
+                        placeholder="Zone name e.g. Beltola"
+                        className="flex-1 bg-white border border-gray-200 rounded-xl py-2.5 px-3 text-sm font-medium focus:ring-2 focus:ring-primary/10 focus:border-primary outline-none transition-all"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const zones = [...formData.zones];
+                          zones[index] = { ...zones[index], status: zones[index].status === 'inactive' ? 'active' : 'inactive' };
+                          setFormData({ ...formData, zones });
+                        }}
+                        className={`px-2.5 py-2 rounded-lg text-[9px] font-bold uppercase tracking-wide border whitespace-nowrap ${zone.status === 'inactive' ? 'bg-gray-50 text-gray-400 border-gray-100' : 'bg-green-50 text-green-600 border-green-100'}`}
+                      >
+                        {zone.status === 'inactive' ? 'Inactive' : 'Active'}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if ((zone.merchantCount || 0) > 0) {
+                            toast.error(`Cannot remove — ${zone.merchantCount} merchant(s) assigned. Deactivate instead.`);
+                            return;
+                          }
+                          setFormData({ ...formData, zones: formData.zones.filter((_, i) => i !== index) });
+                        }}
+                        className="p-2 rounded-lg text-red-400 hover:bg-red-50 shrink-0"
+                      >
+                        <DeleteRoundedIcon sx={{ fontSize: 16 }} />
+                      </button>
+                    </div>
+                  ))}
+                  {(!formData.zones || formData.zones.length === 0) && (
+                    <p className="text-[11px] text-gray-400 italic px-1">No zones yet — add one so merchants can select it.</p>
+                  )}
+                </div>
+                <p className="mt-1.5 text-[10px] text-gray-400 px-1 italic">Zones let merchants pin their exact operating area, and restrict which offers a customer in that area can see.</p>
               </div>
             </div>
 

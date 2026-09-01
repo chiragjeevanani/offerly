@@ -1,6 +1,7 @@
 import Joi from 'joi';
 import Cart from '../models/Cart.js';
 import Product from '../../merchant/models/Product.js';
+import Merchant from '../../merchant/models/Merchant.js';
 
 // @desc    Get customer's cart
 // @route   GET /api/cart
@@ -9,7 +10,11 @@ export const getCart = async (req, res) => {
   try {
     const cart = await Cart.findOne({ customerId: req.user.id })
       .populate('merchantId', 'storeName logo address locality phone')
-      .populate('items.product', 'name category price offerPrice image isVeg');
+      .populate({
+        path: 'items.product',
+        select: 'name categoryId price offerPrice image isVeg',
+        populate: { path: 'categoryId', select: 'name discountPercent' },
+      });
 
     if (!cart) {
       return res.status(200).json({ success: true, data: null });
@@ -43,6 +48,15 @@ export const updateCart = async (req, res) => {
     const product = await Product.findById(productId);
     if (!product) {
       return res.status(404).json({ success: false, error: 'Product not found' });
+    }
+
+    // Only block adding new items - removing (qty 0) or trimming an existing
+    // item down should always be allowed even if the store closed meanwhile.
+    if (qty > 0) {
+      const merchant = await Merchant.findById(merchantId).select('isOpen').lean();
+      if (merchant && merchant.isOpen === false) {
+        return res.status(400).json({ success: false, error: 'This store is closed for now' });
+      }
     }
 
     let cart = await Cart.findOne({ customerId: req.user.id });
@@ -95,7 +109,11 @@ export const updateCart = async (req, res) => {
     await cart.save();
     const updatedCart = await Cart.findById(cart._id)
       .populate('merchantId', 'storeName logo address locality phone')
-      .populate('items.product', 'name category price offerPrice image isVeg');
+      .populate({
+        path: 'items.product',
+        select: 'name categoryId price offerPrice image isVeg',
+        populate: { path: 'categoryId', select: 'name discountPercent' },
+      });
 
     res.status(200).json({ success: true, data: updatedCart });
   } catch (err) {

@@ -1,6 +1,8 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
+import toast from 'react-hot-toast';
+import StorefrontRoundedIcon from '@mui/icons-material/StorefrontRounded';
 import {
   AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid
 } from 'recharts';
@@ -69,8 +71,25 @@ const ChartTooltip = ({ active, payload, label }) => {
   );
 };
 
-const MerchantDashboard = ({ merchant }) => {
+const MerchantDashboard = ({ merchant, onMerchantUpdate }) => {
   const navigate = useNavigate();
+  const [togglingOpen, setTogglingOpen] = useState(false);
+  const isStoreOpen = merchant?.isOpen !== false;
+
+  const handleToggleOpen = async () => {
+    if (togglingOpen) return;
+    setTogglingOpen(true);
+    const nextIsOpen = !isStoreOpen;
+    try {
+      await merchantAPI.updateStore({ isOpen: nextIsOpen });
+      toast.success(nextIsOpen ? 'Store is now open' : 'Store marked as closed');
+      await onMerchantUpdate?.();
+    } catch (error) {
+      toast.error('Failed to update store status');
+    } finally {
+      setTogglingOpen(false);
+    }
+  };
 
   const { data: dashboardData, isLoading: loading } = useQuery({
     queryKey: ['merchantDashboard', merchant?._id],
@@ -151,7 +170,45 @@ const MerchantDashboard = ({ merchant }) => {
   return (
     <div className="min-h-screen bg-background p-3 lg:p-6 -m-4 lg:-m-6">
       <div className="max-w-7xl mx-auto space-y-5 pb-16">
-        
+
+        {/* Store Open/Closed toggle - controls whether customers see this
+            store's offers surfaced normally or greyed out as closed */}
+        <div className={`rounded-2xl p-4 border shadow-sm flex items-center justify-between gap-3 transition-colors ${
+          isStoreOpen ? 'bg-white border-gray-50' : 'bg-gray-50 border-gray-100'
+        }`}>
+          <div className="flex items-center gap-3">
+            <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${
+              isStoreOpen ? 'bg-[#5EB929]/10 text-[#5EB929]' : 'bg-gray-200 text-gray-400'
+            }`}>
+              <StorefrontRoundedIcon sx={{ fontSize: 20 }} />
+            </div>
+            <div>
+              <p className="text-sm font-bold text-gray-900 leading-tight">
+                Store is {isStoreOpen ? 'Open' : 'Closed'}
+              </p>
+              <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mt-0.5">
+                {isStoreOpen ? 'Visible to customers as open' : 'Offers shown as closed for now'}
+              </p>
+            </div>
+          </div>
+          <button
+            type="button"
+            role="switch"
+            aria-checked={isStoreOpen}
+            onClick={handleToggleOpen}
+            disabled={togglingOpen}
+            className={`relative w-14 h-8 rounded-full transition-colors shrink-0 disabled:opacity-50 ${
+              isStoreOpen ? 'bg-[#5EB929]' : 'bg-gray-300'
+            }`}
+          >
+            <span
+              className={`absolute top-1 w-6 h-6 bg-white rounded-full shadow-md transition-transform ${
+                isStoreOpen ? 'translate-x-7' : 'translate-x-1'
+              }`}
+            />
+          </button>
+        </div>
+
         {/* Header - Desktop Only Quick Actions */}
         <div className="hidden md:flex items-center justify-end px-1">
           <button onClick={() => navigate('/merchant/scanner')} className="bg-gray-900 text-white px-5 py-3 rounded-2xl font-bold text-[10px] uppercase tracking-widest shadow-xl shadow-gray-900/10 hover:scale-105 active:scale-95 transition-all flex items-center gap-2.5">

@@ -109,7 +109,10 @@ const offerSchema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
-    isNew: {
+    // Named isNewOffer, not isNew - the latter collides with Mongoose's
+    // reserved Document#isNew (tracks whether the doc has been persisted
+    // yet), which the schema compiler only warns about rather than blocks.
+    isNewOffer: {
       type: Boolean,
       default: true,
     },
@@ -124,7 +127,7 @@ const offerSchema = new mongoose.Schema(
 );
 
 // Indexes for performance optimization
-offerSchema.index({ isNew: 1, status: 1 });
+offerSchema.index({ isNewOffer: 1, status: 1 });
 offerSchema.index({ isTrending: 1, status: 1 });
 offerSchema.index({ merchantId: 1, status: 1 });
 offerSchema.index({ category: 1, status: 1 });
@@ -132,7 +135,7 @@ offerSchema.index({ createdAt: -1 });
 offerSchema.index({ status: 1, validTo: 1 });
 offerSchema.index({ status: 1, merchantId: 1, createdAt: -1 });
 offerSchema.index({ status: 1, isTrending: 1, createdAt: -1 });
-offerSchema.index({ status: 1, isNew: 1, createdAt: -1 });
+offerSchema.index({ status: 1, isNewOffer: 1, createdAt: -1 });
 offerSchema.index({ status: 1, saves: -1, createdAt: -1 });
 
 export default mongoose.model('Offer', offerSchema);

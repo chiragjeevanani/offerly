@@ -201,7 +201,7 @@ const QrScreen = () => {
             product: {
               id: prod._id || prod.id,
               name: prod.name,
-              category: prod.category,
+              category: prod.categoryName,
               price: prod.price,
               offerPrice: prod.offerPrice,
               isVeg: prod.isVeg,

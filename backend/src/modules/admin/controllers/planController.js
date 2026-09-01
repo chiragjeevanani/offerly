@@ -6,7 +6,7 @@ import Merchant from '../../merchant/models/Merchant.js';
 // @access  Public (Optional auth for city detection)
 export const getPlans = async (req, res) => {
   try {
-    let city = req.query.city;
+    let city = typeof req.query.city === 'string' ? req.query.city : '';
 
     // If logged in as merchant, get their city automatically
     if (!city && req.user) {

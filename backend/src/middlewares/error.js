@@ -3,8 +3,7 @@ const errorHandler = (err, req, res, next) => {
 
   error.message = err.message;
 
-  // Log to console for dev
-  console.log(err.stack);
+  console.error(err.stack || err);
 
   // Mongoose bad ObjectId
   if (err.name === 'CastError') {
@@ -27,9 +26,15 @@ const errorHandler = (err, req, res, next) => {
     error.statusCode = 400;
   }
 
+  const message = error.message || 'Server Error';
+
+  // Response shape is inconsistent across this codebase (some handlers use
+  // `{ error }`, others `{ message }`) - emit both here since this is the
+  // last-resort fallback and callers on either convention read it correctly.
   res.status(error.statusCode || 500).json({
     success: false,
-    error: error.message || 'Server Error',
+    error: message,
+    message,
   });
 };
 
