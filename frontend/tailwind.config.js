@@ -59,6 +59,9 @@ export default {
         display: ['Poppins', 'system-ui', 'sans-serif'],
         mono: ['Poppins', 'system-ui', 'sans-serif'],
       },
+      spacing: {
+        '18': '4.5rem',
+      },
       fontSize: {
         'display': ['2rem', { lineHeight: '1.1', fontWeight: '800' }],
         'heading': ['1.5rem', { lineHeight: '1.2', fontWeight: '700' }],

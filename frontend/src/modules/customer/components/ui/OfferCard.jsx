@@ -139,8 +139,8 @@ const OfferCard = ({ offer, variant = 'list', onSaveToggle, viewSource = 'feed' 
       onClick={() => navigate(`/offer/${offerId}`)}
       className={`bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden cursor-pointer active:bg-gray-50 transition-colors ${!isMerchantOpen ? 'opacity-80' : ''}`}
     >
-      <div className="flex gap-3 p-2.5">
-        <div className="relative flex-shrink-0 w-18 h-18 overflow-hidden rounded-xl border border-gray-100 bg-gray-100">
+      <div className="flex items-center gap-3 p-2.5">
+        <div className="relative flex-shrink-0 w-20 h-20 overflow-hidden rounded-xl border border-gray-100 bg-gray-100">
           <img
             src={optimizedImage}
             alt={offer.title}
