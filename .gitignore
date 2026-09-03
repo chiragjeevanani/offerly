@@ -86,7 +86,10 @@ desktop.ini
 *.sw?
 
 # ===============================
-# AI Assistant Context (local only)
+# AI Assistant Context & Local Scripts
 # ===============================
 CLAUDE.md
 .claude/
+backend/scripts/
+scratch/
+
