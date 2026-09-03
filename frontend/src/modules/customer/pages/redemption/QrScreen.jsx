@@ -398,6 +398,13 @@ const QrScreen = () => {
                     </div>
                   )}
 
+                  {booking.totals?.walletDiscount > 0 && (
+                    <div className="flex justify-between items-center text-[10px] mb-1.5">
+                      <span className="font-bold text-emerald-600">🎉 New customer bonus</span>
+                      <span className="font-bold text-emerald-600">-₹{Math.round(booking.totals.walletDiscount)}</span>
+                    </div>
+                  )}
+
                   {booking.totals && (
                     <div className="pt-2 flex justify-between items-end border-t border-dashed border-gray-100">
                       <p className="text-[8px] font-bold text-gray-400 uppercase tracking-widest leading-none">Total Offline Pay</p>

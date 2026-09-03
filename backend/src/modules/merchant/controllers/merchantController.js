@@ -11,6 +11,7 @@ import AdRequest from "../../admin/models/AdRequest.js";
 import City from "../../admin/models/City.js";
 import { calculateDistance, formatDistance } from "../../../utils/distance.js";
 import { invalidateFeedCache } from "../../../utils/feedCache.js";
+import { computeSubscriptionCharge, applySubscriptionWalletEffects } from "../../../utils/subscriptionWallet.js";
 import {
   COMPLETED_STATUSES,
   PENDING_STATUSES,
@@ -18,12 +19,18 @@ import {
   startOfLocalDay,
   addDays,
 } from "../../../utils/analytics.js";
+import { resolveStoreType } from "../../../utils/storeTypeHelper.js";
 
 const escapeRegex = (value = "") => value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+
+const normalizeStoreType = (val, category) => {
+  return resolveStoreType(val, category);
+};
 
 const registrationFields = [
   "storeName",
   "category",
+  "storeType",
   "city",
   "locality",
   "address",
@@ -46,6 +53,8 @@ const buildMerchantPayload = (body) => {
       payload[field] = body[field];
     }
   }
+
+  payload.storeType = normalizeStoreType(body.storeType, body.category || payload.category);
 
   if (!payload.phone && body.contactNumber) {
     payload.phone = body.contactNumber;
@@ -349,6 +358,7 @@ export const updateOnboarding = async (req, res) => {
       // Expected store info + bank details
       if (data.storeName) merchant.storeName = data.storeName;
       if (data.category) merchant.category = data.category;
+      if (data.storeType) merchant.storeType = normalizeStoreType(data.storeType);
       if (data.city) merchant.city = data.city;
       if (data.locality) merchant.locality = data.locality;
       if (data.address) merchant.address = data.address;
@@ -399,7 +409,7 @@ export const updateBusinessDetails = async (req, res) => {
       return res.status(404).json({ success: false, message: 'Merchant not found' });
     }
 
-    const { storeName, category, description, businessEmail, businessPhone, logo, photos } = req.body;
+    const { storeName, category, storeType, description, businessEmail, businessPhone, logo, photos } = req.body;
 
     // Validate required fields
     if (!storeName || !category || !description || !businessEmail || !businessPhone || !logo) {
@@ -428,6 +438,9 @@ export const updateBusinessDetails = async (req, res) => {
     // Update merchant
     merchant.storeName = storeName.trim();
     merchant.category = category.trim();
+    if (storeType) {
+      merchant.storeType = normalizeStoreType(storeType);
+    }
     merchant.description = description.trim();
     merchant.businessEmail = businessEmail.trim().toLowerCase();
     merchant.businessPhone = businessPhone.trim();
@@ -641,6 +654,7 @@ export const updateMyStore = async (req, res) => {
   const editableFields = [
     "storeName",
     "category",
+    "storeType",
     "city",
     "locality",
     "address",
@@ -656,7 +670,11 @@ export const updateMyStore = async (req, res) => {
 
   for (const field of editableFields) {
     if (field in req.body) {
-      merchant[field] = req.body[field];
+      if (field === "storeType") {
+        merchant.storeType = normalizeStoreType(req.body.storeType, req.body.category || merchant.category);
+      } else {
+        merchant[field] = req.body[field];
+      }
     }
   }
 
@@ -1100,9 +1118,14 @@ export const purchaseSubscription = async (req, res) => {
       return res.status(400).json({ success: false, error: 'You have already used your free trial' });
     }
 
+    const isAdPlan = plan.planType === 'advertisement';
+    const charge = isAdPlan
+      ? { listPrice: Number(plan.price || 0), walletDiscount: 0, payable: Number(plan.price || 0) }
+      : computeSubscriptionCharge(plan, merchant);
+
     const startDate = new Date();
     const endDate = new Date();
-    
+
     if (isTrial) {
       endDate.setDate(endDate.getDate() + plan.trialDays);
     } else if (plan.duration === 'Monthly') {
@@ -1111,11 +1134,11 @@ export const purchaseSubscription = async (req, res) => {
       endDate.setFullYear(endDate.getFullYear() + 1);
     }
 
-    // If price > 0, create Razorpay Order
-    if (plan.price > 0) {
+    // If there's still something payable after the wallet discount, create a Razorpay Order
+    if (charge.payable > 0) {
       const { createRazorpayOrder } = await import('../../../utils/razorpay.js');
       try {
-        const order = await createRazorpayOrder(plan.price, 'INR', `rcpt_${merchant._id.toString().slice(-8)}_${Date.now()}`);
+        const order = await createRazorpayOrder(charge.payable, 'INR', `rcpt_${merchant._id.toString().slice(-8)}_${Date.now()}`);
         return res.status(200).json({
           success: true,
           requiresPayment: true,
@@ -1123,6 +1146,8 @@ export const purchaseSubscription = async (req, res) => {
           amount: order.amount,
           currency: order.currency,
           key: process.env.RAZORPAY_KEY_ID,
+          listPrice: charge.listPrice,
+          walletDiscount: charge.walletDiscount,
           merchantDetails: {
             name: merchant.storeName,
             email: req.user.email,
@@ -1134,17 +1159,20 @@ export const purchaseSubscription = async (req, res) => {
       }
     }
 
-    // Update Subscription (Direct activation for Free/Trial)
-    await MerchantSubscription.findOneAndUpdate(
-      { merchantId: merchant._id },
+    // Direct activation - Free/Trial plan, or a merchant plan fully covered by the wallet discount
+    const subscription = await MerchantSubscription.findOneAndUpdate(
+      { merchantId: merchant._id, planType: isAdPlan ? 'advertisement' : { $ne: 'advertisement' } },
       {
         userId: req.user._id,
         merchantId: merchant._id,
         planId: plan._id,
-        amount: plan.price,
+        amount: charge.payable,
+        listPrice: charge.listPrice,
+        walletDiscountApplied: charge.walletDiscount,
         status: 'active',
         startDate,
-        endDate
+        endDate,
+        planType: isAdPlan ? 'advertisement' : 'merchant',
       },
       { upsert: true, returnDocument: 'after' }
     );
@@ -1153,6 +1181,16 @@ export const purchaseSubscription = async (req, res) => {
     const updateData = { subscriptionPlanId: plan._id };
     if (isTrial) updateData.hasUsedFreeTrial = true;
     await Merchant.findByIdAndUpdate(merchant._id, updateData);
+
+    if (!isAdPlan) {
+      await applySubscriptionWalletEffects({
+        merchantDoc: merchant,
+        plan,
+        listPrice: charge.listPrice,
+        walletDiscount: charge.walletDiscount,
+        subscriptionId: subscription._id,
+      });
+    }
 
     res.status(200).json({ success: true, message: `Successfully activated ${plan.name}` });
   } catch (err) {
@@ -1206,14 +1244,18 @@ export const verifySubscription = async (req, res) => {
       });
       // NO update to Merchant.subscriptionPlanId
     } else {
+      const charge = computeSubscriptionCharge(plan, merchant);
+
       // Core Membership - Overwrite/Update existing one
-      await MerchantSubscription.findOneAndUpdate(
+      const subscription = await MerchantSubscription.findOneAndUpdate(
         { merchantId: merchant._id, planType: { $ne: 'advertisement' } },
         {
           userId: req.user._id,
           merchantId: merchant._id,
           planId: plan._id,
-          amount: plan.price,
+          amount: charge.payable,
+          listPrice: charge.listPrice,
+          walletDiscountApplied: charge.walletDiscount,
           status: 'active',
           startDate,
           endDate,
@@ -1226,6 +1268,14 @@ export const verifySubscription = async (req, res) => {
 
       // Update Merchant's primary tier
       await Merchant.findByIdAndUpdate(merchant._id, { subscriptionPlanId: plan._id });
+
+      await applySubscriptionWalletEffects({
+        merchantDoc: merchant,
+        plan,
+        listPrice: charge.listPrice,
+        walletDiscount: charge.walletDiscount,
+        subscriptionId: subscription._id,
+      });
     }
 
     res.status(200).json({ success: true, message: `Payment verified. ${plan.name} activated!` });

@@ -36,4 +36,14 @@ export const bookingAPI = {
   lookupByPassId: async (internalId) => {
     return axiosInstance.get(`${API_ENDPOINTS.CREATE_REDEMPTION}/lookup/${internalId}`);
   },
+
+  // Update items on a pending booking (merchant edits scanned cart)
+  updateItems: async (id, items) => {
+    return axiosInstance.put(`${API_ENDPOINTS.CREATE_REDEMPTION}/${id}/items`, { items });
+  },
+
+  // Cancel a pending booking (merchant rejects the whole cart)
+  cancel: async (id) => {
+    return axiosInstance.post(`${API_ENDPOINTS.CREATE_REDEMPTION}/${id}/cancel`);
+  },
 };

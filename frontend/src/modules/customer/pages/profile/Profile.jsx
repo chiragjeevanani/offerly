@@ -12,7 +12,7 @@ import LogoutRoundedIcon from '@mui/icons-material/LogoutRounded';
 import ChevronRightRoundedIcon from '@mui/icons-material/ChevronRightRounded';
 import EditRoundedIcon from '@mui/icons-material/EditRounded';
 import ContentCopyRoundedIcon from '@mui/icons-material/ContentCopyRounded';
-import AccountBalanceWalletRoundedIcon from '@mui/icons-material/AccountBalanceWalletRounded';
+import SavingsRoundedIcon from '@mui/icons-material/SavingsRounded';
 import SaveRoundedIcon from '@mui/icons-material/SaveRounded';
 import MyLocationRoundedIcon from '@mui/icons-material/MyLocationRounded';
 import axios from 'axios';
@@ -68,6 +68,7 @@ const Profile = () => {
   const navigate = useNavigate();
   const { user, logout, refreshUser } = useApp();
   const [redemptionCount, setRedemptionCount] = useState(0);
+  const [lifetimeSavings, setLifetimeSavings] = useState(user?.lifetimeSavings || 0);
   const [editSheetOpen, setEditSheetOpen] = useState(false);
   const [availableCities, setAvailableCities] = useState([]);
   const [saving, setSaving] = useState(false);
@@ -96,13 +97,33 @@ const Profile = () => {
         const res = await bookingAPI.getCustomerRedemptions();
         if (res && res.success) {
           setRedemptionCount(res.data.length);
+          const computedSavings = (res.data || []).reduce((sum, r) => {
+            const discount = r.totals?.discount || 0;
+            if (discount > 0) return sum + discount;
+            if (r.totals?.original && r.totals?.final && r.totals.original > r.totals.final) {
+              return sum + (r.totals.original - r.totals.final);
+            }
+            const itemSavings = (r.items || []).reduce((itemSum, it) => {
+              const price = it.product?.price || 0;
+              const offerPrice = it.product?.offerPrice || 0;
+              const qty = it.qty || 1;
+              return itemSum + Math.max(0, (price - offerPrice) * qty);
+            }, 0);
+            return sum + itemSavings;
+          }, 0);
+
+          const finalSavings = res.lifetimeSavings !== undefined && res.lifetimeSavings > 0
+            ? res.lifetimeSavings
+            : (computedSavings > 0 ? computedSavings : (user?.lifetimeSavings || 0));
+
+          setLifetimeSavings(finalSavings);
         }
       } catch (err) {
         console.error('Failed to fetch profile stats:', err);
       }
     };
     fetchStats();
-  }, []);
+  }, [user?.lifetimeSavings]);
 
   useEffect(() => {
     const fetchCities = async () => {
@@ -268,13 +289,13 @@ const Profile = () => {
           <div className="bg-white rounded-[2rem] p-4 shadow-[0_8px_30px_rgba(0,0,0,0.04)] border border-gray-50 grid grid-cols-3 gap-3">
              {[
                { label: 'Redeemed', value: redemptionCount, icon: ReceiptLongRoundedIcon },
-               { label: 'Saved', value: savedCount, icon: BookmarkRoundedIcon },
-               { label: 'Balance', value: `₹${user?.credits || 0}`, icon: AccountBalanceWalletRoundedIcon },
+               { label: 'Saved Offers', value: user?.savedOffers?.length || 0, icon: BookmarkRoundedIcon },
+               { label: 'Lifetime Savings', value: `₹${lifetimeSavings}`, icon: SavingsRoundedIcon },
              ].map((stat) => (
                <div key={stat.label} className="text-center p-2 rounded-2xl hover:bg-gray-50 transition-colors">
-                  <stat.icon sx={{ fontSize: 18 }} className="text-[#5EB929] mb-1.5 opacity-40" />
+                  <stat.icon sx={{ fontSize: 18 }} className="text-[#5EB929] mb-1.5 opacity-60" />
                   <p className="text-lg font-bold text-gray-900 tracking-tight leading-none">{stat.value}</p>
-                  <p className="text-[8px] font-bold text-gray-400 uppercase tracking-widest mt-1.5">{stat.label}</p>
+                  <p className="text-[8px] font-bold text-gray-400 uppercase tracking-widest mt-1.5 line-clamp-1">{stat.label}</p>
                </div>
              ))}
           </div>

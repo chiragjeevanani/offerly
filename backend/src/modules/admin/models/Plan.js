@@ -36,6 +36,20 @@ const planSchema = new mongoose.Schema(
       type: [String],
       default: [], // Empty means global/all cities
     },
+    // Per-zone price overrides. zoneId matches the _id of a City.zones subdocument
+    // (the same value stored on Merchant.zone). Falls back to `price` when no
+    // override matches the merchant's own city+zone.
+    zonePricing: {
+      type: [
+        {
+          city: { type: String, trim: true },
+          zoneId: { type: String, trim: true },
+          zoneName: { type: String, trim: true },
+          price: { type: Number, min: 0 },
+        },
+      ],
+      default: [],
+    },
     planType: {
       type: String,
       enum: ['merchant', 'advertisement'],

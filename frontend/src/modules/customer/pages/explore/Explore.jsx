@@ -1,8 +1,6 @@
 import { useState, useMemo, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { useQuery } from '@tanstack/react-query';
-import GridViewRoundedIcon from '@mui/icons-material/GridViewRounded';
-import ViewListRoundedIcon from '@mui/icons-material/ViewListRounded';
 import SearchRoundedIcon from '@mui/icons-material/SearchRounded';
 import ChevronRightRoundedIcon from '@mui/icons-material/ChevronRightRounded';
 
@@ -28,7 +26,6 @@ function useDebounce(value, delay) {
 
 const Explore = () => {
   const { user, selectedCity, selectedCategory, setSelectedCategory, userLocation } = useApp();
-  const [viewMode, setViewMode] = useState('grid');
   const [searchText, setSearchText] = useState('');
   const [selectedZone, setSelectedZone] = useState(null);
   const [page, setPage] = useState(1);
@@ -159,27 +156,13 @@ const Explore = () => {
           </div>
         )}
 
-        {/* View toggle + count - Sharp Typography */}
+        {/* Count - Sharp Typography */}
         <div className="flex items-center justify-between px-0.5">
           <div className="flex flex-col">
             <p className="text-[9px] text-gray-400 font-bold uppercase tracking-widest leading-none">Discovery Results</p>
             <p className="text-[11px] text-gray-800 font-bold mt-0.5">
               {isOffersLoading ? 'FETCHING...' : `${offers.length} DEALS IN ${cityFilter?.toUpperCase() || 'OFFERLY'}`}
             </p>
-          </div>
-          <div className="flex items-center gap-1 bg-white rounded-xl border border-gray-100 p-1 shadow-sm">
-            <button
-              onClick={() => setViewMode('list')}
-              className={`p-1.5 rounded-lg transition-all ${viewMode === 'list' ? 'bg-[#5EB929] text-white' : 'text-gray-300'}`}
-            >
-              <ViewListRoundedIcon sx={{ fontSize: 16 }} />
-            </button>
-            <button
-              onClick={() => setViewMode('grid')}
-              className={`p-1.5 rounded-lg transition-all ${viewMode === 'grid' ? 'bg-[#5EB929] text-white' : 'text-gray-300'}`}
-            >
-              <GridViewRoundedIcon sx={{ fontSize: 16 }} />
-            </button>
           </div>
         </div>
 
@@ -202,9 +185,9 @@ const Explore = () => {
                   <div className="h-1.5 w-1.5 rounded-full bg-[#5EB929] shadow-[0_0_8px_#5EB929]" />
                   <h2 className="text-[11px] font-bold text-gray-900 uppercase tracking-tight">Trending Near You</h2>
                 </div>
-                <div className={viewMode === 'grid' ? 'grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-3 gap-2' : 'grid grid-cols-1 md:grid-cols-2 gap-3'}>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   {trendingOffers.map((offer) => (
-                    <OfferCard key={offer._id || offer.id} offer={offer} viewSource="feed" variant={viewMode === 'grid' ? 'grid' : 'list'} />
+                    <OfferCard key={offer._id || offer.id} offer={offer} viewSource="feed" variant="list" />
                   ))}
                 </div>
               </section>
@@ -217,9 +200,9 @@ const Explore = () => {
                   <div className="h-1.5 w-1.5 rounded-full bg-blue-500 shadow-[0_0_8px_rgba(59,130,246,0.5)]" />
                   <h2 className="text-[11px] font-bold text-gray-900 uppercase tracking-tight">New Arrivals</h2>
                 </div>
-                <div className={viewMode === 'grid' ? 'grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-3 gap-2' : 'grid grid-cols-1 md:grid-cols-2 gap-3'}>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   {newOffers.map((offer) => (
-                    <OfferCard key={offer._id || offer.id} offer={offer} viewSource="feed" variant={viewMode === 'grid' ? 'grid' : 'list'} />
+                    <OfferCard key={offer._id || offer.id} offer={offer} viewSource="feed" variant="list" />
                   ))}
                 </div>
               </section>
@@ -234,9 +217,9 @@ const Explore = () => {
                     {searchText ? 'Search Results' : 'Recommended'}
                   </h2>
                 </div>
-                <div className={viewMode === 'grid' ? 'grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-3 gap-2' : 'grid grid-cols-1 md:grid-cols-2 gap-3'}>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   {offers.map((offer) => (
-                    <OfferCard key={offer._id || offer.id} offer={offer} viewSource="feed" variant={viewMode === 'grid' ? 'grid' : 'list'} />
+                    <OfferCard key={offer._id || offer.id} offer={offer} viewSource="feed" variant="list" />
                   ))}
                 </div>
                 

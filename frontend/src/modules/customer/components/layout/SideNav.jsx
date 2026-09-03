@@ -10,6 +10,7 @@ import NotificationsRoundedIcon from '@mui/icons-material/NotificationsRounded';
 import CardGiftcardRoundedIcon from '@mui/icons-material/CardGiftcardRounded';
 import EmojiEventsRoundedIcon from '@mui/icons-material/EmojiEventsRounded';
 import MapRoundedIcon from '@mui/icons-material/MapRounded';
+import SavingsRoundedIcon from '@mui/icons-material/SavingsRounded';
 import { useApp } from '../../context/AppContext';
 
 const navItems = [
@@ -88,7 +89,7 @@ const SideNav = () => {
         })}
       </nav>
 
-      {/* Bottom credits block */}
+      {/* Bottom lifetime savings block */}
       {user && (
         <div className="px-4 pb-6 mt-auto">
           <div className="bg-gradient-to-br from-green-50 to-primary-light rounded-2xl p-4 flex flex-col items-center border border-primary/10 shadow-sm relative overflow-hidden group">
@@ -98,19 +99,19 @@ const SideNav = () => {
             {isExpanded ? (
               <div className="w-full relative z-10">
                 <p className="text-xs text-text-secondary font-medium mb-0.5 flex items-center gap-1.5">
-                  <CardGiftcardRoundedIcon sx={{ fontSize: 14 }} className="text-primary" />
-                  Available Credits
+                  <SavingsRoundedIcon sx={{ fontSize: 14 }} className="text-primary" />
+                  Lifetime Savings
                 </p>
                 <div className="flex items-baseline gap-1 mt-1">
-                  <span className="text-2xl font-bold text-primary tracking-tight">₹{user.credits || 0}</span>
+                  <span className="text-2xl font-bold text-primary tracking-tight">₹{user.lifetimeSavings ?? user.credits ?? 0}</span>
                 </div>
               </div>
             ) : (
               <div className="relative z-10">
                 <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center mb-1">
-                  <CardGiftcardRoundedIcon sx={{ fontSize: 16 }} className="text-primary" />
+                  <SavingsRoundedIcon sx={{ fontSize: 16 }} className="text-primary" />
                 </div>
-                <p className="text-xs font-bold text-primary">₹{user.credits || 0}</p>
+                <p className="text-xs font-bold text-primary">₹{user.lifetimeSavings ?? user.credits ?? 0}</p>
               </div>
             )}
           </div>

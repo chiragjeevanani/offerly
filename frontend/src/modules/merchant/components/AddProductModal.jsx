@@ -7,33 +7,58 @@ import SpaRoundedIcon from '@mui/icons-material/SpaRounded';
 import AddPhotoAlternateRoundedIcon from '@mui/icons-material/AddPhotoAlternateRounded';
 import toast from 'react-hot-toast';
 import { productCategoryAPI } from '../../../api/productCategory.api';
+import { isServiceCategory, isFoodCategory } from '../../../utils/storeTypeHelper';
 
 const CATEGORY_BEHAVIOURS = {
   'Food': { type: 'product_based', icon: '🍔', showVeg: true },
+  'Restaurant': { type: 'product_based', icon: '🍽️', showVeg: true },
+  'Cafe': { type: 'product_based', icon: '☕', showVeg: true },
+  'Bakery': { type: 'product_based', icon: '🥐', showVeg: true },
   'Grocery': { type: 'product_based', icon: '🛒', showVeg: false },
   'Pharmacy': { type: 'product_based', icon: '💊', showVeg: false },
   'Electronics': { type: 'product_based', icon: '📱', showVeg: false },
   'Fashion': { type: 'product_based', icon: '👕', showVeg: false },
-  'Beauty': { type: 'product_based', icon: '💄', showVeg: false },
-  'Gym': { type: 'service_based', icon: '💪', showDuration: true, requiresBooking: true },
-  'Hotel': { type: 'service_based', icon: '🏨', showDuration: true, requiresBooking: true },
-  'Spa': { type: 'service_based', icon: '🧖', showDuration: true, requiresBooking: true },
-  'Salon': { type: 'service_based', icon: '💇', showDuration: true, requiresBooking: false },
-  'Tours': { type: 'service_based', icon: '🗺️', showDuration: true, requiresBooking: true },
+  'Beauty': { type: 'service_based', icon: '💄', showVeg: false, showDuration: true },
+  'Gym': { type: 'service_based', icon: '💪', showDuration: true, requiresBooking: true, showVeg: false },
+  'Hotel': { type: 'service_based', icon: '🏨', showDuration: true, requiresBooking: true, showVeg: false },
+  'Spa': { type: 'service_based', icon: '🧖', showDuration: true, requiresBooking: true, showVeg: false },
+  'Salon': { type: 'service_based', icon: '💇', showDuration: true, requiresBooking: false, showVeg: false },
+  'Saloon': { type: 'service_based', icon: '💇', showDuration: true, requiresBooking: false, showVeg: false },
+  'Tours': { type: 'service_based', icon: '🗺️', showDuration: true, requiresBooking: true, showVeg: false },
+  'Clinic': { type: 'service_based', icon: '🩺', showDuration: true, requiresBooking: true, showVeg: false },
 };
 
-const getCategoryBehaviour = (category) => CATEGORY_BEHAVIOURS[category] || CATEGORY_BEHAVIOURS['Food'];
+const getCategoryBehaviour = (category) => {
+  if (category && CATEGORY_BEHAVIOURS[category]) return CATEGORY_BEHAVIOURS[category];
+  if (isServiceCategory(category)) {
+    return { type: 'service_based', icon: '💇', showDuration: true, requiresBooking: false, showVeg: false };
+  }
+  if (isFoodCategory(category)) {
+    return { type: 'product_based', icon: '🍔', showVeg: true };
+  }
+  return { type: 'product_based', icon: '🛍️', showVeg: false };
+};
 
 const AddProductModal = ({ isOpen, onClose, merchant, editingProduct, onSave }) => {
   const behaviour = getCategoryBehaviour(merchant?.category);
-  const isProductBased = behaviour.type === 'product_based';
+  
+  const getInitialType = () => {
+    if (editingProduct?.categoryType) return editingProduct.categoryType;
+    if (merchant?.storeType === 'service_based') return 'service_based';
+    if (isServiceCategory(merchant?.category)) return 'service_based';
+    if (merchant?.storeType === 'product_based') return 'product_based';
+    return behaviour.type || 'product_based';
+  };
 
   const [formData, setFormData] = useState({
     name: '', description: '', price: '',
-    categoryId: '', isVeg: false, stock: '', sku: '',
+    categoryType: getInitialType(),
+    categoryId: '', isVeg: behaviour.showVeg ? false : null, stock: '', sku: '',
     duration: '30 mins', inclusions: [''], maxBookings: '',
     validityDays: '30', images: [], imagePreview: null,
   });
+
+  const isProductBased = formData.categoryType === 'product_based';
 
   const [isSaving, setIsSaving] = useState(false);
   const [uploadingImage, setUploadingImage] = useState(false);
@@ -47,14 +72,22 @@ const AddProductModal = ({ isOpen, onClose, merchant, editingProduct, onSave }) 
   }, [isOpen]);
 
   useEffect(() => {
-    if (editingProduct) setFormData({ ...editingProduct });
-    else setFormData({
+    if (editingProduct) {
+      setFormData({ 
+        ...editingProduct,
+        categoryType: editingProduct.categoryType || (merchant?.storeType === 'service_based' ? 'service_based' : 'product_based')
+      });
+    } else {
+      const initialType = getInitialType();
+      setFormData({
         name: '', description: '', price: '', categoryId: '',
-        isVeg: false, stock: '', sku: '', duration: '30 mins', inclusions: [''],
+        categoryType: initialType,
+        isVeg: behaviour.showVeg ? false : null, stock: '', sku: '', duration: '30 mins', inclusions: [''],
         maxBookings: '', validityDays: '30', images: [], imagePreview: null,
-    });
+      });
+    }
     setIsSaving(false);
-  }, [editingProduct, isOpen]);
+  }, [editingProduct, isOpen, merchant?.storeType, merchant?.category]);
 
   const handleChange = (field, value) => setFormData(prev => ({ ...prev, [field]: value }));
 
@@ -86,7 +119,10 @@ const AddProductModal = ({ isOpen, onClose, merchant, editingProduct, onSave }) 
     setIsSaving(true);
     try {
       const payload = {
-        ...formData, merchantId: merchant._id, categoryType: behaviour.type,
+        ...formData, 
+        merchantId: merchant._id, 
+        categoryType: isProductBased ? 'product_based' : 'service_based',
+        isVeg: (behaviour.showVeg && isProductBased) ? (formData.isVeg ?? false) : null,
         price: parseFloat(formData.price),
       };
       await onSave(payload);
@@ -118,6 +154,39 @@ const AddProductModal = ({ isOpen, onClose, merchant, editingProduct, onSave }) 
 
           <div className="p-4 sm:p-6">
             <form onSubmit={handleSubmit} className="space-y-4">
+              {/* Offering Type Switcher: Product vs Service */}
+              <div className="flex items-center justify-between p-1.5 bg-gray-100/80 rounded-2xl border border-gray-100">
+                <span className="text-[10px] font-bold text-gray-500 uppercase tracking-wider pl-2.5">
+                  Offering Type
+                </span>
+                <div className="flex items-center gap-1">
+                  <button
+                    type="button"
+                    onClick={() => handleChange('categoryType', 'product_based')}
+                    className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all ${
+                      isProductBased
+                        ? 'bg-white text-gray-900 shadow-sm'
+                        : 'text-gray-400 hover:text-gray-700'
+                    }`}
+                  >
+                    <Inventory2RoundedIcon sx={{ fontSize: 15 }} className={isProductBased ? 'text-[#5EB929]' : ''} />
+                    <span>Product</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleChange('categoryType', 'service_based')}
+                    className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all ${
+                      !isProductBased
+                        ? 'bg-white text-gray-900 shadow-sm'
+                        : 'text-gray-400 hover:text-gray-700'
+                    }`}
+                  >
+                    <SpaRoundedIcon sx={{ fontSize: 15 }} className={!isProductBased ? 'text-[#5EB929]' : ''} />
+                    <span>Service</span>
+                  </button>
+                </div>
+              </div>
+
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                  <div className="sm:col-span-2 space-y-3">
                     <div>

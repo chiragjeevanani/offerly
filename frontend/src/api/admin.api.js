@@ -80,6 +80,15 @@ export const adminAPI = {
     return axiosInstance.delete(`/admin/plans/${id}`);
   },
 
+  // Merchant discount wallet - global settings
+  getWalletSettings: async () => {
+    return axiosInstance.get('/admin/wallet-settings');
+  },
+
+  updateWalletSettings: async (data) => {
+    return axiosInstance.put('/admin/wallet-settings', data);
+  },
+
   // Ads (Stubbed structure for mapping)
   getAdRequests: async () => {
     return axiosInstance.get('/admin/ads');

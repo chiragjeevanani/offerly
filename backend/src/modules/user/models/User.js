@@ -82,6 +82,10 @@ const userSchema = new mongoose.Schema(
       type: Number,
       default: 0,
     },
+    lifetimeSavings: {
+      type: Number,
+      default: 0,
+    },
     referralCode: {
       type: String,
       unique: true,

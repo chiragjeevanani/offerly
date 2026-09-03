@@ -14,6 +14,7 @@ import Notification from '../../user/models/Notification.js';
 import MerchantNotification from '../../merchant/models/MerchantNotification.js';
 import AdRequest from '../models/AdRequest.js';
 import { emitMerchantNotification } from '../../../config/socket.js';
+import { computeSubscriptionCharge, getWalletSettings } from '../../../utils/subscriptionWallet.js';
 
 // ───────────────────────── DASHBOARD STATS ─────────────────────────
 
@@ -427,18 +428,20 @@ export const savePlan = async (req, res) => {
 export const getPlans = async (req, res) => {
   try {
     let query = { status: 'active' };
-    
+    let requestingMerchant = null;
+
     // If merchant is requesting, filter out Free Trial if already used and handle City-specific pricing
     if (req.user && req.user.role === 'merchant') {
       const merchant = await Merchant.findOne({
         $or: [{ _id: req.user._id }, { ownerId: req.user._id }]
       });
       if (merchant) {
+        requestingMerchant = merchant;
         let filters = [{ status: 'active' }];
-        
+
         // 1. Filter out Free Trial if used
         if (merchant.hasUsedFreeTrial) {
-          filters.push({ 
+          filters.push({
             $and: [
               { name: { $not: /trial/i } },
               { trialDays: { $lte: 0 } }
@@ -465,9 +468,47 @@ export const getPlans = async (req, res) => {
     }
 
     const plans = await Plan.find(query).sort({ price: 1 });
+
+    // Decorate each plan with the requesting merchant's effective (zone-priced)
+    // charge, so the renewal UI can show what they'll actually pay.
+    if (requestingMerchant) {
+      const walletBalance = requestingMerchant.discountWallet?.balance || 0;
+      const decorated = plans.map((plan) => {
+        const charge = plan.planType === 'advertisement'
+          ? { listPrice: Number(plan.price || 0), walletDiscount: 0, payable: Number(plan.price || 0) }
+          : computeSubscriptionCharge(plan, requestingMerchant);
+        const planObj = plan.toObject();
+        return { ...planObj, ...charge };
+      });
+      return res.status(200).json({ success: true, data: decorated, walletBalance });
+    }
+
     res.status(200).json({ success: true, data: plans });
   } catch (err) {
     res.status(500).json({ success: false, error: 'Server error' });
+  }
+};
+
+// ───────────────────────── WALLET SETTINGS ─────────────────────────
+
+export const getWalletSettingsConfig = async (req, res) => {
+  try {
+    const settings = await getWalletSettings();
+    res.status(200).json({ success: true, data: settings });
+  } catch (err) {
+    res.status(500).json({ success: false, error: 'Failed to fetch wallet settings' });
+  }
+};
+
+export const updateWalletSettingsConfig = async (req, res) => {
+  try {
+    const { newUserDiscountAmount } = req.body;
+    const settings = await getWalletSettings();
+    settings.newUserDiscountAmount = Math.max(0, Number(newUserDiscountAmount || 0));
+    await settings.save();
+    res.status(200).json({ success: true, data: settings });
+  } catch (err) {
+    res.status(500).json({ success: false, error: 'Failed to update wallet settings' });
   }
 };
 

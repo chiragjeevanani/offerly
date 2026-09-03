@@ -23,6 +23,7 @@ import { offerAPI } from '../../../../api/offer.api';
 import { reviewAPI } from '../../../../api/review.api';
 import { cartAPI } from '../../../../api/cart.api';
 import PageTransition from '../../components/ui/PageTransition';
+import { checkIsServiceStore, shouldShowVegIndicator } from '../../../../utils/storeTypeHelper';
 import ConfirmDialog from '../../../../components/ui/ConfirmDialog';
 import { useOfferImpression } from '../../../../hooks/useOfferImpression';
 
@@ -61,27 +62,39 @@ const StoreProfile = () => {
     const day = now.toLocaleDateString('en-US', { weekday: 'long' }).toLowerCase();
     const hours = merchant.businessHours[day];
     
-    if (!hours || hours.isClosed) return { isOpen: false, label: 'Closed Today' };
-    
-    const currentTime = now.getHours() * 60 + now.getMinutes();
-    const [openH, openM] = hours.open.split(':').map(Number);
-    const [closeH, closeM] = hours.close.split(':').map(Number);
-    
-    const openTime = openH * 60 + openM;
-    const closeTime = closeH * 60 + closeM;
-    
-    if (currentTime >= openTime && currentTime < closeTime) {
-      return { isOpen: true, label: `Open now (Closes at ${hours.close})` };
+    if (!hours || hours.isClosed || !hours.open || !hours.close) {
+      return { isOpen: false, label: 'Closed Today' };
     }
     
-    if (currentTime < openTime) {
-      return { isOpen: false, label: `Closed (Opens at ${hours.open})` };
+    try {
+      const currentTime = now.getHours() * 60 + now.getMinutes();
+      const [openH, openM] = hours.open.split(':').map(Number);
+      const [closeH, closeM] = hours.close.split(':').map(Number);
+      
+      const openTime = (openH || 0) * 60 + (openM || 0);
+      const closeTime = (closeH || 0) * 60 + (closeM || 0);
+      
+      if (currentTime >= openTime && currentTime < closeTime) {
+        return { isOpen: true, label: `Open now (Closes at ${hours.close})` };
+      }
+      
+      if (currentTime < openTime) {
+        return { isOpen: false, label: `Closed (Opens at ${hours.open})` };
+      }
+      
+      return { isOpen: false, label: 'Closed for the day' };
+    } catch {
+      return { isOpen: false, label: 'Closed Today' };
     }
-    
-    return { isOpen: false, label: 'Closed for the day' };
   };
 
   const status = getStatus();
+
+  const isServiceBased = useMemo(() => {
+    return checkIsServiceStore(merchant, products);
+  }, [merchant, products]);
+
+  const catalogTabLabel = isServiceBased ? 'Services' : 'Products';
 
   useEffect(() => {
     const loadStoreData = async () => {
@@ -143,12 +156,22 @@ const StoreProfile = () => {
       const response = await cartAPI.updateCart(merchantId, productId, newQty);
 
       if (response && response.data) {
+        const fullCart = {
+          ...response.data,
+          merchantId: merchant
+        };
         setCart({
           merchantId: response.data.merchantId._id || response.data.merchantId,
           items: response.data.items || []
         });
+        try {
+          sessionStorage.setItem('offerly_cached_cart', JSON.stringify(fullCart));
+        } catch {}
       } else {
         setCart({ merchantId: null, items: [] });
+        try {
+          sessionStorage.removeItem('offerly_cached_cart');
+        } catch {}
       }
     } catch (error) {
       console.error('Failed to update cart:', error);
@@ -190,7 +213,7 @@ const StoreProfile = () => {
     : 0;
     
   const cartTotalPrice = cart.merchantId === merchantId
-    ? cart.items.reduce((sum, item) => sum + (item.product.offerPrice * item.qty), 0)
+    ? cart.items.reduce((sum, item) => sum + ((item.product.price || item.product.offerPrice || 0) * item.qty), 0)
     : 0;
 
   const productsByCategory = useMemo(() => {
@@ -291,7 +314,7 @@ const StoreProfile = () => {
               </div>
               <div className="bg-gray-50 rounded-2xl py-3 text-center border border-gray-100">
                 <p className="text-base font-bold text-gray-800">{products.length}</p>
-                <p className="text-xs text-gray-500 font-medium">Products</p>
+                <p className="text-xs text-gray-500 font-medium">{catalogTabLabel}</p>
               </div>
             </div>
 
@@ -340,8 +363,8 @@ const StoreProfile = () => {
                               <span className={`text-[11px] font-bold uppercase tracking-tight ${isToday ? 'text-primary' : 'text-gray-400'}`}>
                                 {day} {isToday && '•'}
                               </span>
-                              <span className={`text-[11px] font-bold ${h?.isClosed ? 'text-red-400' : 'text-gray-600'}`}>
-                                {h?.isClosed ? 'Closed' : `${h?.open} - ${h?.close}`}
+                              <span className={`text-[11px] font-bold ${h?.isClosed || !h?.open || !h?.close ? 'text-red-400' : 'text-gray-600'}`}>
+                                {h?.isClosed || !h?.open || !h?.close ? 'Closed' : `${h?.open} - ${h?.close}`}
                               </span>
                             </div>
                           );
@@ -376,7 +399,7 @@ const StoreProfile = () => {
                 }`}
                 whileTap={{ scale: 0.96 }}
               >
-                {tab === 'menu' ? 'Services / Menu' : tab}
+                {tab === 'menu' ? catalogTabLabel : tab}
               </motion.button>
             ))}
           </div>
@@ -389,7 +412,7 @@ const StoreProfile = () => {
               {products.length === 0 ? (
                 <div className="text-center py-12 bg-gray-50 rounded-2xl border border-gray-100">
                    <ShoppingCartRoundedIcon className="text-gray-300 mb-2" sx={{fontSize: 40}} />
-                   <p className="text-gray-500 font-medium">No products listed</p>
+                   <p className="text-gray-500 font-medium">No {catalogTabLabel.toLowerCase()} listed</p>
                 </div>
               ) : (
                 productsByCategory.map((group) => (
@@ -415,22 +438,14 @@ const StoreProfile = () => {
                             className="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 flex gap-4"
                           >
                             <div className="flex-1">
-                              {product.isVeg !== undefined && (
+                              {shouldShowVegIndicator(merchant, product) && (
                                 <div className={`w-3 h-3 border grid place-items-center mb-1 ${product.isVeg ? 'border-green-600' : 'border-red-600'}`}>
                                   <div className={`w-1.5 h-1.5 rounded-full ${product.isVeg ? 'bg-green-600' : 'bg-red-600'}`} />
                                 </div>
                               )}
                               <h3 className="font-bold text-gray-800 text-base">{product.name}</h3>
                               <div className="flex items-center gap-2 mt-2">
-                                 <span className="font-bold text-gray-900">₹{product.offerPrice}</span>
-                                 {product.price > product.offerPrice && (
-                                   <span className="text-xs text-gray-400 line-through">₹{product.price}</span>
-                                 )}
-                                 {product.price > product.offerPrice && (
-                                   <span className="text-xs font-bold text-green-600 bg-green-50 px-1.5 py-0.5 rounded">
-                                     Save ₹{product.price - product.offerPrice}
-                                   </span>
-                                 )}
+                                 <span className="font-bold text-gray-900 text-sm">₹{product.price}</span>
                               </div>
                             </div>
 
@@ -535,13 +550,33 @@ const StoreProfile = () => {
            >
              <div className="max-w-[1200px] mx-auto pointer-events-auto">
                <div className="bg-gray-900 rounded-2xl shadow-2xl p-4 flex items-center justify-between flex-wrap gap-3 border border-gray-800">
-                 <div className="text-white">
-                   <p className="text-xs text-gray-400 font-medium mb-0.5">{cartTotalItems} item{cartTotalItems > 1 ? 's' : ''} added</p>
-                   <p className="text-lg font-bold">₹{cartTotalPrice.toLocaleString()}</p>
-                 </div>
+                  <div className="text-white">
+                    <p className="text-xs text-gray-400 font-medium mb-0.5">{cartTotalItems} item{cartTotalItems > 1 ? 's' : ''} added</p>
+                    <div className="flex items-center gap-2.5">
+                      <p className="text-lg font-bold">₹{cartTotalPrice.toLocaleString()}</p>
+                      <span className="text-[10px] text-green-400 font-bold bg-green-950/60 px-2 py-0.5 rounded-full border border-green-500/20">
+                        Discounts applied in cart
+                      </span>
+                    </div>
+                  </div>
                  <motion.button
                    whileTap={{ scale: 0.95 }}
-                   onClick={() => navigate('/cart')}
+                   onClick={() => {
+                     const fullCart = {
+                       ...cart,
+                       merchantId: merchant
+                     };
+                     try {
+                       sessionStorage.setItem('offerly_cached_cart', JSON.stringify(fullCart));
+                     } catch {}
+                     navigate('/cart', {
+                       state: {
+                         initialCart: fullCart,
+                         initialMerchant: merchant,
+                         autoCelebrate: true
+                       }
+                     });
+                   }}
                    className="bg-white text-gray-900 px-6 py-3 rounded-xl font-bold flex items-center gap-2 shadow-lg"
                  >
                    View Cart <ShoppingCartRoundedIcon sx={{fontSize: 18}} />

@@ -31,6 +31,11 @@ export const productAPI = {
     return axiosInstance.get('/products/stats');
   },
 
+  // Search merchant's own products by name (for add-to-cart picker)
+  search: async (q) => {
+    return axiosInstance.get('/products/search', { params: { q } });
+  },
+
   // Debug authentication
   debugAuth: async () => {
     return axiosInstance.get('/products/debug/auth');

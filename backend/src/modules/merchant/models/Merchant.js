@@ -135,6 +135,15 @@ const merchantSchema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
+    // Funds the extra "new user" discount at checkout, and rolls forward as a
+    // subscription-renewal credit. See utils/subscriptionWallet.js.
+    discountWallet: {
+      balance: {
+        type: Number,
+        default: 0,
+        min: 0,
+      },
+    },
     coordinates: {
       lat: {
         type: Number,
@@ -194,6 +203,11 @@ const merchantSchema = new mongoose.Schema(
     businessType: {
       type: String,
       default: '',
+    },
+    storeType: {
+      type: String,
+      enum: ['product_based', 'service_based'],
+      default: 'product_based',
     },
     onboardingStep: {
       type: Number,

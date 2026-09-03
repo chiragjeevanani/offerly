@@ -9,29 +9,60 @@ import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
 import VideocamRoundedIcon from '@mui/icons-material/VideocamRounded';
 import VideocamOffRoundedIcon from '@mui/icons-material/VideocamOffRounded';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
+import AddRoundedIcon from '@mui/icons-material/AddRounded';
+import RemoveRoundedIcon from '@mui/icons-material/RemoveRounded';
+import DeleteOutlineRoundedIcon from '@mui/icons-material/DeleteOutlineRounded';
 import { bookingAPI } from '../../../api/booking.api';
+import AddProductToCartPicker from '../components/AddProductToCartPicker';
 import toast from 'react-hot-toast';
 
+const buildItemsPayload = (items) => items.map((it) => ({ productId: it.productId, qty: it.qty }));
+
 /* ─── Premium Verification Modal ────────────────────────────────────────────── */
-const BookingVerificationModal = ({ booking, onFulfill, onCancel, fulfilling }) => {
+const BookingVerificationModal = ({ booking, onFulfill, onClose, onCancelBooking, onUpdateItems, fulfilling, updatingItems, cancelling, otherOpenCount }) => {
+  const canRemoveItems = booking.items.length > 1;
+
+  const handleQtyChange = (idx, delta) => {
+    const nextItems = booking.items.map((it, i) => (i === idx ? { ...it, qty: it.qty + delta } : it));
+    if (nextItems[idx].qty <= 0) {
+      if (!canRemoveItems) return; // last item — block, use Cancel Booking instead
+      onUpdateItems(booking._id, buildItemsPayload(booking.items.filter((_, i) => i !== idx)));
+      return;
+    }
+    onUpdateItems(booking._id, buildItemsPayload(nextItems));
+  };
+
+  const handleRemoveItem = (idx) => {
+    if (!canRemoveItems) return;
+    onUpdateItems(booking._id, buildItemsPayload(booking.items.filter((_, i) => i !== idx)));
+  };
+
+  const handleAddProduct = (product) => {
+    const nextItems = [...buildItemsPayload(booking.items), { productId: product._id || product.id, qty: 1 }];
+    onUpdateItems(booking._id, nextItems);
+  };
+
   return (
     <div className="fixed inset-0 bg-gray-950/40 backdrop-blur-sm flex items-center justify-center p-4 z-[100]">
-      <motion.div 
+      <motion.div
         initial={{ scale: 0.95, opacity: 0, y: 20 }}
         animate={{ scale: 1, opacity: 1, y: 0 }}
-        className="bg-white rounded-2xl w-full max-w-md shadow-2xl overflow-hidden flex flex-col"
+        className="bg-white rounded-2xl w-full max-w-md shadow-2xl overflow-hidden flex flex-col max-h-[90vh]"
       >
-        <div className="p-5 border-b border-gray-50 flex items-center justify-between bg-gray-50/50">
+        <div className="p-5 border-b border-gray-50 flex items-center justify-between bg-gray-50/50 shrink-0">
           <div>
             <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Validated Pass</p>
             <h2 className="text-base font-bold text-gray-900 leading-none">#{booking.internalId || booking._id?.slice(-6)}</h2>
+            {otherOpenCount > 0 && (
+              <p className="text-[9px] font-bold text-primary uppercase tracking-wide mt-1">{otherOpenCount} more cart{otherOpenCount > 1 ? 's' : ''} open</p>
+            )}
           </div>
-          <button onClick={onCancel} className="w-8 h-8 rounded-lg bg-white border border-gray-100 flex items-center justify-center text-gray-400 hover:text-gray-600 transition-all">
+          <button onClick={onClose} className="w-8 h-8 rounded-lg bg-white border border-gray-100 flex items-center justify-center text-gray-400 hover:text-gray-600 transition-all">
             <CloseRoundedIcon sx={{ fontSize: 18 }} />
           </button>
         </div>
 
-        <div className="p-6 space-y-5">
+        <div className="p-6 space-y-5 overflow-y-auto">
           <div className="flex items-center gap-3">
              <div className="w-10 h-10 rounded-full bg-primary/5 flex items-center justify-center text-primary shadow-[inset_0_2px_4px_rgba(0,0,0,0.05)]">
                 <PersonRoundedIcon sx={{ fontSize: 20 }} />
@@ -41,30 +72,83 @@ const BookingVerificationModal = ({ booking, onFulfill, onCancel, fulfilling }) 
                 <p className="text-[11px] text-gray-400 font-medium">Identity Verified</p>
              </div>
           </div>
-          
+
           <div className="bg-background rounded-xl p-4 border border-gray-100">
-             <h4 className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-3">Service Details</h4>
-             <div className="space-y-2">
+             <div className="flex items-center justify-between mb-3">
+                <h4 className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Cart Items</h4>
+                {updatingItems && <div className="w-3.5 h-3.5 border-2 border-primary/20 border-t-primary rounded-full animate-spin" />}
+             </div>
+             <div className="space-y-3">
                 {booking.items?.map((it, idx) => (
-                  <div key={idx} className="flex justify-between items-center text-xs font-bold text-gray-700">
-                    <span>{it.qty} × {it.product?.name || 'Product'}</span>
-                    <span className="text-gray-900">₹{(it.qty * (it.product?.offerPrice || it.product?.price || 0)).toLocaleString()}</span>
+                  <div key={it._id || idx} className="flex justify-between items-center gap-3 text-xs font-bold text-gray-700">
+                    <div className="flex-1 min-w-0">
+                      <p className="truncate">{it.product?.name || 'Product'}</p>
+                      <div className="flex items-center gap-2 mt-1.5">
+                        <div className="flex items-center bg-white rounded-lg border border-gray-100">
+                          <motion.button
+                            whileTap={{ scale: 0.9 }}
+                            disabled={updatingItems || (!canRemoveItems && it.qty === 1)}
+                            onClick={() => handleQtyChange(idx, -1)}
+                            className="w-6 h-6 flex items-center justify-center text-gray-400 hover:text-gray-900 disabled:opacity-30 transition-colors"
+                          >
+                            <RemoveRoundedIcon sx={{ fontSize: 12 }} />
+                          </motion.button>
+                          <span className="w-5 text-center text-[11px] font-bold text-gray-900">{it.qty}</span>
+                          <motion.button
+                            whileTap={{ scale: 0.9 }}
+                            disabled={updatingItems}
+                            onClick={() => handleQtyChange(idx, 1)}
+                            className="w-6 h-6 flex items-center justify-center text-gray-400 hover:text-gray-900 disabled:opacity-30 transition-colors"
+                          >
+                            <AddRoundedIcon sx={{ fontSize: 12 }} />
+                          </motion.button>
+                        </div>
+                        {canRemoveItems && (
+                          <button
+                            disabled={updatingItems}
+                            onClick={() => handleRemoveItem(idx)}
+                            className="text-red-400 hover:text-red-500 disabled:opacity-30 transition-colors"
+                          >
+                            <DeleteOutlineRoundedIcon sx={{ fontSize: 15 }} />
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                    <span className="text-gray-900 shrink-0">₹{(it.qty * (it.product?.offerPrice || it.product?.price || 0)).toLocaleString()}</span>
                   </div>
                 ))}
              </div>
-             <div className="mt-3 pt-3 border-t border-gray-200 flex justify-between items-center">
+
+             {!canRemoveItems && (
+               <p className="mt-3 text-[9px] font-bold text-amber-600 uppercase tracking-wide">Last item — use Cancel Booking below to reject the cart</p>
+             )}
+
+             <div className="mt-4">
+                <AddProductToCartPicker
+                  excludeIds={booking.items.map((it) => it.productId)}
+                  onAdd={handleAddProduct}
+                />
+             </div>
+
+             <div className="mt-4 pt-3 border-t border-gray-200 flex justify-between items-center">
                 <span className="text-xs font-bold text-gray-900 uppercase">Collect From Customer</span>
                 <span className="text-xl font-bold text-[#5EB929]">₹{(booking.totals?.final || 0).toLocaleString()}</span>
              </div>
           </div>
         </div>
 
-        <div className="p-5 bg-gray-50 flex gap-3">
-          <button onClick={onCancel} className="flex-1 py-3 bg-white border border-gray-200 text-gray-500 rounded-xl font-bold text-sm hover:bg-gray-100 transition-all">Cancel</button>
-          <button 
+        <div className="p-5 bg-gray-50 flex gap-3 shrink-0">
+          <button
+            onClick={() => onCancelBooking(booking._id)}
+            disabled={cancelling || fulfilling}
+            className="flex-1 py-3 bg-white border border-red-100 text-red-500 rounded-xl font-bold text-sm hover:bg-red-50 transition-all disabled:opacity-50"
+          >
+            {cancelling ? 'Cancelling...' : 'Cancel Booking'}
+          </button>
+          <button
             onClick={() => onFulfill(booking)}
-            disabled={fulfilling}
-            className="flex-[2] py-3 bg-[#5EB929] text-white rounded-xl font-bold text-sm shadow-lg shadow-[#5EB929]/20 flex items-center justify-center gap-2 hover:scale-105 active:scale-95 transition-all shadow-[inset_0_-2px_4px_rgba(0,0,0,0.1)]"
+            disabled={fulfilling || updatingItems}
+            className="flex-[2] py-3 bg-[#5EB929] text-white rounded-xl font-bold text-sm shadow-lg shadow-[#5EB929]/20 flex items-center justify-center gap-2 hover:scale-105 active:scale-95 transition-all shadow-[inset_0_-2px_4px_rgba(0,0,0,0.1)] disabled:opacity-60 disabled:hover:scale-100"
           >
             {fulfilling ? <div className="w-4 h-4 border-2 border-white/20 border-t-white rounded-full animate-spin" /> : <QrCodeScannerRoundedIcon sx={{ fontSize: 18 }} />}
             Complete Fulfillment
@@ -79,10 +163,13 @@ const BookingVerificationModal = ({ booking, onFulfill, onCancel, fulfilling }) 
 const ScannerEntry = ({ merchant }) => {
   const [passId, setPassId] = useState('');
   const [error, setError] = useState('');
-  const [scannedBooking, setScannedBooking] = useState(null);
+  const [openBookings, setOpenBookings] = useState({}); // { [redemptionId]: redemptionDoc }
+  const [activeBookingId, setActiveBookingId] = useState(null);
   const [successMsg, setSuccessMsg] = useState('');
   const [searching, setSearching] = useState(false);
   const [fulfilling, setFulfilling] = useState(false);
+  const [updatingItems, setUpdatingItems] = useState(false);
+  const [cancelling, setCancelling] = useState(false);
 
   const [cameraActive, setCameraActive] = useState(false);
   const [cameraError, setCameraError] = useState('');
@@ -90,18 +177,26 @@ const ScannerEntry = ({ merchant }) => {
 
   useEffect(() => { return () => stopCamera(); }, []);
 
+  // Keep the active card pointed at a booking that's still open
+  useEffect(() => {
+    if (activeBookingId && !openBookings[activeBookingId]) {
+      const remainingIds = Object.keys(openBookings);
+      setActiveBookingId(remainingIds.length ? remainingIds[0] : null);
+    }
+  }, [openBookings, activeBookingId]);
+
   const startCamera = async () => {
     setCameraError('');
     // Step 1: Set camera active to render the container in the DOM
     setCameraActive(true);
-    
+
     // Step 2: Small delay to let React finish rendering the new DOM element
     setTimeout(async () => {
       try {
         const { Html5Qrcode } = await import('html5-qrcode');
         const scannerId = 'qr-scanner-region';
         const scannerContainer = document.getElementById(scannerId);
-        
+
         if (!scannerContainer) {
           setCameraError('Scanner window failed to open. Please try again.');
           setCameraActive(false);
@@ -111,15 +206,15 @@ const ScannerEntry = ({ merchant }) => {
         const html5QrCode = new Html5Qrcode(scannerId);
         html5QrCodeRef.current = html5QrCode;
 
-        const config = { 
-          fps: 15, 
+        const config = {
+          fps: 15,
           qrbox: { width: 250, height: 250 },
           aspectRatio: 1.0
         };
 
         await html5QrCode.start(
-          { facingMode: "environment" }, 
-          config, 
+          { facingMode: "environment" },
+          config,
           async (decodedText) => {
             await stopCamera();
             handleQrScanned(decodedText);
@@ -163,7 +258,8 @@ const ScannerEntry = ({ merchant }) => {
       const response = await bookingAPI.previewQR(qrToken);
       if (response && response.success) {
         if ('vibrate' in navigator) navigator.vibrate(200);
-        setScannedBooking(response.data);
+        setOpenBookings((prev) => ({ ...prev, [response.data._id]: response.data }));
+        setActiveBookingId(response.data._id);
       }
     } catch (err) {
       setError(err.response?.data?.error || 'Invalid QR code.');
@@ -177,7 +273,8 @@ const ScannerEntry = ({ merchant }) => {
     try {
       const response = await bookingAPI.lookupByPassId(passId.trim().toUpperCase());
       if (response && response.success) {
-        setScannedBooking(response.data);
+        setOpenBookings((prev) => ({ ...prev, [response.data._id]: response.data }));
+        setActiveBookingId(response.data._id);
         setPassId('');
       }
     } catch (err) {
@@ -190,13 +287,57 @@ const ScannerEntry = ({ merchant }) => {
     try {
       const res = await bookingAPI.verifyQR(booking.qrToken);
       if (res && res.success) {
-        setScannedBooking(null);
+        setOpenBookings((prev) => {
+          const next = { ...prev };
+          delete next[booking._id];
+          return next;
+        });
         setSuccessMsg(`Booking #${booking.internalId || booking._id?.slice(-6)} fulfilled!`);
         setTimeout(() => setSuccessMsg(''), 5000);
       }
-    } catch (err) { toast.error('Verification failed'); }
+    } catch (err) { toast.error(err.response?.data?.error || 'Verification failed'); }
     finally { setFulfilling(false); }
   };
+
+  const handleUpdateItems = async (id, items) => {
+    setUpdatingItems(true);
+    try {
+      const res = await bookingAPI.updateItems(id, items);
+      if (res && res.success) {
+        setOpenBookings((prev) => ({ ...prev, [id]: res.data }));
+      }
+    } catch (err) {
+      toast.error(err.response?.data?.error || 'Failed to update cart');
+    } finally { setUpdatingItems(false); }
+  };
+
+  const handleCancelBooking = async (id) => {
+    setCancelling(true);
+    try {
+      const res = await bookingAPI.cancel(id);
+      if (res && res.success) {
+        setOpenBookings((prev) => {
+          const next = { ...prev };
+          delete next[id];
+          return next;
+        });
+        toast.success('Booking cancelled');
+      }
+    } catch (err) {
+      toast.error(err.response?.data?.error || 'Failed to cancel booking');
+    } finally { setCancelling(false); }
+  };
+
+  const handleCloseBooking = (id) => {
+    setOpenBookings((prev) => {
+      const next = { ...prev };
+      delete next[id];
+      return next;
+    });
+  };
+
+  const openBookingIds = Object.keys(openBookings);
+  const activeBooking = activeBookingId ? openBookings[activeBookingId] : null;
 
   return (
     <div className="min-h-screen bg-background p-3 lg:p-8 -m-6 lg:-m-8">
@@ -221,6 +362,33 @@ const ScannerEntry = ({ merchant }) => {
           )}
         </AnimatePresence>
 
+        {openBookingIds.length > 0 && (
+          <div className="flex items-center gap-2 overflow-x-auto pb-1">
+            {openBookingIds.map((id) => {
+              const b = openBookings[id];
+              const isActive = id === activeBookingId;
+              return (
+                <button
+                  key={id}
+                  onClick={() => setActiveBookingId(id)}
+                  className={`shrink-0 flex items-center gap-2 pl-3 pr-2 py-2 rounded-xl border text-xs font-bold transition-all ${isActive ? 'bg-gray-900 text-white border-gray-900' : 'bg-white text-gray-600 border-gray-100 hover:border-gray-200'}`}
+                >
+                  <span>#{b.internalId || id.slice(-6)}</span>
+                  <span className={`text-[10px] ${isActive ? 'text-white/60' : 'text-gray-400'}`}>{b.items?.length || 0} item{b.items?.length === 1 ? '' : 's'}</span>
+                  <span
+                    role="button"
+                    tabIndex={0}
+                    onClick={(e) => { e.stopPropagation(); handleCloseBooking(id); }}
+                    className={`w-4 h-4 rounded-full flex items-center justify-center ${isActive ? 'hover:bg-white/10' : 'hover:bg-gray-100'}`}
+                  >
+                    <CloseRoundedIcon sx={{ fontSize: 12 }} />
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+        )}
+
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 lg:gap-6">
           {/* Mobile-Optimized Scanner View */}
           <div className="bg-gray-950 rounded-2xl p-6 lg:p-8 flex flex-col items-center justify-center relative overflow-hidden shadow-2xl min-h-[360px] lg:min-h-[420px]">
@@ -228,7 +396,7 @@ const ScannerEntry = ({ merchant }) => {
             <div className="absolute top-0 right-0 p-4">
                <QrCodeScannerRoundedIcon className="text-white/5" sx={{ fontSize: 120 }} />
             </div>
-            
+
             {cameraActive ? (
               <div className="relative z-10 w-full max-w-[260px]">
                 <div id="qr-scanner-region" className="rounded-xl overflow-hidden border-2 border-white/10 shadow-[0_0_40px_rgba(0,0,0,0.5)] bg-black" />
@@ -243,14 +411,14 @@ const ScannerEntry = ({ merchant }) => {
                    <div className="absolute -top-1 -right-1 w-8 h-8 border-t-4 border-r-4 border-primary rounded-tr-xl shadow-[0_0_15px_rgba(94, 185, 41,0.5)]" />
                    <div className="absolute -bottom-1 -left-1 w-8 h-8 border-b-4 border-l-4 border-primary rounded-bl-xl shadow-[0_0_15px_rgba(94, 185, 41,0.5)]" />
                    <div className="absolute -bottom-1 -right-1 w-8 h-8 border-b-4 border-r-4 border-primary rounded-br-xl shadow-[0_0_15px_rgba(94, 185, 41,0.5)]" />
-                   
+
                    <motion.div animate={{ scale: [1, 1.1, 1] }} transition={{ duration: 2, repeat: Infinity }} className="text-white/10">
                       <QrCodeScannerRoundedIcon sx={{ fontSize: 64 }} />
                    </motion.div>
                    <p className="mt-4 text-[9px] font-bold text-white/30 uppercase tracking-[0.2em]">Ready to scan</p>
                 </div>
-                <button 
-                  onClick={startCamera} 
+                <button
+                  onClick={startCamera}
                   className="bg-[#5EB929] text-white px-10 py-4 rounded-xl font-bold text-sm shadow-[0_10px_20px_rgba(94, 185, 41,0.3),inset_0_-2px_4px_rgba(0,0,0,0.1)] hover:scale-105 active:scale-95 transition-all flex items-center gap-3"
                 >
                    <VideocamRoundedIcon sx={{ fontSize: 20 }} />
@@ -281,12 +449,12 @@ const ScannerEntry = ({ merchant }) => {
              <p className="text-[11px] text-gray-400 font-medium mb-6 leading-relaxed">Enter the 6-digit ID if the QR is damaged.</p>
 
              <form onSubmit={handleSearch} className="space-y-4 relative z-10">
-                <input 
+                <input
                   type="text" value={passId} onChange={(e) => setPassId(e.target.value)}
                   placeholder="B-00000"
                   className="w-full bg-gray-50 border border-gray-100 text-center uppercase tracking-[0.2em] font-mono font-bold text-xl py-4 rounded-xl focus:bg-white focus:border-primary/30 outline-none transition-all shadow-[inset_0_2px_4px_rgba(0,0,0,0.02)]"
                 />
-                <button 
+                <button
                   type="submit" disabled={!passId.trim() || searching}
                   className="w-full py-4 bg-gray-900 text-white rounded-xl font-bold text-xs uppercase tracking-widest hover:bg-black transition-all shadow-lg active:scale-[0.98] shadow-[inset_0_-2px_4px_rgba(255,255,255,0.1)]"
                 >
@@ -309,12 +477,17 @@ const ScannerEntry = ({ merchant }) => {
       </div>
 
       <AnimatePresence>
-        {scannedBooking && (
-          <BookingVerificationModal 
-            booking={scannedBooking} 
+        {activeBooking && (
+          <BookingVerificationModal
+            booking={activeBooking}
             onFulfill={handleFulfill}
-            onCancel={() => setScannedBooking(null)}
+            onClose={() => handleCloseBooking(activeBooking._id)}
+            onCancelBooking={handleCancelBooking}
+            onUpdateItems={handleUpdateItems}
             fulfilling={fulfilling}
+            updatingItems={updatingItems}
+            cancelling={cancelling}
+            otherOpenCount={openBookingIds.length - 1}
           />
         )}
       </AnimatePresence>

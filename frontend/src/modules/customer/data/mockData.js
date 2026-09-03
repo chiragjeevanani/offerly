@@ -8,6 +8,7 @@ export const mockUsers = [
     phone: '+91 98765 43210',
     city: 'Golaghat',
     credits: 120,
+    lifetimeSavings: 120,
     status: 'active',
     type: 'customer',
     createdAt: '2026-01-15T10:00:00Z',

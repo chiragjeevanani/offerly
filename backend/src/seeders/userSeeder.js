@@ -13,6 +13,7 @@ const users = [
     role: 'customer',
     city: 'Golaghat',
     credits: 120,
+    lifetimeSavings: 120,
     status: 'active',
     isProfileComplete: true
   },

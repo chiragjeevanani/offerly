@@ -22,6 +22,7 @@ import PersonRoundedIcon from '@mui/icons-material/PersonRounded';
 import CampaignRoundedIcon from '@mui/icons-material/CampaignRounded';
 import InsightsRoundedIcon from '@mui/icons-material/InsightsRounded';
 import CategoryRoundedIcon from '@mui/icons-material/CategoryRounded';
+import SpaRoundedIcon from '@mui/icons-material/SpaRounded';
 
 import { useApp } from '../customer/context/AppContext';
 import { merchantAPI } from '../../api/merchant.api';
@@ -77,7 +78,11 @@ const MerchantSidebar = ({ merchant, isMobileMenuOpen, setIsMobileMenuOpen }) =>
   ];
 
   const storeNavItems = [
-    { name: 'Store Products', path: '/merchant/products', icon: Inventory2RoundedIcon },
+    { 
+      name: merchant?.storeType === 'service_based' ? 'Store Services' : 'Store Products', 
+      path: '/merchant/products', 
+      icon: merchant?.storeType === 'service_based' ? SpaRoundedIcon : Inventory2RoundedIcon 
+    },
     { name: 'Categories & Discounts', path: '/merchant/categories', icon: CategoryRoundedIcon },
     { name: 'Active Offers', path: '/merchant/offers', icon: LocalOfferRoundedIcon },
     { name: 'Customers', path: '/merchant/customers', icon: PeopleAltRoundedIcon },
@@ -460,7 +465,7 @@ const MerchantApp = () => {
                 <Route path="/advertise" element={<Advertise merchant={merchant} />} />
                 <Route path="/subscription" element={<SubscriptionRenewal merchant={merchant} />} />
                 <Route path="/notifications" element={<Notifications />} />
-                <Route path="/profile" element={<Profile merchant={merchant} />} />
+                <Route path="/profile" element={<Profile merchant={merchant} onMerchantUpdate={fetchMerchant} />} />
                 <Route path="/about" element={<About />} />
                 <Route path="/support" element={<Support />} />
                 <Route path="/contact" element={<Contact />} />

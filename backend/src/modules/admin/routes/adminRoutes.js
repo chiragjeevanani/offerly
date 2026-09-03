@@ -18,7 +18,9 @@ import {
   getAllAdRequests,
   updateAdRequestStatus,
   deleteAdRequest,
-  getApprovedAds
+  getApprovedAds,
+  getWalletSettingsConfig,
+  updateWalletSettingsConfig
 } from '../controllers/adminController.js';
 import { protect, authorize } from '../../../middlewares/auth.js';
 
@@ -42,6 +44,8 @@ router.post('/cities', authorize('admin'), saveCity);
 router.delete('/cities/:id', authorize('admin'), deleteCity);
 router.post('/plans', authorize('admin'), savePlan);
 router.delete('/plans/:id', authorize('admin'), deletePlan);
+router.get('/wallet-settings', authorize('admin'), getWalletSettingsConfig);
+router.put('/wallet-settings', authorize('admin'), updateWalletSettingsConfig);
 
 // Helper public routes
 router.get('/cities', getCities);

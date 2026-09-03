@@ -1,3 +1,5 @@
+import { resolveStoreType } from './storeTypeHelper.js';
+
 export const objectIdToString = (value) => {
   if (!value) return null;
   if (typeof value === 'string') return value;
@@ -20,6 +22,7 @@ export const serializeUser = (user) => ({
   type: user?.role || user?.type || 'customer',
   status: user?.status || 'active',
   credits: user?.credits || 0,
+  lifetimeSavings: user?.lifetimeSavings || 0,
   referralCode: user?.referralCode || '',
   savedOffers: (user?.savedOffers || []).map((offer) => objectIdToString(offer)),
   createdAt: user?.createdAt || null,
@@ -73,6 +76,7 @@ export const serializeMerchant = (merchant) => ({
   isOpen: merchant?.isOpen !== false,
   status: merchant?.status || 'pending',
   subscriptionPlanId: objectIdToString(merchant?.subscriptionPlanId),
+  walletBalance: merchant?.discountWallet?.balance || 0,
   distance: merchant?.distance || '',
   description: merchant?.description || '',
   hasRequestedStore: Boolean(merchant?.hasRequestedStore),
@@ -93,6 +97,7 @@ export const serializeMerchant = (merchant) => ({
   state: merchant?.state || '',
   pincode: merchant?.pincode || '',
   gstNumber: merchant?.gstNumber || '',
+  storeType: resolveStoreType(merchant?.storeType, merchant?.category),
 });
 
 export const serializeOffer = (offer) => ({
@@ -165,7 +170,8 @@ export const serializeProduct = (product) => ({
   offerPrice: product?.offerPrice || 0,
   discount: product?.discount || 0,
   offerId: objectIdToString(product?.offerId),
-  isVeg: product?.isVeg ?? null,
+  categoryType: product?.categoryType || (product?.duration ? 'service_based' : 'product_based'),
+  isVeg: (product?.categoryType === 'service_based' || product?.duration) ? null : (product?.isVeg ?? null),
   duration: product?.duration ?? null,
   images: product?.images || [],
   image: product?.image || (product?.images && product?.images[0]) || '',
@@ -251,6 +257,7 @@ export const serializeRedemption = (redemption) => ({
     discount: redemption?.totals?.discount ?? 0,
     final: redemption?.totals?.final ?? redemption?.totals?.total ?? 0,
     original: redemption?.totals?.original ?? redemption?.totals?.base ?? 0,
+    walletDiscount: redemption?.totals?.walletDiscount ?? 0,
   },
   scannedAt: redemption?.scannedAt || null,
   createdAt: redemption?.createdAt || null,

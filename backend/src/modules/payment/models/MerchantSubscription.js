@@ -37,6 +37,17 @@ const merchantSubscriptionSchema = new mongoose.Schema(
       type: Number,
       default: 0,
     },
+    // The plan's list price for the merchant's zone before any wallet discount
+    // was applied, and how much of that discount came from the wallet. Kept for
+    // audit/display; `amount` above is what was actually charged (listPrice - walletDiscountApplied).
+    listPrice: {
+      type: Number,
+      default: 0,
+    },
+    walletDiscountApplied: {
+      type: Number,
+      default: 0,
+    },
     startDate: {
       type: Date,
       default: Date.now,

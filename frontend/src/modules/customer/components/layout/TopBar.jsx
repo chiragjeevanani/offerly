@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import NotificationsRoundedIcon from '@mui/icons-material/NotificationsRounded';
@@ -9,6 +10,9 @@ import BookmarkRoundedIcon from '@mui/icons-material/BookmarkRounded';
 import MapRoundedIcon from '@mui/icons-material/MapRounded';
 import ShoppingCartRoundedIcon from '@mui/icons-material/ShoppingCartRounded';
 import LocationOnRoundedIcon from '@mui/icons-material/LocationOnRounded';
+import KeyboardArrowDownRoundedIcon from '@mui/icons-material/KeyboardArrowDownRounded';
+import MyLocationRoundedIcon from '@mui/icons-material/MyLocationRounded';
+import BottomSheet from '../ui/BottomSheet';
 import { useApp } from '../../context/AppContext';
 
 // Nav links to display in the new top bar (desktop only)
@@ -21,13 +25,16 @@ const navLinks = [
 const TopBar = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { user, unreadCount, selectedCity } = useApp();
+  const { user, unreadCount, selectedCity, setSelectedCity, currentLocation, setCurrentLocation, fetchLocation, isLocating } = useApp();
+  const [showLocationSheet, setShowLocationSheet] = useState(false);
 
   // Determine back navigation context if deeply nested (though mainly handled gracefully by browser)
   const isNested = location.pathname.startsWith('/offer/') || location.pathname.startsWith('/store/');
+  const activeLocation = currentLocation || selectedCity || 'Indore, Madhya Pradesh';
 
   return (
-    <header className="sticky top-0 z-50 bg-white/95 backdrop-blur-xl border-b border-gray-100 px-4 py-3 flex items-center gap-3">
+    <>
+      <header className="sticky top-0 z-50 bg-white/95 backdrop-blur-xl border-b border-gray-100 px-4 py-3 flex items-center gap-3">
       
       {/* Dynamic Back Button / Mobile Logo */}
       <div className="flex items-center gap-3">
@@ -45,15 +52,21 @@ const TopBar = () => {
 
         {/* Logo + Location (Mobile) */}
         <div 
-          className="lg:hidden flex items-center gap-2.5 cursor-pointer group" 
-          onClick={() => navigate('/profile')}
+          className="lg:hidden flex items-center gap-2.5 cursor-pointer group min-w-0" 
+          onClick={() => setShowLocationSheet(true)}
         >
-          <img src="/offerly-logo-ring.png" alt="Offerly" className="w-9 h-9 object-contain drop-shadow-sm" />
-          <div className="flex flex-col">
+          <img src="/offerly-logo-ring.png" alt="Offerly" className="w-9 h-9 object-contain drop-shadow-sm flex-shrink-0" />
+          <div className="flex flex-col min-w-0 max-w-[210px] sm:max-w-[320px]">
             <span className="font-bold text-base text-gray-900 leading-tight">Offerly</span>
-            <div className="flex items-center gap-1 mt-0.5">
-               <LocationOnRoundedIcon sx={{ fontSize: 13 }} className="text-primary" />
-               <span className="text-xs font-medium text-gray-500 group-hover:text-primary transition-colors">{selectedCity || 'Select City'}</span>
+            <div className="flex items-center gap-1 mt-0.5 min-w-0">
+               <LocationOnRoundedIcon sx={{ fontSize: 13 }} className="text-primary flex-shrink-0" />
+               <span 
+                 className="text-xs font-medium text-gray-600 group-hover:text-primary transition-colors truncate"
+                 title={activeLocation}
+               >
+                 {activeLocation}
+               </span>
+               <KeyboardArrowDownRoundedIcon sx={{ fontSize: 14 }} className="text-gray-400 group-hover:text-primary transition-colors flex-shrink-0" />
             </div>
           </div>
         </div>
@@ -68,13 +81,19 @@ const TopBar = () => {
         </div>
 
         <div 
-          className="flex flex-col items-start cursor-pointer group border-l border-gray-100 pl-6" 
-          onClick={() => navigate('/profile')}
+          className="flex flex-col items-start cursor-pointer group border-l border-gray-100 pl-6 max-w-[360px]" 
+          onClick={() => setShowLocationSheet(true)}
         >
-          <p className="text-[11px] font-medium text-gray-400 mb-0.5">Current Location</p>
-          <div className="flex items-center gap-1.5">
-             <LocationOnRoundedIcon sx={{ fontSize: 14 }} className="text-primary" />
-             <span className="text-sm font-semibold text-gray-700 group-hover:text-primary transition-colors">{selectedCity || 'Select City'}</span>
+          <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-0.5">Current Location</p>
+          <div className="flex items-center gap-1.5 min-w-0">
+             <LocationOnRoundedIcon sx={{ fontSize: 14 }} className="text-primary flex-shrink-0" />
+             <span 
+               className="text-sm font-semibold text-gray-700 group-hover:text-primary transition-colors truncate"
+               title={activeLocation}
+             >
+               {activeLocation}
+             </span>
+             <KeyboardArrowDownRoundedIcon sx={{ fontSize: 16 }} className="text-gray-400 group-hover:text-primary transition-colors flex-shrink-0" />
           </div>
         </div>
       </div>
@@ -150,6 +169,65 @@ const TopBar = () => {
         </motion.button>
       </div>
     </header>
+
+    {/* Location Picker BottomSheet */}
+    <BottomSheet
+      isOpen={showLocationSheet}
+      onClose={() => setShowLocationSheet(false)}
+      title="Current Location"
+    >
+      <div className="p-5 space-y-4">
+        {/* Active detected address card */}
+        <div className="p-4 rounded-2xl bg-gray-50 border border-gray-100">
+          <div className="flex items-center gap-2 mb-1.5">
+            <div className="w-2 h-2 rounded-full bg-[#5EB929] animate-pulse" />
+            <span className="text-[10px] font-bold uppercase tracking-wider text-[#5EB929]">Active Location</span>
+          </div>
+          <p className="text-sm font-bold text-gray-900 leading-snug">
+            {activeLocation}
+          </p>
+        </div>
+
+        {/* Detect GPS Location Button */}
+        <button
+          onClick={async () => {
+            if (fetchLocation) await fetchLocation();
+            setShowLocationSheet(false);
+          }}
+          disabled={isLocating}
+          className="w-full flex items-center justify-center gap-2.5 py-3.5 px-4 rounded-xl bg-primary text-white font-bold text-sm shadow-md shadow-primary/25 active:scale-95 transition-all disabled:opacity-50"
+        >
+          <MyLocationRoundedIcon sx={{ fontSize: 18 }} className={isLocating ? 'animate-spin' : ''} />
+          <span>{isLocating ? 'Detecting GPS Location...' : 'Use Current GPS Location'}</span>
+        </button>
+
+        {/* Quick City Switcher */}
+        <div>
+          <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2.5">Switch City</p>
+          <div className="grid grid-cols-2 gap-2">
+            {['Indore', 'Bhopal', 'Mumbai', 'Delhi', 'Pune', 'Ujjain'].map((c) => (
+              <button
+                key={c}
+                onClick={() => {
+                  setSelectedCity(c);
+                  setCurrentLocation(`${c}, Madhya Pradesh`);
+                  localStorage.setItem('offerly_full_location', `${c}, Madhya Pradesh`);
+                  setShowLocationSheet(false);
+                }}
+                className={`py-2.5 px-3 rounded-xl border text-xs font-semibold text-left transition-all ${
+                  (currentLocation?.includes(c) || selectedCity === c)
+                    ? 'border-[#5EB929] bg-[#5EB929]/10 text-[#5EB929]'
+                    : 'border-gray-100 hover:border-gray-200 text-gray-700 bg-white'
+                }`}
+              >
+                📍 {c}
+              </button>
+            ))}
+          </div>
+        </div>
+      </div>
+    </BottomSheet>
+  </>
   );
 };
 

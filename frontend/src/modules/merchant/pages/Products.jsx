@@ -6,6 +6,7 @@ import AddRoundedIcon from '@mui/icons-material/AddRounded';
 import EditRoundedIcon from '@mui/icons-material/EditRounded';
 import DeleteRoundedIcon from '@mui/icons-material/DeleteRounded';
 import Inventory2RoundedIcon from '@mui/icons-material/Inventory2Rounded';
+import SpaRoundedIcon from '@mui/icons-material/SpaRounded';
 import WarningRoundedIcon from '@mui/icons-material/WarningRounded';
 import AccessTimeRoundedIcon from '@mui/icons-material/AccessTimeRounded';
 import RocketLaunchRoundedIcon from '@mui/icons-material/RocketLaunchRounded';
@@ -17,6 +18,7 @@ import AddProductModal from '../components/AddProductModal';
 import ConfirmDialog from '../components/ConfirmDialog';
 import UnifiedOfferBuilder from '../components/UnifiedOfferBuilder';
 import { productAPI } from '../../../api/product.api';
+import { shouldShowVegIndicator } from '../../../utils/storeTypeHelper';
 
 /* ─── Custom Hook for Debouncing ──────────────── */
 function useDebounce(value, delay) {
@@ -85,6 +87,8 @@ const Products = ({ merchant }) => {
   const maxProducts = merchant?.subscription?.planId?.maxProducts || 5;
   const isUnlimited = maxProducts === 999;
   const usagePercent = isUnlimited ? 0 : Math.round((products.length / maxProducts) * 100);
+  const isService = merchant?.storeType === 'service_based';
+  const itemTypeLabel = isService ? 'Services' : 'Products';
 
   return (
     <div className="min-h-screen bg-background p-3 lg:p-10 -m-6 lg:-m-10">
@@ -93,10 +97,12 @@ const Products = ({ merchant }) => {
         {/* Compact Header */}
         <div className="flex items-center justify-between gap-4">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900 leading-none uppercase tracking-tight">Catalog</h1>
+            <h1 className="text-2xl font-bold text-gray-900 leading-none uppercase tracking-tight">
+              {itemTypeLabel} Catalog
+            </h1>
             <div className="flex items-center gap-2 mt-1.5">
                <div className="w-1.5 h-1.5 bg-[#5EB929] rounded-full" />
-               <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">{products.length} Items Listed</p>
+               <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">{products.length} {itemTypeLabel} Listed</p>
             </div>
           </div>
           <div className="flex gap-2">
@@ -131,7 +137,8 @@ const Products = ({ merchant }) => {
            <div className="md:col-span-7 relative group">
               <SearchRoundedIcon className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-300 group-focus-within:text-[#5EB929] transition-colors" sx={{ fontSize: 18 }} />
               <input 
-                type="text" placeholder="Search menu, products..." 
+                type="text" 
+                placeholder={isService ? "Search services..." : "Search menu, products..."} 
                 value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)}
                 className="w-full pl-12 pr-4 py-3 bg-[#F8FAFC] rounded-2xl outline-none text-[13px] font-bold placeholder:text-gray-300"
               />
@@ -152,14 +159,22 @@ const Products = ({ merchant }) => {
           {loading ? (
              <div className="col-span-full py-24 flex flex-col items-center gap-4">
                 <div className="w-10 h-10 border-2 border-[#5EB929]/20 border-t-[#5EB929] rounded-full animate-spin" />
-                <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest animate-pulse">Syncing Inventory</p>
+                <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest animate-pulse">
+                  {isService ? 'Syncing Services' : 'Syncing Inventory'}
+                </p>
              </div>
           ) : (
             <AnimatePresence mode="popLayout">
               {filtered.length === 0 ? (
                 <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="col-span-full py-20 text-center bg-white rounded-[2.5rem] border border-dashed border-gray-100">
-                  <Inventory2RoundedIcon sx={{ fontSize: 40 }} className="text-gray-100 mb-2" />
-                  <p className="text-[10px] font-bold text-gray-300 uppercase tracking-widest">No Items Found</p>
+                  {isService ? (
+                    <SpaRoundedIcon sx={{ fontSize: 40 }} className="text-gray-200 mb-2" />
+                  ) : (
+                    <Inventory2RoundedIcon sx={{ fontSize: 40 }} className="text-gray-200 mb-2" />
+                  )}
+                  <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">
+                    No {itemTypeLabel} Found
+                  </p>
                 </motion.div>
               ) : (
                 filtered.map((product, idx) => (
@@ -187,8 +202,8 @@ const Products = ({ merchant }) => {
                           </button>
                        </div>
 
-                       {/* Veg/Non-Veg Tag */}
-                       {product.category === 'Food' && product.isVeg !== null && (
+                       {/* Veg/Non-Veg Tag (Food Only) */}
+                       {shouldShowVegIndicator(merchant, product) && (
                           <div className="absolute top-2 left-2 p-1 bg-white/90 backdrop-blur-md rounded-lg shadow-sm border border-white/20">
                              <div className={`w-2 h-2 border flex items-center justify-center rounded-sm ${product.isVeg ? 'border-green-600' : 'border-red-600'}`}>
                                <div className={`w-1 h-1 rounded-full ${product.isVeg ? 'bg-green-600' : 'bg-red-600'}`} />

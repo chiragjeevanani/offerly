@@ -19,6 +19,7 @@ const MerchantRegistrationFlow = () => {
   const [businessData, setBusinessData] = useState({
     storeName: '',
     category: '',
+    storeType: 'product_based',
     description: '',
     businessEmail: '',
     businessPhone: '',

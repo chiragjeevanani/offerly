@@ -17,24 +17,21 @@ const SubscriptionRenewal = ({ merchant }) => {
   const navigate = useNavigate();
   const [showUpgrade, setShowUpgrade] = useState(false);
 
-  const { data: plans = [], isLoading } = useQuery({
+  const { data: plansRes, isLoading } = useQuery({
     queryKey: ['availablePlans', merchant?.city, showUpgrade],
     queryFn: async () => {
       const res = await merchantAPI.getAvailablePlans(merchant?.city);
-      console.log('DEBUG: Raw Plans Response:', res);
-      
-      const allPlans = res.data || (res.success ? res.data : []) || [];
-      
-      const filtered = allPlans.filter(p => {
-        const isMerchantType = p.planType === 'merchant' || !p.planType;
-        const isActive = p.status === 'active';
-        // If upgrading, hide free/trial plans
-        if (showUpgrade && p.price === 0) return false;
-        return isMerchantType && isActive;
-      });
-      
-      return filtered;
+      return res;
     }
+  });
+
+  const walletBalance = plansRes?.walletBalance || 0;
+  const plans = (plansRes?.data || (plansRes?.success ? plansRes.data : []) || []).filter(p => {
+    const isMerchantType = p.planType === 'merchant' || !p.planType;
+    const isActive = p.status === 'active';
+    // If upgrading, hide free/trial plans
+    if (showUpgrade && p.price === 0) return false;
+    return isMerchantType && isActive;
   });
 
   const handleRenew = async (plan) => {
@@ -176,6 +173,13 @@ const SubscriptionRenewal = ({ merchant }) => {
           )}
         </div>
 
+        {walletBalance > 0 && (
+          <div className="max-w-md mx-auto mb-3 flex items-center justify-center gap-2 px-4 py-2 rounded-xl bg-[#5EB929]/5 border border-[#5EB929]/10">
+            <span className="text-[10px] font-bold text-gray-500">Discount wallet balance:</span>
+            <span className="text-[11px] font-bold text-[#5EB929]">₹{walletBalance}</span>
+          </div>
+        )}
+
         {!hasActivePlan && (
           <div className="grid grid-cols-1 md:grid-cols-3 gap-3 items-stretch mb-3">
           {plans.map((plan, idx) => {
@@ -210,9 +214,15 @@ const SubscriptionRenewal = ({ merchant }) => {
                 <div className="mb-3">
                   <div className="flex items-baseline gap-0.5">
                     <span className="text-[9px] font-bold opacity-60">₹</span>
-                    <span className="text-2xl font-bold tracking-tight leading-none">{plan.price}</span>
+                    <span className="text-2xl font-bold tracking-tight leading-none">{plan.payable ?? plan.price}</span>
                     <span className={`text-[8px] font-bold uppercase tracking-widest opacity-30 ml-0.5`}>/mo</span>
                   </div>
+                  {plan.walletDiscount > 0 && (
+                    <div className="flex items-center gap-1.5 mt-1">
+                      <span className={`text-[10px] font-bold line-through opacity-40 ${isPopular ? 'text-gray-300' : 'text-gray-400'}`}>₹{plan.listPrice}</span>
+                      <span className="text-[8px] font-bold px-1.5 py-0.5 rounded bg-emerald-500/15 text-emerald-500">-₹{plan.walletDiscount} wallet</span>
+                    </div>
+                  )}
                 </div>
 
                 {/* Compact Features */}

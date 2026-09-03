@@ -8,6 +8,8 @@ import CameraAltRoundedIcon from '@mui/icons-material/CameraAltRounded';
 import ArrowForwardRoundedIcon from '@mui/icons-material/ArrowForwardRounded';
 import ArrowBackRoundedIcon from '@mui/icons-material/ArrowBackRounded';
 import DescriptionRoundedIcon from '@mui/icons-material/DescriptionRounded';
+import Inventory2RoundedIcon from '@mui/icons-material/Inventory2Rounded';
+import SpaRoundedIcon from '@mui/icons-material/SpaRounded';
 import { categoryAPI } from '../../../../api/category.api';
 import toast from 'react-hot-toast';
 
@@ -19,6 +21,7 @@ const BusinessDetailsStep = ({ data, onSubmit, onBack, loading }) => {
   const [formData, setFormData] = useState({
     storeName: data.storeName || '',
     category: data.category || '',
+    storeType: data.storeType || 'product_based',
     description: data.description || '',
     businessEmail: data.businessEmail || '',
     businessPhone: data.businessPhone || '',
@@ -43,7 +46,27 @@ const BusinessDetailsStep = ({ data, onSubmit, onBack, loading }) => {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData({ ...formData, [name]: value });
+    let nextStoreType = formData.storeType;
+    if (name === 'category') {
+      const matchedCat = categories.find(c => c.name === value);
+      if (matchedCat) {
+        if (matchedCat.type === 'service' || matchedCat.offer_mode === 'service') {
+          nextStoreType = 'service_based';
+        } else if (matchedCat.type === 'product' || matchedCat.offer_mode === 'product') {
+          nextStoreType = 'product_based';
+        }
+      } else {
+        const serviceKeywords = ['gym', 'hotel', 'spa', 'salon', 'tour', 'service', 'clinic', 'fitness'];
+        if (serviceKeywords.some(kw => value.toLowerCase().includes(kw))) {
+          nextStoreType = 'service_based';
+        }
+      }
+    }
+    setFormData(prev => ({
+      ...prev,
+      [name]: value,
+      ...(name === 'category' ? { storeType: nextStoreType } : {})
+    }));
     if (errors[name]) setErrors({ ...errors, [name]: '' });
   };
 
@@ -168,6 +191,79 @@ const BusinessDetailsStep = ({ data, onSubmit, onBack, loading }) => {
                     <option value="">Select</option>
                     {categories.map(c => <option key={c._id} value={c.name}>{c.name}</option>)}
                   </select>
+                </div>
+              </div>
+
+              {/* Store Type: Product-Based vs Service-Based */}
+              <div className="md:col-span-2 space-y-2">
+                <div className="flex items-center justify-between px-1">
+                  <label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">
+                    Store Type (What does your business offer?)
+                  </label>
+                  <span className="text-[9px] font-bold text-[#5EB929]">Required</span>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div
+                    type="button"
+                    onClick={() => setFormData(prev => ({ ...prev, storeType: 'product_based' }))}
+                    className={`p-3.5 rounded-2xl border-2 cursor-pointer transition-all flex items-start gap-3 select-none ${
+                      formData.storeType === 'product_based'
+                        ? 'border-[#5EB929] bg-[#5EB929]/5 shadow-sm ring-1 ring-[#5EB929]/30'
+                        : 'border-gray-100 bg-background hover:border-gray-200'
+                    }`}
+                  >
+                    <div className={`w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 transition-colors ${
+                      formData.storeType === 'product_based' ? 'bg-[#5EB929] text-white shadow-sm' : 'bg-gray-100 text-gray-400'
+                    }`}>
+                      <Inventory2RoundedIcon sx={{ fontSize: 18 }} />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center justify-between">
+                        <p className={`text-xs font-bold ${formData.storeType === 'product_based' ? 'text-gray-900' : 'text-gray-700'}`}>
+                          Product Based
+                        </p>
+                        <div className={`w-4 h-4 rounded-full border flex items-center justify-center ${
+                          formData.storeType === 'product_based' ? 'border-[#5EB929] bg-[#5EB929]' : 'border-gray-300'
+                        }`}>
+                          {formData.storeType === 'product_based' && <div className="w-1.5 h-1.5 rounded-full bg-white" />}
+                        </div>
+                      </div>
+                      <p className="text-[10px] text-gray-500 font-medium mt-0.5 leading-snug">
+                        Retail items, Groceries, Goods, Food menu, Electronics, Fashion
+                      </p>
+                    </div>
+                  </div>
+
+                  <div
+                    type="button"
+                    onClick={() => setFormData(prev => ({ ...prev, storeType: 'service_based' }))}
+                    className={`p-3.5 rounded-2xl border-2 cursor-pointer transition-all flex items-start gap-3 select-none ${
+                      formData.storeType === 'service_based'
+                        ? 'border-[#5EB929] bg-[#5EB929]/5 shadow-sm ring-1 ring-[#5EB929]/30'
+                        : 'border-gray-100 bg-background hover:border-gray-200'
+                    }`}
+                  >
+                    <div className={`w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 transition-colors ${
+                      formData.storeType === 'service_based' ? 'bg-[#5EB929] text-white shadow-sm' : 'bg-gray-100 text-gray-400'
+                    }`}>
+                      <SpaRoundedIcon sx={{ fontSize: 18 }} />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center justify-between">
+                        <p className={`text-xs font-bold ${formData.storeType === 'service_based' ? 'text-gray-900' : 'text-gray-700'}`}>
+                          Service Based
+                        </p>
+                        <div className={`w-4 h-4 rounded-full border flex items-center justify-center ${
+                          formData.storeType === 'service_based' ? 'border-[#5EB929] bg-[#5EB929]' : 'border-gray-300'
+                        }`}>
+                          {formData.storeType === 'service_based' && <div className="w-1.5 h-1.5 rounded-full bg-white" />}
+                        </div>
+                      </div>
+                      <p className="text-[10px] text-gray-500 font-medium mt-0.5 leading-snug">
+                        Salons, Spas, Gyms & Fitness, Repairs, Healthcare, Consultations
+                      </p>
+                    </div>
+                  </div>
                 </div>
               </div>
 

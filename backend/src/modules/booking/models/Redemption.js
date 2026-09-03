@@ -94,6 +94,12 @@ const redemptionSchema = new mongoose.Schema(
         type: Number,
         default: 0,
       },
+      // Extra discount funded from the merchant's discount wallet, granted to
+      // platform-first-time customers. Already folded into `discount`/`final`.
+      walletDiscount: {
+        type: Number,
+        default: 0,
+      },
     },
     internalId: String,
   },

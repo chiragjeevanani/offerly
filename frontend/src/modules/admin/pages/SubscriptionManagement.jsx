@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { adminAPI } from '../../../api/admin.api';
@@ -13,6 +13,7 @@ import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 import RefreshRoundedIcon from '@mui/icons-material/RefreshRounded';
 import ChevronRightRoundedIcon from '@mui/icons-material/ChevronRightRounded';
 import PaymentsRoundedIcon from '@mui/icons-material/PaymentsRounded';
+import AccountBalanceWalletRoundedIcon from '@mui/icons-material/AccountBalanceWalletRounded';
 import toast from 'react-hot-toast';
 import SlideOver from '../components/SlideOver';
 
@@ -35,17 +36,19 @@ const SubscriptionManagement = () => {
   const [isSlideOverOpen, setIsSlideOverOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [selectedPlan, setSelectedPlan] = useState(null);
-  const [formData, setFormData] = useState({ 
-    name: '', 
-    price: 0, 
-    duration: 'Monthly', 
-    maxProducts: 5, 
+  const [formData, setFormData] = useState({
+    name: '',
+    price: 0,
+    duration: 'Monthly',
+    maxProducts: 5,
     maxOffers: 5,
-    features: [], 
+    features: [],
     applicableCities: [],
+    zonePricing: [],
     status: 'active',
-    planType: 'merchant' 
+    planType: 'merchant'
   });
+  const [zoneOverrideDraft, setZoneOverrideDraft] = useState({ city: '', zoneId: '', price: '' });
 
   const { data: citiesList = [] } = useQuery({
     queryKey: ['adminCities'],
@@ -54,6 +57,52 @@ const SubscriptionManagement = () => {
       return res.data || res.cities || [];
     }
   });
+
+  const { data: walletSettings, refetch: refetchWalletSettings } = useQuery({
+    queryKey: ['walletSettings'],
+    queryFn: async () => {
+      const res = await adminAPI.getWalletSettings();
+      return res.data || res;
+    }
+  });
+  const newUserDiscountInputRef = useRef(null);
+
+  const handleSaveWalletSettings = async () => {
+    try {
+      const value = Number(newUserDiscountInputRef.current?.value) || 0;
+      await adminAPI.updateWalletSettings({ newUserDiscountAmount: value });
+      toast.success('Wallet settings updated');
+      refetchWalletSettings();
+    } catch {
+      toast.error('Failed to update wallet settings');
+    }
+  };
+
+  const zoneOverrideCityOptions = citiesList.filter((c) => (c.zones || []).length > 0);
+  const zoneOverrideZoneOptions = citiesList.find((c) => c.name === zoneOverrideDraft.city)?.zones || [];
+
+  const handleAddZoneOverride = () => {
+    const city = citiesList.find((c) => c.name === zoneOverrideDraft.city);
+    const zone = city?.zones?.find((z) => (z._id || z.id) === zoneOverrideDraft.zoneId);
+    if (!city || !zone || zoneOverrideDraft.price === '') {
+      toast.error('Pick a city, zone, and price');
+      return;
+    }
+    const zoneId = zone._id || zone.id;
+    const withoutExisting = formData.zonePricing.filter((z) => z.zoneId !== zoneId);
+    setFormData({
+      ...formData,
+      zonePricing: [
+        ...withoutExisting,
+        { city: city.name, zoneId, zoneName: zone.name, price: Number(zoneOverrideDraft.price) || 0 },
+      ],
+    });
+    setZoneOverrideDraft({ city: '', zoneId: '', price: '' });
+  };
+
+  const handleRemoveZoneOverride = (zoneId) => {
+    setFormData({ ...formData, zonePricing: formData.zonePricing.filter((z) => z.zoneId !== zoneId) });
+  };
 
   const { data: plans = [], isLoading: loading, refetch, isFetching } = useQuery({
     queryKey: ['adminPlans'],
@@ -70,28 +119,32 @@ const SubscriptionManagement = () => {
 
   const handleAdd = () => {
     setSelectedPlan(null);
-    setFormData({ 
-      name: '', 
-      price: 0, 
-      duration: 'Monthly', 
-      maxProducts: 5, 
+    setFormData({
+      name: '',
+      price: 0,
+      duration: 'Monthly',
+      maxProducts: 5,
       maxOffers: 5,
-      features: [{ id: 'f1', text: '' }], 
+      features: [{ id: 'f1', text: '' }],
       applicableCities: [],
+      zonePricing: [],
       status: 'active',
       planType: activeTab
     });
+    setZoneOverrideDraft({ city: '', zoneId: '', price: '' });
     setIsSlideOverOpen(true);
   };
 
   const handleEdit = (plan) => {
     setSelectedPlan(plan);
-    setFormData({ 
-      ...plan, 
+    setFormData({
+      ...plan,
       applicableCities: plan.applicableCities || [],
+      zonePricing: plan.zonePricing || [],
       planType: plan.planType || 'merchant',
       features: plan.features?.length > 0 ? plan.features.map((f, i) => ({ id: `f${i}`, text: f })) : [{ id: 'f1', text: '' }]
     });
+    setZoneOverrideDraft({ city: '', zoneId: '', price: '' });
     setIsSlideOverOpen(true);
   };
 
@@ -167,11 +220,41 @@ const SubscriptionManagement = () => {
             <TabButton label="Merchant Tiers" isActive={activeTab === 'merchant'} onClick={() => setActiveTab('merchant')} />
             <TabButton label="Ad Packages" isActive={activeTab === 'advertisement'} onClick={() => setActiveTab('advertisement')} />
           </div>
-          
+
           <div className="hidden lg:block text-right">
              <p className="text-[10px] font-medium text-gray-400">Showing {filteredPlans.length} active configurations</p>
           </div>
         </div>
+
+        {/* Discount Wallet Settings */}
+        {activeTab === 'merchant' && (
+          <div className="mb-2.5 bg-white rounded-2xl border border-gray-100 shadow-sm p-4 flex flex-col sm:flex-row sm:items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-[#5EB929]/10 flex items-center justify-center text-[#5EB929] shrink-0">
+              <AccountBalanceWalletRoundedIcon sx={{ fontSize: 20 }} />
+            </div>
+            <div className="flex-1">
+              <p className="text-[12px] font-bold text-gray-800">New-customer wallet discount</p>
+              <p className="text-[10px] text-gray-400">Flat amount taken from a merchant's discount wallet the first time any customer redeems anywhere on Offerly.</p>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="text-gray-400 text-sm font-bold">₹</span>
+              <input
+                key={walletSettings?.newUserDiscountAmount ?? 'loading'}
+                type="number"
+                min="0"
+                ref={newUserDiscountInputRef}
+                defaultValue={walletSettings?.newUserDiscountAmount ?? 0}
+                className="w-24 bg-gray-50 border border-gray-200 rounded-xl py-2 px-3 text-sm font-bold focus:ring-2 focus:ring-primary/10 focus:border-primary outline-none"
+              />
+              <button
+                onClick={handleSaveWalletSettings}
+                className="px-4 py-2 bg-gray-900 text-white rounded-xl text-[11px] font-bold hover:bg-black transition-all"
+              >
+                Save
+              </button>
+            </div>
+          </div>
+        )}
 
         {loading ? (
           <div className="py-20 flex flex-col items-center justify-center gap-4">
@@ -357,6 +440,68 @@ const SubscriptionManagement = () => {
                   </select>
                 </div>
               </div>
+
+              {formData.planType === 'merchant' && (
+                <div>
+                  <label className="block text-[11px] font-bold text-gray-400 uppercase tracking-widest mb-1.5 ml-1">Zone Price Overrides</label>
+                  <div className="p-3 bg-gray-50 rounded-xl border border-gray-100 space-y-2">
+                    {formData.zonePricing.length > 0 && (
+                      <div className="space-y-1.5 mb-2">
+                        {formData.zonePricing.map((z) => (
+                          <div key={z.zoneId} className="flex items-center justify-between bg-white rounded-lg border border-gray-100 px-3 py-2">
+                            <span className="text-[11px] font-bold text-gray-700">{z.city} · {z.zoneName}</span>
+                            <div className="flex items-center gap-2">
+                              <span className="text-[11px] font-bold text-[#5EB929]">₹{z.price}</span>
+                              <button type="button" onClick={() => handleRemoveZoneOverride(z.zoneId)} className="text-gray-300 hover:text-red-500">
+                                <CloseRoundedIcon sx={{ fontSize: 14 }} />
+                              </button>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                    <div className="grid grid-cols-3 gap-2">
+                      <select
+                        value={zoneOverrideDraft.city}
+                        onChange={(e) => setZoneOverrideDraft({ city: e.target.value, zoneId: '', price: zoneOverrideDraft.price })}
+                        className="bg-white border border-gray-200 rounded-lg py-2 px-2 text-[11px] font-medium outline-none appearance-none"
+                      >
+                        <option value="">City</option>
+                        {zoneOverrideCityOptions.map((c) => (
+                          <option key={c._id || c.id} value={c.name}>{c.name}</option>
+                        ))}
+                      </select>
+                      <select
+                        value={zoneOverrideDraft.zoneId}
+                        onChange={(e) => setZoneOverrideDraft({ ...zoneOverrideDraft, zoneId: e.target.value })}
+                        disabled={!zoneOverrideDraft.city}
+                        className="bg-white border border-gray-200 rounded-lg py-2 px-2 text-[11px] font-medium outline-none appearance-none disabled:bg-gray-100 disabled:text-gray-300"
+                      >
+                        <option value="">Zone</option>
+                        {zoneOverrideZoneOptions.map((z) => (
+                          <option key={z._id || z.id} value={z._id || z.id}>{z.name}</option>
+                        ))}
+                      </select>
+                      <input
+                        type="number"
+                        min="0"
+                        placeholder="₹ Price"
+                        value={zoneOverrideDraft.price}
+                        onChange={(e) => setZoneOverrideDraft({ ...zoneOverrideDraft, price: e.target.value })}
+                        className="bg-white border border-gray-200 rounded-lg py-2 px-2 text-[11px] font-medium outline-none"
+                      />
+                    </div>
+                    <button
+                      type="button"
+                      onClick={handleAddZoneOverride}
+                      className="w-full py-2 bg-white border border-dashed border-gray-200 rounded-lg text-[10px] font-bold text-gray-500 hover:border-[#5EB929]/40 hover:text-[#5EB929] transition-all"
+                    >
+                      + Add zone override
+                    </button>
+                  </div>
+                  <p className="mt-1.5 text-[10px] text-gray-400 px-1 italic">Merchants in an overridden zone pay this price instead of the base price above.</p>
+                </div>
+              )}
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
