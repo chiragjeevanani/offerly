@@ -14,6 +14,7 @@ import {
   getAllRedemptions,
   getAdminNotifications,
   markAdminNotificationRead,
+  markAllAdminNotificationsRead,
   globalSearch,
   getAllAdRequests,
   updateAdRequestStatus,
@@ -53,6 +54,7 @@ router.get('/plans', getPlans);
 
 // Notifications
 router.get('/notifications', authorize('admin'), getAdminNotifications);
+router.put('/notifications/read-all', authorize('admin'), markAllAdminNotificationsRead);
 router.put('/notifications/:id/read', authorize('admin'), markAdminNotificationRead);
 
 // Search

@@ -3,6 +3,8 @@ import User from "../../user/models/User.js";
 import Merchant from "../models/Merchant.js";
 import Offer from "../models/Offer.js";
 import OfferView from "../models/OfferView.js";
+import Plan from "../../admin/models/Plan.js";
+import MerchantSubscription from "../../payment/models/MerchantSubscription.js";
 import {
   AGE_BANDS,
   COMPLETED_STATUSES,
@@ -22,6 +24,39 @@ import {
 const getMerchantForOwner = async (userId) => {
   if (!userId) return null;
   return Merchant.findOne({ $or: [{ _id: userId }, { ownerId: userId }] });
+};
+
+const getEffectivePlan = async (merchant) => {
+  const now = new Date();
+  const activeSubscription = await MerchantSubscription.findOne({
+    merchantId: merchant._id,
+    status: "active",
+    endDate: { $gte: now },
+  })
+    .populate("planId")
+    .sort({ createdAt: -1 });
+
+  if (activeSubscription?.planId) {
+    return activeSubscription.planId;
+  }
+
+  if (!merchant.subscriptionPlanId) {
+    return null;
+  }
+
+  return Plan.findById(merchant.subscriptionPlanId);
+};
+
+const requireInsightsAccess = async (merchant, res) => {
+  const plan = await getEffectivePlan(merchant);
+  if (!plan?.insightsEnabled) {
+    res.status(403).json({
+      message: "Dashboard Insights is a premium feature. Upgrade your plan to unlock analytics.",
+      code: "INSIGHTS_LOCKED",
+    });
+    return false;
+  }
+  return true;
 };
 
 const asNumber = (value) => Number(value || 0);
@@ -162,6 +197,8 @@ export const getMonthlyAnalytics = async (req, res) => {
   if (!merchant) {
     return res.status(404).json({ message: "Merchant profile not found" });
   }
+
+  if (!(await requireInsightsAccess(merchant, res))) return;
 
   const range = resolveMonthRange(req.query.month);
   const { start, end, previousStart, previousEnd } = range;

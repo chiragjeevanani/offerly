@@ -242,13 +242,43 @@ const AdminLogin = () => {
                     {loading ? 'Authenticating...' : 'Access Dashboard'}
                   </CleanButton>
 
-                  {/* Debug Info (Development Only) */}
-                  {process.env.NODE_ENV === 'development' && (
-                    <div className="mt-4 p-3 bg-gray-50 border border-gray-200 rounded-lg">
-                      <p className="text-xs font-bold text-gray-600 mb-2">🔧 Development Credentials:</p>
-                      <div className="space-y-1 text-xs text-gray-600">
-                        <p><span className="font-semibold">Email:</span> admin@offerly.com</p>
-                        <p><span className="font-semibold">Password:</span> Admin@123</p>
+                  {/* Debug Info / Quick Autofill */}
+                  {(import.meta.env?.DEV || process.env.NODE_ENV === 'development') && (
+                    <div
+                      onClick={() => {
+                        setEmail('admin@offerly.in');
+                        setPassword('offerly123');
+                        setError('');
+                        toast.success('Admin credentials autofilled!');
+                      }}
+                      role="button"
+                      tabIndex={0}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' || e.key === ' ') {
+                          e.preventDefault();
+                          setEmail('admin@offerly.in');
+                          setPassword('offerly123');
+                          setError('');
+                          toast.success('Admin credentials autofilled!');
+                        }
+                      }}
+                      className="mt-4 p-3.5 bg-gray-50 hover:bg-emerald-50/70 active:scale-[0.99] border border-gray-200 hover:border-emerald-300 rounded-xl cursor-pointer transition-all duration-150 group select-none shadow-sm"
+                    >
+                      <div className="flex items-center justify-between mb-2">
+                        <p className="text-xs font-bold text-gray-700 group-hover:text-emerald-700 flex items-center gap-1.5 transition-colors">
+                          <span>🔧</span> Development Credentials:
+                        </p>
+                        <span className="text-[10px] font-bold text-emerald-600 bg-emerald-100/80 group-hover:bg-emerald-200/80 px-2 py-0.5 rounded-full transition-colors flex items-center gap-1">
+                          ⚡ Click to autofill
+                        </span>
+                      </div>
+                      <div className="space-y-1 text-xs text-gray-600 group-hover:text-gray-800 transition-colors">
+                        <p>
+                          <span className="font-semibold text-gray-700">Email:</span> admin@offerly.in
+                        </p>
+                        <p>
+                          <span className="font-semibold text-gray-700">Password:</span> offerly123
+                        </p>
                         <p className="text-[10px] text-gray-500 mt-2">
                           Note: If these don't work, check database seeding
                         </p>

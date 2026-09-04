@@ -65,6 +65,7 @@ const MerchantManagement = () => {
   const [isSlideOverOpen, setIsSlideOverOpen] = useState(false);
   const [isRejectModalOpen, setIsRejectModalOpen] = useState(false);
   const [merchantToReject, setMerchantToReject] = useState(null);
+  const [isDrawerActionLoading, setIsDrawerActionLoading] = useState(false);
 
   // 1. Fetch merchants with React Query
   const { data, isLoading: loading, isFetching, refetch } = useQuery({
@@ -94,9 +95,27 @@ const MerchantManagement = () => {
   const handleApprove = async (id) => {
     try {
       await adminAPI.updateMerchantStatus(id, 'approved');
+      
+      queryClient.setQueriesData({ queryKey: ['adminMerchants'] }, (oldData) => {
+        if (!oldData) return oldData;
+        if (Array.isArray(oldData.merchants)) {
+          return {
+            ...oldData,
+            merchants: oldData.merchants.map((m) =>
+              (m._id === id || m.id === id) ? { ...m, status: 'approved' } : m
+            ),
+          };
+        }
+        return oldData;
+      });
+
+      setViewingMerchant((prev) =>
+        prev && (prev._id === id || prev.id === id) ? { ...prev, status: 'approved' } : prev
+      );
+
       toast.success('Merchant approved!');
       setIsSlideOverOpen(false);
-      queryClient.invalidateQueries(['adminMerchants']);
+      queryClient.invalidateQueries({ queryKey: ['adminMerchants'] });
     } catch (error) {
       toast.error('Approval failed');
     }
@@ -110,30 +129,81 @@ const MerchantManagement = () => {
   const confirmReject = async (reason) => {
     try {
       await adminAPI.updateMerchantStatus(merchantToReject, 'rejected', reason);
+
+      queryClient.setQueriesData({ queryKey: ['adminMerchants'] }, (oldData) => {
+        if (!oldData) return oldData;
+        if (Array.isArray(oldData.merchants)) {
+          return {
+            ...oldData,
+            merchants: oldData.merchants.map((m) =>
+              (m._id === merchantToReject || m.id === merchantToReject)
+                ? { ...m, status: 'rejected', rejectionReason: reason }
+                : m
+            ),
+          };
+        }
+        return oldData;
+      });
+
+      setViewingMerchant((prev) =>
+        prev && (prev._id === merchantToReject || prev.id === merchantToReject)
+          ? { ...prev, status: 'rejected', rejectionReason: reason }
+          : prev
+      );
+
       toast.error('Merchant rejected');
       setIsRejectModalOpen(false);
       setIsSlideOverOpen(false);
-      queryClient.invalidateQueries(['adminMerchants']);
+      queryClient.invalidateQueries({ queryKey: ['adminMerchants'] });
     } catch (error) {
       toast.error('Rejection failed');
     }
   };
 
   const handleStatusToggle = async (merchant) => {
+    const targetId = merchant.id || merchant._id;
     const currentStatus = merchant.status;
-    const newStatus = currentStatus === 'approved' ? 'rejected' : 'approved';
-    const action = newStatus === 'approved' ? 'Activated' : 'Restricted';
+    const isCurrentlyRestricted = currentStatus === 'rejected' || currentStatus === 'restricted' || currentStatus === 'suspended';
+    const newStatus = isCurrentlyRestricted ? 'approved' : 'rejected';
+    const action = isCurrentlyRestricted ? 'unrestricted' : 'restricted';
     
     try {
-      await adminAPI.updateMerchantStatus(merchant.id || merchant._id, newStatus);
+      await adminAPI.updateMerchantStatus(
+        targetId, 
+        newStatus, 
+        isCurrentlyRestricted ? null : 'Account restricted by administrator'
+      );
+
+      // Immediately update React Query cache so the UI updates instantly
+      queryClient.setQueriesData({ queryKey: ['adminMerchants'] }, (oldData) => {
+        if (!oldData) return oldData;
+        if (Array.isArray(oldData.merchants)) {
+          return {
+            ...oldData,
+            merchants: oldData.merchants.map((m) =>
+              (m._id === targetId || m.id === targetId)
+                ? { ...m, status: newStatus }
+                : m
+            ),
+          };
+        }
+        return oldData;
+      });
+
+      setViewingMerchant((prev) =>
+        prev && (prev._id === targetId || prev.id === targetId)
+          ? { ...prev, status: newStatus }
+          : prev
+      );
+
       toast.success(`Merchant ${action} successfully`);
-      queryClient.invalidateQueries(['adminMerchants']);
+
+      // Refetch in the background without blocking the UI
+      queryClient.invalidateQueries({ queryKey: ['adminMerchants'] });
     } catch (error) {
-      toast.error(`Failed to update merchant status`);
+      toast.error(`Failed to ${isCurrentlyRestricted ? 'unrestrict' : 'restrict'} merchant`);
     }
   };
-
-
 
   return (
     <div className="min-h-[calc(100vh-80px)] bg-background p-4 lg:p-8 -m-6 lg:-m-8 font-sans text-gray-800 lg:rounded-tl-[32px]">
@@ -161,7 +231,7 @@ const MerchantManagement = () => {
             <TabButton label="All" isActive={activeTab === 'all'} onClick={() => { setActiveTab('all'); setPage(1); }} />
             <TabButton label="Pending" isActive={activeTab === 'pending'} onClick={() => { setActiveTab('pending'); setPage(1); }} />
             <TabButton label="Active" isActive={activeTab === 'approved'} onClick={() => { setActiveTab('approved'); setPage(1); }} />
-            <TabButton label="Blocked" isActive={activeTab === 'rejected'} onClick={() => { setActiveTab('rejected'); setPage(1); }} />
+            <TabButton label="Restricted" isActive={activeTab === 'rejected'} onClick={() => { setActiveTab('rejected'); setPage(1); }} />
           </div>
 
           <div className="relative flex-1 max-w-md w-full">
@@ -392,20 +462,70 @@ const MerchantManagement = () => {
 
             {/* Sticky Action Footer (Mobile Style) */}
             <div className="absolute bottom-0 left-0 right-0 p-4 bg-white border-t border-gray-100 flex gap-3 z-20">
-              <button 
-                onClick={() => handleReject(viewingMerchant._id || viewingMerchant.id)}
-                className="flex-1 flex items-center justify-center gap-2 bg-white border border-red-100 text-red-500 py-3.5 rounded-xl font-semibold text-[14px] hover:bg-red-50 transition-all shadow-sm"
-              >
-                <CloseRoundedIcon sx={{ fontSize: 20 }} />
-                Reject Merchant
-              </button>
-              <button 
-                onClick={() => handleApprove(viewingMerchant._id || viewingMerchant.id)}
-                className="flex-[1.2] flex items-center justify-center gap-2 bg-[#5EB929] text-white py-3.5 rounded-xl font-semibold text-[14px] hover:bg-[#489A1B] transition-all shadow-lg shadow-[#5EB929]/20"
-              >
-                <CheckCircleRoundedIcon sx={{ fontSize: 20 }} />
-                Approve Merchant
-              </button>
+              {viewingMerchant.status === 'rejected' || viewingMerchant.status === 'restricted' ? (
+                <button 
+                  disabled={isDrawerActionLoading}
+                  onClick={async () => {
+                    setIsDrawerActionLoading(true);
+                    try {
+                      await handleStatusToggle(viewingMerchant);
+                      setIsSlideOverOpen(false);
+                    } finally {
+                      setIsDrawerActionLoading(false);
+                    }
+                  }}
+                  className="flex-1 flex items-center justify-center gap-2 bg-[#5EB929] text-white py-3.5 rounded-xl font-semibold text-[14px] hover:bg-[#489A1B] transition-all shadow-lg shadow-[#5EB929]/20 disabled:opacity-60 disabled:cursor-not-allowed"
+                >
+                  {isDrawerActionLoading ? (
+                    <>
+                      <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin shrink-0" />
+                      <span>Unrestricting...</span>
+                    </>
+                  ) : (
+                    <>
+                      <CheckCircleRoundedIcon sx={{ fontSize: 20 }} />
+                      <span>Unrestrict Merchant</span>
+                    </>
+                  )}
+                </button>
+              ) : (
+                <>
+                  <button 
+                    disabled={isDrawerActionLoading}
+                    onClick={() => handleReject(viewingMerchant._id || viewingMerchant.id)}
+                    className="flex-1 flex items-center justify-center gap-2 bg-white border border-red-100 text-red-500 py-3.5 rounded-xl font-semibold text-[14px] hover:bg-red-50 transition-all shadow-sm disabled:opacity-60 disabled:cursor-not-allowed"
+                  >
+                    <CloseRoundedIcon sx={{ fontSize: 20 }} />
+                    <span>Restrict Merchant</span>
+                  </button>
+                  {viewingMerchant.status !== 'approved' && (
+                    <button 
+                      disabled={isDrawerActionLoading}
+                      onClick={async () => {
+                        setIsDrawerActionLoading(true);
+                        try {
+                          await handleApprove(viewingMerchant._id || viewingMerchant.id);
+                        } finally {
+                          setIsDrawerActionLoading(false);
+                        }
+                      }}
+                      className="flex-[1.2] flex items-center justify-center gap-2 bg-[#5EB929] text-white py-3.5 rounded-xl font-semibold text-[14px] hover:bg-[#489A1B] transition-all shadow-lg shadow-[#5EB929]/20 disabled:opacity-60 disabled:cursor-not-allowed"
+                    >
+                      {isDrawerActionLoading ? (
+                        <>
+                          <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin shrink-0" />
+                          <span>Approving...</span>
+                        </>
+                      ) : (
+                        <>
+                          <CheckCircleRoundedIcon sx={{ fontSize: 20 }} />
+                          <span>Approve Merchant</span>
+                        </>
+                      )}
+                    </button>
+                  )}
+                </>
+              )}
             </div>
           </div>
         )}

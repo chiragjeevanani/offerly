@@ -94,14 +94,40 @@ const UserManagement = () => {
   };
 
   const handleStatusToggle = async (user) => {
+    const targetId = user.id || user._id;
     const currentStatus = user.status || 'active';
     const newStatus = currentStatus === 'active' ? 'suspended' : 'active';
     const action = newStatus === 'active' ? 'Activated' : 'Restricted';
     
     try {
-      await adminAPI.updateUserStatus(user.id || user._id, newStatus);
+      await adminAPI.updateUserStatus(targetId, newStatus);
+
+      // Immediately update React Query cache so the UI updates instantly
+      queryClient.setQueriesData({ queryKey: ['adminUsers'] }, (oldData) => {
+        if (!oldData) return oldData;
+        if (Array.isArray(oldData.users)) {
+          return {
+            ...oldData,
+            users: oldData.users.map((u) =>
+              (u._id === targetId || u.id === targetId)
+                ? { ...u, status: newStatus }
+                : u
+            ),
+          };
+        }
+        return oldData;
+      });
+
+      setViewingUser((prev) =>
+        prev && (prev._id === targetId || prev.id === targetId)
+          ? { ...prev, status: newStatus }
+          : prev
+      );
+
       toast.success(`User ${action} successfully`);
-      queryClient.invalidateQueries(['adminUsers']);
+
+      // Refetch in the background without blocking the UI
+      queryClient.invalidateQueries({ queryKey: ['adminUsers'] });
     } catch (error) {
       toast.error(`Failed to update user status`);
     }

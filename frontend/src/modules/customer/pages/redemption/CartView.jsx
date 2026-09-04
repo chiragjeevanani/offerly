@@ -71,7 +71,10 @@ const CartView = () => {
   const items = cart?.items || [];
   const totalBasePrice = Math.round(items.reduce((sum, item) => sum + ((item.product?.price || 0) * item.qty), 0));
   const totalOfferPrice = Math.round(items.reduce((sum, item) => sum + ((item.product?.offerPrice || 0) * item.qty), 0));
-  const totalDiscount = Math.round(totalBasePrice - totalOfferPrice);
+  const storeDiscount = Math.round(totalBasePrice - totalOfferPrice);
+  const offerlyExtraDiscount = Math.round(cart?.offerlyExtraDiscount || 0);
+  const totalDiscount = Math.round(storeDiscount + offerlyExtraDiscount);
+  const finalPayable = Math.max(0, Math.round(totalOfferPrice - offerlyExtraDiscount));
   const discountPercent = totalBasePrice > 0 ? Math.round((totalDiscount / totalBasePrice) * 100) : 0;
 
   // showCelebrationModal is TRUE immediately on frame 0 if discount > 0!
@@ -222,10 +225,7 @@ const CartView = () => {
       <PageTransition>
         <div className="min-h-screen bg-gray-50 flex flex-col pt-safe">
           <div className="px-4 py-4 flex items-center bg-white shadow-sm sticky top-0 z-20">
-            <button onClick={() => navigate(-1)} className="p-2 -ml-2 text-gray-700">
-              <ArrowBackRoundedIcon />
-            </button>
-            <h1 className="text-lg font-bold text-gray-900 ml-2">Booking Cart</h1>
+            <h1 className="text-lg font-bold text-gray-900">Booking Cart</h1>
           </div>
           <div className="flex-1 flex flex-col items-center justify-center p-6 text-center">
             <div className="w-24 h-24 bg-gray-200 rounded-full flex items-center justify-center mb-4 text-gray-400">
@@ -344,22 +344,24 @@ const CartView = () => {
 
       <div className="min-h-screen bg-[#F8FAFC] pb-32">
         {/* Concise Premium Header */}
-        <div className="px-5 py-5 flex items-center justify-between bg-white border-b border-gray-100 sticky top-0 z-30 shadow-sm backdrop-blur-md bg-white/90">
-          <div className="flex items-center gap-4">
-            <button onClick={() => navigate(-1)} className="w-10 h-10 flex items-center justify-center bg-gray-50 rounded-xl text-gray-900 border border-gray-100 hover:scale-105 transition-all">
-              <ArrowBackRoundedIcon sx={{ fontSize: 20 }} />
-            </button>
-            <div>
-               <h1 className="text-lg font-bold text-gray-900 leading-none uppercase tracking-tight">Review Booking</h1>
-               <div className="flex items-center gap-1.5 mt-1.5">
-                  <div className="w-1.5 h-1.5 bg-[#5EB929] rounded-full" />
-                  <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">{merchant.storeName}</p>
-               </div>
+        <div className="px-5 py-4 flex items-center justify-between bg-white border-b border-gray-100 sticky top-0 z-30 shadow-sm backdrop-blur-md bg-white/90">
+          <div>
+            <h1 className="text-lg font-bold text-gray-900 leading-none uppercase tracking-tight">Review Booking</h1>
+            <div className="flex items-center gap-1.5 mt-1.5">
+              <div className="w-1.5 h-1.5 bg-[#5EB929] rounded-full" />
+              <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">{merchant.storeName}</p>
             </div>
           </div>
-          {merchant.logo && (
-            <img src={merchant.logo} alt="" className="w-10 h-10 rounded-xl shadow-lg object-cover border-2 border-white" />
-          )}
+          {merchant.logo ? (
+            <img
+              src={merchant.logo}
+              alt={merchant.storeName || ''}
+              className="w-10 h-10 rounded-xl shadow-md object-cover border border-gray-100"
+              onError={(e) => {
+                e.currentTarget.style.display = 'none';
+              }}
+            />
+          ) : null}
         </div>
 
         <div className="p-4 space-y-4 max-w-2xl mx-auto">
@@ -499,16 +501,29 @@ const CartView = () => {
              
              <div className="space-y-3 mb-6">
                <div className="flex justify-between items-center">
-                 <span className="text-[12px] font-bold text-gray-400 uppercase tracking-tight">Base Amount</span>
+                 <span className="text-[12px] font-bold text-gray-500 uppercase tracking-tight">Total Amount (Without Offer)</span>
                  <span className="text-[13px] font-bold text-gray-900">₹{totalBasePrice}</span>
                </div>
-               <div className="flex justify-between items-center">
-                 <div className="flex items-center gap-1.5">
-                    <span className="text-[12px] font-bold text-gray-400 uppercase tracking-tight">Offer Benefit</span>
-                    <div className="px-1.5 py-0.5 bg-green-50 text-green-600 rounded text-[8px] font-bold uppercase">Apply</div>
+               {storeDiscount > 0 && (
+                 <div className="flex justify-between items-center">
+                   <div className="flex items-center gap-1.5">
+                      <span className="text-[12px] font-bold text-gray-500 uppercase tracking-tight">Discount Applied</span>
+                      <div className="px-1.5 py-0.5 bg-green-50 text-green-600 rounded text-[8px] font-bold uppercase tracking-wider">Applied</div>
+                   </div>
+                   <span className="text-[13px] font-bold text-green-600">- ₹{storeDiscount}</span>
                  </div>
-                 <span className="text-[13px] font-bold text-green-600">- ₹{totalDiscount}</span>
-               </div>
+               )}
+               {offerlyExtraDiscount > 0 && (
+                 <div className="flex justify-between items-center">
+                   <div className="flex items-center gap-1.5">
+                      <span className="text-[12px] font-bold text-gray-500 uppercase tracking-tight">Offerly Extra Discount</span>
+                      <div className="px-1.5 py-0.5 bg-[#5EB929]/10 text-[#4E9F1F] rounded text-[8px] font-bold uppercase tracking-wider">Offerly</div>
+                   </div>
+                   <span className="text-[13px] font-bold text-[#5EB929]">
+                     - ₹{offerlyExtraDiscount}
+                   </span>
+                 </div>
+               )}
              </div>
 
              <div className="pt-5 border-t border-dashed border-gray-100 flex justify-between items-end">
@@ -517,7 +532,7 @@ const CartView = () => {
                    <p className="text-[12px] font-bold text-gray-400 leading-none">Net Amount</p>
                 </div>
                 <div className="text-right">
-                   <p className="text-2xl font-bold text-[#5EB929] leading-none tracking-tight">₹{totalOfferPrice}</p>
+                   <p className="text-2xl font-bold text-[#5EB929] leading-none tracking-tight">₹{finalPayable}</p>
                 </div>
              </div>
 

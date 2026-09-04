@@ -42,6 +42,7 @@ const SubscriptionManagement = () => {
     duration: 'Monthly',
     maxProducts: 5,
     maxOffers: 5,
+    insightsEnabled: false,
     features: [],
     applicableCities: [],
     zonePricing: [],
@@ -125,6 +126,7 @@ const SubscriptionManagement = () => {
       duration: 'Monthly',
       maxProducts: 5,
       maxOffers: 5,
+      insightsEnabled: false,
       features: [{ id: 'f1', text: '' }],
       applicableCities: [],
       zonePricing: [],
@@ -296,9 +298,16 @@ const SubscriptionManagement = () => {
                     )}
                   </div>
                   
-                  <div className="flex items-baseline gap-1 mb-4">
-                    <span className="text-2xl font-bold text-gray-900">₹{plan.price}</span>
-                    <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">/{plan.duration}</span>
+                  <div className="mb-4">
+                    <div className="flex items-baseline gap-1">
+                      <span className="text-2xl font-bold text-gray-900">₹{plan.price}</span>
+                      <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">/{plan.duration}</span>
+                    </div>
+                    {plan.insightsEnabled && (
+                      <span className="inline-flex items-center gap-1 text-[9px] font-bold uppercase tracking-widest text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded-md mt-1.5">
+                        Insights Included
+                      </span>
+                    )}
                   </div>
 
                   {/* Limits - Slim Style */}
@@ -549,6 +558,22 @@ const SubscriptionManagement = () => {
                   </div>
                 </div>
               </div>
+
+              {formData.planType === 'merchant' && (
+                <div className="flex items-center justify-between p-4 bg-gray-50 rounded-xl border border-gray-100">
+                  <div>
+                    <p className="text-[11px] font-bold text-gray-700 uppercase tracking-widest">Dashboard Insights</p>
+                    <p className="text-[10px] text-gray-400 mt-0.5">Gate the merchant analytics dashboard behind this plan.</p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setFormData({ ...formData, insightsEnabled: !formData.insightsEnabled })}
+                    className={`relative w-11 h-6 rounded-full transition-colors flex-shrink-0 ${formData.insightsEnabled ? 'bg-[#5EB929]' : 'bg-gray-300'}`}
+                  >
+                    <span className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow-sm transition-transform ${formData.insightsEnabled ? 'translate-x-5' : 'translate-x-0'}`} />
+                  </button>
+                </div>
+              )}
 
               {/* Feature Management */}
               <div>

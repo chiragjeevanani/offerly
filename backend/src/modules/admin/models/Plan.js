@@ -31,6 +31,10 @@ const planSchema = new mongoose.Schema(
       type: Number,
       default: 0, // 0 means no limit unless it's a fixed duration
     },
+    insightsEnabled: {
+      type: Boolean,
+      default: false,
+    },
     features: [String],
     applicableCities: {
       type: [String],

@@ -101,11 +101,38 @@ const MapView = () => {
     loadMapData();
   }, [cityFilter]);
 
+  const isMerchantOpen = (merchant) => {
+    if (!merchant) return false;
+    if (merchant.isOpen === false) return false;
+    if (!merchant.businessHours) return true;
+
+    const days = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
+    const now = new Date();
+    const today = days[now.getDay()];
+    const hours = merchant.businessHours[today];
+
+    if (!hours) return true;
+    if (hours.isClosed || hours.isOpen === false) return false;
+    if (!hours.open || !hours.close) return true;
+
+    try {
+      const currentMinutes = now.getHours() * 60 + now.getMinutes();
+      const [openH, openM] = hours.open.split(':').map(Number);
+      const [closeH, closeM] = hours.close.split(':').map(Number);
+      const openMinutes = openH * 60 + openM;
+      const closeMinutes = closeH * 60 + closeM;
+      return currentMinutes >= openMinutes && currentMinutes < closeMinutes;
+    } catch {
+      return true;
+    }
+  };
+
   const displayedMerchants = useMemo(() => {
     let filtered = merchants;
     if (selectedCategory !== 'All') {
       filtered = merchants.filter(m => m.category === selectedCategory);
     }
+    filtered = filtered.filter(isMerchantOpen);
     return [...filtered].sort((a, b) => (b.avgRating || 0) - (a.avgRating || 0));
   }, [merchants, selectedCategory]);
 
@@ -157,7 +184,7 @@ const MapView = () => {
           <div className="flex items-center gap-3">
              <div className="flex items-center gap-1.5">
                <div className="w-2 h-2 rounded-full bg-[#5EB929] shadow-[0_0_6px_#5EB929]" />
-               <span className="text-[9px] font-bold text-gray-400 uppercase tracking-widest">Active Shops</span>
+               <span className="text-[9px] font-bold text-gray-400 uppercase tracking-widest">Open Shops</span>
              </div>
              <div className="flex items-center gap-1.5">
                <div className="w-2 h-2 rounded-full bg-gray-900 shadow-[0_0_6px_rgba(0,0,0,0.1)]" />
@@ -267,7 +294,7 @@ const MapView = () => {
               ))
             ) : (
               <div className="py-12 text-center bg-white rounded-3xl border border-gray-100 shadow-sm">
-                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">No partners in this area</p>
+                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">No open shops in this area</p>
               </div>
             )}
           </div>

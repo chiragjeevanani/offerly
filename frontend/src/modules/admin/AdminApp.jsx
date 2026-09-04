@@ -1,7 +1,7 @@
 import { useState, useEffect, lazy, Suspense } from 'react';
 import { Routes, Route, Navigate, Link, useLocation, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import SpaceDashboardRoundedIcon from '@mui/icons-material/SpaceDashboardRounded';
 import StorefrontRoundedIcon from '@mui/icons-material/StorefrontRounded';
 import GroupRoundedIcon from '@mui/icons-material/GroupRounded';
@@ -196,33 +196,32 @@ const AdminSidebar = ({ isMobileMenuOpen, setIsMobileMenuOpen }) => {
 
 const AdminHeader = ({ onMenuToggle, pageTitle }) => {
   const navigate = useNavigate();
-  const [pendingCount, setPendingCount] = useState(0);
   const [searchQuery, setSearchQuery] = useState('');
   const { socket } = useSocket();
   const location = useLocation();
+  const queryClient = useQueryClient();
   const currentDate = new Date().toLocaleDateString('en-GB', {
     day: 'numeric',
     month: 'short',
     year: 'numeric',
   });
 
-  useEffect(() => {
-    const fetchPending = async () => {
-      try {
-        const res = await adminAPI.getNotifications();
-        const unread = res.data?.filter(n => !n.isRead).length || 0;
-        setPendingCount(unread);
-      } catch (err) {}
-    };
-    fetchPending();
+  const { data: notifications = [] } = useQuery({
+    queryKey: ['adminNotifications'],
+    queryFn: async () => {
+      const res = await adminAPI.getNotifications();
+      return res.data || [];
+    },
+  });
+  const pendingCount = notifications.filter(n => !n.isRead).length;
 
-    if (socket) {
-      socket.on('admin_notification', () => {
-        setPendingCount(prev => prev + 1);
-      });
-      return () => socket.off('admin_notification');
-    }
-  }, [socket]);
+  useEffect(() => {
+    if (!socket) return;
+    socket.on('admin_notification', () => {
+      queryClient.invalidateQueries(['adminNotifications']);
+    });
+    return () => socket.off('admin_notification');
+  }, [socket, queryClient]);
 
   const handleSearchKeyPress = (e) => {
     if (e.key === 'Enter' && searchQuery.trim()) {
@@ -383,20 +382,17 @@ const AdminLayout = ({ children }) => {
         />
         
         <main className="flex-1 overflow-y-auto p-4 lg:p-8 no-scrollbar pb-40 lg:pb-8">
-          <AnimatePresence mode="wait">
-            <motion.div
-              key={location.pathname}
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -10 }}
-              transition={{ duration: 0.3 }}
-              className="min-h-full"
-            >
-              {children}
-              {/* Bottom Spacer for Mobile Scroll */}
-              <div className="h-32 lg:hidden" />
-            </motion.div>
-          </AnimatePresence>
+          <motion.div
+            key={location.pathname}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.15, ease: 'easeOut' }}
+            className="min-h-full"
+          >
+            {children}
+            {/* Bottom Spacer for Mobile Scroll */}
+            <div className="h-32 lg:hidden" />
+          </motion.div>
         </main>
 
         <BottomNav />

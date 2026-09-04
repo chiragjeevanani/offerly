@@ -39,6 +39,10 @@ export const adminAPI = {
     return axiosInstance.put(`/admin/notifications/${id}/read`);
   },
 
+  markAllNotificationsRead: async () => {
+    return axiosInstance.put('/admin/notifications/read-all');
+  },
+
   // Global Search
   globalSearch: async (query) => {
     return axiosInstance.get(`/admin/search?q=${encodeURIComponent(query)}`);

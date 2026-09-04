@@ -42,11 +42,14 @@ const Notifications = () => {
 
   const markAllAsRead = async () => {
     try {
-      // In a real scenario, this would call a markAll endpoint
-      // For now, we loop or wait for next fetch
-      toast.success('Marking all as read...');
-      queryClient.invalidateQueries(['adminNotifications']);
-    } catch (err) {}
+      await adminAPI.markAllNotificationsRead();
+      queryClient.setQueryData(['adminNotifications'], (old) =>
+        (old || []).map(n => ({ ...n, isRead: true }))
+      );
+      toast.success('All notifications marked as read');
+    } catch (err) {
+      toast.error('Failed to mark all as read');
+    }
   };
 
   const getIcon = (type) => {

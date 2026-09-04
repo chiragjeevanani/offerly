@@ -290,7 +290,7 @@ const Profile = () => {
              {[
                { label: 'Redeemed', value: redemptionCount, icon: ReceiptLongRoundedIcon },
                { label: 'Saved Offers', value: user?.savedOffers?.length || 0, icon: BookmarkRoundedIcon },
-               { label: 'Lifetime Savings', value: `₹${lifetimeSavings}`, icon: SavingsRoundedIcon },
+               { label: 'Savings', value: `₹${lifetimeSavings}`, icon: SavingsRoundedIcon },
              ].map((stat) => (
                <div key={stat.label} className="text-center p-2 rounded-2xl hover:bg-gray-50 transition-colors">
                   <stat.icon sx={{ fontSize: 18 }} className="text-[#5EB929] mb-1.5 opacity-60" />

@@ -1,5 +1,7 @@
 import { useMemo, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
+import WorkspacePremiumRoundedIcon from '@mui/icons-material/WorkspacePremiumRounded';
 import {
   AreaChart, Area, BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid
 } from 'recharts';
@@ -205,6 +207,29 @@ const SORTS = {
   },
 };
 
+const InsightsLocked = () => {
+  const navigate = useNavigate();
+  return (
+    <div className="min-h-[70vh] flex flex-col items-center justify-center gap-4 text-center px-6">
+      <div className="w-16 h-16 rounded-3xl bg-indigo-50 flex items-center justify-center">
+        <WorkspacePremiumRoundedIcon sx={{ fontSize: 30 }} className="text-indigo-500" />
+      </div>
+      <div>
+        <p className="text-sm font-bold text-gray-900">Dashboard Insights is a premium feature</p>
+        <p className="text-[11px] font-medium text-gray-500 mt-1 max-w-xs">
+          Upgrade to a plan that includes Insights to unlock revenue trends, customer demographics, and offer performance analytics.
+        </p>
+      </div>
+      <button
+        onClick={() => navigate('/merchant/subscription')}
+        className="mt-2 px-6 py-3 bg-[#5EB929] text-white rounded-xl font-bold text-xs uppercase tracking-widest hover:bg-[#2D5A3A] transition-all shadow-lg shadow-[#5EB929]/20"
+      >
+        View Plans
+      </button>
+    </div>
+  );
+};
+
 const Insights = ({ merchant }) => {
   const [month, setMonth] = useState(() => monthKey(new Date()));
   const [sortBy, setSortBy] = useState('revenue');
@@ -212,12 +237,18 @@ const Insights = ({ merchant }) => {
   const currentMonth = monthKey(new Date());
   const isCurrentMonth = month === currentMonth;
 
+  const insightsEnabled = Boolean(merchant?.subscription?.planId?.insightsEnabled);
+
   const { data, isLoading, isError } = useQuery({
     queryKey: ['merchantInsights', merchant?._id, month],
     queryFn: () => merchantAPI.getMonthlyAnalytics(month),
-    enabled: !!merchant?._id,
+    enabled: !!merchant?._id && insightsEnabled,
     placeholderData: (previous) => previous,
   });
+
+  if (!insightsEnabled) {
+    return <InsightsLocked />;
+  }
 
   const revenueSeries = useMemo(
     () => (data?.revenueSeries || []).map((point) => ({

@@ -2,6 +2,35 @@ import Joi from 'joi';
 import Cart from '../models/Cart.js';
 import Product from '../../merchant/models/Product.js';
 import Merchant from '../../merchant/models/Merchant.js';
+import Redemption from '../models/Redemption.js';
+import WalletSettings from '../../admin/models/WalletSettings.js';
+
+const calculateOfferlyExtraDiscount = async (cart, customerId) => {
+  if (!cart || !cart.merchantId || !cart.items || cart.items.length === 0) return 0;
+
+  try {
+    const hasCompletedBefore = await Redemption.exists({ customerId, status: 'completed' });
+    if (hasCompletedBefore) return 0;
+
+    const merchantId = cart.merchantId._id || cart.merchantId;
+    const [merchantDoc, walletSettings] = await Promise.all([
+      Merchant.findById(merchantId).select('discountWallet'),
+      WalletSettings.findOne(),
+    ]);
+
+    const configuredAmount = walletSettings?.newUserDiscountAmount || 0;
+    const availableBalance = merchantDoc?.discountWallet?.balance || 0;
+    const totalOfferPrice = cart.items.reduce(
+      (sum, item) => sum + ((item.product?.offerPrice || 0) * (item.qty || 1)),
+      0
+    );
+
+    return Math.max(0, Math.round(Math.min(configuredAmount, availableBalance, totalOfferPrice)));
+  } catch (e) {
+    console.error('Error calculating extra discount:', e);
+    return 0;
+  }
+};
 
 // @desc    Get customer's cart
 // @route   GET /api/cart
@@ -9,7 +38,7 @@ import Merchant from '../../merchant/models/Merchant.js';
 export const getCart = async (req, res) => {
   try {
     const cart = await Cart.findOne({ customerId: req.user.id })
-      .populate('merchantId', 'storeName logo address locality phone')
+      .populate('merchantId', 'storeName logo address locality phone discountWallet')
       .populate({
         path: 'items.product',
         select: 'name categoryId price offerPrice image isVeg',
@@ -20,7 +49,11 @@ export const getCart = async (req, res) => {
       return res.status(200).json({ success: true, data: null });
     }
 
-    res.status(200).json({ success: true, data: cart });
+    const offerlyExtraDiscount = await calculateOfferlyExtraDiscount(cart, req.user.id);
+    const cartData = cart.toObject();
+    cartData.offerlyExtraDiscount = offerlyExtraDiscount;
+
+    res.status(200).json({ success: true, data: cartData });
   } catch (err) {
     res.status(500).json({ success: false, error: 'Server Error' });
   }
@@ -108,14 +141,18 @@ export const updateCart = async (req, res) => {
     // Save and return updated cart
     await cart.save();
     const updatedCart = await Cart.findById(cart._id)
-      .populate('merchantId', 'storeName logo address locality phone')
+      .populate('merchantId', 'storeName logo address locality phone discountWallet')
       .populate({
         path: 'items.product',
         select: 'name categoryId price offerPrice image isVeg',
         populate: { path: 'categoryId', select: 'name discountPercent' },
       });
 
-    res.status(200).json({ success: true, data: updatedCart });
+    const offerlyExtraDiscount = await calculateOfferlyExtraDiscount(updatedCart, req.user.id);
+    const cartData = updatedCart.toObject();
+    cartData.offerlyExtraDiscount = offerlyExtraDiscount;
+
+    res.status(200).json({ success: true, data: cartData });
   } catch (err) {
     res.status(500).json({ success: false, error: err.message });
   }

@@ -284,7 +284,7 @@ export const getOffersFeed = async (req, res) => {
     city: exactCityRegex,
   })
     .select(
-      "_id storeName businessName verified coordinates city zone isOpen totalRedemptions avgRating totalReviews logo coverImage category",
+      "_id storeName businessName verified coordinates city zone isOpen businessHours totalRedemptions avgRating totalReviews logo coverImage category",
     )
     .lean();
 
@@ -294,7 +294,7 @@ export const getOffersFeed = async (req, res) => {
       city: fuzzyCityRegex,
     })
       .select(
-        "_id storeName businessName verified coordinates city zone isOpen totalRedemptions avgRating totalReviews logo coverImage category",
+        "_id storeName businessName verified coordinates city zone isOpen businessHours totalRedemptions avgRating totalReviews logo coverImage category",
       )
       .lean();
   }
@@ -426,14 +426,18 @@ export const getOffersFeed = async (req, res) => {
     const recencyScore = getRecencyScore(offer.createdAt);
     const categoryAffinity = affinity.weights[normalizeCity(offer.category || "")] || 0;
 
-    const trendingScore = redemptions30d * 4 + saves * 2 + recencyScore + (offer.isTrending ? 8 : 0);
-    // User range awareness: Add a weight for proximity (closer is better)
-    const proximityWeight = distanceKm !== null ? Math.max(0, (20 - distanceKm) * 0.5) : 0;
-    const finalTrendingScore = trendingScore + proximityWeight + planBoost;
+    // Trending score: Driven by actual user engagement (redemptions, saves) + explicit trending flag.
+    // Recency is a modest freshness booster (0-5 pts max) rather than dominating actual redemptions,
+    // ensuring new unearned offers do not outrank popular ones.
+    const engagementScore = redemptions30d * 6 + saves * 3 + (Number(offer.currentRedemptions) || 0) * 1.5;
+    const trendingFlagScore = offer.isTrending ? 20 : 0;
+    const recencyBonus = Math.min(5, Math.round(recencyScore / 6));
+    const proximityWeight = distanceKm !== null ? Math.max(0, (20 - distanceKm) * 0.3) : 0;
+    const finalTrendingScore = engagementScore + trendingFlagScore + recencyBonus + proximityWeight + planBoost;
 
     const recommendationScore = categoryAffinity * 6 + redemptions30d * 2 + saves + recencyScore + planBoost;
     const nearYouScore =
-      distanceKm === null ? trendingScore : 1000 - Math.min(distanceKm, 1000) + redemptions30d * 1.5 + (planBoost * 0.5);
+      distanceKm === null ? finalTrendingScore : 1000 - Math.min(distanceKm, 1000) + redemptions30d * 1.5 + (planBoost * 0.5);
 
     const offerData = toFeedOffer({ offer, merchant, distanceKm });
     offerData.merchant.planName = planName;
@@ -456,10 +460,26 @@ export const getOffersFeed = async (req, res) => {
 
   const seenOfferIds = new Set();
 
+  // Trending Nearby Qualification:
+  // Only include offers that have earned trending status:
+  // 1. Explicitly marked as trending by admin/merchant (offer.isTrending === true), OR
+  // 2. Demonstrable popularity (recent redemptions >= 1, total redemptions >= 1, or saves >= 1).
+  // Newly created offers with 0 redemptions/saves and no trending flag will NOT show here.
+  const eligibleTrendingOffers = rankedOffers.filter((item) => {
+    const isExplicitlyTrending = Boolean(item.offer.isTrending);
+    const hasRedemptions = (item.redemptions30d || 0) > 0 || (Number(item.offer.currentRedemptions) || 0) > 0;
+    const hasSaves = (Number(item.offer.saves) || 0) > 0;
+    return isExplicitlyTrending || hasRedemptions || hasSaves;
+  });
+
   const trendingOffers = pickUniqueOffers(
-    [...rankedOffers].sort((left, right) => {
+    [...eligibleTrendingOffers].sort((left, right) => {
       if (left.isOpen !== right.isOpen) {
         return left.isOpen ? -1 : 1;
+      }
+      // Prioritize offers with explicit trending flag or higher trending score
+      if (Boolean(left.offer.isTrending) !== Boolean(right.offer.isTrending)) {
+        return left.offer.isTrending ? -1 : 1;
       }
       if (right.trendingScore !== left.trendingScore) {
         return right.trendingScore - left.trendingScore;

@@ -70,9 +70,11 @@ const MerchantSidebar = ({ merchant, isMobileMenuOpen, setIsMobileMenuOpen }) =>
   const { logout } = useApp();
   const navigate = useNavigate();
 
+  const insightsEnabled = Boolean(merchant?.subscription?.planId?.insightsEnabled);
+
   const mainNavItems = [
     { name: 'Dashboard', path: '/merchant', icon: DashboardRoundedIcon },
-    { name: 'Insights', path: '/merchant/insights', icon: InsightsRoundedIcon },
+    { name: 'Insights', path: '/merchant/insights', icon: InsightsRoundedIcon, badge: insightsEnabled ? null : 'PRO' },
     { name: 'Live Bookings', path: '/merchant/bookings', icon: ReceiptLongRoundedIcon },
     { name: 'Verify QR', path: '/merchant/scanner', icon: QrCodeScannerRoundedIcon },
   ];

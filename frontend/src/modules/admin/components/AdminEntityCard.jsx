@@ -41,6 +41,8 @@ const AdminEntityCard = ({
   const subtext = entity.phone;
   const location = isMerchant ? `${entity.locality || ''} ${entity.city || ''}` : entity.city || 'N/A';
   const status = entity.status || 'active';
+  const isRestricted = status === 'rejected' || status === 'restricted' || status === 'suspended' || status === 'blocked';
+  const isApproved = status === 'approved' || status === 'active';
   
   // Dynamic stats based on entity type
   const stats = isMerchant ? [
@@ -53,6 +55,20 @@ const AdminEntityCard = ({
   const profileImg = entity.logo || entity.logoUrl || entity.profilePhoto;
 
   const [isExpanded, setIsExpanded] = useState(false);
+  const [isToggling, setIsToggling] = useState(false);
+
+  const handleToggle = async (e) => {
+    if (e) e.stopPropagation();
+    if (isToggling) return;
+    setIsToggling(true);
+    try {
+      if (onStatusToggle) {
+        await onStatusToggle(entity);
+      }
+    } finally {
+      setIsToggling(false);
+    }
+  };
 
   return (
     <motion.div
@@ -77,10 +93,12 @@ const AdminEntityCard = ({
                 )}
               </div>
               <div className={`absolute -bottom-1 -right-1 w-4 h-4 rounded-full border-2 border-white flex items-center justify-center shadow-sm ${
-                status === 'approved' || status === 'active' ? 'bg-green-500' : 'bg-amber-500'
+                isApproved ? 'bg-green-500' : isRestricted ? 'bg-red-500' : 'bg-amber-500'
               }`}>
-                {status === 'approved' || status === 'active' ? (
+                {isApproved ? (
                   <CheckCircleRoundedIcon sx={{ fontSize: 8 }} className="text-white" />
+                ) : isRestricted ? (
+                  <BlockRoundedIcon sx={{ fontSize: 8 }} className="text-white" />
                 ) : (
                   <HistoryRoundedIcon sx={{ fontSize: 8 }} className="text-white" />
                 )}
@@ -95,6 +113,11 @@ const AdminEntityCard = ({
                 {ownerName && (
                   <span className="text-[9px] font-medium text-[#5EB929] bg-[#5EB929]/5 px-2 py-0.5 rounded-full border border-[#5EB929]/10 uppercase tracking-widest">
                     {ownerName}
+                  </span>
+                )}
+                {isRestricted && (
+                  <span className="text-[9px] font-bold text-red-600 bg-red-50 px-2 py-0.5 rounded-full border border-red-200 uppercase tracking-wider">
+                    Restricted
                   </span>
                 )}
               </div>
@@ -127,11 +150,34 @@ const AdminEntityCard = ({
               View Profile
             </button>
             <button 
-              onClick={() => onStatusToggle(entity)}
-              className="flex items-center gap-2 px-3 py-1.5 rounded-[10px] bg-white text-red-500 border border-red-100 hover:border-red-200 hover:bg-red-50 hover:text-red-600 transition-all duration-300 font-medium text-[11px] shadow-sm"
+              onClick={handleToggle}
+              disabled={isToggling}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-[10px] border transition-all duration-300 font-semibold text-[11px] shadow-sm disabled:opacity-60 disabled:cursor-not-allowed ${
+                isRestricted
+                  ? 'bg-white text-emerald-600 border-emerald-200 hover:border-emerald-300 hover:bg-emerald-50 hover:text-emerald-700'
+                  : 'bg-white text-red-500 border-red-200 hover:border-red-300 hover:bg-red-50 hover:text-red-600'
+              }`}
             >
-              <BlockRoundedIcon sx={{ fontSize: 14 }} />
-              {isMerchant ? 'Restrict' : 'Suspend'}
+              {isToggling ? (
+                <>
+                  <div className="w-3 h-3 border-2 border-current border-t-transparent rounded-full animate-spin shrink-0" />
+                  <span>
+                    {isRestricted 
+                      ? (isMerchant ? 'Unrestricting...' : 'Reactivating...') 
+                      : (isMerchant ? 'Restricting...' : 'Suspending...')}
+                  </span>
+                </>
+              ) : isRestricted ? (
+                <>
+                  <CheckCircleRoundedIcon sx={{ fontSize: 14 }} />
+                  <span>{isMerchant ? 'Unrestrict' : 'Reactivate'}</span>
+                </>
+              ) : (
+                <>
+                  <BlockRoundedIcon sx={{ fontSize: 14 }} />
+                  <span>{isMerchant ? 'Restrict' : 'Suspend'}</span>
+                </>
+              )}
             </button>
           </div>
         </div>
@@ -181,9 +227,13 @@ const AdminEntityCard = ({
           <div className="flex flex-col items-end gap-1">
             <div className="flex items-center gap-1">
               <span className={`px-2 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider ${
-                status === 'pending' ? 'bg-amber-50 text-amber-600' : 'bg-green-50 text-green-600'
+                isRestricted
+                  ? 'bg-red-50 text-red-600 border border-red-100'
+                  : status === 'pending'
+                  ? 'bg-amber-50 text-amber-600 border border-amber-100'
+                  : 'bg-green-50 text-green-600 border border-green-100'
               }`}>
-                {status === 'pending' ? 'Pending' : 'Active'}
+                {isRestricted ? 'Restricted' : status === 'pending' ? 'Pending' : 'Active'}
               </span>
               <ChevronRightRoundedIcon sx={{ fontSize: 16 }} className="text-gray-400" />
             </div>
@@ -195,6 +245,40 @@ const AdminEntityCard = ({
               )}
             </span>
           </div>
+        </div>
+
+        {/* Mobile Action Buttons */}
+        <div className="flex items-center justify-end gap-2 mt-1 pt-1.5 border-t border-gray-50">
+          <button
+            onClick={handleToggle}
+            disabled={isToggling}
+            className={`flex items-center gap-1.5 px-3 py-1 rounded-lg border text-[11px] font-semibold transition-all disabled:opacity-60 disabled:cursor-not-allowed ${
+              isRestricted
+                ? 'bg-white text-emerald-600 border-emerald-200 hover:bg-emerald-50'
+                : 'bg-white text-red-500 border-red-200 hover:bg-red-50'
+            }`}
+          >
+            {isToggling ? (
+              <>
+                <div className="w-2.5 h-2.5 border-2 border-current border-t-transparent rounded-full animate-spin shrink-0" />
+                <span>
+                  {isRestricted 
+                    ? (isMerchant ? 'Unrestricting...' : 'Reactivating...') 
+                    : (isMerchant ? 'Restricting...' : 'Suspending...')}
+                </span>
+              </>
+            ) : isRestricted ? (
+              <>
+                <CheckCircleRoundedIcon sx={{ fontSize: 13 }} />
+                <span>{isMerchant ? 'Unrestrict' : 'Reactivate'}</span>
+              </>
+            ) : (
+              <>
+                <BlockRoundedIcon sx={{ fontSize: 13 }} />
+                <span>{isMerchant ? 'Restrict' : 'Suspend'}</span>
+              </>
+            )}
+          </button>
         </div>
       </div>
     </motion.div>

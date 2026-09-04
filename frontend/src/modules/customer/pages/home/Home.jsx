@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useState, useEffect, useMemo } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import KeyboardArrowDownRoundedIcon from '@mui/icons-material/KeyboardArrowDownRounded';
 import SearchRoundedIcon from '@mui/icons-material/SearchRounded';
@@ -29,6 +29,34 @@ import { merchantAPI } from '../../../../api/merchant.api';
 import { cityAPI } from '../../../../api/city.api';
 import { adAPI } from '../../../../api/adRequest.api';
 import OfferCard from '../../components/ui/OfferCard';
+import AllStoresClosedView from '../../components/home/AllStoresClosedView';
+
+// Helper to check if a merchant is currently open based on isOpen flag and businessHours
+export const isMerchantOpen = (merchant) => {
+  if (!merchant) return false;
+  if (merchant.isOpen === false) return false;
+  if (!merchant.businessHours) return true;
+
+  const days = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
+  const now = new Date();
+  const today = days[now.getDay()];
+  const hours = merchant.businessHours[today];
+
+  if (!hours) return true;
+  if (hours.isClosed || hours.isOpen === false) return false;
+  if (!hours.open || !hours.close) return true;
+
+  try {
+    const currentMinutes = now.getHours() * 60 + now.getMinutes();
+    const [openH, openM] = hours.open.split(':').map(Number);
+    const [closeH, closeM] = hours.close.split(':').map(Number);
+    const openMinutes = openH * 60 + openM;
+    const closeMinutes = closeH * 60 + closeM;
+    return currentMinutes >= openMinutes && currentMinutes < closeMinutes;
+  } catch {
+    return true;
+  }
+};
 
 const containerVariants = {
   hidden: {},
@@ -89,6 +117,7 @@ const getColorForCategory = (label) => {
 
 const Home = () => {
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const { user, selectedCity, setSelectedCity, setSelectedCategory } = useApp();
   const useUnifiedFeed = import.meta.env.VITE_USE_UNIFIED_FEED !== 'false';
   const [categories, setCategories] = useState([]);
@@ -96,6 +125,25 @@ const Home = () => {
   const [availableCities, setAvailableCities] = useState([]);
   const [userCoords, setUserCoords] = useState(null);
   const [cityRequired, setCityRequired] = useState(false);
+
+  // Manual / URL simulation for testing closed stores state
+  const [simulateClosed, setSimulateClosed] = useState(() => {
+    return searchParams.get('closed') === 'true';
+  });
+
+  const handleSimulateToggle = () => {
+    setSimulateClosed((prev) => {
+      const next = !prev;
+      const newParams = new URLSearchParams(searchParams);
+      if (next) {
+        newParams.set('closed', 'true');
+      } else {
+        newParams.delete('closed');
+      }
+      setSearchParams(newParams, { replace: true });
+      return next;
+    });
+  };
   
   // Sections data
   const [featuredBanners, setFeaturedBanners] = useState([]);
@@ -255,6 +303,27 @@ const Home = () => {
 
   const displayCity = selectedCity !== 'Select City' ? selectedCity : (user?.city || 'Select City');
 
+  // Evaluate if all stores in the selected area/city are closed
+  const areAllStoresClosed = useMemo(() => {
+    if (simulateClosed) return true;
+    if (isLoading || cityRequired) return false;
+
+    // Check stores list: if we have stores in the city and none of them are currently open
+    const hasStores = mostPopulatedStores && mostPopulatedStores.length > 0;
+    const allStoresCheckedClosed = hasStores && mostPopulatedStores.every((s) => !isMerchantOpen(s));
+
+    // Also check if all active offers in the city belong to closed merchants
+    const allOffers = [...trendingOffers, ...nearbyOffers, ...recommendedOffers];
+    const hasOffers = allOffers.length > 0;
+    const allOffersMerchantsClosed =
+      hasOffers && allOffers.every((o) => (o.merchant ? !isMerchantOpen(o.merchant) : false));
+
+    if (hasStores && allStoresCheckedClosed) return true;
+    if (hasOffers && allOffersMerchantsClosed) return true;
+
+    return false;
+  }, [simulateClosed, isLoading, cityRequired, mostPopulatedStores, trendingOffers, nearbyOffers, recommendedOffers]);
+
   return (
     <PageTransition>
       <div className="px-4 md:px-6 py-3 space-y-5 pb-8 bg-background min-h-screen">
@@ -339,12 +408,23 @@ const Home = () => {
           </div>
         </motion.section>
 
-        {/* Claim Milestones & Scratch Cards Quick Banner */}
-        <motion.section
-          initial={{ opacity: 0, y: 12 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.15 }}
-        >
+        {/* 2.5 All Stores Closed dedicated view or normal feed */}
+        {!isLoading && areAllStoresClosed ? (
+          <AllStoresClosedView
+            city={displayCity}
+            stores={mostPopulatedStores}
+            rawOffers={[...trendingOffers, ...nearbyOffers, ...recommendedOffers]}
+            onSimulateToggle={handleSimulateToggle}
+            isSimulated={simulateClosed}
+          />
+        ) : (
+          <>
+            {/* Claim Milestones & Scratch Cards Quick Banner */}
+            <motion.section
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.15 }}
+            >
           <div
             onClick={() => navigate('/rewards')}
             className="flex items-center justify-between bg-gradient-to-r from-primary-50 via-emerald-50 to-primary-50/50 border border-primary/20 rounded-2xl p-3.5 shadow-sm hover:shadow-md cursor-pointer transition-all active:scale-[0.99] group"
@@ -536,6 +616,20 @@ const Home = () => {
               ))}
             </div>
           </motion.section>
+        )}
+
+            {/* Discreet QA / Dev Preview toggle for testing "All Stores Closed" */}
+            {!isLoading && !cityRequired && (
+              <div className="text-center pt-2 pb-1">
+                <button
+                  onClick={handleSimulateToggle}
+                  className="text-[11px] font-medium text-gray-400 hover:text-primary transition-colors bg-white/80 border border-gray-200/80 px-3 py-1.5 rounded-full shadow-2xs hover:shadow-xs"
+                >
+                  🌙 Test "All Stores Closed" View
+                </button>
+              </div>
+            )}
+          </>
         )}
 
         {/* Loading Skeletons */}

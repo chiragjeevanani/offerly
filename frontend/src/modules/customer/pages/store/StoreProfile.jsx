@@ -7,6 +7,7 @@ import LocationOnRoundedIcon from '@mui/icons-material/LocationOnRounded';
 import PhoneRoundedIcon from '@mui/icons-material/PhoneRounded';
 import VerifiedRoundedIcon from '@mui/icons-material/VerifiedRounded';
 import ShoppingCartRoundedIcon from '@mui/icons-material/ShoppingCartRounded';
+import ArrowForwardRoundedIcon from '@mui/icons-material/ArrowForwardRounded';
 import AddRoundedIcon from '@mui/icons-material/AddRounded';
 import RemoveRoundedIcon from '@mui/icons-material/RemoveRounded';
 import { 
@@ -539,52 +540,106 @@ const StoreProfile = () => {
         </div>
       </div>
 
-      {/* Floating Cart Summary Footer */}
+      {/* Floating Cart Summary Pill */}
       <AnimatePresence>
-         {cartTotalItems > 0 && (
-           <motion.div 
-             initial={{ y: 100, opacity: 0 }}
-             animate={{ y: 0, opacity: 1 }}
-             exit={{ y: 100, opacity: 0 }}
-             className="fixed bottom-20 left-0 right-0 p-4 z-40 pointer-events-none"
-           >
-             <div className="max-w-[1200px] mx-auto pointer-events-auto">
-               <div className="bg-gray-900 rounded-2xl shadow-2xl p-4 flex items-center justify-between flex-wrap gap-3 border border-gray-800">
-                  <div className="text-white">
-                    <p className="text-xs text-gray-400 font-medium mb-0.5">{cartTotalItems} item{cartTotalItems > 1 ? 's' : ''} added</p>
-                    <div className="flex items-center gap-2.5">
-                      <p className="text-lg font-bold">₹{cartTotalPrice.toLocaleString()}</p>
-                      <span className="text-[10px] text-green-400 font-bold bg-green-950/60 px-2 py-0.5 rounded-full border border-green-500/20">
-                        Discounts applied in cart
-                      </span>
-                    </div>
+        {cartTotalItems > 0 && (
+          <div className="fixed bottom-[5.5rem] sm:bottom-24 lg:bottom-7 left-0 right-0 z-[10001] pointer-events-none flex justify-center px-4">
+            <motion.div
+              initial={{ y: 50, opacity: 0, scale: 0.9 }}
+              animate={{ y: 0, opacity: 1, scale: 1 }}
+              exit={{ y: 50, opacity: 0, scale: 0.9 }}
+              transition={{ type: 'spring', stiffness: 450, damping: 26 }}
+              className="pointer-events-auto"
+            >
+              <div
+                role="button"
+                tabIndex={0}
+                onClick={() => {
+                  const fullCart = {
+                    ...cart,
+                    merchantId: merchant,
+                  };
+                  try {
+                    sessionStorage.setItem('offerly_cached_cart', JSON.stringify(fullCart));
+                  } catch {}
+                  navigate('/cart', {
+                    state: {
+                      initialCart: fullCart,
+                      initialMerchant: merchant,
+                      autoCelebrate: true,
+                    },
+                  });
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    navigate('/cart', {
+                      state: {
+                        initialCart: { ...cart, merchantId: merchant },
+                        initialMerchant: merchant,
+                        autoCelebrate: true,
+                      },
+                    });
+                  }
+                }}
+                className="group cursor-pointer bg-gray-900/95 hover:bg-gray-900 active:scale-[0.97] transition-all duration-200 backdrop-blur-xl rounded-full shadow-[0_12px_32px_rgba(0,0,0,0.45),0_0_24px_rgba(94,185,41,0.22)] border border-white/15 ring-1 ring-primary/25 pl-3.5 pr-2 py-1.5 flex items-center gap-3 select-none"
+              >
+                {/* Mini Cart Icon with Item Count Badge & Lively Bounce */}
+                <motion.div
+                  key={cartTotalItems}
+                  initial={{ scale: 0.85, rotate: -10 }}
+                  animate={{ scale: 1, rotate: 0 }}
+                  transition={{ type: 'spring', stiffness: 500, damping: 15 }}
+                  className="relative flex items-center justify-center w-8 h-8 rounded-full bg-primary/20 text-primary border border-primary/30 shrink-0"
+                >
+                  <ShoppingCartRoundedIcon sx={{ fontSize: 16 }} />
+                  <motion.span
+                    key={`badge-${cartTotalItems}`}
+                    initial={{ scale: 0 }}
+                    animate={{ scale: 1 }}
+                    transition={{ type: 'spring', stiffness: 600, damping: 12 }}
+                    className="absolute -top-1 -right-1 bg-primary text-white text-[10px] font-extrabold w-4 h-4 rounded-full flex items-center justify-center ring-2 ring-gray-900 shadow-sm"
+                  >
+                    {cartTotalItems}
+                  </motion.span>
+                </motion.div>
+
+                {/* Price & Cart Info */}
+                <div className="flex flex-col min-w-0 pr-0.5">
+                  <div className="flex items-center gap-1.5 leading-none">
+                    <span className="text-sm font-bold text-white tracking-tight">
+                      ₹{cartTotalPrice.toLocaleString()}
+                    </span>
+                    <span className="text-[11px] text-gray-400 font-medium">
+                      • {cartTotalItems} {cartTotalItems > 1 ? 'items' : 'item'}
+                    </span>
                   </div>
-                 <motion.button
-                   whileTap={{ scale: 0.95 }}
-                   onClick={() => {
-                     const fullCart = {
-                       ...cart,
-                       merchantId: merchant
-                     };
-                     try {
-                       sessionStorage.setItem('offerly_cached_cart', JSON.stringify(fullCart));
-                     } catch {}
-                     navigate('/cart', {
-                       state: {
-                         initialCart: fullCart,
-                         initialMerchant: merchant,
-                         autoCelebrate: true
-                       }
-                     });
-                   }}
-                   className="bg-white text-gray-900 px-6 py-3 rounded-xl font-bold flex items-center gap-2 shadow-lg"
-                 >
-                   View Cart <ShoppingCartRoundedIcon sx={{fontSize: 18}} />
-                 </motion.button>
-               </div>
-             </div>
-           </motion.div>
-         )}
+                  <div className="flex items-center gap-1.5 mt-1">
+                    <span className="relative flex h-1.5 w-1.5">
+                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                      <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-emerald-400"></span>
+                    </span>
+                    <span className="text-[10px] text-emerald-400 font-semibold leading-none">
+                      Discounts in cart
+                    </span>
+                  </div>
+                </div>
+
+                {/* View Cart Pill Button with Animated Arrow */}
+                <div className="bg-white group-hover:bg-primary group-hover:text-white text-gray-900 font-bold text-xs px-3.5 py-1.5 rounded-full flex items-center gap-1 shadow-sm transition-colors duration-200 shrink-0">
+                  <span>View Cart</span>
+                  <motion.span
+                    animate={{ x: [0, 3, 0] }}
+                    transition={{ repeat: Infinity, duration: 1.8, ease: 'easeInOut' }}
+                    className="flex items-center"
+                  >
+                    <ArrowForwardRoundedIcon sx={{ fontSize: 13 }} />
+                  </motion.span>
+                </div>
+              </div>
+            </motion.div>
+          </div>
+        )}
       </AnimatePresence>
 
       <ConfirmDialog

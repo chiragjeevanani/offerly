@@ -545,6 +545,15 @@ export const markAdminNotificationRead = async (req, res) => {
   }
 };
 
+export const markAllAdminNotificationsRead = async (req, res) => {
+  try {
+    await AdminNotification.updateMany({ isRead: false }, { isRead: true });
+    res.status(200).json({ success: true });
+  } catch (err) {
+    res.status(500).json({ success: false, error: 'Failed to update notifications' });
+  }
+};
+
 // ───────────────────────── SEARCH ─────────────────────────
 
 export const globalSearch = async (req, res) => {

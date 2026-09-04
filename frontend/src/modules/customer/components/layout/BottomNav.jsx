@@ -19,44 +19,53 @@ const BottomNav = () => {
   const location = useLocation();
 
   return (
-    <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-[9999] bg-white/95 backdrop-blur-xl border-t border-gray-100/50 pb-safe shadow-[0_-5px_20px_rgba(0,0,0,0.03)]">
-      <div className="flex items-center justify-around px-1 pt-1 pb-1">
+    <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-[9999] bg-white/90 backdrop-blur-2xl border-t border-gray-200/50 pb-safe shadow-[0_-4px_24px_rgba(0,0,0,0.04)]">
+      <div className="flex items-center justify-around px-2 py-1 max-w-md mx-auto">
         {tabs.map((tab) => {
-          const isActive = location.pathname === tab.path ||
+          const isActive =
+            location.pathname === tab.path ||
             (tab.path === '/saved' && location.pathname.startsWith('/saved'));
           const Icon = tab.icon;
 
           return (
-            <button
+            <motion.button
               key={tab.path}
+              whileTap={{ scale: 0.9 }}
               onClick={() => navigate(tab.path)}
-              className="flex flex-col items-center gap-1 flex-1 py-2 relative group"
+              className="relative flex flex-col items-center justify-center flex-1 py-1 px-1 rounded-xl transition-all duration-150 select-none group"
             >
-              {/* Active indicator bar (top) */}
+              {/* Fluid animated pill background for active tab */}
               {isActive && (
                 <motion.div
-                  layoutId="customer-bottom-nav-indicator"
-                  className="absolute top-0 left-0 right-0 h-0.5 bg-[#5EB929] rounded-full mx-3 shadow-[0_2px_10px_rgba(94, 185, 41,0.3)]"
-                  transition={{ type: 'spring', stiffness: 500, damping: 35 }}
+                  layoutId="customer-bottom-nav-active-pill"
+                  className="absolute inset-x-1 inset-y-0.5 bg-primary/10 rounded-xl"
+                  transition={{ type: 'spring', stiffness: 450, damping: 32 }}
                 />
               )}
 
               <motion.div
-                animate={{ scale: isActive ? 1.1 : 1 }}
-                transition={{ type: 'spring', stiffness: 400, damping: 20 }}
-                className={`${isActive ? 'text-[#5EB929]' : 'text-gray-400'} transition-colors group-active:scale-90`}
+                animate={{
+                  scale: isActive ? 1.1 : 1,
+                  y: isActive ? -1 : 0,
+                }}
+                transition={{ type: 'spring', stiffness: 450, damping: 22 }}
+                className={`relative z-10 transition-colors ${
+                  isActive ? 'text-primary' : 'text-gray-400 group-hover:text-gray-600'
+                }`}
               >
-                <Icon sx={{ fontSize: 22 }} />
+                <Icon sx={{ fontSize: 20 }} />
               </motion.div>
 
               <span
-                className={`text-[11px] font-medium leading-none transition-colors ${
-                  isActive ? 'text-primary font-semibold' : 'text-gray-400'
+                className={`relative z-10 text-[10px] tracking-tight leading-none mt-0.5 transition-colors ${
+                  isActive
+                    ? 'text-primary font-bold'
+                    : 'text-gray-400 group-hover:text-gray-600 font-medium'
                 }`}
               >
                 {tab.label}
               </span>
-            </button>
+            </motion.button>
           );
         })}
       </div>

@@ -100,7 +100,7 @@ const SideNav = () => {
               <div className="w-full relative z-10">
                 <p className="text-xs text-text-secondary font-medium mb-0.5 flex items-center gap-1.5">
                   <SavingsRoundedIcon sx={{ fontSize: 14 }} className="text-primary" />
-                  Lifetime Savings
+                  Savings
                 </p>
                 <div className="flex items-baseline gap-1 mt-1">
                   <span className="text-2xl font-bold text-primary tracking-tight">₹{user.lifetimeSavings ?? user.credits ?? 0}</span>

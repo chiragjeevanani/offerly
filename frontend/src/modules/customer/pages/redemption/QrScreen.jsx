@@ -56,11 +56,20 @@ const QrScreen = () => {
 
           const totalBasePrice = backendCart.items.reduce((sum, item) => sum + (item.product.price * item.qty), 0);
           const totalOfferPrice = backendCart.items.reduce((sum, item) => sum + (item.product.offerPrice * item.qty), 0);
-          const totalDiscount = totalBasePrice - totalOfferPrice;
+          const storeDiscount = totalBasePrice - totalOfferPrice;
+          const offerlyExtraDiscount = backendCart.offerlyExtraDiscount || 0;
+          const totalDiscount = storeDiscount + offerlyExtraDiscount;
+          const finalPayable = Math.max(0, totalOfferPrice - offerlyExtraDiscount);
 
           setDraftData({
             items: backendCart.items,
-            totals: { base: totalBasePrice, discount: totalDiscount, final: totalOfferPrice }
+            totals: {
+              base: totalBasePrice,
+              discount: totalDiscount,
+              final: finalPayable,
+              storeDiscount,
+              offerlyExtraDiscount,
+            }
           });
 
           const merchantRes = await merchantAPI.getById(mId);
@@ -400,8 +409,8 @@ const QrScreen = () => {
 
                   {booking.totals?.walletDiscount > 0 && (
                     <div className="flex justify-between items-center text-[10px] mb-1.5">
-                      <span className="font-bold text-emerald-600">🎉 New customer bonus</span>
-                      <span className="font-bold text-emerald-600">-₹{Math.round(booking.totals.walletDiscount)}</span>
+                      <span className="font-bold text-[#5EB929]">Offerly Extra Discount</span>
+                      <span className="font-bold text-[#5EB929]">-₹{Math.round(booking.totals.walletDiscount)}</span>
                     </div>
                   )}
 
