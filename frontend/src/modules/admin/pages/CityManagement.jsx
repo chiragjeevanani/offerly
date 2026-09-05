@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import SlideOver from '../components/SlideOver';
 import ConfirmDeleteModal from '../components/ConfirmDeleteModal';
+import CityZoneMap from '../components/CityZoneMap';
 import { adminAPI } from '../../../api/admin.api';
 import SearchRoundedIcon from '@mui/icons-material/SearchRounded';
 import AddRoundedIcon from '@mui/icons-material/AddRounded';
@@ -20,7 +21,7 @@ const CityManagement = () => {
   const [isSlideOverOpen, setIsSlideOverOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [selectedCity, setSelectedCity] = useState(null);
-  const [formData, setFormData] = useState({ name: '', zones: [] });
+  const [formData, setFormData] = useState({ name: '', zones: [], coordinates: undefined });
 
   const { data: cities = [], isLoading: loading, refetch, isFetching } = useQuery({
     queryKey: ['adminCities'],
@@ -36,7 +37,7 @@ const CityManagement = () => {
 
   const handleAdd = () => {
     setSelectedCity(null);
-    setFormData({ name: '', zones: [] });
+    setFormData({ name: '', zones: [], coordinates: undefined });
     setIsSlideOverOpen(true);
   };
 
@@ -184,7 +185,7 @@ const CityManagement = () => {
         onClose={() => setIsSlideOverOpen(false)}
         title={selectedCity ? "Edit Region" : "New Region Registry"}
         subtitle={selectedCity ? `REF: ${selectedCity._id.substring(0, 12)}` : "Deploy Offerly to a new city"}
-        widthClass="max-w-md"
+        widthClass="max-w-3xl"
       >
         <form onSubmit={handleSave} className="flex flex-col h-full font-sans">
           <div className="flex-1 overflow-y-auto space-y-5 pb-32 pr-1 no-scrollbar">
@@ -212,64 +213,14 @@ const CityManagement = () => {
               </div>
 
               <div>
-                <div className="flex items-center justify-between mb-1.5 ml-1">
-                  <label className="block text-[11px] font-bold text-gray-400 uppercase tracking-widest">Associated Zones</label>
-                  <button
-                    type="button"
-                    onClick={() => setFormData({
-                      ...formData,
-                      zones: [...(formData.zones || []), { name: '', merchantCount: 0, status: 'active' }],
-                    })}
-                    className="text-[10px] font-bold text-[#5EB929] uppercase tracking-wide"
-                  >
-                    + Add Zone
-                  </button>
-                </div>
-                <div className="space-y-2">
-                  {(formData.zones || []).map((zone, index) => (
-                    <div key={zone._id || zone.id || `new-${index}`} className="flex items-center gap-2">
-                      <input
-                        type="text"
-                        value={zone.name}
-                        onChange={(e) => {
-                          const zones = [...formData.zones];
-                          zones[index] = { ...zones[index], name: e.target.value };
-                          setFormData({ ...formData, zones });
-                        }}
-                        placeholder="Zone name e.g. Beltola"
-                        className="flex-1 bg-white border border-gray-200 rounded-xl py-2.5 px-3 text-sm font-medium focus:ring-2 focus:ring-primary/10 focus:border-primary outline-none transition-all"
-                      />
-                      <button
-                        type="button"
-                        onClick={() => {
-                          const zones = [...formData.zones];
-                          zones[index] = { ...zones[index], status: zones[index].status === 'inactive' ? 'active' : 'inactive' };
-                          setFormData({ ...formData, zones });
-                        }}
-                        className={`px-2.5 py-2 rounded-lg text-[9px] font-bold uppercase tracking-wide border whitespace-nowrap ${zone.status === 'inactive' ? 'bg-gray-50 text-gray-400 border-gray-100' : 'bg-green-50 text-green-600 border-green-100'}`}
-                      >
-                        {zone.status === 'inactive' ? 'Inactive' : 'Active'}
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          if ((zone.merchantCount || 0) > 0) {
-                            toast.error(`Cannot remove — ${zone.merchantCount} merchant(s) assigned. Deactivate instead.`);
-                            return;
-                          }
-                          setFormData({ ...formData, zones: formData.zones.filter((_, i) => i !== index) });
-                        }}
-                        className="p-2 rounded-lg text-red-400 hover:bg-red-50 shrink-0"
-                      >
-                        <DeleteRoundedIcon sx={{ fontSize: 16 }} />
-                      </button>
-                    </div>
-                  ))}
-                  {(!formData.zones || formData.zones.length === 0) && (
-                    <p className="text-[11px] text-gray-400 italic px-1">No zones yet — add one so merchants can select it.</p>
-                  )}
-                </div>
-                <p className="mt-1.5 text-[10px] text-gray-400 px-1 italic">Zones let merchants pin their exact operating area, and restrict which offers a customer in that area can see.</p>
+                <label className="block text-[11px] font-bold text-gray-400 uppercase tracking-widest mb-1.5 ml-1">Operational Zones</label>
+                <CityZoneMap
+                  coordinates={formData.coordinates}
+                  onCoordinatesChange={(coordinates) => setFormData({ ...formData, coordinates })}
+                  zones={formData.zones || []}
+                  onZonesChange={(zones) => setFormData({ ...formData, zones })}
+                />
+                <p className="mt-1.5 text-[10px] text-gray-400 px-1 italic">Draw hexagonal zones on the map — merchants pin their exact operating area inside one, and it restricts which offers a customer in that area can see.</p>
               </div>
             </div>
 

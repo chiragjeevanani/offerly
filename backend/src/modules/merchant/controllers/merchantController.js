@@ -1137,8 +1137,30 @@ export const purchaseSubscription = async (req, res) => {
     // If there's still something payable after the wallet discount, create a Razorpay Order
     if (charge.payable > 0) {
       const { createRazorpayOrder } = await import('../../../utils/razorpay.js');
+      const { default: SubscriptionOrder } = await import('../../payment/models/SubscriptionOrder.js');
       try {
-        const order = await createRazorpayOrder(charge.payable, 'INR', `rcpt_${merchant._id.toString().slice(-8)}_${Date.now()}`);
+        const order = await createRazorpayOrder(charge.payable, 'INR', `rcpt_${merchant._id.toString().slice(-8)}_${Date.now()}`, {
+          planId: plan._id.toString(),
+          planName: plan.name,
+          planType: isAdPlan ? 'advertisement' : 'merchant',
+          merchantId: merchant._id.toString(),
+          merchantName: merchant.storeName,
+        });
+
+        // Bind this order to exactly this plan/amount so verifySubscription can't be
+        // tricked into activating a different (more expensive) plan with the same
+        // payment proof - see SubscriptionOrder.js.
+        await SubscriptionOrder.create({
+          userId: req.user._id,
+          merchantId: merchant._id,
+          planId: plan._id,
+          orderId: order.id,
+          amount: charge.payable,
+          listPrice: charge.listPrice,
+          walletDiscountApplied: charge.walletDiscount,
+          planType: isAdPlan ? 'advertisement' : 'merchant',
+        });
+
         return res.status(200).json({
           success: true,
           requiresPayment: true,
@@ -1203,6 +1225,7 @@ export const verifySubscription = async (req, res) => {
   try {
     const { razorpay_order_id, razorpay_payment_id, razorpay_signature, planId } = req.body;
     const { verifyRazorpayPayment } = await import('../../../utils/razorpay.js');
+    const { default: SubscriptionOrder } = await import('../../payment/models/SubscriptionOrder.js');
 
     const isValid = verifyRazorpayPayment(razorpay_order_id, razorpay_payment_id, razorpay_signature);
 
@@ -1211,15 +1234,35 @@ export const verifySubscription = async (req, res) => {
     }
 
     const merchant = await getMerchantForOwner(req.user._id);
-    const plan = await Plan.findById(planId);
+    if (!merchant) {
+      return res.status(404).json({ success: false, error: 'Merchant not found' });
+    }
 
-    if (!merchant || !plan) {
-      return res.status(404).json({ success: false, error: 'Merchant or Plan not found' });
+    // The plan/amount actually paid for is whatever purchaseSubscription recorded
+    // when it created this Razorpay order - never trust req.body.planId for this,
+    // otherwise a payment for a cheap plan could be replayed to activate a
+    // different, more expensive one. Atomically claim the order so it can only
+    // ever be verified once.
+    const order = await SubscriptionOrder.findOneAndUpdate(
+      { orderId: razorpay_order_id, merchantId: merchant._id, status: 'created' },
+      { status: 'consumed' },
+      { new: true }
+    );
+    if (!order) {
+      return res.status(400).json({ success: false, error: 'This order was not found, does not belong to you, or has already been used' });
+    }
+    if (planId && String(planId) !== String(order.planId)) {
+      return res.status(400).json({ success: false, error: 'Plan does not match the plan this payment was created for' });
+    }
+
+    const plan = await Plan.findById(order.planId);
+    if (!plan) {
+      return res.status(404).json({ success: false, error: 'Plan not found' });
     }
 
     const startDate = new Date();
     const endDate = new Date();
-    
+
     if (plan.duration === 'Monthly') {
       endDate.setMonth(endDate.getMonth() + 1);
     } else if (plan.duration === 'Yearly') {
@@ -1234,7 +1277,7 @@ export const verifySubscription = async (req, res) => {
         userId: req.user._id,
         merchantId: merchant._id,
         planId: plan._id,
-        amount: plan.price,
+        amount: order.amount,
         status: 'active',
         startDate,
         endDate,
@@ -1244,7 +1287,10 @@ export const verifySubscription = async (req, res) => {
       });
       // NO update to Merchant.subscriptionPlanId
     } else {
-      const charge = computeSubscriptionCharge(plan, merchant);
+      // Use the listPrice/walletDiscount locked in when the order was created,
+      // not a fresh computeSubscriptionCharge() call - the wallet balance may
+      // have changed since then, and what was actually charged must not drift.
+      const { amount, listPrice, walletDiscountApplied } = order;
 
       // Core Membership - Overwrite/Update existing one
       const subscription = await MerchantSubscription.findOneAndUpdate(
@@ -1253,9 +1299,9 @@ export const verifySubscription = async (req, res) => {
           userId: req.user._id,
           merchantId: merchant._id,
           planId: plan._id,
-          amount: charge.payable,
-          listPrice: charge.listPrice,
-          walletDiscountApplied: charge.walletDiscount,
+          amount,
+          listPrice,
+          walletDiscountApplied,
           status: 'active',
           startDate,
           endDate,
@@ -1272,8 +1318,8 @@ export const verifySubscription = async (req, res) => {
       await applySubscriptionWalletEffects({
         merchantDoc: merchant,
         plan,
-        listPrice: charge.listPrice,
-        walletDiscount: charge.walletDiscount,
+        listPrice,
+        walletDiscount: walletDiscountApplied,
         subscriptionId: subscription._id,
       });
     }

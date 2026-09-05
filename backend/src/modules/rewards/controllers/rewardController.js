@@ -251,6 +251,19 @@ export const getAdminCards = async (req, res, next) => {
   }
 };
 
+export const deleteAdminCard = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const card = await ScratchCard.findByIdAndDelete(id);
+    if (!card) {
+      return res.status(404).json({ success: false, message: 'Scratch card not found' });
+    }
+    return res.status(200).json({ success: true, message: 'Scratch card deleted successfully' });
+  } catch (error) {
+    next(error);
+  }
+};
+
 // Manual award / trigger helper for admin testing
 export const triggerMilestoneCheckAdmin = async (req, res, next) => {
   try {

@@ -197,13 +197,13 @@ const MerchantDashboard = ({ merchant, onMerchantUpdate }) => {
             aria-checked={isStoreOpen}
             onClick={handleToggleOpen}
             disabled={togglingOpen}
-            className={`relative w-14 h-8 rounded-full transition-colors shrink-0 disabled:opacity-50 ${
+            className={`relative w-14 h-8 p-0 rounded-full transition-colors shrink-0 disabled:opacity-50 ${
               isStoreOpen ? 'bg-[#5EB929]' : 'bg-gray-300'
             }`}
           >
             <span
-              className={`absolute top-1 w-6 h-6 bg-white rounded-full shadow-md transition-transform ${
-                isStoreOpen ? 'translate-x-7' : 'translate-x-1'
+              className={`absolute top-1 left-1 w-6 h-6 bg-white rounded-full shadow-md transition-transform ${
+                isStoreOpen ? 'translate-x-6' : 'translate-x-0'
               }`}
             />
           </button>

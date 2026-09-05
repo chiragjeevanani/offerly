@@ -56,6 +56,10 @@ export const rewardsAPI = {
     return axiosInstance.get('/rewards/admin/cards', { params });
   },
 
+  deleteAdminCard: async (id) => {
+    return axiosInstance.delete(`/rewards/admin/cards/${id}`);
+  },
+
   triggerAdminCheck: async (userId) => {
     return axiosInstance.post('/rewards/admin/trigger-check', { userId });
   },

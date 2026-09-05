@@ -127,6 +127,16 @@ const RewardsManagement = () => {
     onError: (err) => toast.error(err.message || 'Failed to delete reward'),
   });
 
+  // Card Mutations
+  const deleteCardMutation = useMutation({
+    mutationFn: (id) => rewardsAPI.deleteAdminCard(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries(['adminCards']);
+      toast.success('Scratch card deleted');
+    },
+    onError: (err) => toast.error(err.message || 'Failed to delete scratch card'),
+  });
+
   // Handlers for Milestones
   const handleOpenMilestoneModal = (milestone = null) => {
     if (milestone) {
@@ -509,6 +519,7 @@ const RewardsManagement = () => {
                     <th className="px-6 py-3.5">Coupon Code</th>
                     <th className="px-6 py-3.5">Status</th>
                     <th className="px-6 py-3.5">Issued Date</th>
+                    <th className="px-6 py-3.5 text-right">Actions</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-100">
@@ -544,6 +555,20 @@ const RewardsManagement = () => {
                       </td>
                       <td className="px-6 py-4 text-xs text-gray-400">
                         {new Date(card.createdAt).toLocaleDateString()}
+                      </td>
+                      <td className="px-6 py-4 text-right">
+                        <button
+                          onClick={() => {
+                            if (confirm(`Delete this scratch card for ${card.userId?.name || 'this customer'}? This cannot be undone.`)) {
+                              deleteCardMutation.mutate(card._id);
+                            }
+                          }}
+                          disabled={deleteCardMutation.isPending}
+                          className="p-2 text-gray-400 hover:text-rose-600 hover:bg-rose-50 rounded-xl transition-all disabled:opacity-50"
+                          title="Delete scratch card"
+                        >
+                          <DeleteRoundedIcon sx={{ fontSize: 18 }} />
+                        </button>
                       </td>
                     </tr>
                   ))}

@@ -13,7 +13,7 @@ if (process.env.RAZORPAY_KEY_ID && process.env.RAZORPAY_KEY_ID !== 'rzp_test_XXX
   });
 }
 
-export const createRazorpayOrder = async (amount, currency = 'INR', receipt) => {
+export const createRazorpayOrder = async (amount, currency = 'INR', receipt, notes = undefined) => {
   if (!razorpay) {
     throw new Error('Razorpay is not configured with valid keys');
   }
@@ -22,6 +22,9 @@ export const createRazorpayOrder = async (amount, currency = 'INR', receipt) => 
     amount: Math.round(amount * 100), // Amount in paise, rounded to avoid float issues
     currency,
     receipt,
+    // Shows up on the order/payment detail page in the Razorpay Dashboard -
+    // otherwise every payment there is just an amount + opaque receipt string.
+    ...(notes ? { notes } : {}),
   };
 
   try {

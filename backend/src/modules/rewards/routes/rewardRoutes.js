@@ -13,6 +13,7 @@ import {
   updateAdminReward,
   deleteAdminReward,
   getAdminCards,
+  deleteAdminCard,
   triggerMilestoneCheckAdmin,
 } from '../controllers/rewardController.js';
 
@@ -39,6 +40,7 @@ router.put('/admin/rewards/:id', protect, authorize('admin'), updateAdminReward)
 router.delete('/admin/rewards/:id', protect, authorize('admin'), deleteAdminReward);
 
 router.get('/admin/cards', protect, authorize('admin'), getAdminCards);
+router.delete('/admin/cards/:id', protect, authorize('admin'), deleteAdminCard);
 router.post('/admin/trigger-check', protect, authorize('admin'), triggerMilestoneCheckAdmin);
 
 export default router;

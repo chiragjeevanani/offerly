@@ -1,5 +1,13 @@
 import mongoose from 'mongoose';
 
+const pointSchema = new mongoose.Schema(
+  {
+    lat: { type: Number, required: true },
+    lng: { type: Number, required: true },
+  },
+  { _id: false }
+);
+
 const zoneSchema = new mongoose.Schema(
   {
     name: {
@@ -15,6 +23,21 @@ const zoneSchema = new mongoose.Schema(
       type: String,
       enum: ['active', 'inactive'],
       default: 'active',
+    },
+    // Hexagonal zone geometry — center + radius define the hexagon,
+    // `path` is the precomputed set of 6 vertices so the map can render
+    // it without recomputing geodesic points on every load.
+    center: {
+      type: pointSchema,
+      default: undefined,
+    },
+    radiusMeters: {
+      type: Number,
+      default: 800,
+    },
+    path: {
+      type: [pointSchema],
+      default: undefined,
     },
   },
   { _id: true }

@@ -25,6 +25,18 @@ window.addEventListener('error', (e) => {
   }
 });
 
+// Some browser/IDE tooling injects anonymous, eval'd scripts into the page
+// (DevTools shows these as "VM123" with no source file) — we don't ship any
+// eval'd code ourselves, so a thrown error with no filename is always one of
+// those, never this app's own. Suppress just those so they don't show as
+// scary uncaught errors; anything from our own bundle always has a real
+// filename and is left untouched.
+window.addEventListener('error', (e) => {
+  if (!e.filename) {
+    e.preventDefault();
+  }
+});
+
 // Prevent pinch-to-zoom and gesture zoom on mobile WebViews/browsers
 if (typeof window !== 'undefined') {
   document.addEventListener('gesturestart', (e) => e.preventDefault(), { passive: false });
