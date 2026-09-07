@@ -1,9 +1,9 @@
 import axiosInstance from './axios';
 
 export const planAPI = {
-  // Get all active plans
-  getAll: async () => {
-    return axiosInstance.get('/plans');
+  // Get all active plans (optionally filtered, e.g. { planType: 'customer' })
+  getAll: async (params = {}) => {
+    return axiosInstance.get('/plans', { params });
   },
 
   // Get plan by ID

@@ -20,6 +20,11 @@ export const getPlans = async (req, res) => {
 
     const query = { status: 'active' };
 
+    const allowedPlanTypes = ['merchant', 'advertisement', 'customer'];
+    if (allowedPlanTypes.includes(req.query.planType)) {
+      query.planType = req.query.planType;
+    }
+
     if (city) {
       // Show plans specifically for this city OR global plans (empty/null)
       query.$or = [

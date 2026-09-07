@@ -15,6 +15,7 @@ import { cartAPI } from '../../../../api/cart.api';
 import { merchantAPI } from '../../../../api/merchant.api';
 import PageTransition from '../../components/ui/PageTransition';
 import { useApp } from '../../context/AppContext';
+import { useCustomerSubscription } from '../../../../hooks/useCustomerSubscription';
 import { useSocket } from '../../../../context/SocketContext';
 
 function formatDateTime(dateString) {
@@ -35,6 +36,7 @@ const QrScreen = () => {
   const [timeLeft, setTimeLeft] = useState('');
   const [isExpired, setIsExpired] = useState(false);
   const { user } = useApp();
+  const { enabled: subscriptionEnabled, isSubscribed } = useCustomerSubscription();
 
   const [draftData, setDraftData] = useState(null);
   const [draftMerchantId, setDraftMerchantId] = useState(null);
@@ -199,6 +201,11 @@ const QrScreen = () => {
   }, [booking?._id, isDraft]);
 
   const handleSendRequest = async () => {
+    if (subscriptionEnabled && !isSubscribed) {
+      navigate('/subscribe', { state: { from: '/redeem/draft' } });
+      return;
+    }
+
     setIsRequesting(true);
     try {
       const response = await bookingAPI.create({
@@ -235,7 +242,11 @@ const QrScreen = () => {
       }
     } catch (error) {
       console.error('Booking error:', error);
-      const errorMessage = error.response?.data?.error || error.message || 'Failed to generate pass';
+      if (error?.code === 'SUBSCRIPTION_REQUIRED') {
+        navigate('/subscribe', { state: { from: '/redeem/draft' } });
+        return;
+      }
+      const errorMessage = error?.error || error?.message || 'Failed to generate pass';
       toast.error(errorMessage);
     } finally {
       setIsRequesting(false);

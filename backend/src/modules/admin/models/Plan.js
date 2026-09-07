@@ -56,7 +56,7 @@ const planSchema = new mongoose.Schema(
     },
     planType: {
       type: String,
-      enum: ['merchant', 'advertisement'],
+      enum: ['merchant', 'advertisement', 'customer'],
       default: 'merchant',
     },
     status: {

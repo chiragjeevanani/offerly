@@ -33,6 +33,7 @@ const Referral = lazy(() => import('./modules/customer/pages/profile/Referral'))
 const Notifications = lazy(() => import('./modules/customer/pages/profile/Notifications'));
 const SearchResults = lazy(() => import('./modules/customer/pages/search/SearchResults'));
 const CartView = lazy(() => import('./modules/customer/pages/redemption/CartView'));
+const SubscribePage = lazy(() => import('./modules/customer/pages/subscription/SubscribePage'));
 const RewardsHub = lazy(() => import('./modules/customer/pages/rewards/RewardsHub'));
 
 // Static pages
@@ -89,6 +90,7 @@ const AppRoutes = () => {
                 <Route path="explore" element={<ProtectedRoute><Explore /></ProtectedRoute>} />
                 <Route path="map" element={<ProtectedRoute><MapView /></ProtectedRoute>} />
                 <Route path="cart" element={<ProtectedRoute><CartView /></ProtectedRoute>} />
+                <Route path="subscribe" element={<ProtectedRoute><SubscribePage /></ProtectedRoute>} />
                 <Route path="offer/:id" element={<ProtectedRoute><OfferDetail /></ProtectedRoute>} />
                 <Route path="saved" element={<ProtectedRoute><SavedOffers /></ProtectedRoute>} />
                 <Route path="redemptions" element={<ProtectedRoute><MyRedemptions /></ProtectedRoute>} />

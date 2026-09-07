@@ -51,4 +51,17 @@ export const userAPI = {
   redeemCredits: async (amount) => {
     return axiosInstance.post('/users/credits/redeem', { amount });
   },
+
+  // Customer subscription (claim gate)
+  getSubscriptionStatus: async () => {
+    return axiosInstance.get('/users/me/subscription');
+  },
+
+  purchaseSubscription: async (planId) => {
+    return axiosInstance.post('/users/me/subscription/purchase', { planId });
+  },
+
+  verifySubscription: async (payload) => {
+    return axiosInstance.post('/users/me/subscription/verify', payload);
+  },
 };

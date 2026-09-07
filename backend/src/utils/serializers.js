@@ -236,6 +236,27 @@ export const serializeReferralHistory = (entry) => ({
   status: entry?.status || 'credited',
 });
 
+export const serializeCustomerSubscription = (subscription) => {
+  if (!subscription) return null;
+
+  const plan = subscription.planId && typeof subscription.planId === 'object'
+    ? serializePlan(subscription.planId)
+    : null;
+
+  return {
+    id: objectIdToString(subscription?._id ?? subscription?.id),
+    userId: objectIdToString(subscription?.userId),
+    planId: plan ? plan.id : objectIdToString(subscription?.planId),
+    plan,
+    status: subscription?.status || 'pending',
+    amount: subscription?.amount || 0,
+    startDate: subscription?.startDate || null,
+    endDate: subscription?.endDate || null,
+    createdAt: subscription?.createdAt || null,
+    updatedAt: subscription?.updatedAt || null,
+  };
+};
+
 export const serializeRedemption = (redemption) => ({
   id: redemption?.internalId || objectIdToString(redemption?._id ?? redemption?.id),
   databaseId: objectIdToString(redemption?._id ?? redemption?.id),

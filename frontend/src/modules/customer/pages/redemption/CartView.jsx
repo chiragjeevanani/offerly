@@ -17,6 +17,7 @@ import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 import { cartAPI } from '../../../../api/cart.api';
 import { merchantAPI } from '../../../../api/merchant.api';
 import { useApp } from '../../context/AppContext';
+import { useCustomerSubscription } from '../../../../hooks/useCustomerSubscription';
 import PageTransition from '../../components/ui/PageTransition';
 
 const CountUp = ({ to }) => {
@@ -206,7 +207,13 @@ const CartView = () => {
     }
   };
 
+  const { enabled: subscriptionEnabled, isSubscribed } = useCustomerSubscription();
+
   const handleProceed = () => {
+     if (subscriptionEnabled && !isSubscribed) {
+       navigate('/subscribe', { state: { from: '/redeem/draft' } });
+       return;
+     }
      navigate('/redeem/draft');
   };
 

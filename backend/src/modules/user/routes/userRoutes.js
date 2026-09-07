@@ -1,6 +1,6 @@
 import express from "express";
 
-import { protect } from "../../../middlewares/auth.js";
+import { authorize, protect } from "../../../middlewares/auth.js";
 import {
   getCities,
   getMyNotifications,
@@ -14,6 +14,11 @@ import {
   toggleSavedOffer,
   updateMyProfile,
 } from "../controllers/userController.js";
+import {
+  getMySubscriptionStatus,
+  purchaseCustomerSubscription,
+  verifyCustomerSubscription,
+} from "../controllers/subscriptionController.js";
 
 const router = express.Router();
 
@@ -31,5 +36,8 @@ router.post("/saved-offers/:offerId/toggle", protect, toggleSavedOffer);
 router.get("/referrals", protect, getReferralHistory);
 router.get("/referrals/history", protect, getReferralHistory);
 router.post("/credits/redeem", protect, redeemCredits);
+router.get("/me/subscription", protect, authorize("customer"), getMySubscriptionStatus);
+router.post("/me/subscription/purchase", protect, authorize("customer"), purchaseCustomerSubscription);
+router.post("/me/subscription/verify", protect, authorize("customer"), verifyCustomerSubscription);
 
 export default router;

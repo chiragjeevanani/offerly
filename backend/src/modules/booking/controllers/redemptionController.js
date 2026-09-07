@@ -8,6 +8,7 @@ import { emitUserNotification, emitMerchantNotification } from '../../../config/
 import { invalidateFeedCache } from '../../../utils/feedCache.js';
 import { checkAndAwardMilestone } from '../../rewards/services/milestoneService.js';
 import { getWalletSettings } from '../../../utils/subscriptionWallet.js';
+import { getCustomerSubscriptionStatus } from '../../../utils/customerSubscription.js';
 import DiscountWalletTransaction from '../../payment/models/DiscountWalletTransaction.js';
 
 // @desc    Create a redemption/booking
@@ -47,6 +48,15 @@ export const createRedemption = async (req, res) => {
 
   try {
     const { offerId, merchantId, items, totals } = req.body;
+
+    const { enabled, isSubscribed } = await getCustomerSubscriptionStatus(req.user.id);
+    if (enabled && !isSubscribed) {
+      return res.status(403).json({
+        success: false,
+        error: 'An active subscription is required to claim offers.',
+        code: 'SUBSCRIPTION_REQUIRED',
+      });
+    }
 
     // Extra discount for customers who've never completed a redemption anywhere
     // on the platform, funded from the merchant's discount wallet. Computed

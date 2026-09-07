@@ -15,6 +15,7 @@ import MerchantNotification from '../../merchant/models/MerchantNotification.js'
 import AdRequest from '../models/AdRequest.js';
 import { emitMerchantNotification } from '../../../config/socket.js';
 import { computeSubscriptionCharge, getWalletSettings } from '../../../utils/subscriptionWallet.js';
+import { getCustomerSubscriptionSettings } from '../../../utils/customerSubscription.js';
 
 // ───────────────────────── DASHBOARD STATS ─────────────────────────
 
@@ -509,6 +510,29 @@ export const updateWalletSettingsConfig = async (req, res) => {
     res.status(200).json({ success: true, data: settings });
   } catch (err) {
     res.status(500).json({ success: false, error: 'Failed to update wallet settings' });
+  }
+};
+
+// ─────────────────── CUSTOMER SUBSCRIPTION SETTINGS ───────────────────
+
+export const getCustomerSubscriptionSettingsConfig = async (req, res) => {
+  try {
+    const settings = await getCustomerSubscriptionSettings();
+    res.status(200).json({ success: true, data: settings });
+  } catch (err) {
+    res.status(500).json({ success: false, error: 'Failed to fetch customer subscription settings' });
+  }
+};
+
+export const updateCustomerSubscriptionSettingsConfig = async (req, res) => {
+  try {
+    const { enabled } = req.body;
+    const settings = await getCustomerSubscriptionSettings();
+    settings.enabled = Boolean(enabled);
+    await settings.save();
+    res.status(200).json({ success: true, data: settings });
+  } catch (err) {
+    res.status(500).json({ success: false, error: 'Failed to update customer subscription settings' });
   }
 };
 

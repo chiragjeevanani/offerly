@@ -15,7 +15,7 @@ const subscriptionOrderSchema = new mongoose.Schema(
     merchantId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Merchant",
-      required: true,
+      default: null,
       index: true,
     },
     planId: {
@@ -43,7 +43,7 @@ const subscriptionOrderSchema = new mongoose.Schema(
     },
     planType: {
       type: String,
-      enum: ["merchant", "advertisement"],
+      enum: ["merchant", "advertisement", "customer"],
       default: "merchant",
     },
     status: {

@@ -32,7 +32,7 @@ const TabButton = ({ label, isActive, onClick }) => (
 
 const SubscriptionManagement = () => {
   const queryClient = useQueryClient();
-  const [activeTab, setActiveTab] = useState('merchant'); // 'merchant', 'advertisement'
+  const [activeTab, setActiveTab] = useState('merchant'); // 'merchant', 'advertisement', 'customer'
   const [isSlideOverOpen, setIsSlideOverOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [selectedPlan, setSelectedPlan] = useState(null);
@@ -79,6 +79,25 @@ const SubscriptionManagement = () => {
     }
   };
 
+  const { data: customerSubscriptionSettings, refetch: refetchCustomerSubscriptionSettings } = useQuery({
+    queryKey: ['customerSubscriptionSettings'],
+    queryFn: async () => {
+      const res = await adminAPI.getCustomerSubscriptionSettings();
+      return res.data || res;
+    }
+  });
+
+  const handleToggleCustomerSubscription = async () => {
+    try {
+      const nextEnabled = !customerSubscriptionSettings?.enabled;
+      await adminAPI.updateCustomerSubscriptionSettings({ enabled: nextEnabled });
+      toast.success(nextEnabled ? 'Customer subscriptions are now required to claim offers' : 'Customer subscriptions turned off — claiming is free again');
+      refetchCustomerSubscriptionSettings();
+    } catch {
+      toast.error('Failed to update customer subscription settings');
+    }
+  };
+
   const zoneOverrideCityOptions = citiesList.filter((c) => (c.zones || []).length > 0);
   const zoneOverrideZoneOptions = citiesList.find((c) => c.name === zoneOverrideDraft.city)?.zones || [];
 
@@ -114,18 +133,21 @@ const SubscriptionManagement = () => {
     }
   });
 
-  const filteredPlans = plans.filter(p => 
-    activeTab === 'merchant' ? (p.planType === 'merchant' || !p.planType) : (p.planType === 'advertisement')
-  );
+  const filteredPlans = plans.filter(p => {
+    if (activeTab === 'merchant') return p.planType === 'merchant' || !p.planType;
+    if (activeTab === 'customer') return p.planType === 'customer';
+    return p.planType === 'advertisement';
+  });
 
   const handleAdd = () => {
     setSelectedPlan(null);
+    const isCustomerTab = activeTab === 'customer';
     setFormData({
       name: '',
       price: 0,
       duration: 'Monthly',
-      maxProducts: 5,
-      maxOffers: 5,
+      maxProducts: isCustomerTab ? 0 : 5,
+      maxOffers: isCustomerTab ? 0 : 5,
       insightsEnabled: false,
       features: [{ id: 'f1', text: '' }],
       applicableCities: [],
@@ -194,7 +216,7 @@ const SubscriptionManagement = () => {
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-2 mb-1.5">
           <div>
             <h1 className="text-xl lg:text-2xl font-medium text-gray-800 tracking-tight">Plan Architecture</h1>
-            <p className="text-[12px] text-gray-500 tracking-tight">Configure subscription tiers and ad packages</p>
+            <p className="text-[12px] text-gray-500 tracking-tight">Configure subscription tiers, ad packages, and customer plans</p>
           </div>
 
           <div className="flex items-center gap-2">
@@ -221,6 +243,7 @@ const SubscriptionManagement = () => {
           <div className="flex items-center gap-1.5 bg-white/50 p-1 rounded-[12px] border border-gray-100 overflow-x-auto no-scrollbar">
             <TabButton label="Merchant Tiers" isActive={activeTab === 'merchant'} onClick={() => setActiveTab('merchant')} />
             <TabButton label="Ad Packages" isActive={activeTab === 'advertisement'} onClick={() => setActiveTab('advertisement')} />
+            <TabButton label="Customer Plans" isActive={activeTab === 'customer'} onClick={() => setActiveTab('customer')} />
           </div>
 
           <div className="hidden lg:block text-right">
@@ -255,6 +278,30 @@ const SubscriptionManagement = () => {
                 Save
               </button>
             </div>
+          </div>
+        )}
+
+        {/* Customer Subscription Gate Toggle */}
+        {activeTab === 'customer' && (
+          <div className="mb-2.5 bg-white rounded-2xl border border-gray-100 shadow-sm p-4 flex flex-col sm:flex-row sm:items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-[#5EB929]/10 flex items-center justify-center text-[#5EB929] shrink-0">
+              <PaymentsRoundedIcon sx={{ fontSize: 20 }} />
+            </div>
+            <div className="flex-1">
+              <p className="text-[12px] font-bold text-gray-800">Require subscription to claim offers</p>
+              <p className="text-[10px] text-gray-400">
+                {customerSubscriptionSettings?.enabled
+                  ? 'Customers must have an active plan below to claim any offer. Browsing stays free.'
+                  : 'Off — every customer can claim offers for free, regardless of the plans below.'}
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={handleToggleCustomerSubscription}
+              className={`relative w-11 h-6 rounded-full transition-colors flex-shrink-0 ${customerSubscriptionSettings?.enabled ? 'bg-[#5EB929]' : 'bg-gray-300'}`}
+            >
+              <span className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow-sm transition-transform ${customerSubscriptionSettings?.enabled ? 'translate-x-5' : 'translate-x-0'}`} />
+            </button>
           </div>
         )}
 
@@ -311,18 +358,20 @@ const SubscriptionManagement = () => {
                   </div>
 
                   {/* Limits - Slim Style */}
-                  <div className="grid grid-cols-2 gap-2 mb-4">
-                    <div className="bg-gray-50/50 rounded-xl p-2 border border-gray-50 flex flex-col items-center text-center">
-                       <Inventory2RoundedIcon sx={{ fontSize: 14 }} className="text-gray-400 mb-1" />
-                       <p className="text-[9px] font-bold text-gray-400 uppercase tracking-tight">Products</p>
-                       <p className="text-[11px] font-bold text-gray-700">{plan.maxProducts === 999 ? 'Unlimited' : plan.maxProducts}</p>
+                  {plan.planType !== 'customer' && (
+                    <div className="grid grid-cols-2 gap-2 mb-4">
+                      <div className="bg-gray-50/50 rounded-xl p-2 border border-gray-50 flex flex-col items-center text-center">
+                         <Inventory2RoundedIcon sx={{ fontSize: 14 }} className="text-gray-400 mb-1" />
+                         <p className="text-[9px] font-bold text-gray-400 uppercase tracking-tight">Products</p>
+                         <p className="text-[11px] font-bold text-gray-700">{plan.maxProducts === 999 ? 'Unlimited' : plan.maxProducts}</p>
+                      </div>
+                      <div className="bg-gray-50/50 rounded-xl p-2 border border-gray-50 flex flex-col items-center text-center">
+                         <LocalOfferRoundedIcon sx={{ fontSize: 14 }} className="text-gray-400 mb-1" />
+                         <p className="text-[9px] font-bold text-gray-400 uppercase tracking-tight">Offers</p>
+                         <p className="text-[11px] font-bold text-gray-700">{plan.maxOffers === 999 ? 'Unlimited' : plan.maxOffers}</p>
+                      </div>
                     </div>
-                    <div className="bg-gray-50/50 rounded-xl p-2 border border-gray-50 flex flex-col items-center text-center">
-                       <LocalOfferRoundedIcon sx={{ fontSize: 14 }} className="text-gray-400 mb-1" />
-                       <p className="text-[9px] font-bold text-gray-400 uppercase tracking-tight">Offers</p>
-                       <p className="text-[11px] font-bold text-gray-700">{plan.maxOffers === 999 ? 'Unlimited' : plan.maxOffers}</p>
-                    </div>
-                  </div>
+                  )}
 
                   {/* Features List - Compact */}
                   {plan.features?.length > 0 && (
@@ -512,6 +561,7 @@ const SubscriptionManagement = () => {
                 </div>
               )}
 
+              {formData.planType !== 'customer' && (
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-[11px] font-bold text-gray-400 uppercase tracking-widest mb-1.5 ml-1">Product SKU Limit</label>
@@ -558,6 +608,7 @@ const SubscriptionManagement = () => {
                   </div>
                 </div>
               </div>
+              )}
 
               {formData.planType === 'merchant' && (
                 <div className="flex items-center justify-between p-4 bg-gray-50 rounded-xl border border-gray-100">

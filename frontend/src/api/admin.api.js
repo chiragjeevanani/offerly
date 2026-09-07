@@ -93,6 +93,14 @@ export const adminAPI = {
     return axiosInstance.put('/admin/wallet-settings', data);
   },
 
+  getCustomerSubscriptionSettings: async () => {
+    return axiosInstance.get('/admin/customer-subscription-settings');
+  },
+
+  updateCustomerSubscriptionSettings: async (data) => {
+    return axiosInstance.put('/admin/customer-subscription-settings', data);
+  },
+
   // Ads (Stubbed structure for mapping)
   getAdRequests: async () => {
     return axiosInstance.get('/admin/ads');

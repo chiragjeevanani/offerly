@@ -58,32 +58,32 @@ if (enableRequestLogs) {
   });
 }
 
-app.get("/api/health", (_req, res) => {
+app.get("/health", (_req, res) => {
   return res.status(200).json({
     status: "ok",
     timestamp: new Date().toISOString(),
   });
 });
 
-app.use("/api/auth", authRoutes);
-app.use("/api/users", userRoutes);
-app.use("/api/merchants", merchantRoutes);
-app.use("/api/products", productRoutes);
-app.use("/api/product-categories", productCategoryRoutes);
-app.use("/api/reviews", reviewRoutes);
-app.use("/api/service-plans", servicePlanRoutes);
-app.use("/api/variants", variantRoutes);
-app.use("/api/offers", offerRoutes);
-app.use("/api/redemptions", redemptionRoutes);
-app.use("/api/cart", cartRoutes);
-app.use("/api/admin", adminRoutes);
-app.use("/api/admin/categories", adminCategoryRoutes);
-app.use("/api/categories", categoryRoutes);
-app.use("/api/cities", cityRoutes);
-app.use("/api/plans", planRoutes);
-app.use("/api/payments", paymentRoutes);
-app.use("/api/rewards", rewardRoutes);
-app.use("/api/upload", uploadRoutes);
+app.use("/auth", authRoutes);
+app.use("/users", userRoutes);
+app.use("/merchants", merchantRoutes);
+app.use("/products", productRoutes);
+app.use("/product-categories", productCategoryRoutes);
+app.use("/reviews", reviewRoutes);
+app.use("/service-plans", servicePlanRoutes);
+app.use("/variants", variantRoutes);
+app.use("/offers", offerRoutes);
+app.use("/redemptions", redemptionRoutes);
+app.use("/cart", cartRoutes);
+app.use("/admin", adminRoutes);
+app.use("/admin/categories", adminCategoryRoutes);
+app.use("/categories", categoryRoutes);
+app.use("/cities", cityRoutes);
+app.use("/plans", planRoutes);
+app.use("/payments", paymentRoutes);
+app.use("/rewards", rewardRoutes);
+app.use("/upload", uploadRoutes);
 
 app.use((req, res) => {
   return res.status(404).json({ message: `Route not found: ${req.method} ${req.originalUrl}` });
