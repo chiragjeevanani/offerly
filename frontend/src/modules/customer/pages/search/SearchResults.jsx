@@ -73,7 +73,7 @@ const SearchResults = () => {
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
                 autoFocus
-                className="flex-1 bg-transparent text-[13px] font-bold text-gray-900 placeholder:text-gray-400 outline-none uppercase tracking-tight"
+                className="flex-1 bg-transparent text-base font-bold text-gray-900 placeholder:text-gray-400 outline-none uppercase tracking-tight"
               />
               {query && (
                 <button 
