@@ -25,6 +25,12 @@ import uploadRoutes from "./routes/uploadRoutes.js";
 
 const app = express();
 
+// nginx terminates TLS and proxies to 127.0.0.1, so without this every request
+// looks like it came from localhost and all four rate limiters collapse into one
+// platform-wide bucket. 1, not true - trusting the whole chain would let a client
+// spoof X-Forwarded-For and walk straight past them.
+app.set("trust proxy", 1);
+
 app.use(helmet());
 
 app.use(
