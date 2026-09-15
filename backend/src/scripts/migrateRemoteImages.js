@@ -20,7 +20,7 @@ import dotenv from 'dotenv';
 
 import connectDB from '../config/db.js';
 import { UPLOAD_DIR, buildPublicUrl, storeFile } from '../utils/fileStorage.js';
-import { IMAGE_TARGETS, collectSlots, isExternalImageUrl, toMarkPath, toQueryPath } from '../utils/imageFields.js';
+import { IMAGE_TARGETS, collectSlots, isExternalImageUrl, toQueryPath } from '../utils/imageFields.js';
 
 dotenv.config();
 
@@ -95,9 +95,10 @@ const migrateModel = async ({ name, model, paths }) => {
   let touchedFields = 0;
 
   for (const doc of documents) {
-    // Only the paths we actually rewrote get marked - marking an untouched one is at
-    // best a wasted write and at worst an invalid update against an empty array.
-    const changedPaths = new Set();
+    // Collected as concrete positional paths ('photos.2') and written with one $set.
+    // A full doc.save() would re-validate the whole record, and some legacy rows are
+    // missing required fields that have nothing to do with images.
+    const updates = {};
 
     for (const dotPath of paths) {
       for (const slot of collectSlots(doc, dotPath)) {
@@ -108,15 +109,14 @@ const migrateModel = async ({ name, model, paths }) => {
 
         if (!COMMIT) {
           touchedFields += 1;
-          changedPaths.add(dotPath);
+          updates[slot.mongoPath] = true;
           continue;
         }
 
         try {
-          slot.parent[slot.key] = await fetchAndStore(current);
+          updates[slot.mongoPath] = await fetchAndStore(current);
           stats.migrated += 1;
           touchedFields += 1;
-          changedPaths.add(dotPath);
         } catch (error) {
           stats.failed += 1;
           failures.push({ model: name, id: String(doc._id), path: dotPath, url: current, error: error.message });
@@ -125,13 +125,10 @@ const migrateModel = async ({ name, model, paths }) => {
       }
     }
 
-    if (changedPaths.size > 0) {
+    if (Object.keys(updates).length > 0) {
       touchedDocs += 1;
       if (COMMIT) {
-        // Mutating an array element in place does not always trip Mongoose's change
-        // tracking, so mark the array root explicitly.
-        [...changedPaths].forEach((p) => doc.markModified(toMarkPath(p)));
-        await doc.save();
+        await model.updateOne({ _id: doc._id }, { $set: updates });
       }
     }
   }

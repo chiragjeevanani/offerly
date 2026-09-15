@@ -20,7 +20,7 @@ import mongoose from 'mongoose';
 import dotenv from 'dotenv';
 
 import connectDB from '../config/db.js';
-import { IMAGE_TARGETS, collectSlots, isExternalImageUrl, toMarkPath, toQueryPath } from '../utils/imageFields.js';
+import { IMAGE_TARGETS, collectSlots, isExternalImageUrl, toQueryPath } from '../utils/imageFields.js';
 
 dotenv.config();
 
@@ -58,8 +58,9 @@ const processModel = async ({ name, model, paths }) => {
   let removed = 0;
 
   for (const doc of documents) {
-    // Track per-path so an untouched field is never marked or reassigned.
-    const changedPaths = new Set();
+    // Written with one $set rather than doc.save(), which would re-validate the whole
+    // record - some legacy rows are missing required fields unrelated to images.
+    const updates = {};
 
     for (const dotPath of paths) {
       const isSubdocField = dotPath.includes('[].');
@@ -82,9 +83,8 @@ const processModel = async ({ name, model, paths }) => {
           }
         }
         if (dropped > 0) {
-          doc[field] = kept;
+          updates[field] = kept;
           removed += dropped;
-          changedPaths.add(dotPath);
         }
         continue;
       }
@@ -105,9 +105,8 @@ const processModel = async ({ name, model, paths }) => {
           }
         }
         if (dropped > 0) {
-          doc[arrayPath] = kept;
+          updates[arrayPath] = kept;
           removed += dropped;
-          changedPaths.add(dotPath);
         }
         continue;
       }
@@ -119,17 +118,15 @@ const processModel = async ({ name, model, paths }) => {
           stats.kept += 1;
           continue;
         }
-        slot.parent[slot.key] = '';
+        updates[slot.mongoPath] = '';
         cleared += 1;
-        changedPaths.add(dotPath);
       }
     }
 
-    if (changedPaths.size > 0) {
+    if (Object.keys(updates).length > 0) {
       touchedDocs += 1;
       if (COMMIT) {
-        [...changedPaths].forEach((p) => doc.markModified(toMarkPath(p)));
-        await doc.save();
+        await model.updateOne({ _id: doc._id }, { $set: updates });
       }
     }
   }
