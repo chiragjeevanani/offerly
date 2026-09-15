@@ -16,6 +16,7 @@
     "seed:offers": "node src/seeders/offerSeeder.js",
     "seed:ads": "node src/seeders/adRequestSeeder.js",
     "normalize:phones": "node src/scripts/normalizePhoneNumbers.js",
+    "migrate:images": "node src/scripts/migrateCloudinaryToLocal.js",
     "backfill:product-categories": "node src/scripts/backfillProductCategories.js"
   },
   "keywords": [],
@@ -24,7 +25,6 @@
   "description": "",
   "dependencies": {
     "bcryptjs": "^3.0.3",
-    "cloudinary": "^1.41.3",
     "cors": "^2.8.6",
     "dotenv": "^17.4.1",
     "express": "^5.2.1",
@@ -36,9 +36,9 @@
     "mongoose": "^9.4.1",
     "morgan": "^1.10.1",
     "multer": "^2.1.1",
-    "multer-storage-cloudinary": "^4.0.0",
     "node-cron": "^4.2.1",
     "razorpay": "^2.9.6",
+    "sharp": "^0.34.4",
     "socket.io": "^4.8.3"
   },
   "devDependencies": {

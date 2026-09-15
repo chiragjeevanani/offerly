@@ -21,6 +21,11 @@ pids/
 *.seed
 *.pid.lock
 
+# User uploads - real user data living inside the git tree. Never `git clean` this.
+uploads/*
+!uploads/.gitkeep
+migration-failures.json
+
 # Coverage
 coverage/
 .nyc_output/

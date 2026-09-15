@@ -13,7 +13,6 @@ import PaymentsRoundedIcon from '@mui/icons-material/PaymentsRounded';
 import PlaceRoundedIcon from '@mui/icons-material/PlaceRounded';
 import LocalPhoneRoundedIcon from '@mui/icons-material/LocalPhoneRounded';
 import ChevronRightRoundedIcon from '@mui/icons-material/ChevronRightRounded';
-import { getOptimizedImageUrl } from '../../../utils/cloudinaryUtils';
 
 const StatBox = ({ icon: Icon, label, value, colorClass = "text-gray-900" }) => (
   <div className="flex flex-col gap-0.5 p-1.5 rounded-lg bg-gray-50/50 border border-transparent hover:border-gray-100 hover:bg-white transition-all duration-300 group/stat">
@@ -87,7 +86,7 @@ const AdminEntityCard = ({
             <div className="relative">
               <div className="w-12 h-12 rounded-[10px] bg-gray-50 flex items-center justify-center text-[#5EB929] font-semibold text-xl border border-gray-100 group-hover:scale-105 transition-all duration-300 overflow-hidden">
                 {profileImg ? (
-                  <img src={getOptimizedImageUrl(profileImg, 100, 100)} alt="" className="w-full h-full object-cover" />
+                  <img src={profileImg} alt="" className="w-full h-full object-cover" />
                 ) : (
                   name?.[0]?.toUpperCase()
                 )}
@@ -211,7 +210,7 @@ const AdminEntityCard = ({
             {/* Circular Icon */}
             <div className="w-11 h-11 rounded-full bg-gray-100 flex items-center justify-center border border-gray-200 overflow-hidden flex-shrink-0">
               {profileImg ? (
-                <img src={getOptimizedImageUrl(profileImg, 80, 80)} alt="" className="w-full h-full object-cover" />
+                <img src={profileImg} alt="" className="w-full h-full object-cover" />
               ) : (
                 <span className="text-gray-400 font-bold text-lg">{name?.[0]?.toUpperCase()}</span>
               )}

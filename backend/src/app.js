@@ -22,6 +22,7 @@ import userRoutes from "./modules/user/routes/userRoutes.js";
 import rewardRoutes from "./modules/rewards/routes/rewardRoutes.js";
 import categoryRoutes from "./routes/categoryRoutes.js";
 import uploadRoutes from "./routes/uploadRoutes.js";
+import { UPLOAD_DIR } from "./utils/fileStorage.js";
 
 const app = express();
 
@@ -70,6 +71,26 @@ app.get("/health", (_req, res) => {
     timestamp: new Date().toISOString(),
   });
 });
+
+// User-uploaded images and KYB documents, served off the app's own disk.
+// In production PUBLIC_UPLOAD_BASE_URL points at https://<domain>/api, and nginx strips
+// the /api prefix before proxying - so those URLs land here.
+app.use(
+  "/uploads",
+  express.static(UPLOAD_DIR, {
+    maxAge: "1y",
+    immutable: true, // filenames carry 8 random bytes, so a given name never changes content
+    index: false,
+    dotfiles: "deny",
+    setHeaders: (res) => {
+      // helmet() defaults Cross-Origin-Resource-Policy to same-origin, which blocks the
+      // dev frontend on :5173 from rendering an image served from :5000. The request
+      // succeeds and the browser discards it, so this shows up as a silently broken
+      // image rather than a network error.
+      res.setHeader("Cross-Origin-Resource-Policy", "cross-origin");
+    },
+  }),
+);
 
 app.use("/auth", authRoutes);
 app.use("/users", userRoutes);

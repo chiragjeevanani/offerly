@@ -16,6 +16,16 @@ jspm_packages/
 !.env.example
 
 # ===============================
+# User Uploads (server-local image storage)
+# ===============================
+# These are user data, not build output. The directory lives inside the git tree, so
+# deploy.sh's `git reset --hard` must never gain -d and never be paired with `git clean`
+# -- either would delete every uploaded image on the server.
+backend/uploads/*
+!backend/uploads/.gitkeep
+backend/migration-failures.json
+
+# ===============================
 # Production & Build Outputs
 # ===============================
 dist/

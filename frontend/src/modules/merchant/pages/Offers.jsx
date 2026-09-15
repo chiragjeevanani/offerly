@@ -16,7 +16,6 @@ import { offerAPI } from '../../../api/offer.api';
 import ProductOfferForm from '../components/ProductOfferForm';
 import ServiceOfferForm from '../components/ServiceOfferForm';
 import ConfirmDialog from '../components/ConfirmDialog';
-import { getOptimizedImageUrl } from '../../../utils/cloudinaryUtils';
 
 /* ─── Custom Hook for Debouncing ──────────────── */
 function useDebounce(value, delay) {
@@ -216,7 +215,7 @@ const Offers = ({ merchant }) => {
                   >
                     {/* Image Section */}
                     <div className="w-full sm:w-44 h-44 sm:h-auto relative flex-shrink-0">
-                       <img src={getOptimizedImageUrl(offer.image, { width: 400, height: 400 })} className="w-full h-full object-cover" alt="" />
+                       <img src={offer.image} className="w-full h-full object-cover" alt="" />
                        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
                        <div className="absolute bottom-3 left-3 bg-white/90 backdrop-blur-md px-2 py-1 rounded-lg shadow-lg">
                           <p className="text-[10px] font-bold text-gray-900 leading-none">

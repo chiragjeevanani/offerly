@@ -9,7 +9,6 @@ import { userAPI } from '../../../../api/user.api';
 import { useApp } from '../../context/AppContext';
 import toast from 'react-hot-toast';
 
-import { getOptimizedImageUrl } from '../../../../utils/cloudinaryUtils';
 import { useOfferImpression } from '../../../../hooks/useOfferImpression';
 
 const OfferCard = ({ offer, variant = 'list', onSaveToggle, viewSource = 'feed' }) => {
@@ -21,8 +20,9 @@ const OfferCard = ({ offer, variant = 'list', onSaveToggle, viewSource = 'feed' 
   // for a second - see hooks/useOfferImpression.
   const impressionRef = useOfferImpression(offerId, viewSource);
 
-  // Optimize image URL
-  const optimizedImage = getOptimizedImageUrl(offer.image, { width: 400, height: 300 });
+  // Images are resized and re-encoded to WebP at upload time (backend/src/utils/fileStorage.js),
+  // so there is no URL-level transform to apply here.
+  const optimizedImage = offer.image;
 
   const [isSaved, setIsSaved] = useState(() => {
     // Check if offer is in user's savedOffers
