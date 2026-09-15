@@ -1,10 +1,11 @@
-import React, { Suspense, lazy } from 'react';
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import React, { Suspense, lazy, useState, useEffect } from 'react';
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
 import { AppProvider, useApp } from './modules/customer/context/AppContext';
 import { SocketProvider } from './context/SocketContext';
 import AppLayout from './modules/customer/components/layout/AppLayout';
 import ScrollToTop from './components/common/ScrollToTop';
+import SplashScreen from './modules/customer/components/ui/SplashScreen';
 
 // Loading Component
 const PageLoader = () => (
@@ -65,9 +66,31 @@ const PublicOnlyRoute = ({ children }) => {
 
 const AppRoutes = () => {
   const { isLoggedIn, authStatus } = useApp();
+  const location = useLocation();
+  const isBusinessRoute = location.pathname.startsWith('/merchant') || location.pathname.startsWith('/admin');
+
+  const [showSplash, setShowSplash] = useState(() => {
+    if (typeof window === 'undefined') return false;
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('splash') === '1' || params.get('splash') === 'true') return true;
+    const path = window.location.pathname;
+    if (path.startsWith('/merchant') || path.startsWith('/admin')) return false;
+    return true;
+  });
+
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    if (params.get('splash') === '1' || params.get('splash') === 'true') {
+      setShowSplash(true);
+    }
+  }, [location.search]);
   
   return (
-    <Suspense fallback={<PageLoader />}>
+    <>
+      {showSplash && !isBusinessRoute && (
+        <SplashScreen onFinish={() => setShowSplash(false)} />
+      )}
+      <Suspense fallback={<PageLoader />}>
       <Routes>
         {/* Merchant Panel - Independent Layout */}
         <Route path="/merchant/*" element={<MerchantApp />} />
@@ -118,6 +141,7 @@ const AppRoutes = () => {
         } />
       </Routes>
     </Suspense>
+    </>
   );
 };
 
