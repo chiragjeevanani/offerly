@@ -1,6 +1,7 @@
 import mongoose from 'mongoose';
 import Product from '../modules/merchant/models/Product.js';
 import ProductCategory from '../modules/merchant/models/ProductCategory.js';
+import { seedImage } from './seedAssets.js';
 
 const ROYAL_RESTAURANT_ID = new mongoose.Types.ObjectId('507f1f77bcf86cd799439011');
 const STYLE_SALON_ID = new mongoose.Types.ObjectId('507f1f77bcf86cd799439012');
@@ -43,7 +44,7 @@ export const seedProducts = async () => {
         categoryId: categoryId(ROYAL_RESTAURANT_ID, 'Main Course'),
         price: 250,
         ...withDiscount(250, 20),
-        images: ['https://images.unsplash.com/photo-1563379091339-03b21ab4a4f8?w=500&q=80'],
+        images: [seedImage('product-chicken-biryani-img')],
         isVeg: false,
         isActive: true,
       },
@@ -54,7 +55,7 @@ export const seedProducts = async () => {
         categoryId: categoryId(ROYAL_RESTAURANT_ID, 'Main Course'),
         price: 200,
         ...withDiscount(200, 20),
-        images: ['https://images.unsplash.com/photo-1631452180519-c014fe946bc7?w=500&q=80'],
+        images: [seedImage('product-paneer-butter-masala-img')],
         isVeg: true,
         isActive: true,
       },
@@ -65,7 +66,7 @@ export const seedProducts = async () => {
         categoryId: categoryId(ROYAL_RESTAURANT_ID, 'Starters'),
         price: 150,
         ...withDiscount(150, 20),
-        images: ['https://images.unsplash.com/photo-1599487488170-d11ec9c172f0?w=500&q=80'],
+        images: [seedImage('product-crispy-chilli-babycorn-img')],
         isVeg: true,
         isActive: true,
       },
@@ -76,7 +77,7 @@ export const seedProducts = async () => {
         categoryId: categoryId(STYLE_SALON_ID, 'Hair Services'),
         price: 500,
         ...withDiscount(500, 30),
-        images: ['https://images.unsplash.com/photo-1560066984-138dadb4c035?w=500&q=80'],
+        images: [seedImage('product-premium-haircut-wash-img')],
         isVeg: null,
         isActive: true,
         categoryType: 'service_based'
@@ -88,7 +89,7 @@ export const seedProducts = async () => {
         categoryId: categoryId(STYLE_SALON_ID, 'Spa Treatments'),
         price: 1200,
         ...withDiscount(1200, 30),
-        images: ['https://images.unsplash.com/photo-1544161515-4ab6ce6db874?w=500&q=80'],
+        images: [seedImage('product-deep-tissue-massage-img')],
         isVeg: null,
         isActive: true,
         categoryType: 'service_based'

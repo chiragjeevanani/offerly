@@ -1,5 +1,6 @@
 import mongoose from 'mongoose';
 import Offer from '../modules/merchant/models/Offer.js';
+import { seedImage } from './seedAssets.js';
 
 const offers = [
   {
@@ -14,7 +15,7 @@ const offers = [
     validTo: new Date('2026-04-30T23:59:59Z'),
     maxRedemptions: 500,
     currentRedemptions: 342,
-    image: 'https://images.unsplash.com/photo-1514326640560-7d063ef2aed5?w=1000&q=80',
+    image: seedImage('offer-flat-20-off-image'),
     status: 'active',
     category: 'Food',
     isTrending: true,
@@ -39,7 +40,7 @@ const offers = [
     validTo: new Date('2026-04-30T23:59:59Z'),
     maxRedemptions: 200,
     currentRedemptions: 89,
-    image: 'https://images.unsplash.com/photo-1522335789203-aabd1fc54bc9?w=1000&q=80',
+    image: seedImage('offer-get-30-off-image'),
     status: 'active',
     category: 'Saloon',
     isTrending: true,
@@ -63,7 +64,7 @@ const offers = [
     validTo: new Date('2026-05-31T23:59:59Z'),
     maxRedemptions: 100,
     currentRedemptions: 67,
-    image: 'https://images.unsplash.com/photo-1540497077202-7c8a3999166f?w=1000&q=80',
+    image: seedImage('offer-free-trial-class-image'),
     status: 'active',
     category: 'Gym',
     isTrending: true,
@@ -87,7 +88,7 @@ const offers = [
     validTo: new Date('2026-04-15T23:59:59Z'),
     maxRedemptions: 300,
     currentRedemptions: 132,
-    image: 'https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=1000&q=80',
+    image: seedImage('offer-get-5-off-image'),
     status: 'active',
     category: 'Shops',
     isTrending: false,
@@ -110,7 +111,7 @@ const offers = [
     validTo: new Date('2026-04-20T23:59:59Z'),
     maxRedemptions: 400,
     currentRedemptions: 189,
-    image: 'https://images.unsplash.com/photo-1554118811-1e0d58224f24?w=1000&q=80',
+    image: seedImage('offer-flat-15-off-image'),
     status: 'active',
     category: 'Cafe',
     isTrending: false,
@@ -134,7 +135,7 @@ const offers = [
     validTo: new Date('2026-04-30T23:59:59Z'),
     maxRedemptions: 1000,
     currentRedemptions: 450,
-    image: 'https://images.unsplash.com/photo-1514326640560-7d063ef2aed5?w=1000&q=80',
+    image: seedImage('offer-flat-20-off-image'),
     status: 'active',
     category: 'Food',
     isTrending: true,
@@ -154,7 +155,7 @@ const offers = [
     validTo: new Date('2026-05-31T23:59:59Z'),
     maxRedemptions: 50,
     currentRedemptions: 12,
-    image: 'https://images.unsplash.com/photo-1522335789203-aabd1fc54bc9?w=1000&q=80',
+    image: seedImage('offer-get-30-off-image'),
     status: 'active',
     category: 'Saloon',
     isTrending: true,

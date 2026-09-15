@@ -1,5 +1,6 @@
 import mongoose from 'mongoose';
 import AdRequest from '../modules/admin/models/AdRequest.js';
+import { seedImage } from './seedAssets.js';
 
 const adRequests = [
   {
@@ -7,7 +8,7 @@ const adRequests = [
     storeName: 'Royal Restaurant',
     type: 'banner',
     status: 'approved',
-    image: 'https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=1600&q=80',
+    image: seedImage('adRequest-royal-restaurant-image'),
     expiryAt: new Date('2026-05-15T23:59:59Z'),
   },
   {
@@ -15,7 +16,7 @@ const adRequests = [
     storeName: 'Style Salon & Spa',
     type: 'featured',
     status: 'approved',
-    image: 'https://images.unsplash.com/photo-1560066984-138dadb4c035?w=1600&q=80',
+    image: seedImage('adRequest-style-salon-spa-image'),
     expiryAt: new Date('2026-04-30T23:59:59Z'),
   },
   {
@@ -23,7 +24,7 @@ const adRequests = [
     storeName: 'Indore Food Street',
     type: 'banner',
     status: 'approved',
-    image: 'https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=1600&q=80',
+    image: seedImage('adRequest-royal-restaurant-image'),
     expiryAt: new Date('2026-06-30T23:59:59Z'),
   },
 ];
