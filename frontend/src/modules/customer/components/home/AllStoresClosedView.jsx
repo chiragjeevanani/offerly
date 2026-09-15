@@ -66,7 +66,7 @@ const DEFAULT_UPCOMING_OFFERS = [
     discountBadge: 'FLAT 40% OFF',
     description: 'Pre-book your feast for tomorrow lunch or dinner',
     openingTime: 'Opens tomorrow at 11:00 AM',
-    image: 'https://images.unsplash.com/photo-1563379091339-03b21ab4a4f8?w=500&auto=format&fit=crop&q=60',
+    image: '/placeholders/sample-1.webp',
   },
   {
     id: 'up-2',
@@ -78,7 +78,7 @@ const DEFAULT_UPCOMING_OFFERS = [
     discountBadge: 'BUY 1 GET 1',
     description: 'Fresh warm waffles & specialty artisan coffee',
     openingTime: 'Opens tomorrow at 9:00 AM',
-    image: 'https://images.unsplash.com/photo-1562376552-0d160a2f238d?w=500&auto=format&fit=crop&q=60',
+    image: '/placeholders/sample-2.webp',
   },
   {
     id: 'up-3',
@@ -90,7 +90,7 @@ const DEFAULT_UPCOMING_OFFERS = [
     discountBadge: 'SAVE ₹300',
     description: 'Early bird weekday relaxation appointment slots',
     openingTime: 'Opens tomorrow at 10:00 AM',
-    image: 'https://images.unsplash.com/photo-1560066984-138dadb4c035?w=500&auto=format&fit=crop&q=60',
+    image: '/placeholders/sample-3.webp',
   },
   {
     id: 'up-4',
@@ -102,7 +102,7 @@ const DEFAULT_UPCOMING_OFFERS = [
     discountBadge: 'FREE SIDES',
     description: 'Wood-fired oven sourdough crust specials',
     openingTime: 'Opens tomorrow at 11:30 AM',
-    image: 'https://images.unsplash.com/photo-1513104890138-7c749659a591?w=500&auto=format&fit=crop&q=60',
+    image: '/placeholders/sample-4.webp',
   },
 ];
 

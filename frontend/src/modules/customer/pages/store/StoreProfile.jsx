@@ -252,11 +252,11 @@ const StoreProfile = () => {
         {/* Cover image */}
         <div className="relative h-48 sm:h-56 md:h-64 lg:h-72 max-w-5xl mx-auto rounded-b-[2.5rem] overflow-hidden shadow-lg bg-gray-900">
           <img 
-            src={merchant.coverImage || 'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=1200&auto=format&fit=crop&q=80'} 
+            src={merchant.coverImage || '/placeholders/store-cover.webp'} 
             alt="" 
             className="w-full h-full object-cover"
             onError={(e) => {
-              e.currentTarget.src = 'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=1200&auto=format&fit=crop&q=80';
+              e.currentTarget.src = '/placeholders/store-cover.webp';
             }}
           />
           <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />

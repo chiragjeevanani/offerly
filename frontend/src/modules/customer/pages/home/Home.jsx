@@ -490,11 +490,11 @@ const Home = () => {
                   }}
                 >
                   <img
-                    src={featuredBanners[currentSlide].image || 'https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=1200&auto=format&fit=crop&q=80'}
+                    src={featuredBanners[currentSlide].image || '/placeholders/banner.webp'}
                     alt={featuredBanners[currentSlide].title}
                     className="w-full h-full object-cover transition-transform duration-[4000ms] group-hover:scale-105"
                     onError={(e) => {
-                      e.currentTarget.src = 'https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=1200&auto=format&fit=crop&q=80';
+                      e.currentTarget.src = '/placeholders/banner.webp';
                     }}
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />

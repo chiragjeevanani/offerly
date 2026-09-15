@@ -89,7 +89,7 @@ const OfferCard = ({ offer, variant = 'list', onSaveToggle, viewSource = 'feed' 
             className={`w-full h-full object-cover transition-transform duration-700 group-hover:scale-110 ${!isMerchantOpen ? 'grayscale' : ''}`}
             loading="lazy"
             onError={(e) => {
-              e.currentTarget.src = 'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=500&auto=format&fit=crop&q=60';
+              e.currentTarget.src = '/placeholders/store-card.webp';
             }}
           />
           {!isMerchantOpen && (
@@ -147,7 +147,7 @@ const OfferCard = ({ offer, variant = 'list', onSaveToggle, viewSource = 'feed' 
             className={`w-full h-full object-cover ${!isMerchantOpen ? 'grayscale' : ''}`}
             loading="lazy"
             onError={(e) => {
-              e.currentTarget.src = 'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=500&auto=format&fit=crop&q=60';
+              e.currentTarget.src = '/placeholders/store-card.webp';
             }}
           />
           {!isMerchantOpen ? (

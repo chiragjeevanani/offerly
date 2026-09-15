@@ -78,12 +78,12 @@ const StoreCard = ({ merchant, offerCount, variant = 'row' }) => {
     >
       <div className="h-24 relative overflow-hidden bg-gray-100">
         <img
-          src={merchant.coverImage || 'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=500&auto=format&fit=crop&q=60'}
+          src={merchant.coverImage || '/placeholders/store-card.webp'}
           alt={merchant.storeName}
           className="w-full h-full object-cover transition-transform group-hover:scale-105"
           loading="lazy"
           onError={(e) => {
-            e.currentTarget.src = 'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=500&auto=format&fit=crop&q=60';
+            e.currentTarget.src = '/placeholders/store-card.webp';
           }}
         />
         {offerCount !== undefined && offerCount > 0 && (

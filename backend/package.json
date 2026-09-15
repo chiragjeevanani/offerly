@@ -16,8 +16,8 @@
     "seed:offers": "node src/seeders/offerSeeder.js",
     "seed:ads": "node src/seeders/adRequestSeeder.js",
     "normalize:phones": "node src/scripts/normalizePhoneNumbers.js",
-    "migrate:images": "node src/scripts/migrateCloudinaryToLocal.js",
-    "clear:dead-images": "node src/scripts/clearDeadCloudinaryUrls.js",
+    "migrate:images": "node src/scripts/migrateRemoteImages.js",
+    "clear:dead-images": "node src/scripts/clearDeadImageUrls.js",
     "backfill:product-categories": "node src/scripts/backfillProductCategories.js"
   },
   "keywords": [],

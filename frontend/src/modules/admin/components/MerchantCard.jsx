@@ -40,7 +40,7 @@ const MerchantCard = ({ merchant, onApprove, onReject, onClick }) => {
           {/* Profile Image */}
           <div className="w-20 h-20 rounded-2xl overflow-hidden bg-gradient-to-br from-gray-50 to-gray-100 border-2 border-gray-200 flex-shrink-0 shadow-sm">
             <img 
-              src={merchant.logo || 'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=200&q=80'} 
+              src={merchant.logo || '/placeholders/store-thumb.webp'} 
               alt={`${merchant.storeName} logo`}
               className="w-full h-full object-cover"
             />
