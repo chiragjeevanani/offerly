@@ -20,7 +20,7 @@ import mongoose from 'mongoose';
 import dotenv from 'dotenv';
 
 import connectDB from '../config/db.js';
-import { IMAGE_TARGETS, collectSlots, isExternalImageUrl, toQueryPath } from '../utils/imageFields.js';
+import { IMAGE_TARGETS, collectSlots, isExternalImageUrl, toMarkPath, toQueryPath } from '../utils/imageFields.js';
 
 dotenv.config();
 
@@ -58,11 +58,12 @@ const processModel = async ({ name, model, paths }) => {
   let removed = 0;
 
   for (const doc of documents) {
-    let changed = false;
+    // Track per-path so an untouched field is never marked or reassigned.
+    const changedPaths = new Set();
 
     for (const dotPath of paths) {
-      const isArrayMember = dotPath.endsWith('[]');
       const isSubdocField = dotPath.includes('[].');
+      const isArrayMember = !isSubdocField && dotPath.endsWith('[]');
 
       if (isArrayMember) {
         // Remove dead members outright - an empty string left in photos[] would still
@@ -72,15 +73,19 @@ const processModel = async ({ name, model, paths }) => {
         if (!Array.isArray(current)) continue;
 
         const kept = [];
+        let dropped = 0;
         for (const value of current) {
           if (isExternalImageUrl(value, OWN_BASE) && (await isDead(value))) {
-            removed += 1;
-            changed = true;
+            dropped += 1;
           } else {
             kept.push(value);
           }
         }
-        if (changed) doc[field] = kept;
+        if (dropped > 0) {
+          doc[field] = kept;
+          removed += dropped;
+          changedPaths.add(dotPath);
+        }
         continue;
       }
 
@@ -90,16 +95,20 @@ const processModel = async ({ name, model, paths }) => {
         if (!Array.isArray(current)) continue;
 
         const kept = [];
+        let dropped = 0;
         for (const entry of current) {
           const value = entry?.[urlField];
           if (isExternalImageUrl(value, OWN_BASE) && (await isDead(value))) {
-            removed += 1;
-            changed = true;
+            dropped += 1;
           } else {
             kept.push(entry);
           }
         }
-        if (changed) doc[arrayPath] = kept;
+        if (dropped > 0) {
+          doc[arrayPath] = kept;
+          removed += dropped;
+          changedPaths.add(dotPath);
+        }
         continue;
       }
 
@@ -112,14 +121,14 @@ const processModel = async ({ name, model, paths }) => {
         }
         slot.parent[slot.key] = '';
         cleared += 1;
-        changed = true;
+        changedPaths.add(dotPath);
       }
     }
 
-    if (changed) {
+    if (changedPaths.size > 0) {
       touchedDocs += 1;
       if (COMMIT) {
-        paths.forEach((p) => doc.markModified(toQueryPath(p)));
+        [...changedPaths].forEach((p) => doc.markModified(toMarkPath(p)));
         await doc.save();
       }
     }

@@ -20,7 +20,7 @@ import dotenv from 'dotenv';
 
 import connectDB from '../config/db.js';
 import { UPLOAD_DIR, buildPublicUrl, storeFile } from '../utils/fileStorage.js';
-import { IMAGE_TARGETS, collectSlots, isExternalImageUrl, toQueryPath } from '../utils/imageFields.js';
+import { IMAGE_TARGETS, collectSlots, isExternalImageUrl, toMarkPath, toQueryPath } from '../utils/imageFields.js';
 
 dotenv.config();
 
@@ -95,7 +95,9 @@ const migrateModel = async ({ name, model, paths }) => {
   let touchedFields = 0;
 
   for (const doc of documents) {
-    let changed = false;
+    // Only the paths we actually rewrote get marked - marking an untouched one is at
+    // best a wasted write and at worst an invalid update against an empty array.
+    const changedPaths = new Set();
 
     for (const dotPath of paths) {
       for (const slot of collectSlots(doc, dotPath)) {
@@ -106,7 +108,7 @@ const migrateModel = async ({ name, model, paths }) => {
 
         if (!COMMIT) {
           touchedFields += 1;
-          changed = true;
+          changedPaths.add(dotPath);
           continue;
         }
 
@@ -114,7 +116,7 @@ const migrateModel = async ({ name, model, paths }) => {
           slot.parent[slot.key] = await fetchAndStore(current);
           stats.migrated += 1;
           touchedFields += 1;
-          changed = true;
+          changedPaths.add(dotPath);
         } catch (error) {
           stats.failed += 1;
           failures.push({ model: name, id: String(doc._id), path: dotPath, url: current, error: error.message });
@@ -123,12 +125,12 @@ const migrateModel = async ({ name, model, paths }) => {
       }
     }
 
-    if (changed) {
+    if (changedPaths.size > 0) {
       touchedDocs += 1;
       if (COMMIT) {
         // Mutating an array element in place does not always trip Mongoose's change
-        // tracking, so mark the roots explicitly.
-        paths.forEach((p) => doc.markModified(toQueryPath(p)));
+        // tracking, so mark the array root explicitly.
+        [...changedPaths].forEach((p) => doc.markModified(toMarkPath(p)));
         await doc.save();
       }
     }

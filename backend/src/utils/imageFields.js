@@ -37,6 +37,16 @@ export const IMAGE_TARGETS = [
 export const toQueryPath = (dotPath) => dotPath.replace(/\[\]/g, '');
 
 /**
+ * The path to hand to doc.markModified().
+ *
+ * It must stop at the array root: marking 'documents.url' on a document whose
+ * `documents` is [] makes Mongo reject the update with "Cannot create field 'url' in
+ * element {documents: []}". Marking 'documents' is both correct and enough, since
+ * Mongoose then re-serialises the whole array.
+ */
+export const toMarkPath = (dotPath) => dotPath.split('[]')[0].replace(/\.$/, '');
+
+/**
  * Resolve a dot-path against a document into assignable slots.
  * Returns [{ parent, key }] so callers can read and write the value in place.
  */
