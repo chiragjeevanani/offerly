@@ -12,6 +12,8 @@ import VerifiedRoundedIcon from '@mui/icons-material/VerifiedRounded';
 import LocationOnRoundedIcon from '@mui/icons-material/LocationOnRounded';
 import SportsEsportsRoundedIcon from '@mui/icons-material/SportsEsportsRounded';
 import CasinoRoundedIcon from '@mui/icons-material/CasinoRounded';
+import CalendarMonthRoundedIcon from '@mui/icons-material/CalendarMonthRounded';
+import FavoriteRoundedIcon from '@mui/icons-material/FavoriteRounded';
 import toast from 'react-hot-toast';
 
 // Helper to format opening time tomorrow from merchant.businessHours
@@ -255,287 +257,119 @@ const AllStoresClosedView = ({
         </div>
       )}
 
-      {/* 1. Header with exact requested text matching reference image */}
+      {/* 1. Header matching reference image 2 */}
       <motion.div
         initial={{ opacity: 0, y: 12 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.4 }}
         className="text-center px-3"
       >
-        <h2 className="text-[19px] md:text-2xl font-extrabold text-gray-900 tracking-tight leading-snug">
-          Nothing open right now…
+        <h2 className="text-[21px] sm:text-2xl font-black text-gray-900 tracking-tight leading-snug">
+          Nothing open right now...
         </h2>
         <p
-          className="font-['Caveat',_cursive] text-2xl md:text-3xl text-[#d94848] font-bold tracking-wide mt-0.5"
+          className="font-['Caveat',_cursive] text-[26px] sm:text-[32px] text-[#008736] font-bold tracking-wide mt-0.5"
           style={{ transform: 'rotate(-1deg)' }}
         >
-          but here’s what’s coming tomorrow
+          but here's what's coming tomorrow!
         </p>
-        <p className="text-xs text-gray-500 mt-2 max-w-xs mx-auto">
-          All outlets in {city || 'this area'} have closed for today. Discover tomorrow's best deals and set reminders!
+        <p className="text-xs text-gray-500 mt-2 max-w-sm mx-auto leading-relaxed">
+          All outlets in {city || 'Digboi'} have closed for today.<br className="hidden xs:inline" /> Discover tomorrow's best deals and set reminders!
         </p>
       </motion.div>
 
-      {/* 2. Custom Illustration (High-fidelity vector matching the client's reference) */}
+      {/* 2. 3D Closed Store Illustration with Mascot Ovi */}
       <motion.div
-        initial={{ opacity: 0, scale: 0.95 }}
+        initial={{ opacity: 0, scale: 0.96 }}
         animate={{ opacity: 1, scale: 1 }}
-        transition={{ duration: 0.5, delay: 0.1 }}
-        className="relative max-w-sm mx-auto px-4 flex justify-center items-center"
+        transition={{ duration: 0.45, delay: 0.1 }}
+        className="relative w-full max-w-[460px] mx-auto px-2 flex justify-center items-center"
       >
-        <div className="w-full max-w-[340px] aspect-[1.25/1] relative flex items-center justify-center">
-          <svg
-            viewBox="0 0 400 320"
-            fill="none"
-            xmlns="http://www.w3.org/2000/svg"
-            className="w-full h-full drop-shadow-sm select-none"
-          >
-            <defs>
-              {/* Background Glow */}
-              <radialGradient id="bgGlow" cx="50%" cy="50%" r="50%">
-                <stop offset="0%" stopColor="#fdf2f8" stopOpacity="0.9" />
-                <stop offset="100%" stopColor="#ffffff" stopOpacity="0" />
-              </radialGradient>
+        <img
+          src="/closed-store-3d.png"
+          alt="Nothing open right now - Amazing deals are coming tomorrow!"
+          className="w-full h-auto object-contain select-none pointer-events-none filter drop-shadow-sm"
+          draggable={false}
+        />
+      </motion.div>
 
-              {/* Awning gradient */}
-              <linearGradient id="awningGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-                <stop offset="0%" stopColor="#f472b6" />
-                <stop offset="100%" stopColor="#ec4899" />
-              </linearGradient>
+      {/* 3. 4-Pillar Features Row */}
+      <motion.div
+        initial={{ opacity: 0, y: 14 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.4, delay: 0.2 }}
+        className="w-full max-w-[480px] mx-auto px-1"
+      >
+        <div className="bg-[#EBF8EB] rounded-2xl border border-emerald-100/90 py-3.5 px-1 sm:px-2 grid grid-cols-4 divide-x divide-emerald-200/70 shadow-xs">
+          {/* Pillar 1: Set Reminders */}
+          <div className="flex flex-col items-center text-center px-1">
+            <div className="w-8 h-8 rounded-xl bg-emerald-100/80 text-[#008736] flex items-center justify-center mb-1.5 shadow-xs">
+              <CalendarMonthRoundedIcon sx={{ fontSize: 18 }} />
+            </div>
+            <h5 className="text-[10px] sm:text-[11px] font-black text-gray-900 leading-tight">
+              Set Reminders
+            </h5>
+            <p className="text-[8px] sm:text-[9.5px] text-gray-500 font-medium leading-tight mt-0.5">
+              Get notified when stores open
+            </p>
+          </div>
 
-              {/* Shop booth gradient */}
-              <linearGradient id="boothGrad" x1="0%" y1="0%" x2="0%" y2="100%">
-                <stop offset="0%" stopColor="#fce7f3" />
-                <stop offset="100%" stopColor="#fbcfe8" />
-              </linearGradient>
+          {/* Pillar 2: Save Your Favourite Stores */}
+          <div className="flex flex-col items-center text-center px-1">
+            <div className="w-8 h-8 rounded-xl bg-emerald-100/80 text-[#008736] flex items-center justify-center mb-1.5 shadow-xs">
+              <FavoriteRoundedIcon sx={{ fontSize: 18 }} />
+            </div>
+            <h5 className="text-[10px] sm:text-[11px] font-black text-gray-900 leading-tight">
+              Save Your Favourite Stores
+            </h5>
+            <p className="text-[8px] sm:text-[9.5px] text-gray-500 font-medium leading-tight mt-0.5">
+              Never miss a deal
+            </p>
+          </div>
 
-              {/* Bike seat/box gradient */}
-              <linearGradient id="boxGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-                <stop offset="0%" stopColor="#1e293b" />
-                <stop offset="100%" stopColor="#0f172a" />
-              </linearGradient>
-            </defs>
+          {/* Pillar 3: Be the First to Know */}
+          <div className="flex flex-col items-center text-center px-1">
+            <div className="w-8 h-8 rounded-xl bg-emerald-100/80 text-[#008736] flex items-center justify-center mb-1.5 shadow-xs">
+              <NotificationsActiveRoundedIcon sx={{ fontSize: 18 }} />
+            </div>
+            <h5 className="text-[10px] sm:text-[11px] font-black text-gray-900 leading-tight">
+              Be the First to Know
+            </h5>
+            <p className="text-[8px] sm:text-[9.5px] text-gray-500 font-medium leading-tight mt-0.5">
+              New offers every day
+            </p>
+          </div>
 
-            {/* Ambient Background Circle */}
-            <circle cx="200" cy="160" r="140" fill="url(#bgGlow)" />
-
-            {/* Ground Line */}
-            <line x1="40" y1="285" x2="360" y2="285" stroke="#e2e8f0" strokeWidth="3" strokeLinecap="round" />
-
-            {/* 1. STORE BOOTH (Right side) */}
-            <g id="storeBooth">
-              {/* Main Wall */}
-              <rect x="210" y="90" width="165" height="195" rx="14" fill="url(#boothGrad)" stroke="#f472b6" strokeWidth="2.5" />
-
-              {/* Store Window Counter cutout */}
-              <rect x="228" y="125" width="130" height="95" rx="10" fill="#ffffff" stroke="#fbcfe8" strokeWidth="2" />
-              <rect x="228" y="180" width="130" height="40" fill="#fef3c7" />
-
-              {/* Awning Canopy */}
-              <path
-                d="M195 90 C 205 65, 230 60, 290 60 C 350 60, 380 65, 390 90 Z"
-                fill="url(#awningGrad)"
-              />
-              {/* Scalloped Awning trim */}
-              <path
-                d="M195 90 Q 207 100, 219 90 Q 231 100, 243 90 Q 255 100, 267 90 Q 279 100, 291 90 Q 303 100, 315 90 Q 327 100, 339 90 Q 351 100, 363 90 Q 375 100, 390 90 L 390 85 L 195 85 Z"
-                fill="#ffffff"
-                opacity="0.9"
-              />
-
-              {/* Shopkeeper inside */}
-              <g id="shopkeeper">
-                {/* Body */}
-                <path d="M272 155 Q 292 145, 312 155 L 316 182 L 268 182 Z" fill="#6366f1" />
-                {/* Apron collar */}
-                <polygon points="292,156 284,166 300,166" fill="#ffffff" />
-                {/* Head */}
-                <circle cx="292" cy="138" r="14" fill="#6b3710" />
-                {/* Hair */}
-                <path d="M280 134 Q 292 122, 304 134 Q 307 140, 292 131 Q 278 140, 280 134 Z" fill="#1e1e24" />
-                {/* Smiling Eyes */}
-                <circle cx="288" cy="138" r="1.5" fill="#ffffff" />
-                <circle cx="296" cy="138" r="1.5" fill="#ffffff" />
-                {/* Friendly Smile */}
-                <path d="M289 144 Q 292 147, 295 144" stroke="#ffffff" strokeWidth="1.2" strokeLinecap="round" fill="none" />
-                {/* Hand waving */}
-                <path d="M266 165 Q 250 155, 252 145" stroke="#6b3710" strokeWidth="4" strokeLinecap="round" />
-              </g>
-
-              {/* Closed Hanging Sign */}
-              <g id="closedSign" transform="translate(240, 195)">
-                <rect x="0" y="0" width="48" height="20" rx="4" fill="#ffffff" stroke="#ef4444" strokeWidth="1.5" />
-                <text x="24" y="14" fill="#ef4444" fontSize="9" fontWeight="bold" textAnchor="middle" letterSpacing="0.5">CLOSED</text>
-              </g>
-
-              {/* Takeaway bag on counter */}
-              <rect x="325" y="170" width="22" height="28" rx="3" fill="#f59e0b" />
-              <path d="M331 170 Q 336 163, 341 170" stroke="#b45309" strokeWidth="1.8" fill="none" />
-            </g>
-
-            {/* 2. DELIVERY BIKE & RIDER (Front / Center Left) */}
-            <g id="deliveryBike">
-              {/* Back Wheel */}
-              <circle cx="120" cy="255" r="28" fill="#1e293b" />
-              <circle cx="120" cy="255" r="18" fill="#ffffff" stroke="#cbd5e1" strokeWidth="3" />
-              <circle cx="120" cy="255" r="6" fill="#64748b" />
-
-              {/* Front Wheel */}
-              <circle cx="230" cy="255" r="28" fill="#1e293b" />
-              <circle cx="230" cy="255" r="18" fill="#ffffff" stroke="#cbd5e1" strokeWidth="3" />
-              <circle cx="230" cy="255" r="6" fill="#64748b" />
-
-              {/* Scooter Chassis */}
-              <path
-                d="M120 255 L 148 230 L 195 230 L 222 200 L 230 255"
-                stroke="#ec4899"
-                strokeWidth="7"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                fill="none"
-              />
-              <path
-                d="M140 230 Q 170 215, 205 230"
-                fill="#fce7f3"
-                stroke="#ec4899"
-                strokeWidth="2"
-              />
-
-              {/* Scooter Handlebars & Headlight */}
-              <line x1="216" y1="205" x2="210" y2="185" stroke="#334155" strokeWidth="4" strokeLinecap="round" />
-              <line x1="202" y1="185" x2="218" y2="185" stroke="#334155" strokeWidth="4" strokeLinecap="round" />
-              <circle cx="220" cy="188" r="6" fill="#fbbf24" stroke="#d97706" strokeWidth="1.5" />
-
-              {/* Large Delivery Box on Back */}
-              <rect x="95" y="172" width="46" height="46" rx="8" fill="url(#boxGrad)" stroke="#334155" strokeWidth="2" />
-              {/* Box Logo / Accent (Bag Icon) */}
-              <circle cx="118" cy="195" r="12" fill="#ec4899" />
-              <path d="M114 195 Q 118 190, 122 195" stroke="#ffffff" strokeWidth="1.8" fill="none" />
-              <rect x="113" y="195" width="10" height="7" rx="1.5" fill="#ffffff" />
-
-              {/* Rider Standing / Leaning */}
-              <g id="rider">
-                {/* Legs */}
-                <path d="M165 200 L 160 250 L 150 282" stroke="#1e293b" strokeWidth="7" strokeLinecap="round" strokeLinejoin="round" fill="none" />
-                <path d="M178 200 L 180 245 L 195 282" stroke="#1e293b" strokeWidth="7" strokeLinecap="round" strokeLinejoin="round" fill="none" />
-                {/* Rider Jacket / Body */}
-                <path d="M155 160 L 185 160 L 182 205 L 157 205 Z" fill="#ef4444" rx="4" />
-                {/* White Stripe on jacket */}
-                <line x1="170" y1="160" x2="170" y2="205" stroke="#ffffff" strokeWidth="2" />
-                {/* Rider Arms on Handle */}
-                <path d="M160 168 L 185 180 L 205 186" stroke="#ef4444" strokeWidth="5" strokeLinecap="round" fill="none" />
-                {/* Helmet */}
-                <circle cx="170" cy="142" r="14" fill="#ef4444" />
-                {/* Visor */}
-                <path d="M173 138 Q 183 142, 175 149" stroke="#1e293b" strokeWidth="4" strokeLinecap="round" fill="none" />
-              </g>
-            </g>
-
-            {/* Stars / Night Embellishments */}
-            <circle cx="80" cy="70" r="3" fill="#fbbf24" opacity="0.8" />
-            <circle cx="140" cy="50" r="2.5" fill="#fbbf24" opacity="0.7" />
-            <circle cx="50" cy="110" r="2" fill="#fbbf24" opacity="0.6" />
-            {/* Crescent Moon */}
-            <path
-              d="M75 50 A 12 12 0 0 0 88 65 A 15 15 0 1 1 75 50 Z"
-              fill="#fbbf24"
-              opacity="0.85"
-            />
-          </svg>
+          {/* Pillar 4: Support Local */}
+          <div className="flex flex-col items-center text-center px-1">
+            <div className="w-8 h-8 rounded-xl bg-emerald-100/80 text-[#008736] flex items-center justify-center mb-1.5 shadow-xs">
+              <StorefrontRoundedIcon sx={{ fontSize: 18 }} />
+            </div>
+            <h5 className="text-[10px] sm:text-[11px] font-black text-gray-900 leading-tight">
+              Support Local
+            </h5>
+            <p className="text-[8px] sm:text-[9.5px] text-gray-500 font-medium leading-tight mt-0.5">
+              A happier {city || 'Digboi'} together!
+            </p>
+          </div>
         </div>
       </motion.div>
 
-      {/* 3. Gamification Banners (Matching the 2 cards in client's reference screenshot) */}
+      {/* 4. Green Lucky Reel Reward Banner */}
       <motion.div
         initial={{ opacity: 0, y: 16 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.4, delay: 0.2 }}
-        className="space-y-3"
+        transition={{ duration: 0.4, delay: 0.25 }}
+        className="w-full max-w-[480px] mx-auto px-1 cursor-pointer"
+        onClick={() => navigate('/rewards')}
       >
-        {/* Banner 1: Play Game to Win Rewards (Blue/Indigo Gradient) */}
-        <div
-          onClick={() => navigate('/rewards')}
-          className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-blue-700 via-indigo-600 to-blue-600 text-white p-4 shadow-md shadow-blue-500/15 cursor-pointer hover:shadow-lg transition-all active:scale-[0.99] group border border-blue-400/30"
-        >
-          {/* Subtle wave background overlay */}
-          <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(255,255,255,0.15),transparent_60%)] pointer-events-none" />
-
-          <div className="flex items-center justify-between relative z-10">
-            <div className="max-w-[62%]">
-              <h4 className="text-[15px] font-bold leading-tight drop-shadow-sm">
-                Play the game to win rewards
-              </h4>
-              <p className="text-xs text-blue-100/90 mt-0.5 font-medium">
-                Win cashbacks, coins & exclusive perks
-              </p>
-
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  navigate('/rewards');
-                }}
-                className="mt-3 px-5 py-1.5 rounded-full bg-gradient-to-b from-amber-300 to-amber-400 text-amber-950 text-xs font-extrabold shadow-md shadow-amber-500/30 hover:brightness-105 active:scale-95 transition-all flex items-center gap-1"
-              >
-                Play <ChevronRightRoundedIcon sx={{ fontSize: 16 }} />
-              </button>
-            </div>
-
-            {/* Game / Slot Machine Graphic */}
-            <div className="w-24 h-20 rounded-xl bg-blue-900/60 border border-blue-300/40 p-2 shadow-inner flex flex-col justify-center items-center relative flex-shrink-0 group-hover:scale-105 transition-transform">
-              <div className="flex items-center gap-1.5">
-                <span className="text-lg">💎</span>
-                <span className="text-lg">🍬</span>
-                <span className="text-lg">⭐</span>
-              </div>
-              <div className="w-full h-1 bg-amber-400/80 rounded-full mt-2" />
-              <span className="text-[9px] font-bold text-amber-300 uppercase tracking-widest mt-1">
-                LUCKY REEL
-              </span>
-            </div>
-          </div>
-        </div>
-
-        {/* Banner 2: Spin the Wheel to Win Rewards (Purple/Magenta Gradient) */}
-        <div
-          onClick={() => navigate('/rewards')}
-          className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-purple-700 via-fuchsia-600 to-purple-600 text-white p-4 shadow-md shadow-purple-500/15 cursor-pointer hover:shadow-lg transition-all active:scale-[0.99] group border border-purple-400/30"
-        >
-          <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(255,255,255,0.15),transparent_60%)] pointer-events-none" />
-
-          <div className="flex items-center justify-between relative z-10">
-            <div className="max-w-[62%]">
-              <h4 className="text-[15px] font-bold leading-tight drop-shadow-sm">
-                Spin the wheel to win rewards
-              </h4>
-              <p className="text-xs text-purple-100/90 mt-0.5 font-medium">
-                Claim vouchers & surprise milestone gifts
-              </p>
-
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  navigate('/rewards');
-                }}
-                className="mt-3 px-5 py-1.5 rounded-full bg-gradient-to-b from-amber-300 to-amber-400 text-amber-950 text-xs font-extrabold shadow-md shadow-amber-500/30 hover:brightness-105 active:scale-95 transition-all flex items-center gap-1"
-              >
-                Spin <ChevronRightRoundedIcon sx={{ fontSize: 16 }} />
-              </button>
-            </div>
-
-            {/* Spin Wheel Graphic */}
-            <div className="w-20 h-20 rounded-full bg-gradient-to-tr from-fuchsia-900 to-purple-800 border-2 border-amber-300/80 p-1.5 shadow-lg flex items-center justify-center relative flex-shrink-0 group-hover:rotate-12 transition-transform duration-500">
-              <div className="w-full h-full rounded-full border border-dashed border-white/60 flex items-center justify-center">
-                <span className="text-2xl animate-spin-slow">🎡</span>
-              </div>
-              <div className="absolute -top-1 w-2.5 h-2.5 bg-amber-400 rotate-45 rounded-sm" />
-            </div>
-          </div>
-        </div>
-
-        {/* Carousel indicator dots (matching the 2 dots in client's screenshot) */}
-        <div className="flex justify-center items-center gap-1.5 pt-1">
-          <div className="w-2 h-2 rounded-full bg-gray-800 transition-all" />
-          <div className="w-2 h-2 rounded-full bg-gray-300 transition-all" />
+        <div className="relative overflow-hidden rounded-2xl shadow-md hover:shadow-lg transition-all active:scale-[0.99] border border-emerald-500/20 group">
+          <img
+            src="/lucky-reel-banner-green.png"
+            alt="Play the game to win rewards - Try Lucky Reel"
+            className="w-full h-auto object-contain block rounded-2xl select-none pointer-events-none"
+            draggable={false}
+          />
         </div>
       </motion.div>
 

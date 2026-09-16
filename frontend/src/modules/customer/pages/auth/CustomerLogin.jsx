@@ -7,23 +7,52 @@ import { useApp } from '../../context/AppContext';
 import toast from 'react-hot-toast';
 import PageTransition from '../../components/ui/PageTransition';
 
-const slides = [
+const loginBanners = [
   {
-    title: 'FIND THE BEST DEAL\nON EVERY MEAL',
-    subtitle: 'Save up to 50% at premier restaurants, cafes, and rooftop dining in your city.',
-    badge: 'Exclusive Dining Deals',
+    id: 1,
+    image: '/banners/login-banner-1.png',
+    alt: 'Offerly - Discover Local Deals Near You',
+    badge: 'Verified Deals',
   },
   {
-    title: 'UNLOCK UP TO 70% OFF\nON TOP MERCHANTS',
-    subtitle: 'From luxury spas and gyms to lifestyle stores — get VIP pricing instantly.',
-    badge: 'Top Tier Discounts',
+    id: 2,
+    image: '/banners/login-banner-2.png',
+    alt: 'Offerly - Enter Number to Join & Save',
+    badge: 'Instant Access',
   },
   {
-    title: 'DISCOVER EXCLUSIVE\nOFFERS IN YOUR CITY',
-    subtitle: 'Join thousands of smart shoppers redeeming verified local deals every day.',
-    badge: 'Verified Local Deals',
+    id: 3,
+    image: '/banners/login-banner-3.png',
+    alt: 'Offerly - Start Exploring Local Offers',
+    badge: 'Exclusive Perks',
   },
 ];
+
+const bannerVariants = {
+  enter: (direction) => ({
+    x: direction > 0 ? 100 : -100,
+    opacity: 0,
+    scale: 0.96,
+  }),
+  center: {
+    x: 0,
+    opacity: 1,
+    scale: 1,
+    transition: {
+      duration: 0.38,
+      ease: [0.16, 1, 0.3, 1],
+    },
+  },
+  exit: (direction) => ({
+    x: direction > 0 ? -100 : 100,
+    opacity: 0,
+    scale: 0.96,
+    transition: {
+      duration: 0.28,
+      ease: [0.4, 0, 1, 1],
+    },
+  }),
+};
 
 const countryList = [
   { code: '+91', flag: '🇮🇳', country: 'India' },
@@ -92,13 +121,26 @@ const CustomerLogin = () => {
   const phoneInputRef = useRef(null);
   const otpInputRefs = useRef([]);
 
-  // Auto carousel timer
+  const [slideDirection, setSlideDirection] = useState(1);
+  const [isPaused, setIsPaused] = useState(false);
+
+  // Auto carousel timer (pauses when user hovers or interacts)
   useEffect(() => {
+    if (isPaused) return;
     const timer = setInterval(() => {
-      setActiveSlide((prev) => (prev + 1) % slides.length);
+      setSlideDirection(1);
+      setActiveSlide((prev) => (prev + 1) % loginBanners.length);
     }, 4500);
     return () => clearInterval(timer);
-  }, []);
+  }, [isPaused]);
+
+  const paginateSlide = (newDirection) => {
+    setSlideDirection(newDirection);
+    setActiveSlide((prev) => (prev + newDirection + loginBanners.length) % loginBanners.length);
+  };
+
+  const swipeConfidenceThreshold = 10000;
+  const swipePower = (offset, velocity) => Math.abs(offset) * velocity;
 
   // Handle clicking outside country picker
   useEffect(() => {
@@ -394,16 +436,19 @@ const CustomerLogin = () => {
           {/* ========================================================================= */}
           {/* TOP (MOBILE) / LEFT (DESKTOP) SECTION: Brand Hero Banner                  */}
           {/* ========================================================================= */}
-          <div className={`relative w-full md:w-7/12 lg:w-3/5 flex flex-col justify-between items-center md:items-start p-3 sm:p-5 md:p-10 lg:p-12 overflow-hidden bg-gradient-to-b md:bg-gradient-to-br from-[#060806] via-[#090F08] to-[#040504] shrink-0 ${
-            isKeyboardOpen ? 'h-[14vh] md:h-auto' : 'h-[28vh] sm:h-[32vh] md:h-auto md:flex-1'
-          } transition-all duration-300`}>
-            
+          <div 
+            onMouseEnter={() => setIsPaused(true)}
+            onMouseLeave={() => setIsPaused(false)}
+            className={`relative w-full md:w-7/12 lg:w-3/5 flex flex-col justify-between items-center md:items-start p-3 sm:p-5 md:p-8 lg:p-10 overflow-hidden bg-gradient-to-b md:bg-gradient-to-br from-[#060806] via-[#090F08] to-[#040504] shrink-0 ${
+              isKeyboardOpen ? 'h-[14vh] md:h-auto' : 'h-[30vh] sm:h-[34vh] md:h-auto md:flex-1'
+            } transition-all duration-300`}
+          >
             {/* Ambient Glows */}
-            <div className="absolute top-1/2 left-1/2 md:left-1/3 -translate-x-1/2 -translate-y-1/2 w-64 sm:w-80 md:w-96 h-64 sm:h-80 md:h-96 bg-[#5EB929]/20 rounded-full blur-[80px] pointer-events-none" />
+            <div className="absolute top-1/2 left-1/2 md:left-1/2 -translate-x-1/2 -translate-y-1/2 w-64 sm:w-80 md:w-[480px] h-64 sm:h-80 md:h-[480px] bg-[#5EB929]/15 rounded-full blur-[90px] pointer-events-none" />
             <div className="absolute bottom-0 right-0 w-48 md:w-64 h-48 md:h-64 bg-[#5EB929]/10 rounded-full blur-[70px] pointer-events-none" />
 
-            {/* Desktop Brand Identity (Visible only on Desktop) */}
-            <div className="hidden md:flex relative z-10 w-full items-center justify-between">
+            {/* Desktop Brand Identity Header */}
+            <div className="hidden md:flex relative z-10 w-full items-center justify-between pb-3">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 md:w-11 md:h-11 rounded-2xl bg-white/5 border border-white/10 backdrop-blur-md p-2 flex items-center justify-center shadow-lg shadow-black/40">
                   <img src="/offerly-logo-ring.png" alt="Offerly Logo" className="w-full h-full object-contain" />
@@ -423,59 +468,65 @@ const CustomerLogin = () => {
               </div>
             </div>
 
-            {/* Middle Section: Floating Scalloped Badge + Dynamic Copy */}
-            <div className="relative z-10 w-full h-full md:h-auto flex flex-col md:flex-row items-center justify-center md:justify-between gap-2 md:gap-8 my-auto">
-              
-              {/* Desktop Headline & Carousel Copy */}
-              <div className="hidden md:flex w-full md:max-w-md text-left flex-col justify-center">
-                <div className="inline-flex items-center gap-2 self-start px-3 py-1 rounded-full bg-[#5EB929]/15 border border-[#5EB929]/30 text-[#67C72E] text-xs font-bold uppercase tracking-wider mb-4">
-                  <span>★</span>
-                  <span>{slides[activeSlide].badge}</span>
-                </div>
-
-                <div className="min-h-[96px] flex items-start justify-start">
-                  <AnimatePresence mode="wait">
-                    <motion.div
-                      key={activeSlide}
-                      initial={{ opacity: 0, y: 10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: -10 }}
-                      transition={{ duration: 0.3 }}
-                      className="space-y-2"
-                    >
-                      <h1 className="text-white font-black tracking-tight leading-[1.15] uppercase font-sans drop-shadow-md whitespace-pre-line text-2xl md:text-3xl lg:text-4xl">
-                        {slides[activeSlide].title}
-                      </h1>
-                      <p className="text-sm lg:text-base text-gray-400 font-normal leading-relaxed">
-                        {slides[activeSlide].subtitle}
-                      </p>
-                    </motion.div>
-                  </AnimatePresence>
-                </div>
-              </div>
-
-              {/* 3D Scalloped Badge Graphic */}
-              <div className="relative flex items-center justify-center h-full max-h-[160px] sm:max-h-[190px] md:max-h-none md:max-w-[260px] lg:max-w-[300px] aspect-square w-auto">
-                <motion.div
-                  animate={{ y: [0, -5, 0] }}
-                  transition={{ duration: 4, repeat: Infinity, ease: 'easeInOut' }}
-                  className="relative z-10 w-full h-full flex items-center justify-center"
-                >
-                  <img
-                    src="/offerly-green-medal-nobg.png"
-                    alt="Offerly Deals"
-                    className="max-h-full max-w-full object-contain drop-shadow-[0_12px_28px_rgba(94,185,41,0.35)] select-none pointer-events-none"
-                    onError={(e) => {
-                      e.currentTarget.src = '/offerly-badge-clean.png';
+            {/* Middle Section: 3D Banner Carousel Slider */}
+            <div className="relative z-10 w-full flex-1 flex flex-col items-center justify-center my-auto min-h-0 overflow-hidden group">
+              <div className="relative w-full max-w-[420px] sm:max-w-[460px] md:max-w-[540px] lg:max-w-[600px] aspect-[1024/581] max-h-full flex items-center justify-center">
+                <AnimatePresence initial={false} custom={slideDirection} mode="wait">
+                  <motion.div
+                    key={activeSlide}
+                    custom={slideDirection}
+                    variants={bannerVariants}
+                    initial="enter"
+                    animate="center"
+                    exit="exit"
+                    drag="x"
+                    dragConstraints={{ left: 0, right: 0 }}
+                    dragElastic={0.2}
+                    onDragEnd={(e, { offset, velocity }) => {
+                      const swipe = swipePower(offset.x, velocity.x);
+                      if (swipe < -swipeConfidenceThreshold) {
+                        paginateSlide(1);
+                      } else if (swipe > swipeConfidenceThreshold) {
+                        paginateSlide(-1);
+                      }
                     }}
-                  />
-                </motion.div>
-              </div>
+                    className="w-full h-full flex items-center justify-center cursor-grab active:cursor-grabbing select-none"
+                  >
+                    <img
+                      src={loginBanners[activeSlide].image}
+                      alt={loginBanners[activeSlide].alt}
+                      className="w-full h-full object-contain filter drop-shadow-[0_12px_24px_rgba(0,0,0,0.5)] select-none pointer-events-none rounded-2xl"
+                      draggable={false}
+                    />
+                  </motion.div>
+                </AnimatePresence>
 
+                {/* Desktop Prev/Next Hover Arrows */}
+                <button
+                  type="button"
+                  onClick={() => paginateSlide(-1)}
+                  aria-label="Previous banner"
+                  className="hidden md:flex absolute left-2 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-black/50 hover:bg-[#5EB929] border border-white/10 text-white items-center justify-center backdrop-blur-md transition-all opacity-0 group-hover:opacity-100 z-20 cursor-pointer shadow-lg active:scale-95"
+                >
+                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15 19l-7-7 7-7" />
+                  </svg>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => paginateSlide(1)}
+                  aria-label="Next banner"
+                  className="hidden md:flex absolute right-2 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-black/50 hover:bg-[#5EB929] border border-white/10 text-white items-center justify-center backdrop-blur-md transition-all opacity-0 group-hover:opacity-100 z-20 cursor-pointer shadow-lg active:scale-95"
+                >
+                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 5l7 7-7 7" />
+                  </svg>
+                </button>
+              </div>
             </div>
 
             {/* Bottom Hero Highlights & Carousel Indicators */}
-            <div className="relative z-10 w-full flex items-center justify-center md:justify-between pt-1">
+            <div className="relative z-10 w-full flex items-center justify-center md:justify-between pt-1 sm:pt-2">
               <div className="hidden md:flex items-center gap-3">
                 {highlights.map((h, i) => (
                   <div key={i} className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/5 border border-white/5 text-xs font-semibold text-gray-300">
@@ -487,14 +538,17 @@ const CustomerLogin = () => {
 
               {/* Carousel Indicators */}
               <div className="flex items-center gap-1.5 pb-1 md:pb-0">
-                {slides.map((_, idx) => (
+                {loginBanners.map((_, idx) => (
                   <button
                     key={idx}
                     type="button"
-                    onClick={() => setActiveSlide(idx)}
+                    onClick={() => {
+                      setSlideDirection(idx > activeSlide ? 1 : -1);
+                      setActiveSlide(idx);
+                    }}
                     className={`transition-all duration-300 rounded-full cursor-pointer ${
                       activeSlide === idx
-                        ? 'w-6 md:w-8 h-1.5 bg-[#5EB929]'
+                        ? 'w-6 md:w-8 h-1.5 bg-[#5EB929] shadow-[0_0_8px_#5EB929]'
                         : 'w-1.5 h-1.5 bg-gray-700 hover:bg-gray-500'
                     }`}
                     aria-label={`Slide ${idx + 1}`}

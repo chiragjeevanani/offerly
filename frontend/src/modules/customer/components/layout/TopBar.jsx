@@ -25,7 +25,7 @@ const navLinks = [
 const TopBar = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { user, unreadCount, selectedCity, setSelectedCity, currentLocation, setCurrentLocation, fetchLocation, isLocating } = useApp();
+  const { unreadCount, selectedCity, setSelectedCity, currentLocation, setCurrentLocation, fetchLocation, isLocating } = useApp();
   const [showLocationSheet, setShowLocationSheet] = useState(false);
 
   // Determine back navigation context if deeply nested (though mainly handled gracefully by browser)
@@ -157,16 +157,6 @@ const TopBar = () => {
           </AnimatePresence>
         </motion.button>
 
-        {/* Profile Avatar (Mobile & Desktop) */}
-        <motion.button
-          whileTap={{ scale: 0.9 }}
-          onClick={() => navigate('/profile')}
-          className="w-9 h-9 bg-white rounded-xl flex items-center justify-center border border-gray-100 shadow-sm hover:shadow-md cursor-pointer group transition-all"
-        >
-          <span className="text-[#5EB929] font-bold text-[12px] group-hover:scale-110 transition-transform">
-            {user?.name?.charAt(0)?.toUpperCase() || 'U'}
-          </span>
-        </motion.button>
       </div>
     </header>
 

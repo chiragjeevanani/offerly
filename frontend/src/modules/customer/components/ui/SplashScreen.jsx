@@ -58,33 +58,34 @@ const SplashScreen = ({ onFinish, duration = 2200, forceShow = false }) => {
             scale: 1.02,
             transition: { duration: 0.4, ease: [0.22, 1, 0.36, 1] }
           }}
-          className="fixed inset-0 z-[99999] flex items-center justify-center bg-white select-none overflow-hidden touch-none"
+          className="fixed inset-0 z-[99999] flex items-center justify-center bg-[#EAF7E8] select-none overflow-hidden touch-none"
           style={{
-            background: 'radial-gradient(ellipse at 50% 15%, #F0FAF0 0%, #FFFFFF 75%)'
+            paddingTop: 'env(safe-area-inset-top, 0px)',
+            paddingBottom: 'env(safe-area-inset-bottom, 0px)',
           }}
           role="dialog"
           aria-label="Offerly loading splash screen"
         >
-          {/* Main mobile screen container preserving exact 334:668 aspect ratio */}
-          <div className="relative h-full max-h-[100dvh] aspect-[334/668] max-w-[100vw] flex items-center justify-center shadow-2xl md:shadow-emerald-900/10 md:rounded-3xl md:overflow-hidden bg-white">
+          {/* Main mobile screen container: Full-bleed on mobile (0 side margins), sleek centered card on desktop */}
+          <div className="relative w-full h-full h-[100dvh] md:w-auto md:max-w-[430px] md:h-[92vh] md:max-h-[880px] md:aspect-[576/1024] flex items-center justify-center md:rounded-[36px] md:shadow-[0_25px_70px_rgba(40,120,30,0.2)] md:border md:border-black/5 overflow-hidden bg-[#EAF7E8]">
             
-            {/* High-resolution clean splash screen background artwork */}
+            {/* Ultra high-resolution 2x Retina splash screen background artwork (clean background with no static loader) */}
             <img
-              src="/splash-screen-clean@3x.png"
+              src="/splash-screen-clean@3x.png?v=2"
               alt="Offerly Splash Screen"
-              className="absolute inset-0 w-full h-full object-contain pointer-events-none select-none"
+              className="absolute inset-0 w-full h-full object-cover object-center pointer-events-none select-none"
               draggable="false"
               loading="eager"
             />
 
-            {/* Pixel-perfect interactive loading bar positioned at exact Y: 92.51% */}
+            {/* Single dynamic interactive loading progress bar */}
             <div 
-              className="absolute left-1/2 -translate-x-1/2 w-[37.4%] flex flex-col items-center pointer-events-none"
-              style={{ top: '92.4%' }}
+              className="absolute left-1/2 -translate-x-1/2 w-[59.2%] pointer-events-none"
+              style={{ top: '84.6%', height: '2.1%', maxHeight: '18px', minHeight: '12px' }}
             >
-              {/* Track */}
+              {/* Pill Track */}
               <div 
-                className="w-full h-[5px] bg-[#DCDCDC] rounded-full overflow-hidden relative shadow-[inset_0_1px_1px_rgba(0,0,0,0.06)]"
+                className="w-full h-full rounded-full overflow-hidden relative shadow-[inset_0_1.5px_3px_rgba(0,0,0,0.12)] border border-[#C2E4BF]/70 bg-[#CCE8D2]/80"
                 role="progressbar"
                 aria-valuenow={progress}
                 aria-valuemin={0}
@@ -95,22 +96,12 @@ const SplashScreen = ({ onFinish, duration = 2200, forceShow = false }) => {
                   className="h-full rounded-full"
                   style={{
                     width: `${progress}%`,
-                    backgroundColor: '#3FB712',
-                    boxShadow: '0 0 6px rgba(63, 183, 18, 0.45)',
+                    background: 'linear-gradient(90deg, #5EB929 0%, #3FB712 60%, #369E0F 100%)',
+                    boxShadow: '0 0 10px rgba(63, 183, 18, 0.65)',
                   }}
                   transition={{ ease: 'linear', duration: 0.05 }}
                 />
               </div>
-            </div>
-
-            {/* Subtitle Caption positioned at exact Y: 95.66% */}
-            <div
-              className="absolute left-1/2 -translate-x-1/2 pointer-events-none"
-              style={{ top: '95.6%' }}
-            >
-              <p className="text-[7.5px] sm:text-[8.5px] tracking-[0.18em] font-semibold text-[#8E9790] uppercase whitespace-nowrap opacity-90 transition-opacity">
-                LOADING A BETTER LOCAL SHOPPING EXPERIENCE...
-              </p>
             </div>
 
           </div>
