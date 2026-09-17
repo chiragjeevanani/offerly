@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import HourglassEmptyRoundedIcon from '@mui/icons-material/HourglassEmptyRounded';
 import ErrorOutlineRoundedIcon from '@mui/icons-material/ErrorOutlineRounded';
 import CheckCircleRoundedIcon from '@mui/icons-material/CheckCircleRounded';
@@ -312,14 +312,21 @@ const MerchantStatus = ({ merchant, onStatusChange }) => {
         </motion.div>
         
         {/* Modern Footer */}
-        <div className="mt-10 flex flex-col items-center opacity-30">
-          <div className="flex items-center gap-2 mb-2">
-            <div className="w-6 h-6 bg-gray-900 rounded flex items-center justify-center">
-              <span className="text-white text-[10px] font-bold">O</span>
-            </div>
-            <span className="text-xs font-bold tracking-widest text-gray-900 uppercase">OFFERLY<span className="text-primary-700">BIZ</span></span>
+        <div className="mt-10 flex flex-col items-center space-y-2">
+          <div className="flex items-center gap-3 text-[10px] font-bold text-gray-400">
+            <Link to="/merchant/terms" className="hover:text-[#5EB929] transition-colors" target="_blank">Terms of Operation</Link>
+            <span>•</span>
+            <Link to="/merchant/privacy" className="hover:text-[#5EB929] transition-colors" target="_blank">Privacy Protocol</Link>
+            <span>•</span>
+            <Link to="/merchant/support" className="hover:text-[#5EB929] transition-colors" target="_blank">Support</Link>
           </div>
-          <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Secured Merchant Portal v2.0</p>
+          <div className="flex items-center gap-2 opacity-50">
+            <div className="w-5 h-5 bg-gray-900 rounded flex items-center justify-center">
+              <span className="text-white text-[9px] font-bold">O</span>
+            </div>
+            <span className="text-[11px] font-bold tracking-widest text-gray-900 uppercase">OFFERLY<span className="text-[#5EB929]">BIZ</span></span>
+          </div>
+          <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest">Secured Merchant Portal v2.0</p>
         </div>
       </div>
     </div>

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import StorefrontRoundedIcon from '@mui/icons-material/StorefrontRounded';
 import ArrowForwardRoundedIcon from '@mui/icons-material/ArrowForwardRounded';
@@ -118,19 +118,38 @@ const MerchantLogin = () => {
                 </motion.button>
               </form>
 
-              <div className="pt-6 border-t border-gray-50 text-center">
+              <div className="pt-6 border-t border-gray-50 text-center space-y-3">
                 <p className="text-[11px] font-bold text-gray-400">
                   New business architecture? 
                   <button onClick={() => navigate('/merchant/signup')} className="text-[#5EB929] font-bold ml-1.5 hover:underline">Deploy store</button>
+                </p>
+                <p className="text-[10px] text-gray-400 leading-relaxed">
+                  By accessing Offerly Biz, you agree to our{' '}
+                  <Link to="/merchant/terms" className="text-[#5EB929] font-bold hover:underline">
+                    Terms of Operation
+                  </Link>{' '}
+                  and{' '}
+                  <Link to="/merchant/privacy" className="text-[#5EB929] font-bold hover:underline">
+                    Privacy Protocol
+                  </Link>.
                 </p>
               </div>
             </div>
           </motion.div>
 
           {/* Platform Ledger */}
-          <p className="text-center text-[9px] font-bold text-gray-300 tracking-widest">
-            Secure Enterprise Gateway · v2.0.0
-          </p>
+          <div className="text-center space-y-1.5">
+            <div className="flex items-center justify-center gap-3 text-[10px] font-bold text-gray-400">
+              <Link to="/merchant/terms" className="hover:text-[#5EB929] transition-colors">Terms of Operation</Link>
+              <span>•</span>
+              <Link to="/merchant/privacy" className="hover:text-[#5EB929] transition-colors">Privacy Protocol</Link>
+              <span>•</span>
+              <Link to="/merchant/support" className="hover:text-[#5EB929] transition-colors">Support</Link>
+            </div>
+            <p className="text-[9px] font-bold text-gray-300 tracking-widest">
+              Secure Enterprise Gateway · v2.0.0
+            </p>
+          </div>
         </div>
       </div>
     </PageTransition>

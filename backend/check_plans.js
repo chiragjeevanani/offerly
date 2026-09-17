@@ -3,10 +3,12 @@ import dotenv from 'dotenv';
 import Plan from './src/modules/admin/models/Plan.js';
 import Merchant from './src/modules/merchant/models/Merchant.js';
 
+import connectDB from './src/config/db.js';
+
 dotenv.config();
 
 async function checkPlans() {
-  await mongoose.connect(process.env.MONGO_URI);
+  await connectDB();
   console.log('Connected to DB');
 
   const plans = await Plan.find({});

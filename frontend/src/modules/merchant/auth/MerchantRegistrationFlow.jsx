@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import toast from 'react-hot-toast';
 import { merchantAPI } from '../../../api/merchant.api';
@@ -268,6 +268,18 @@ const MerchantRegistrationFlow = () => {
             {renderStep()}
           </motion.div>
         </AnimatePresence>
+
+        {/* Legal Footer */}
+        <div className="mt-8 pt-4 border-t border-gray-200/60 text-center space-y-1">
+          <div className="flex items-center justify-center gap-3 text-[10px] font-bold text-gray-400">
+            <Link to="/merchant/terms" className="hover:text-[#5EB929] transition-colors" target="_blank">Terms of Operation</Link>
+            <span>•</span>
+            <Link to="/merchant/privacy" className="hover:text-[#5EB929] transition-colors" target="_blank">Privacy Protocol</Link>
+            <span>•</span>
+            <Link to="/merchant/support" className="hover:text-[#5EB929] transition-colors" target="_blank">Support</Link>
+          </div>
+          <p className="text-[9px] text-gray-400 font-medium">Offerly Biz Merchant Enrollment Protocol</p>
+        </div>
       </div>
     </div>
   );

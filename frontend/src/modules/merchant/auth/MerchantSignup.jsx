@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import StorefrontRoundedIcon from '@mui/icons-material/StorefrontRounded';
 import PersonRoundedIcon from '@mui/icons-material/PersonRounded';
@@ -205,6 +205,17 @@ const MerchantSignup = () => {
                   <textarea name="address" required value={formData.address} onChange={handleChange} rows="2" placeholder="HQ Address / Outlet Location" className="w-full p-4 bg-background rounded-2xl border border-gray-50 text-sm font-bold outline-none focus:bg-white focus:border-[#5EB929]/30 transition-all resize-none" />
                 </div>
 
+                <p className="text-[10px] text-gray-400 text-center leading-relaxed px-2">
+                  By enrolling, you agree to Offerly Biz{' '}
+                  <Link to="/merchant/terms" className="text-[#5EB929] font-bold hover:underline" target="_blank">
+                    Terms of Operation
+                  </Link>{' '}
+                  and{' '}
+                  <Link to="/merchant/privacy" className="text-[#5EB929] font-bold hover:underline" target="_blank">
+                    Privacy Protocol
+                  </Link>.
+                </p>
+
                 <motion.button
                   whileTap={{ scale: 0.98 }}
                   type="submit" disabled={loading}
@@ -221,9 +232,18 @@ const MerchantSignup = () => {
           </motion.div>
 
           {/* Footer Ledger */}
-          <p className="text-center text-[9px] font-bold text-gray-300 tracking-widest">
-            Merchant Protocol Standards · v2.0.0
-          </p>
+          <div className="text-center space-y-1.5">
+            <div className="flex items-center justify-center gap-3 text-[10px] font-bold text-gray-400">
+              <Link to="/merchant/terms" className="hover:text-[#5EB929] transition-colors">Terms of Operation</Link>
+              <span>•</span>
+              <Link to="/merchant/privacy" className="hover:text-[#5EB929] transition-colors">Privacy Protocol</Link>
+              <span>•</span>
+              <Link to="/merchant/support" className="hover:text-[#5EB929] transition-colors">Support</Link>
+            </div>
+            <p className="text-center text-[9px] font-bold text-gray-300 tracking-widest">
+              Merchant Protocol Standards · v2.0.0
+            </p>
+          </div>
         </div>
       </div>
     </PageTransition>

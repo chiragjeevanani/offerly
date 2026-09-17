@@ -374,6 +374,29 @@ const MerchantApp = () => {
     };
   }, [socket, merchant?._id]);
 
+  const isLegalRoute = 
+    location.pathname === '/merchant/terms' || 
+    location.pathname === '/merchant/privacy' ||
+    location.pathname === '/merchant/legal/terms' ||
+    location.pathname === '/merchant/legal/privacy' ||
+    location.pathname === '/merchant/terms/' ||
+    location.pathname === '/merchant/privacy/';
+
+  // Public Legal Access: Allow visitors to access Terms and Privacy without login or waiting for merchant load
+  if (isLegalRoute && (!isLoggedIn || user?.type !== 'merchant')) {
+    return (
+      <Suspense fallback={<PageLoader />}>
+        <Routes>
+          <Route path="/terms" element={<LegalTerms isEmbedded={false} />} />
+          <Route path="/privacy" element={<LegalPrivacy isEmbedded={false} />} />
+          <Route path="/legal/terms" element={<Navigate to="/merchant/terms" replace />} />
+          <Route path="/legal/privacy" element={<Navigate to="/merchant/privacy" replace />} />
+          <Route path="*" element={<Navigate to="/merchant/terms" replace />} />
+        </Routes>
+      </Suspense>
+    );
+  }
+
   if (loading) return (
     <div className="min-h-screen grid place-items-center bg-background">
       <div className="w-10 h-10 border-2 border-[#5EB929]/20 border-t-[#5EB929] rounded-full animate-spin" />
@@ -387,14 +410,35 @@ const MerchantApp = () => {
         <Route path="/login" element={<MerchantLogin />} />
         <Route path="/signup" element={<MerchantSignup />} />
         <Route path="/verify" element={<OtpVerify />} />
+        <Route path="/terms" element={<LegalTerms isEmbedded={false} />} />
+        <Route path="/privacy" element={<LegalPrivacy isEmbedded={false} />} />
+        <Route path="/legal/terms" element={<Navigate to="/merchant/terms" replace />} />
+        <Route path="/legal/privacy" element={<Navigate to="/merchant/privacy" replace />} />
         <Route path="*" element={<Navigate to="/merchant" replace />} />
       </Routes>
+    );
+  }
+
+  // If logged-in merchant is viewing legal terms during onboarding or pending status
+  if (isLegalRoute && merchant?.status !== 'approved') {
+    return (
+      <Suspense fallback={<PageLoader />}>
+        <Routes>
+          <Route path="/terms" element={<LegalTerms isEmbedded={false} />} />
+          <Route path="/privacy" element={<LegalPrivacy isEmbedded={false} />} />
+          <Route path="/legal/terms" element={<Navigate to="/merchant/terms" replace />} />
+          <Route path="/legal/privacy" element={<Navigate to="/merchant/privacy" replace />} />
+          <Route path="*" element={<Navigate to="/merchant/terms" replace />} />
+        </Routes>
+      </Suspense>
     );
   }
 
   if (!merchant || !merchant.hasRequestedStore || (merchant.onboardingStep < 4)) {
     return (
       <Routes>
+        <Route path="/terms" element={<LegalTerms isEmbedded={false} />} />
+        <Route path="/privacy" element={<LegalPrivacy isEmbedded={false} />} />
         <Route path="/register" element={<MerchantRegistrationFlow />} />
         <Route path="/status" element={<Navigate to="/merchant/register" replace />} />
         <Route path="*" element={<Navigate to="/merchant/register" replace />} />
@@ -405,6 +449,8 @@ const MerchantApp = () => {
   if (merchant.status === 'pending' || merchant.status === 'rejected') {
     return (
       <Routes>
+        <Route path="/terms" element={<LegalTerms isEmbedded={false} />} />
+        <Route path="/privacy" element={<LegalPrivacy isEmbedded={false} />} />
         <Route path="/status" element={<MerchantStatus merchant={merchant} onStatusChange={fetchMerchant} />} />
         <Route path="*" element={<Navigate to="/merchant/status" replace />} />
       </Routes>
@@ -412,6 +458,8 @@ const MerchantApp = () => {
   }
 
   if (merchant.isSubscriptionExpired) {
+    if (location.pathname === '/merchant/terms') return <LegalTerms isEmbedded={false} />;
+    if (location.pathname === '/merchant/privacy') return <LegalPrivacy isEmbedded={false} />;
     return <SubscriptionRenewal merchant={merchant} />;
   }
 
@@ -471,8 +519,10 @@ const MerchantApp = () => {
                 <Route path="/about" element={<About />} />
                 <Route path="/support" element={<Support />} />
                 <Route path="/contact" element={<Contact />} />
-                <Route path="/terms" element={<LegalTerms />} />
-                <Route path="/privacy" element={<LegalPrivacy />} />
+                <Route path="/terms" element={<LegalTerms isEmbedded={true} />} />
+                <Route path="/privacy" element={<LegalPrivacy isEmbedded={true} />} />
+                <Route path="/legal/terms" element={<Navigate to="/merchant/terms" replace />} />
+                <Route path="/legal/privacy" element={<Navigate to="/merchant/privacy" replace />} />
                 <Route path="*" element={<Navigate to="/merchant" replace />} />
               </Routes>
             </Suspense>
