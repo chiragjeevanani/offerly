@@ -4,8 +4,7 @@ import Merchant from '../../merchant/models/Merchant.js';
 import Offer from '../../merchant/models/Offer.js';
 import Product from '../../merchant/models/Product.js';
 import User from '../../user/models/User.js';
-import { emitMerchantNotification } from '../../../config/socket.js';
-import { notifyUser } from '../../user/services/notificationService.js';
+import { notifyMerchant, notifyUser } from '../../user/services/notificationService.js';
 import { invalidateFeedCache } from '../../../utils/feedCache.js';
 import { checkAndAwardMilestone } from '../../rewards/services/milestoneService.js';
 import { getWalletSettings } from '../../../utils/subscriptionWallet.js';
@@ -104,14 +103,24 @@ export const createRedemption = async (req, res) => {
       status: 'pending'
     });
 
-    // Emit new booking notification to merchant
+    // Notify the merchant: persisted record + live socket event + FCM push.
+    // The socket keeps carrying the whole redemption (Bookings.jsx reads
+    // `notification.data.customerName`); the push gets a small subset,
+    // since FCM caps a message at 4KB.
     try {
-      emitMerchantNotification(merchantId.toString(), {
+      await notifyMerchant(merchantId.toString(), {
         type: 'new_booking',
-        data: redemption
+        title: 'New booking request',
+        body: `${redemption.customerName || 'A customer'} placed a request (#${internalId}).`,
+        data: {
+          redemptionId: redemption._id.toString(),
+          internalId,
+        },
+        socketData: redemption,
+        link: '/merchant/bookings',
       });
-    } catch (socketErr) {
-      console.error('WebSocket emit error for merchant:', socketErr);
+    } catch (notifyErr) {
+      console.error('Merchant notification error (non-blocking):', notifyErr);
     }
 
     res.status(201).json({ success: true, data: redemption });

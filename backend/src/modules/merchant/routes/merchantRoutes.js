@@ -1,6 +1,13 @@
 import express from "express";
+import rateLimit from "express-rate-limit";
 
 import { authorize, optionalAuth, protect } from "../../../middlewares/auth.js";
+import {
+  getMyMerchantPushTokens,
+  registerMerchantPushToken,
+  sendMerchantTestPush,
+  unregisterMerchantPushToken,
+} from "../controllers/merchantPushController.js";
 import {
   getMerchantById,
   getMerchantCustomers,
@@ -30,6 +37,17 @@ import { deleteMerchant } from "../../admin/controllers/adminController.js";
 
 const router = express.Router();
 
+// The test endpoint only ever pushes to the caller's own devices, but it is
+// still a free Firebase send per request — cap it so a stuck client loop
+// cannot burn quota.
+const pushTestLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  limit: 5,
+  standardHeaders: "draft-7",
+  legacyHeaders: false,
+  message: { message: "Too many test notifications, please wait a moment" },
+});
+
 router.get("/", optionalAuth, getMerchants);
 router.get("/me", protect, authorize("merchant", "admin"), getMyStore);
 router.get("/me/store-config", protect, authorize("merchant"), getStoreConfig);
@@ -58,6 +76,13 @@ router.post("/me/ads", protect, authorize("merchant"), requestAd);
 router.get("/me/notifications", protect, authorize("merchant"), getMyNotifications);
 router.patch("/me/notifications/:id/read", protect, authorize("merchant"), markNotificationRead);
 router.patch("/me/notifications/mark-all-read", protect, authorize("merchant"), markAllNotificationsRead);
+
+// Firebase Cloud Messaging device tokens. Mirrors the customer routes under
+// /users/me/push-tokens, but writes to Merchant.fcmTokens.
+router.get("/me/push-tokens", protect, authorize("merchant"), getMyMerchantPushTokens);
+router.post("/me/push-tokens", protect, authorize("merchant"), registerMerchantPushToken);
+router.delete("/me/push-tokens", protect, authorize("merchant"), unregisterMerchantPushToken);
+router.post("/me/push-tokens/test", protect, authorize("merchant"), pushTestLimiter, sendMerchantTestPush);
 
 router.post("/register", protect, authorize("merchant"), registerStore);
 router.put("/me", protect, authorize("merchant", "admin"), updateMyStore);

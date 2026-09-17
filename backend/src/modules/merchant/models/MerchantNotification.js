@@ -20,7 +20,19 @@ const merchantNotificationSchema = new mongoose.Schema(
     },
     type: {
       type: String,
-      enum: ['offer_approved', 'subscription_expiry', 'ad_status', 'payment', 'store_status', 'merchant_application', 'general'],
+      // 'new_booking' matches what Bookings.jsx already listens for on the
+      // socket; keep the two in step or the notification emits fine but never
+      // persists, and the merchant's list silently misses every booking.
+      enum: [
+        'new_booking',
+        'offer_approved',
+        'subscription_expiry',
+        'ad_status',
+        'payment',
+        'store_status',
+        'merchant_application',
+        'general',
+      ],
       default: 'general',
     },
     data: {

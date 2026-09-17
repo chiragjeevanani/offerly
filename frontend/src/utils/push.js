@@ -1,10 +1,39 @@
 import { deleteToken, getToken } from 'firebase/messaging';
 
 import { getMessagingIfSupported, vapidKey } from '../config/firebase';
-import { userAPI } from '../api/user.api';
+import axiosInstance from '../api/axios';
 
 const LAST_TOKEN_KEY = 'offerly_fcm_token';
+// Which persona the stored token is registered under, so logout knows which
+// endpoint to release it from.
+const PERSONA_KEY = 'offerly_fcm_persona';
 const SW_PATH = '/firebase-messaging-sw.js';
+
+// Customer and merchant share one Firebase project, one origin and therefore
+// one service worker — the token is identical either way. What separates them
+// is which collection it is stored in, which is decided by the endpoint.
+const ENDPOINTS = {
+  customer: '/users/me/push-tokens',
+  merchant: '/merchants/me/push-tokens',
+};
+
+const endpointFor = (persona) => ENDPOINTS[persona] || ENDPOINTS.customer;
+
+const readStored = (key) => {
+  try {
+    return localStorage.getItem(key);
+  } catch {
+    return null;
+  }
+};
+
+const writeStored = (key, value) => {
+  try {
+    localStorage.setItem(key, value);
+  } catch {
+    /* storage blocked — only costs us the tidy unregister on logout */
+  }
+};
 
 /**
  * Which of the two arrays the token goes into server-side: `fcmTokens.web` or
@@ -52,9 +81,11 @@ const getSwRegistration = async () => {
  * @param {boolean} [options.requestPermission] Prompt if permission is still
  *   'default'. Leave false for the silent on-login sync so we never fire a
  *   browser permission dialog the user didn't ask for.
+ * @param {'customer'|'merchant'} [options.persona] Which account the token is
+ *   registered against.
  * @returns {Promise<{ok: boolean, reason?: string, token?: string, platform?: string}>}
  */
-export const syncPushToken = async ({ requestPermission = false } = {}) => {
+export const syncPushToken = async ({ requestPermission = false, persona = 'customer' } = {}) => {
   if (!isPushSupported()) {
     return { ok: false, reason: 'unsupported' };
   }
@@ -90,13 +121,10 @@ export const syncPushToken = async ({ requestPermission = false } = {}) => {
 
     const platform = detectPlatform();
 
-    await userAPI.registerPushToken({ token, platform });
+    await axiosInstance.post(endpointFor(persona), { token, platform });
 
-    try {
-      localStorage.setItem(LAST_TOKEN_KEY, token);
-    } catch {
-      /* storage blocked — only costs us the tidy unregister on logout */
-    }
+    writeStored(LAST_TOKEN_KEY, token);
+    writeStored(PERSONA_KEY, persona);
 
     return { ok: true, token, platform };
   } catch (error) {
@@ -109,18 +137,12 @@ export const syncPushToken = async ({ requestPermission = false } = {}) => {
  * Turn push off for this device: drop it server-side first (so we stop being
  * sent to even if the local delete fails), then revoke the token itself.
  */
-export const disablePushToken = async () => {
-  let token = null;
-
-  try {
-    token = localStorage.getItem(LAST_TOKEN_KEY);
-  } catch {
-    /* ignore */
-  }
+export const disablePushToken = async (persona = 'customer') => {
+  const token = readStored(LAST_TOKEN_KEY);
 
   if (token) {
     try {
-      await userAPI.unregisterPushToken(token);
+      await axiosInstance.delete(endpointFor(persona), { data: { token } });
     } catch (error) {
       console.warn('[Push] Failed to unregister token server-side:', error?.message);
     }
@@ -137,6 +159,7 @@ export const disablePushToken = async () => {
 
   try {
     localStorage.removeItem(LAST_TOKEN_KEY);
+    localStorage.removeItem(PERSONA_KEY);
   } catch {
     /* ignore */
   }
@@ -150,18 +173,19 @@ export const disablePushToken = async () => {
  * than re-prompting for permission.
  */
 export const releasePushTokenOnLogout = async (authToken) => {
-  let token = null;
-
-  try {
-    token = localStorage.getItem(LAST_TOKEN_KEY);
-  } catch {
-    return;
-  }
+  const token = readStored(LAST_TOKEN_KEY);
 
   if (!token) return;
 
+  // Release from whichever persona the token was registered under — hitting
+  // the wrong endpoint would 403 and leave the device still subscribed.
+  const persona = readStored(PERSONA_KEY) || 'customer';
+
   try {
-    await userAPI.unregisterPushToken(token, authToken);
+    await axiosInstance.delete(endpointFor(persona), {
+      data: { token },
+      ...(authToken ? { headers: { Authorization: `Bearer ${authToken}` } } : {}),
+    });
   } catch {
     // Best effort: the auth token may already be gone. The server also evicts
     // this token from the old account the next time it's registered anywhere.

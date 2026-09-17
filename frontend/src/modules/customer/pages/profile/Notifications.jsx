@@ -8,7 +8,7 @@ import DoneAllRoundedIcon from '@mui/icons-material/DoneAllRounded';
 import { userAPI } from '../../../../api/user.api';
 import { useApp } from '../../context/AppContext';
 import PageTransition from '../../components/ui/PageTransition';
-import PushOptInCard from '../../components/ui/PushOptInCard';
+import PushOptInCard from '../../../../components/common/PushOptInCard';
 
 const typeConfig = {
   redemption: { icon: ReceiptRoundedIcon, color: 'text-[#5EB929]', bg: 'bg-[#5EB929]/5' },
@@ -120,7 +120,7 @@ const Notifications = () => {
           )}
         </div>
 
-        <PushOptInCard />
+        <PushOptInCard persona="customer" isLoggedIn={isLoggedIn} />
 
         {notifications.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-28 text-center">

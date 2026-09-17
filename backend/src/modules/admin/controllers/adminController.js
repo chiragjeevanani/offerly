@@ -13,7 +13,7 @@ import AdminNotification from '../models/AdminNotification.js';
 import Notification from '../../user/models/Notification.js';
 import MerchantNotification from '../../merchant/models/MerchantNotification.js';
 import AdRequest from '../models/AdRequest.js';
-import { emitMerchantNotification } from '../../../config/socket.js';
+import { notifyMerchant } from '../../user/services/notificationService.js';
 import { computeSubscriptionCharge, getWalletSettings } from '../../../utils/subscriptionWallet.js';
 import { getCustomerSubscriptionSettings } from '../../../utils/customerSubscription.js';
 
@@ -271,15 +271,14 @@ export const updateMerchantStatus = async (req, res) => {
     }
 
     if (title) {
-       const merchantNotification = await MerchantNotification.create({
-         merchantId: merchant._id,
+       // Persists a MerchantNotification, emits the socket event and pushes.
+       await notifyMerchant(merchant._id, {
          title,
          body,
          type: 'store_status',
-         data: { status: req.body.status }
+         data: { status: req.body.status },
+         link: '/merchant/notifications',
        });
-       
-       emitMerchantNotification(merchant._id, merchantNotification);
     }
 
     // If approved, check if they are starting a trial

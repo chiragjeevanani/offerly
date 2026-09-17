@@ -3,6 +3,7 @@ import Redemption from "../../booking/models/Redemption.js";
 import MerchantSubscription from "../../payment/models/MerchantSubscription.js";
 import Notification from "../../user/models/Notification.js";
 import MerchantNotification from "../models/MerchantNotification.js";
+import { notifyMerchant } from "../../user/services/notificationService.js";
 import { serializeMerchant, serializeRedemption } from "../../../utils/serializers.js";
 import Merchant from "../models/Merchant.js";
 import Offer from "../models/Offer.js";
@@ -290,12 +291,12 @@ export const registerStore = async (req, res) => {
     { upsert: true, new: true, setDefaultsOnInsert: true },
   );
 
-  await MerchantNotification.create({
-    merchantId: req.user._id,
+  await notifyMerchant(req.user._id, {
     title: "Store application submitted",
     body: "Your merchant profile has been submitted and is waiting for admin approval. Your 1-month free trial will begin once approved.",
     type: "merchant_application",
     data: { merchantId: merchant._id.toString() },
+    link: "/merchant/notifications",
   });
 
   return res.status(201).json({

@@ -36,6 +36,24 @@ const kybDocumentSchema = new mongoose.Schema(
   { _id: false }
 );
 
+// One entry per device that has granted push permission, in the same shape the
+// User model uses -- the shared push service reads `fcmTokens.web` /
+// `fcmTokens.app` off either collection.
+const fcmTokenSchema = new mongoose.Schema(
+  {
+    token: {
+      type: String,
+      required: true,
+      trim: true,
+    },
+    lastSeenAt: {
+      type: Date,
+      default: Date.now,
+    },
+  },
+  { _id: false },
+);
+
 const merchantSchema = new mongoose.Schema(
   {
     ownerName: {
@@ -256,6 +274,16 @@ const merchantSchema = new mongoose.Schema(
       type: [kybDocumentSchema],
       default: [],
     },
+    fcmTokens: {
+      web: {
+        type: [fcmTokenSchema],
+        default: [],
+      },
+      app: {
+        type: [fcmTokenSchema],
+        default: [],
+      },
+    },
   },
   {
     timestamps: true,
@@ -272,5 +300,10 @@ merchantSchema.index({ coordinates: '2d' }); // For geospatial queries
 merchantSchema.index({ status: 1, city: 1, avgRating: -1 });
 merchantSchema.index({ status: 1, city: 1, totalRedemptions: -1 });
 merchantSchema.index({ status: 1, zone: 1 });
+
+// Registering a token evicts it from whichever account last used that device,
+// which means looking merchants up by token.
+merchantSchema.index({ 'fcmTokens.web.token': 1 });
+merchantSchema.index({ 'fcmTokens.app.token': 1 });
 
 export default mongoose.model('Merchant', merchantSchema);

@@ -8,17 +8,22 @@ import { useApp } from '../../modules/customer/context/AppContext';
 import { getPermission, isPushSupported, syncPushToken } from '../../utils/push';
 
 /**
- * Headless. Mounted once for the customer app; renders nothing.
+ * Headless. Mounted once for the whole SPA; renders nothing.
  *
  * Two jobs:
- *  1. Keep this device's FCM token registered against the logged-in account.
- *     Only ever silent — the permission prompt itself lives behind an explicit
- *     opt-in on the notifications page, because an unprompted browser dialog
- *     on first load is the fastest way to get permanently blocked.
+ *  1. Keep this device's FCM token registered against the signed-in account,
+ *     under the right persona. Only ever silent — the permission prompt lives
+ *     behind an explicit opt-in on the notifications pages, because an
+ *     unprompted browser dialog on first load is the fastest way to get
+ *     permanently blocked.
  *  2. Surface foreground pushes as toasts. The service worker only handles
- *     messages that arrive while the tab is backgrounded; with the tab focused,
- *     FCM hands the payload to the page instead and nothing is shown unless we
- *     show it.
+ *     messages that arrive while the tab is backgrounded; with the tab focused
+ *     FCM hands the payload to the page instead, and nothing is shown unless
+ *     we show it.
+ *
+ * Customer and merchant share one Firebase project and one service worker, so
+ * the token is identical for both — the persona only decides which endpoint it
+ * is registered against, and therefore which collection stores it.
  */
 const PushNotificationBridge = () => {
   const { isLoggedIn, user } = useApp();
@@ -26,26 +31,29 @@ const PushNotificationBridge = () => {
   const location = useLocation();
   const syncedFor = useRef(null);
 
-  const isCustomerContext =
-    !location.pathname.startsWith('/merchant') &&
-    !location.pathname.startsWith('/admin') &&
-    (!user?.type || user.type === 'customer');
+  // Admin has no push surface, so it gets no token and no listener.
+  const isAdminArea = location.pathname.startsWith('/admin') || user?.type === 'admin';
+  const persona = user?.type === 'merchant' ? 'merchant' : 'customer';
+  const active = isLoggedIn && !isAdminArea && isPushSupported();
 
-  // Re-register on login. The token itself rarely changes, but the row it maps
-  // to server-side does — a device shared between accounts has to follow the
-  // account that's currently signed in.
+  // Re-register on login and whenever the persona changes. The token itself
+  // rarely changes, but the row it maps to server-side does — a device shared
+  // between accounts has to follow whoever is currently signed in.
   useEffect(() => {
-    if (!isLoggedIn || !isCustomerContext || !isPushSupported()) return;
+    if (!active) return;
     if (getPermission() !== 'granted') return;
 
-    const userId = user?.id || user?._id;
-    if (!userId || syncedFor.current === userId) return;
+    const ownerId = user?.id || user?._id;
+    if (!ownerId) return;
 
-    syncedFor.current = userId;
-    syncPushToken({ requestPermission: false }).catch(() => {
+    const key = `${persona}:${ownerId}`;
+    if (syncedFor.current === key) return;
+
+    syncedFor.current = key;
+    syncPushToken({ requestPermission: false, persona }).catch(() => {
       /* non-fatal — the opt-in control can retry */
     });
-  }, [isLoggedIn, isCustomerContext, user?.id, user?._id]);
+  }, [active, persona, user?.id, user?._id]);
 
   useEffect(() => {
     if (!isLoggedIn) {
@@ -54,7 +62,7 @@ const PushNotificationBridge = () => {
   }, [isLoggedIn]);
 
   useEffect(() => {
-    if (!isLoggedIn || !isCustomerContext || !isPushSupported()) return undefined;
+    if (!active) return undefined;
 
     let unsubscribe = null;
     let cancelled = false;
@@ -92,7 +100,7 @@ const PushNotificationBridge = () => {
       cancelled = true;
       if (unsubscribe) unsubscribe();
     };
-  }, [isLoggedIn, isCustomerContext, navigate]);
+  }, [active, navigate]);
 
   return null;
 };

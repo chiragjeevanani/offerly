@@ -11,9 +11,11 @@ import WorkspacePremiumRoundedIcon from '@mui/icons-material/WorkspacePremiumRou
 import DoneAllRoundedIcon from '@mui/icons-material/DoneAllRounded';
 import { merchantAPI } from '../../../api/merchant.api';
 import toast from 'react-hot-toast';
+import PushOptInCard from '../../../components/common/PushOptInCard';
 
 const typeConfig = {
-  booking_new: { icon: ReceiptLongRoundedIcon, color: 'text-emerald-600', bg: 'bg-emerald-50' },
+  merchant_application: { icon: StorefrontRoundedIcon, color: 'text-indigo-600', bg: 'bg-indigo-50' },
+  new_booking: { icon: ReceiptLongRoundedIcon, color: 'text-emerald-600', bg: 'bg-emerald-50' },
   booking_fulfilled: { icon: ReceiptLongRoundedIcon, color: 'text-[#5EB929]', bg: 'bg-[#5EB929]/10' },
   subscription_expiry: { icon: WorkspacePremiumRoundedIcon, color: 'text-amber-600', bg: 'bg-amber-50' },
   offer_approved: { icon: LocalOfferRoundedIcon, color: 'text-indigo-600', bg: 'bg-indigo-50' },
@@ -105,6 +107,8 @@ const Notifications = () => {
 
       {/* Main Content Area */}
       <div className="max-w-3xl mx-auto px-4 py-6">
+        <PushOptInCard persona="merchant" className="mb-6" />
+
         {notifications.length === 0 ? (
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="flex flex-col items-center justify-center py-32 text-center">
             <div className="w-24 h-24 bg-white rounded-3xl flex items-center justify-center mb-6 shadow-xl shadow-gray-200/50 border border-gray-50">
