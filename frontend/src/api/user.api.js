@@ -52,6 +52,29 @@ export const userAPI = {
     return axiosInstance.post('/users/credits/redeem', { amount });
   },
 
+  // Push notifications (FCM device tokens)
+  getPushTokens: async () => {
+    return axiosInstance.get('/users/me/push-tokens');
+  },
+
+  registerPushToken: async ({ token, platform }) => {
+    return axiosInstance.post('/users/me/push-tokens', { token, platform });
+  },
+
+  // `authToken` is for the logout path, where auth storage is cleared the
+  // instant after this fires and the request interceptor would find nothing.
+  unregisterPushToken: async (token, authToken) => {
+    // DELETE with a body: axios needs it under `data`, not as the 2nd arg.
+    return axiosInstance.delete('/users/me/push-tokens', {
+      data: { token },
+      ...(authToken ? { headers: { Authorization: `Bearer ${authToken}` } } : {}),
+    });
+  },
+
+  sendTestPush: async () => {
+    return axiosInstance.post('/users/me/push-tokens/test');
+  },
+
   // Customer subscription (claim gate)
   getSubscriptionStatus: async () => {
     return axiosInstance.get('/users/me/subscription');

@@ -15,6 +15,12 @@ jspm_packages/
 *.env
 !.env.example
 
+# Firebase service-account private keys — these are send credentials for the
+# whole project, they belong in env vars, never in the tree.
+*firebase-adminsdk*.json
+**/serviceAccountKey.json
+backend/secrets/
+
 # ===============================
 # User Uploads (server-local image storage)
 # ===============================

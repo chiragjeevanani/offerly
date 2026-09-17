@@ -2,7 +2,7 @@ import Redemption from '../../booking/models/Redemption.js';
 import MilestoneConfig from '../models/MilestoneConfig.js';
 import Reward from '../models/Reward.js';
 import ScratchCard from '../models/ScratchCard.js';
-import { emitUserNotification } from '../../../config/socket.js';
+import { notifyUser } from '../../user/services/notificationService.js';
 
 /**
  * Generate unique coupon code for a reward if none is configured
@@ -103,17 +103,20 @@ export const checkAndAwardMilestone = async (userId) => {
 
       awardedCards.push(card);
 
-      // Emit real-time notification via WebSocket
+      // In-app record + live socket event + FCM push.
       try {
-        emitUserNotification(userId.toString(), {
+        await notifyUser(userId.toString(), {
           type: 'milestone_reward_earned',
           title: '🎉 Scratch Card Unlocked!',
           body: `You completed ${completedClaimsCount} claimed offers! Scratch your new reward card now.`,
-          cardId: card._id,
-          milestoneLevel: milestone.level,
+          data: {
+            cardId: card._id.toString(),
+            milestoneLevel: String(milestone.level),
+          },
+          link: '/rewards',
         });
-      } catch (socketErr) {
-        console.error('[MilestoneService] Socket notification error (non-blocking):', socketErr);
+      } catch (notifyErr) {
+        console.error('[MilestoneService] Notification error (non-blocking):', notifyErr);
       }
     }
 

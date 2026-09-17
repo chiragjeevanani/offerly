@@ -1,6 +1,7 @@
 import { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { storage } from '../../../utils/storage';
 import { userAPI } from '../../../api/user.api';
+import { releasePushTokenOnLogout } from '../../../utils/push';
 
 const AuthContext = createContext(null);
 
@@ -56,6 +57,13 @@ export const AuthProvider = ({ children }) => {
   }, []);
 
   const logout = useCallback(() => {
+    // Stop pushing to this device for the account being signed out. Grab the
+    // bearer before clearing storage and hand it over explicitly — the request
+    // interceptor reads storage, which is about to be empty. Not awaited: the
+    // sign-out must feel instant, and the server evicts this token anyway the
+    // next time it is registered against any account.
+    releasePushTokenOnLogout(storage.getToken());
+
     storage.clearAuth();
     setUser(null);
     setAuthStatus('unauthenticated');

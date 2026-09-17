@@ -4,7 +4,8 @@ import Merchant from '../../merchant/models/Merchant.js';
 import Offer from '../../merchant/models/Offer.js';
 import Product from '../../merchant/models/Product.js';
 import User from '../../user/models/User.js';
-import { emitUserNotification, emitMerchantNotification } from '../../../config/socket.js';
+import { emitMerchantNotification } from '../../../config/socket.js';
+import { notifyUser } from '../../user/services/notificationService.js';
 import { invalidateFeedCache } from '../../../utils/feedCache.js';
 import { checkAndAwardMilestone } from '../../rewards/services/milestoneService.js';
 import { getWalletSettings } from '../../../utils/subscriptionWallet.js';
@@ -280,17 +281,23 @@ export const verifyQR = async (req, res) => {
     const merchant = await Merchant.findById(redemption.merchantId).select("city").lean();
     invalidateFeedCache({ city: merchant?.city || "" });
 
-    // Notify the customer via WebSocket
+    // Notify the customer: in-app record + live socket event + FCM push.
+    // Awaited so the push actually goes out before the request ends, but
+    // never allowed to fail the redemption itself.
     try {
-      emitUserNotification(redemption.customerId.toString(), {
+      await notifyUser(redemption.customerId.toString(), {
         type: 'booking_fulfilled',
         title: 'Booking Fulfilled!',
         body: `Your booking #${redemption.internalId} has been verified and fulfilled.`,
-        redemptionId: redemption._id,
-        status: 'completed',
+        data: {
+          redemptionId: redemption._id.toString(),
+          internalId: redemption.internalId,
+          status: 'completed',
+        },
+        link: `/redeem/${redemption._id}`,
       });
-    } catch (socketErr) {
-      console.error('WebSocket emit error (non-blocking):', socketErr);
+    } catch (notifyErr) {
+      console.error('Customer notification error (non-blocking):', notifyErr);
     }
 
     // Check & award milestone rewards in background (non-blocking)

@@ -1,6 +1,24 @@
 import bcrypt from "bcryptjs";
 import mongoose from "mongoose";
 
+// One entry per device that has granted push permission. Kept as separate
+// arrays per platform so we can target "web only" or "app only" campaigns
+// without filtering, and so a user logged in on both keeps both alive.
+const fcmTokenSchema = new mongoose.Schema(
+  {
+    token: {
+      type: String,
+      required: true,
+      trim: true,
+    },
+    lastSeenAt: {
+      type: Date,
+      default: Date.now,
+    },
+  },
+  { _id: false },
+);
+
 const userSchema = new mongoose.Schema(
   {
     name: {
@@ -103,6 +121,16 @@ const userSchema = new mongoose.Schema(
         ref: "Offer",
       },
     ],
+    fcmTokens: {
+      web: {
+        type: [fcmTokenSchema],
+        default: [],
+      },
+      app: {
+        type: [fcmTokenSchema],
+        default: [],
+      },
+    },
     isProfileComplete: {
       type: Boolean,
       default: false,
@@ -110,6 +138,11 @@ const userSchema = new mongoose.Schema(
   },
   { timestamps: true },
 );
+
+// Registering a token has to evict it from whichever other account last used
+// that device, which means looking users up by token.
+userSchema.index({ "fcmTokens.web.token": 1 });
+userSchema.index({ "fcmTokens.app.token": 1 });
 
 userSchema.pre("save", async function savePassword() {
   if (!this.isModified("password") || !this.password) {

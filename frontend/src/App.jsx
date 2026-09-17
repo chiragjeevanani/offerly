@@ -5,6 +5,7 @@ import { AppProvider, useApp } from './modules/customer/context/AppContext';
 import { SocketProvider } from './context/SocketContext';
 import AppLayout from './modules/customer/components/layout/AppLayout';
 import ScrollToTop from './components/common/ScrollToTop';
+import PushNotificationBridge from './components/common/PushNotificationBridge';
 import SplashScreen from './modules/customer/components/ui/SplashScreen';
 
 // Loading Component
@@ -151,6 +152,7 @@ const App = () => (
     <AppProvider>
       <SocketProvider>
         <AppRoutes />
+        <PushNotificationBridge />
         <Toaster
           position="top-center"
           toastOptions={{

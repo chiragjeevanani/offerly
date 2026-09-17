@@ -8,12 +8,15 @@ import DoneAllRoundedIcon from '@mui/icons-material/DoneAllRounded';
 import { userAPI } from '../../../../api/user.api';
 import { useApp } from '../../context/AppContext';
 import PageTransition from '../../components/ui/PageTransition';
+import PushOptInCard from '../../components/ui/PushOptInCard';
 
 const typeConfig = {
   redemption: { icon: ReceiptRoundedIcon, color: 'text-[#5EB929]', bg: 'bg-[#5EB929]/5' },
   review: { icon: NotificationsRoundedIcon, color: 'text-amber-600', bg: 'bg-amber-50' },
   offer: { icon: LocalOfferRoundedIcon, color: 'text-blue-600', bg: 'bg-blue-50' },
   referral: { icon: CardGiftcardRoundedIcon, color: 'text-purple-600', bg: 'bg-purple-50' },
+  booking_fulfilled: { icon: ReceiptRoundedIcon, color: 'text-[#5EB929]', bg: 'bg-[#5EB929]/5' },
+  milestone_reward_earned: { icon: CardGiftcardRoundedIcon, color: 'text-purple-600', bg: 'bg-purple-50' },
 };
 
 const Notifications = () => {
@@ -116,6 +119,8 @@ const Notifications = () => {
             </button>
           )}
         </div>
+
+        <PushOptInCard />
 
         {notifications.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-28 text-center">
