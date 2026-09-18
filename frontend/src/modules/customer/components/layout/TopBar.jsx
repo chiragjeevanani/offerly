@@ -34,7 +34,7 @@ const TopBar = () => {
 
   return (
     <>
-      <header className="sticky top-0 z-50 bg-white/95 backdrop-blur-xl border-b border-gray-100 px-4 py-3 flex items-center gap-3">
+      <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-xl border-b border-gray-100 px-4 py-3 flex items-center gap-3">
       
       {/* Dynamic Back Button / Mobile Logo */}
       <div className="flex items-center gap-3">

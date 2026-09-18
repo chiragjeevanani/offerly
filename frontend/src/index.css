@@ -251,7 +251,7 @@
 
   /* ─── Modal System ─────────────────────────────── */
   .merchant-modal-overlay {
-    @apply fixed inset-0 z-50 flex items-center justify-center p-0 md:p-4;
+    @apply fixed inset-0 z-[9999] flex items-center justify-center p-0 md:p-4;
   }
   .merchant-modal-backdrop {
     @apply absolute inset-0 bg-gray-900/60 backdrop-blur-md;

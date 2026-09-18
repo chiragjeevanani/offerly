@@ -286,10 +286,12 @@ const AllStoresClosedView = ({
         className="relative w-full max-w-[460px] mx-auto px-2 flex justify-center items-center"
       >
         <img
-          src="/closed-store-3d.png"
+          src="/closed-store-3d.png?v=2"
           alt="Nothing open right now - Amazing deals are coming tomorrow!"
-          className="w-full h-auto object-contain select-none pointer-events-none filter drop-shadow-sm"
+          className="w-full h-auto object-contain select-none pointer-events-none"
           draggable={false}
+          loading="eager"
+          decoding="async"
         />
       </motion.div>
 

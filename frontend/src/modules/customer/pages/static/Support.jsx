@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import ArrowBackRoundedIcon from '@mui/icons-material/ArrowBackRounded';
 import SearchRoundedIcon from '@mui/icons-material/SearchRounded';
@@ -29,9 +29,7 @@ const CategoryCard = ({ icon: Icon, title, count, color, bgColor, onClick }) => 
   </motion.button>
 );
 
-const FAQItem = ({ question, answer }) => {
-  const [isOpen, setIsOpen] = useState(false);
-
+const FAQItem = ({ question, answer, isOpen, onToggle }) => {
   return (
     <motion.div
       initial={{ opacity: 0, y: 10 }}
@@ -40,7 +38,7 @@ const FAQItem = ({ question, answer }) => {
       className="bg-white rounded-xl border border-gray-200 overflow-hidden"
     >
       <button
-        onClick={() => setIsOpen(!isOpen)}
+        onClick={onToggle}
         className="w-full flex items-center justify-between p-4 text-left hover:bg-gray-50 transition-colors"
       >
         <span className="font-semibold text-gray-900 text-sm pr-4">{question}</span>
@@ -48,15 +46,21 @@ const FAQItem = ({ question, answer }) => {
           className={`text-gray-400 transition-transform flex-shrink-0 ${isOpen ? 'rotate-180' : ''}`}
         />
       </button>
-      {isOpen && (
-        <motion.div
-          initial={{ height: 0, opacity: 0 }}
-          animate={{ height: 'auto', opacity: 1 }}
-          className="px-4 pb-4 text-sm text-gray-600 leading-relaxed"
-        >
-          {answer}
-        </motion.div>
-      )}
+      <AnimatePresence initial={false}>
+        {isOpen && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: 'auto', opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.25, ease: 'easeInOut' }}
+            className="overflow-hidden"
+          >
+            <div className="px-4 pb-4 text-sm text-gray-600 leading-relaxed">
+              {answer}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </motion.div>
   );
 };
@@ -64,6 +68,11 @@ const FAQItem = ({ question, answer }) => {
 const Support = () => {
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState('');
+  const [openFaq, setOpenFaq] = useState(null);
+
+  const toggleFaq = (idx) => {
+    setOpenFaq((prev) => (prev === idx ? null : idx));
+  };
 
   const categories = [
     { icon: LockRoundedIcon, title: 'Account & Login', count: 8, color: 'text-blue-600', bgColor: 'bg-blue-50' },
@@ -169,7 +178,12 @@ const Support = () => {
            <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest px-1">Active Protocols (FAQ)</p>
            <div className="space-y-2">
               {faqs.map((faq, idx) => (
-                <FAQItem key={idx} {...faq} />
+                <FAQItem
+                  key={idx}
+                  {...faq}
+                  isOpen={openFaq === idx}
+                  onToggle={() => toggleFaq(idx)}
+                />
               ))}
            </div>
         </div>

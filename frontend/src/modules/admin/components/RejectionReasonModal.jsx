@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 import WarningRoundedIcon from '@mui/icons-material/WarningRounded';
@@ -66,11 +67,13 @@ const RejectionReasonModal = ({ isOpen, merchantName, onClose, onConfirm }) => {
     return () => document.removeEventListener('keydown', handleTab);
   }, [isOpen]);
 
-  return (
+  if (typeof document === 'undefined') return null;
+
+  return createPortal(
     <AnimatePresence>
       {isOpen && (
         <div 
-          className="fixed inset-0 z-50 flex items-center justify-center p-4"
+          className="fixed inset-0 z-[9999] flex items-center justify-center p-4"
           role="dialog"
           aria-modal="true"
           aria-labelledby="rejection-modal-title"
@@ -171,7 +174,8 @@ const RejectionReasonModal = ({ isOpen, merchantName, onClose, onConfirm }) => {
           </motion.div>
         </div>
       )}
-    </AnimatePresence>
+    </AnimatePresence>,
+    document.body
   );
 };
 

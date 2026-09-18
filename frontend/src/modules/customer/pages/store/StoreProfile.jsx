@@ -543,7 +543,7 @@ const StoreProfile = () => {
       {/* Floating Cart Summary Pill */}
       <AnimatePresence>
         {cartTotalItems > 0 && (
-          <div className="fixed bottom-[5.5rem] sm:bottom-24 lg:bottom-7 left-0 right-0 z-[10001] pointer-events-none flex justify-center px-4">
+          <div className="fixed bottom-[5.5rem] sm:bottom-24 lg:bottom-7 left-0 right-0 z-40 pointer-events-none flex justify-center px-4">
             <motion.div
               initial={{ y: 50, opacity: 0, scale: 0.9 }}
               animate={{ y: 0, opacity: 1, scale: 1 }}

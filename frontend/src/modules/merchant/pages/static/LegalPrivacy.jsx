@@ -98,7 +98,7 @@ const PrivacySection = ({ section, isExpanded, onToggle }) => {
 
 const LegalPrivacy = ({ isEmbedded = false }) => {
   const [searchQuery, setSearchQuery] = useState('');
-  const [expandedSections, setExpandedSections] = useState({ 0: true, 1: true });
+  const [expandedSections, setExpandedSections] = useState({ 0: true });
 
   useEffect(() => {
     window.scrollTo(0, 0);
@@ -333,10 +333,7 @@ const LegalPrivacy = ({ isEmbedded = false }) => {
   });
 
   const toggleSection = (idx) => {
-    setExpandedSections((prev) => ({
-      ...prev,
-      [idx]: !prev[idx]
-    }));
+    setExpandedSections((prev) => (prev[idx] ? {} : { [idx]: true }));
   };
 
   const expandAll = () => {

@@ -1,4 +1,5 @@
 import { useRef, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 
@@ -23,16 +24,19 @@ const BottomSheet = ({ isOpen, onClose, title, children, height = 'auto' }) => {
     return () => { document.body.style.overflow = ''; };
   }, [isOpen]);
 
-  return (
+  if (typeof document === 'undefined') return null;
+
+  return createPortal(
     <AnimatePresence>
       {isOpen && (
-        <>
+        <div className="fixed inset-0 z-[9999] flex flex-col justify-end pointer-events-none">
           {/* Backdrop */}
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black/40 z-50 backdrop-blur-sm"
+            onClick={onClose}
+            className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[9999] pointer-events-auto"
           />
 
           {/* Sheet */}
@@ -43,7 +47,7 @@ const BottomSheet = ({ isOpen, onClose, title, children, height = 'auto' }) => {
             exit={{ y: '100%' }}
             transition={{ type: 'spring', stiffness: 400, damping: 35 }}
             style={height !== 'auto' ? { maxHeight: height } : {}}
-            className="fixed bottom-0 left-0 right-0 bg-surface rounded-t-3xl z-50 overflow-hidden"
+            className="relative w-full bg-white rounded-t-3xl z-[10000] overflow-hidden pointer-events-auto shadow-2xl pb-safe flex flex-col"
           >
             {/* Handle */}
             <div className="flex justify-center pt-3 pb-1">
@@ -52,22 +56,26 @@ const BottomSheet = ({ isOpen, onClose, title, children, height = 'auto' }) => {
 
             {/* Header */}
             {title && (
-              <div className="flex items-center justify-between px-5 py-3 border-b border-border">
-                <span className="font-semibold text-text-primary">{title}</span>
-                <button onClick={onClose}>
-                  <CloseRoundedIcon sx={{ fontSize: 22 }} className="text-gray-400" />
+              <div className="flex items-center justify-between px-5 py-3 border-b border-gray-100">
+                <span className="font-bold text-gray-900 text-base">{title}</span>
+                <button 
+                  onClick={onClose}
+                  className="w-8 h-8 rounded-full bg-gray-100 hover:bg-gray-200 flex items-center justify-center text-gray-500 transition-colors"
+                >
+                  <CloseRoundedIcon sx={{ fontSize: 20 }} />
                 </button>
               </div>
             )}
 
             {/* Content */}
-            <div className="overflow-y-auto scrollbar-hide" style={{ maxHeight: '70vh' }}>
+            <div className="overflow-y-auto scrollbar-hide flex-1" style={{ maxHeight: '75vh' }}>
               {children}
             </div>
           </motion.div>
-        </>
+        </div>
       )}
-    </AnimatePresence>
+    </AnimatePresence>,
+    document.body
   );
 };
 

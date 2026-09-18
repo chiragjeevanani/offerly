@@ -14,9 +14,7 @@ import StorefrontRoundedIcon from '@mui/icons-material/StorefrontRounded';
 import TrendingUpRoundedIcon from '@mui/icons-material/TrendingUpRounded';
 import SettingsRoundedIcon from '@mui/icons-material/SettingsRounded';
 
-const FAQItem = ({ question, answer, idx }) => {
-  const [isOpen, setIsOpen] = useState(false);
-
+const FAQItem = ({ question, answer, idx, isOpen, onToggle }) => {
   return (
     <motion.div
       initial={{ opacity: 0, x: -10 }}
@@ -26,7 +24,7 @@ const FAQItem = ({ question, answer, idx }) => {
       className={`rounded-2xl border transition-all overflow-hidden ${isOpen ? 'bg-white border-[#5EB929]/20 shadow-lg' : 'bg-white/50 border-gray-100 hover:border-gray-200'}`}
     >
       <button
-        onClick={() => setIsOpen(!isOpen)}
+        onClick={onToggle}
         className="w-full px-5 py-4 flex items-center justify-between text-left"
       >
         <span className={`text-[13px] font-bold tracking-tight ${isOpen ? 'text-[#5EB929]' : 'text-gray-800'}`}>{question}</span>
@@ -34,16 +32,19 @@ const FAQItem = ({ question, answer, idx }) => {
            <ExpandMoreRoundedIcon sx={{ fontSize: 20 }} />
         </div>
       </button>
-      <AnimatePresence>
+      <AnimatePresence initial={false}>
         {isOpen && (
           <motion.div
             initial={{ height: 0, opacity: 0 }}
             animate={{ height: 'auto', opacity: 1 }}
             exit={{ height: 0, opacity: 0 }}
-            className="px-5 pb-5 text-[12px] font-medium text-gray-500 leading-relaxed"
+            transition={{ duration: 0.25, ease: 'easeInOut' }}
+            className="overflow-hidden"
           >
-            <div className="pt-2 border-t border-gray-50">
-               {answer}
+            <div className="px-5 pb-5 text-[12px] font-medium text-gray-500 leading-relaxed">
+              <div className="pt-2 border-t border-gray-50">
+                {answer}
+              </div>
             </div>
           </motion.div>
         )}
@@ -54,6 +55,11 @@ const FAQItem = ({ question, answer, idx }) => {
 
 const Support = () => {
   const navigate = useNavigate();
+  const [openFaq, setOpenFaq] = useState(null);
+
+  const toggleFaq = (idx) => {
+    setOpenFaq((prev) => (prev === idx ? null : idx));
+  };
 
   useEffect(() => {
     window.scrollTo(0, 0);
@@ -140,7 +146,14 @@ const Support = () => {
            </div>
            <div className="space-y-3">
               {faqs.map((faq, index) => (
-                <FAQItem key={index} idx={index} question={faq.question} answer={faq.answer} />
+                <FAQItem
+                  key={index}
+                  idx={index}
+                  question={faq.question}
+                  answer={faq.answer}
+                  isOpen={openFaq === index}
+                  onToggle={() => toggleFaq(index)}
+                />
               ))}
            </div>
         </div>

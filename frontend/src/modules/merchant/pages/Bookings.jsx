@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import SearchRoundedIcon from '@mui/icons-material/SearchRounded';
 import QrCodeScannerRoundedIcon from '@mui/icons-material/QrCodeScannerRounded';
@@ -70,9 +71,14 @@ const BookingDetailModal = ({ booking, onClose, onFulfilled }) => {
     }
   };
 
+  useEffect(() => {
+    document.body.style.overflow = 'hidden';
+    return () => { document.body.style.overflow = ''; };
+  }, []);
+
   if (fulfilled) {
-    return (
-      <div className="fixed inset-0 bg-gray-950/40 backdrop-blur-sm flex items-center justify-center p-4 z-[100]">
+    return createPortal(
+      <div className="fixed inset-0 bg-gray-950/60 backdrop-blur-md flex items-center justify-center p-4 z-[9999]">
         <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="bg-white rounded-2xl w-full max-w-sm shadow-2xl overflow-hidden p-8 text-center">
            <div className="w-16 h-16 bg-green-500 rounded-full flex items-center justify-center mx-auto mb-4 shadow-[0_4px_12px_rgba(34,197,94,0.3)]">
               <CheckCircleRoundedIcon className="text-white" sx={{ fontSize: 32 }} />
@@ -81,12 +87,13 @@ const BookingDetailModal = ({ booking, onClose, onFulfilled }) => {
            <p className="text-sm text-gray-500 mb-6 font-medium">Payment confirmed and booking fulfilled.</p>
            <button onClick={onClose} className="w-full py-3 bg-primary text-white rounded-xl font-bold shadow-lg shadow-primary/20 hover:scale-105 transition-all">Done</button>
         </motion.div>
-      </div>
+      </div>,
+      document.body
     );
   }
 
-  return (
-    <div className="fixed inset-0 bg-gray-950/40 backdrop-blur-sm flex items-center justify-center p-4 z-[100]">
+  return createPortal(
+    <div className="fixed inset-0 bg-gray-950/60 backdrop-blur-md flex items-center justify-center p-4 z-[9999]">
       <motion.div initial={{ y: 20, opacity: 0 }} animate={{ y: 0, opacity: 1 }} className="bg-white rounded-2xl w-full max-w-md shadow-2xl overflow-hidden">
         <div className="p-5 border-b border-gray-50 flex items-center justify-between bg-gray-50/50">
           <div>
@@ -151,7 +158,8 @@ const BookingDetailModal = ({ booking, onClose, onFulfilled }) => {
            )}
         </div>
       </motion.div>
-    </div>
+    </div>,
+    document.body
   );
 };
 

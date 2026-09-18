@@ -1,4 +1,5 @@
 import { useNavigate } from 'react-router-dom';
+import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useApp } from '../../customer/context/AppContext';
 import ArrowBackRoundedIcon from '@mui/icons-material/ArrowBackRounded';
@@ -367,8 +368,8 @@ const Profile = ({ merchant, onMerchantUpdate }) => {
 
       {/* Edit Store Core Profile Modal */}
       <AnimatePresence>
-        {isEditModalOpen && (
-          <div className="fixed inset-0 z-[99999] bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
+        {isEditModalOpen && createPortal(
+          <div className="fixed inset-0 z-[9999] bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
             <motion.div
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
@@ -505,7 +506,8 @@ const Profile = ({ merchant, onMerchantUpdate }) => {
                 </div>
               </form>
             </motion.div>
-          </div>
+          </div>,
+          document.body
         )}
       </AnimatePresence>
     </div>

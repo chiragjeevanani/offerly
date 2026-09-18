@@ -1,14 +1,12 @@
 import { useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import ArrowBackRoundedIcon from '@mui/icons-material/ArrowBackRounded';
 import ExpandMoreRoundedIcon from '@mui/icons-material/ExpandMoreRounded';
 import ReceiptLongRoundedIcon from '@mui/icons-material/ReceiptLongRounded';
 import PageTransition from '../../components/ui/PageTransition';
 
-const Section = ({ title, children, number }) => {
-  const [isOpen, setIsOpen] = useState(false);
-
+const Section = ({ title, children, number, isOpen, onToggle }) => {
   return (
     <motion.div
       initial={{ opacity: 0, y: 10 }}
@@ -17,7 +15,7 @@ const Section = ({ title, children, number }) => {
       className="bg-white rounded-xl border border-gray-200 overflow-hidden"
     >
       <button
-        onClick={() => setIsOpen(!isOpen)}
+        onClick={onToggle}
         className="w-full flex items-center justify-between p-4 sm:p-5 text-left hover:bg-gray-50 transition-colors"
       >
         <div className="flex items-center gap-3">
@@ -30,22 +28,32 @@ const Section = ({ title, children, number }) => {
           className={`text-gray-400 transition-transform ${isOpen ? 'rotate-180' : ''}`}
         />
       </button>
-      {isOpen && (
-        <motion.div
-          initial={{ height: 0, opacity: 0 }}
-          animate={{ height: 'auto', opacity: 1 }}
-          exit={{ height: 0, opacity: 0 }}
-          className="px-4 sm:px-5 pb-5 text-sm text-gray-600 leading-relaxed space-y-3"
-        >
-          {children}
-        </motion.div>
-      )}
+      <AnimatePresence initial={false}>
+        {isOpen && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: 'auto', opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.25, ease: 'easeInOut' }}
+            className="overflow-hidden"
+          >
+            <div className="px-4 sm:px-5 pb-5 text-sm text-gray-600 leading-relaxed space-y-3">
+              {children}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </motion.div>
   );
 };
 
 const TermsAndConditions = () => {
   const navigate = useNavigate();
+  const [openSection, setOpenSection] = useState(null);
+
+  const toggleSection = (id) => {
+    setOpenSection((prev) => (prev === id ? null : id));
+  };
 
   // Scroll to top on component mount
   useEffect(() => {
@@ -81,27 +89,52 @@ const TermsAndConditions = () => {
           <div className="space-y-3">
              <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest px-1">Legal Clauses</p>
              
-             <Section number="01" title="Acceptance of Terms">
+             <Section
+               number="01"
+               title="Acceptance of Terms"
+               isOpen={openSection === '01'}
+               onToggle={() => toggleSection('01')}
+             >
                <p>By accessing the Offerly platform, you enter into a binding digital agreement to adhere to our operational protocols.</p>
                <p>Failure to comply with these terms may result in immediate termination of your digital access to the network.</p>
              </Section>
 
-             <Section number="02" title="User Identity">
+             <Section
+               number="02"
+               title="User Identity"
+               isOpen={openSection === '02'}
+               onToggle={() => toggleSection('02')}
+             >
                <p><strong>Registration:</strong> Users must maintain valid and accurate identification profiles within the network.</p>
                <p><strong>Security:</strong> You are the sole custodian of your access credentials and responsible for all ledger activity under your ID.</p>
              </Section>
 
-             <Section number="03" title="Service Utilization">
+             <Section
+               number="03"
+               title="Service Utilization"
+               isOpen={openSection === '03'}
+               onToggle={() => toggleSection('03')}
+             >
                <p>Offerly provides a discovery layer for merchant offerings. All transactional fulfillment occurs directly at the merchant facility.</p>
                <p>The network is provided for non-commercial, personal utilization of registered customers only.</p>
              </Section>
 
-             <Section number="04" title="Digital Redemption">
+             <Section
+               number="04"
+               title="Digital Redemption"
+               isOpen={openSection === '04'}
+               onToggle={() => toggleSection('04')}
+             >
                <p><strong>Protocol:</strong> Redemption is executed via unique QR pass verification at the merchant terminal.</p>
                <p><strong>Expiry:</strong> All digital passes carry a cryptographic timestamp and must be utilized before expiration.</p>
              </Section>
 
-             <Section number="05" title="Financial Protocols">
+             <Section
+               number="05"
+               title="Financial Protocols"
+               isOpen={openSection === '05'}
+               onToggle={() => toggleSection('05')}
+             >
                <p><strong>Direct Settlement:</strong> All financial settlements occur at the merchant location. Offerly does not process customer-to-merchant payments.</p>
                <p><strong>Credits:</strong> Referral credits are digital utility tokens within the Offerly ecosystem and have no direct cash value outside the network.</p>
              </Section>

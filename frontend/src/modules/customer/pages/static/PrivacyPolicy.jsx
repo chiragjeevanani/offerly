@@ -1,14 +1,12 @@
 import { useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import ArrowBackRoundedIcon from '@mui/icons-material/ArrowBackRounded';
 import ExpandMoreRoundedIcon from '@mui/icons-material/ExpandMoreRounded';
 import SecurityRoundedIcon from '@mui/icons-material/SecurityRounded';
 import PageTransition from '../../components/ui/PageTransition';
 
-const Section = ({ title, children, number, icon: Icon }) => {
-  const [isOpen, setIsOpen] = useState(false);
-
+const Section = ({ title, children, number, icon: Icon, isOpen, onToggle }) => {
   return (
     <motion.div
       initial={{ opacity: 0, y: 10 }}
@@ -17,7 +15,7 @@ const Section = ({ title, children, number, icon: Icon }) => {
       className="bg-white rounded-xl border border-gray-200 overflow-hidden"
     >
       <button
-        onClick={() => setIsOpen(!isOpen)}
+        onClick={onToggle}
         className="w-full flex items-center justify-between p-4 sm:p-5 text-left hover:bg-gray-50 transition-colors"
       >
         <div className="flex items-center gap-3">
@@ -32,21 +30,32 @@ const Section = ({ title, children, number, icon: Icon }) => {
           className={`text-gray-400 transition-transform ${isOpen ? 'rotate-180' : ''}`}
         />
       </button>
-      {isOpen && (
-        <motion.div
-          initial={{ height: 0, opacity: 0 }}
-          animate={{ height: 'auto', opacity: 1 }}
-          className="px-4 sm:px-5 pb-5 text-sm text-gray-600 leading-relaxed space-y-3"
-        >
-          {children}
-        </motion.div>
-      )}
+      <AnimatePresence initial={false}>
+        {isOpen && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: 'auto', opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.25, ease: 'easeInOut' }}
+            className="overflow-hidden"
+          >
+            <div className="px-4 sm:px-5 pb-5 text-sm text-gray-600 leading-relaxed space-y-3">
+              {children}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </motion.div>
   );
 };
 
 const PrivacyPolicy = () => {
   const navigate = useNavigate();
+  const [openSection, setOpenSection] = useState(null);
+
+  const toggleSection = (id) => {
+    setOpenSection((prev) => (prev === id ? null : id));
+  };
 
   // Scroll to top on component mount
   useEffect(() => {
@@ -82,27 +91,52 @@ const PrivacyPolicy = () => {
           <div className="space-y-3">
              <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest px-1">Privacy Protocols</p>
              
-             <Section title="Data Collection" icon={SecurityRoundedIcon}>
+             <Section
+               title="Data Collection"
+               icon={SecurityRoundedIcon}
+               isOpen={openSection === 'collection'}
+               onToggle={() => toggleSection('collection')}
+             >
                <p><strong>Personal Data:</strong> We collect only essential identification markers including phone numbers and digital profiles.</p>
                <p><strong>Telemetry:</strong> Device identifiers and location telemetry are utilized strictly for proximity offer matching.</p>
              </Section>
 
-             <Section title="Utilization Logic" icon={SecurityRoundedIcon}>
+             <Section
+               title="Utilization Logic"
+               icon={SecurityRoundedIcon}
+               isOpen={openSection === 'utilization'}
+               onToggle={() => toggleSection('utilization')}
+             >
                <p>Data is utilized to personalize your discovery feed and facilitate redemption pass generation.</p>
                <p>Automated telemetry is used to monitor network health and detect fraudulent pass activities.</p>
              </Section>
 
-             <Section title="Sharing Protocols" icon={SecurityRoundedIcon}>
+             <Section
+               title="Sharing Protocols"
+               icon={SecurityRoundedIcon}
+               isOpen={openSection === 'sharing'}
+               onToggle={() => toggleSection('sharing')}
+             >
                <p><strong>Merchant Node:</strong> Necessary booking ID and user handles are shared with merchants upon pass redemption.</p>
                <p><strong>Third-Party:</strong> We utilize specialized nodes for OTP dispatch and location mapping services only.</p>
              </Section>
 
-             <Section title="Security Infrastructure" icon={SecurityRoundedIcon}>
+             <Section
+               title="Security Infrastructure"
+               icon={SecurityRoundedIcon}
+               isOpen={openSection === 'security'}
+               onToggle={() => toggleSection('security')}
+             >
                <p>All data packets are encrypted in transit via industry-standard protocols.</p>
                <p>Our digital infrastructure undergoes periodic security audits to ensure ledger integrity.</p>
              </Section>
 
-             <Section title="User Sovereignty" icon={SecurityRoundedIcon}>
+             <Section
+               title="User Sovereignty"
+               icon={SecurityRoundedIcon}
+               isOpen={openSection === 'sovereignty'}
+               onToggle={() => toggleSection('sovereignty')}
+             >
                <p>Users maintain full sovereignty over their data. You may request identity deletion or data porting via the Support Terminal.</p>
              </Section>
           </div>

@@ -410,15 +410,19 @@ export const getCities = async (req, res) => {
 
 export const savePlan = async (req, res) => {
   try {
+    const updateData = { ...req.body };
+    if (Array.isArray(updateData.structuredFeatures) && (!updateData.features || updateData.features.length === 0)) {
+      updateData.features = updateData.structuredFeatures.map(f => f.title || f.text || '').filter(Boolean);
+    }
     if (req.body._id || req.body.id) {
       const plan = await Plan.findByIdAndUpdate(
         req.body._id || req.body.id,
-        req.body,
+        updateData,
         { new: true }
       );
       return res.status(200).json({ success: true, data: plan });
     }
-    const plan = await Plan.create(req.body);
+    const plan = await Plan.create(updateData);
     res.status(201).json({ success: true, data: plan });
   } catch (err) {
     res.status(500).json({ success: false, error: 'Operation failed' });
@@ -467,7 +471,7 @@ export const getPlans = async (req, res) => {
       }
     }
 
-    const plans = await Plan.find(query).sort({ price: 1 });
+    const plans = await Plan.find(query).sort({ sortOrder: 1, price: 1 });
 
     // Decorate each plan with the requesting merchant's effective (zone-priced)
     // charge, so the renewal UI can show what they'll actually pay.

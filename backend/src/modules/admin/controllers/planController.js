@@ -36,7 +36,7 @@ export const getPlans = async (req, res) => {
 
     const plans = await Plan.find(query)
       .select('-__v')
-      .sort({ price: 1 });
+      .sort({ sortOrder: 1, price: 1 });
     
     return res.status(200).json({
       success: true,

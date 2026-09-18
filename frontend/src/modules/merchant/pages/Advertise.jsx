@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { createPortal } from 'react-dom';
 import { motion } from 'framer-motion';
 import { useQuery } from '@tanstack/react-query';
 import { merchantAPI } from '../../../api/merchant.api';
@@ -269,8 +270,8 @@ const Advertise = ({ merchant }) => {
       </div>
 
       {/* Banner Submission Modal */}
-      {isRequestModalOpen && (
-        <div className="fixed inset-0 z-[99999] bg-gray-950/80 backdrop-blur-md flex items-center justify-center p-4">
+      {isRequestModalOpen && createPortal(
+        <div className="fixed inset-0 z-[9999] bg-gray-950/80 backdrop-blur-md flex items-center justify-center p-4">
           <motion.div 
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
@@ -348,7 +349,8 @@ const Advertise = ({ merchant }) => {
               </div>
             </div>
           </motion.div>
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   );

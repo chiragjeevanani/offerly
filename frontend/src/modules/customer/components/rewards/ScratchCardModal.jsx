@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import confetti from 'canvas-confetti';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
@@ -192,9 +193,9 @@ const ScratchCardModal = ({ isOpen, card, onClose, onScratched }) => {
 
   if (!isOpen || !card) return null;
 
-  return (
+  return createPortal(
     <AnimatePresence>
-      <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+      <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
         {/* Backdrop */}
         <motion.div
           initial={{ opacity: 0 }}
@@ -331,7 +332,8 @@ const ScratchCardModal = ({ isOpen, card, onClose, onScratched }) => {
           </div>
         </motion.div>
       </div>
-    </AnimatePresence>
+    </AnimatePresence>,
+    document.body
   );
 };
 

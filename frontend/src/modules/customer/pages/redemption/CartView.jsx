@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import confetti from 'canvas-confetti';
@@ -256,8 +257,8 @@ const CartView = () => {
     <PageTransition>
       {/* Full-Screen Graffiti / Confetti Celebration Modal */}
       <AnimatePresence>
-        {showCelebrationModal && totalDiscount > 0 && (
-          <div className="fixed inset-0 z-[999999] flex items-center justify-center p-4">
+        {showCelebrationModal && totalDiscount > 0 && createPortal(
+          <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
             {/* Dimmed Backdrop */}
             <motion.div
               initial={{ opacity: 0 }}
@@ -345,7 +346,8 @@ const CartView = () => {
                 <span>🚀</span>
               </motion.button>
             </motion.div>
-          </div>
+          </div>,
+          document.body
         )}
       </AnimatePresence>
 

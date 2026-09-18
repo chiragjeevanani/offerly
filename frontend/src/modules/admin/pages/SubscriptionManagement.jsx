@@ -1,4 +1,5 @@
 import { useState, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { adminAPI } from '../../../api/admin.api';
@@ -16,6 +17,7 @@ import PaymentsRoundedIcon from '@mui/icons-material/PaymentsRounded';
 import AccountBalanceWalletRoundedIcon from '@mui/icons-material/AccountBalanceWalletRounded';
 import toast from 'react-hot-toast';
 import SlideOver from '../components/SlideOver';
+import { ICON_OPTIONS, renderPlanIcon } from '../../merchant/components/planIcons';
 
 const TabButton = ({ label, isActive, onClick }) => (
   <button
@@ -38,16 +40,27 @@ const SubscriptionManagement = () => {
   const [selectedPlan, setSelectedPlan] = useState(null);
   const [formData, setFormData] = useState({
     name: '',
+    badge: '',
+    tagline: '',
+    description: '',
     price: 0,
     duration: 'Monthly',
     maxProducts: 5,
     maxOffers: 5,
     insightsEnabled: false,
+    isPopular: false,
+    popularBadgeText: 'Most Popular',
+    cardTheme: 'standard',
+    characterImage: '',
+    floatingTagline: '',
+    buttonText: '',
+    structuredFeatures: [],
     features: [],
     applicableCities: [],
     zonePricing: [],
     status: 'active',
-    planType: 'merchant'
+    planType: 'merchant',
+    sortOrder: 0
   });
   const [zoneOverrideDraft, setZoneOverrideDraft] = useState({ city: '', zoneId: '', price: '' });
 
@@ -144,16 +157,29 @@ const SubscriptionManagement = () => {
     const isCustomerTab = activeTab === 'customer';
     setFormData({
       name: '',
+      badge: activeTab === 'merchant' ? `PLAN ${filteredPlans.length + 1}` : '',
+      tagline: '',
+      description: '',
       price: 0,
       duration: 'Monthly',
-      maxProducts: isCustomerTab ? 0 : 5,
-      maxOffers: isCustomerTab ? 0 : 5,
+      maxProducts: isCustomerTab ? 0 : 50,
+      maxOffers: isCustomerTab ? 0 : 15,
       insightsEnabled: false,
+      isPopular: false,
+      popularBadgeText: 'Most Popular',
+      cardTheme: 'standard',
+      characterImage: '/assets/plans/plan1-pointing.jpg',
+      floatingTagline: '',
+      buttonText: '',
+      structuredFeatures: [
+        { id: 'sf_1', title: '', description: '', icon: 'tag' }
+      ],
       features: [{ id: 'f1', text: '' }],
       applicableCities: [],
       zonePricing: [],
       status: 'active',
-      planType: activeTab
+      planType: activeTab,
+      sortOrder: filteredPlans.length + 1
     });
     setZoneOverrideDraft({ city: '', zoneId: '', price: '' });
     setIsSlideOverOpen(true);
@@ -161,12 +187,44 @@ const SubscriptionManagement = () => {
 
   const handleEdit = (plan) => {
     setSelectedPlan(plan);
+    
+    // Normalize structuredFeatures from plan or derive from plan.features
+    let initialStructured = [];
+    if (plan.structuredFeatures && plan.structuredFeatures.length > 0) {
+      initialStructured = plan.structuredFeatures.map((sf, i) => ({
+        id: sf._id || sf.id || `sf_${i}`,
+        title: sf.title || '',
+        description: sf.description || '',
+        icon: sf.icon || 'check'
+      }));
+    } else if (plan.features && plan.features.length > 0) {
+      initialStructured = plan.features.map((f, i) => ({
+        id: `sf_${i}`,
+        title: typeof f === 'string' ? f : f?.title || '',
+        description: typeof f === 'string' ? '' : f?.description || '',
+        icon: 'check'
+      }));
+    } else {
+      initialStructured = [{ id: 'sf_1', title: '', description: '', icon: 'tag' }];
+    }
+
     setFormData({
       ...plan,
+      badge: plan.badge || '',
+      tagline: plan.tagline || '',
+      description: plan.description || '',
+      isPopular: !!plan.isPopular,
+      popularBadgeText: plan.popularBadgeText || 'Most Popular',
+      cardTheme: plan.cardTheme || 'standard',
+      characterImage: plan.characterImage || '',
+      floatingTagline: plan.floatingTagline || '',
+      buttonText: plan.buttonText || '',
+      sortOrder: plan.sortOrder ?? 0,
+      structuredFeatures: initialStructured,
       applicableCities: plan.applicableCities || [],
       zonePricing: plan.zonePricing || [],
       planType: plan.planType || 'merchant',
-      features: plan.features?.length > 0 ? plan.features.map((f, i) => ({ id: `f${i}`, text: f })) : [{ id: 'f1', text: '' }]
+      features: plan.features?.length > 0 ? plan.features.map((f, i) => ({ id: `f${i}`, text: typeof f === 'string' ? f : f?.title || '' })) : [{ id: 'f1', text: '' }]
     });
     setZoneOverrideDraft({ city: '', zoneId: '', price: '' });
     setIsSlideOverOpen(true);
@@ -179,10 +237,23 @@ const SubscriptionManagement = () => {
 
   const handleSave = async (e) => {
     e.preventDefault();
+    const cleanStructuredFeatures = (formData.structuredFeatures || [])
+      .filter(sf => sf.title && sf.title.trim() !== '')
+      .map(sf => ({
+        title: sf.title.trim(),
+        description: (sf.description || '').trim(),
+        icon: sf.icon || 'check'
+      }));
+
+    const cleanFeatures = cleanStructuredFeatures.length > 0
+      ? cleanStructuredFeatures.map(sf => sf.title)
+      : (formData.features || []).map(f => f.text).filter(t => t && t.trim() !== '');
+
     const payload = {
       ...formData,
       id: selectedPlan?._id || selectedPlan?.id,
-      features: formData.features.map(f => f.text).filter(t => t.trim() !== '')
+      structuredFeatures: cleanStructuredFeatures,
+      features: cleanFeatures
     };
 
     try {
@@ -323,8 +394,26 @@ const SubscriptionManagement = () => {
                 
                 <div className="p-4 flex-1 flex flex-col">
                   <div className="flex justify-between items-start mb-3">
-                    <div className="w-10 h-10 rounded-xl bg-gray-50 flex items-center justify-center text-[#5EB929] border border-gray-100">
-                      <WorkspacePremiumRoundedIcon sx={{ fontSize: 20 }} />
+                    <div className="flex items-center gap-2">
+                      <div className="w-10 h-10 rounded-xl bg-gray-50 flex items-center justify-center text-[#5EB929] border border-gray-100 overflow-hidden shrink-0">
+                        {plan.characterImage ? (
+                          <img src={plan.characterImage} alt="" className="w-full h-full object-cover" />
+                        ) : (
+                          <WorkspacePremiumRoundedIcon sx={{ fontSize: 20 }} />
+                        )}
+                      </div>
+                      <div>
+                        {plan.badge && (
+                          <span className="text-[9px] font-black uppercase text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-100">
+                            {plan.badge}
+                          </span>
+                        )}
+                        {plan.isPopular && (
+                          <span className="ml-1 text-[9px] font-black uppercase text-amber-700 bg-amber-50 px-2 py-0.5 rounded-full border border-amber-100">
+                            👑 {plan.popularBadgeText || 'Popular'}
+                          </span>
+                        )}
+                      </div>
                     </div>
                     <span className={`px-2 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider ${
                       plan.status === 'active' ? 'bg-green-50 text-green-600' : 'bg-red-50 text-red-600'
@@ -333,7 +422,10 @@ const SubscriptionManagement = () => {
                     </span>
                   </div>
 
-                  <h4 className="text-base font-bold text-gray-800 mb-1">{plan.name}</h4>
+                  <h4 className="text-base font-bold text-gray-800 mb-0.5">{plan.name}</h4>
+                  {plan.tagline && (
+                    <p className="text-[11px] font-medium text-gray-400 mb-2 line-clamp-1">{plan.tagline}</p>
+                  )}
                   
                   <div className="flex flex-wrap gap-1 mb-3">
                     {(!plan.applicableCities || plan.applicableCities.length === 0) ? (
@@ -431,16 +523,199 @@ const SubscriptionManagement = () => {
 
             {/* Core Details */}
             <div className="space-y-4">
+              {formData.planType === 'merchant' && (
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-[11px] font-bold text-gray-400 uppercase tracking-widest mb-1.5 ml-1">Plan Badge</label>
+                    <input 
+                      type="text"
+                      value={formData.badge}
+                      onChange={(e) => setFormData({...formData, badge: e.target.value})}
+                      placeholder="e.g. PLAN 1"
+                      className="w-full bg-white border border-gray-200 rounded-xl py-2.5 px-3 text-sm font-medium focus:ring-2 focus:ring-primary/10 focus:border-primary outline-none transition-all"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[11px] font-bold text-gray-400 uppercase tracking-widest mb-1.5 ml-1">Display Order</label>
+                    <input 
+                      type="number"
+                      value={formData.sortOrder}
+                      onChange={(e) => setFormData({...formData, sortOrder: Number(e.target.value) || 0})}
+                      placeholder="e.g. 1"
+                      className="w-full bg-white border border-gray-200 rounded-xl py-2.5 px-3 text-sm font-medium focus:ring-2 focus:ring-primary/10 focus:border-primary outline-none transition-all"
+                    />
+                  </div>
+                </div>
+              )}
+
               <div>
                 <label className="block text-[11px] font-bold text-gray-400 uppercase tracking-widest mb-1.5 ml-1">Plan Title</label>
                 <input 
                   type="text"
                   value={formData.name}
                   onChange={(e) => setFormData({...formData, name: e.target.value})}
-                  placeholder="e.g. Professional Hub"
+                  placeholder="e.g. Existance, Visible, Dominate"
                   className="w-full bg-white border border-gray-200 rounded-xl py-3 px-4 text-sm font-medium focus:ring-2 focus:ring-primary/10 focus:border-primary outline-none transition-all"
                 />
               </div>
+
+              {formData.planType === 'merchant' && (
+                <>
+                  <div>
+                    <label className="block text-[11px] font-bold text-gray-400 uppercase tracking-widest mb-1.5 ml-1">Subtitle / Tagline</label>
+                    <input 
+                      type="text"
+                      value={formData.tagline}
+                      onChange={(e) => setFormData({...formData, tagline: e.target.value})}
+                      placeholder="e.g. Get started. Be on Offerly."
+                      className="w-full bg-white border border-gray-200 rounded-xl py-2.5 px-4 text-sm font-medium focus:ring-2 focus:ring-primary/10 focus:border-primary outline-none transition-all"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-[11px] font-bold text-gray-400 uppercase tracking-widest mb-1.5 ml-1">Description</label>
+                    <textarea 
+                      rows={2}
+                      value={formData.description}
+                      onChange={(e) => setFormData({...formData, description: e.target.value})}
+                      placeholder="e.g. Put your business on the map and start reaching new customers."
+                      className="w-full bg-white border border-gray-200 rounded-xl py-2 px-3 text-sm font-medium focus:ring-2 focus:ring-primary/10 focus:border-primary outline-none transition-all resize-none"
+                    />
+                  </div>
+
+                  {/* Card Theme & Character Styling */}
+                  <div className="p-4 bg-emerald-50/50 rounded-2xl border border-emerald-100/80 space-y-3">
+                    <p className="text-[11px] font-extrabold text-emerald-900 uppercase tracking-wider">Card Visual Theme</p>
+                    
+                    <div className="grid grid-cols-2 gap-2">
+                      <button
+                        type="button"
+                        onClick={() => setFormData({ ...formData, cardTheme: 'standard' })}
+                        className={`py-2 px-3 rounded-xl text-[11px] font-bold transition-all border ${
+                          formData.cardTheme === 'standard' 
+                            ? 'bg-white text-emerald-800 border-emerald-400 shadow-sm' 
+                            : 'bg-white/60 text-gray-400 border-gray-200'
+                        }`}
+                      >
+                        Standard (White)
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setFormData({ ...formData, cardTheme: 'highlighted' })}
+                        className={`py-2 px-3 rounded-xl text-[11px] font-bold transition-all border ${
+                          formData.cardTheme === 'highlighted' 
+                            ? 'bg-[#16A34A] text-white border-[#16A34A] shadow-sm' 
+                            : 'bg-white/60 text-gray-400 border-gray-200'
+                        }`}
+                      >
+                        Highlighted (Green Header)
+                      </button>
+                    </div>
+
+                    <div className="flex items-center justify-between pt-2 border-t border-emerald-100">
+                      <div>
+                        <p className="text-[11px] font-bold text-gray-800">"Most Popular" Floating Badge</p>
+                        <p className="text-[10px] text-gray-400">Shows floating 👑 badge at the top</p>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => setFormData({ ...formData, isPopular: !formData.isPopular })}
+                        className={`relative w-11 h-6 rounded-full transition-colors flex-shrink-0 ${formData.isPopular ? 'bg-[#16A34A]' : 'bg-gray-300'}`}
+                      >
+                        <span className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow-sm transition-transform ${formData.isPopular ? 'translate-x-5' : 'translate-x-0'}`} />
+                      </button>
+                    </div>
+
+                    {formData.isPopular && (
+                      <div>
+                        <label className="block text-[10px] font-bold text-gray-500 uppercase mb-1">Badge Text</label>
+                        <input
+                          type="text"
+                          value={formData.popularBadgeText}
+                          onChange={(e) => setFormData({ ...formData, popularBadgeText: e.target.value })}
+                          placeholder="Most Popular"
+                          className="w-full bg-white border border-gray-200 rounded-xl py-2 px-3 text-xs font-medium outline-none"
+                        />
+                      </div>
+                    )}
+
+                    <div>
+                      <label className="block text-[10px] font-bold text-gray-500 uppercase mb-1">Floating Doodle Note (Optional)</label>
+                      <input
+                        type="text"
+                        value={formData.floatingTagline}
+                        onChange={(e) => setFormData({ ...formData, floatingTagline: e.target.value })}
+                        placeholder="e.g. More Reach More Sales!"
+                        className="w-full bg-white border border-gray-200 rounded-xl py-2 px-3 text-xs font-medium outline-none"
+                      />
+                    </div>
+
+                    {/* 3D Character Avatar Picker */}
+                    <div>
+                      <label className="block text-[10px] font-bold text-gray-500 uppercase mb-1.5">3D Character Illustration</label>
+                      <div className="grid grid-cols-3 gap-2 mb-2">
+                        <button
+                          type="button"
+                          onClick={() => setFormData({ ...formData, characterImage: '/assets/plans/plan1-pointing.jpg' })}
+                          className={`p-1.5 rounded-xl border flex flex-col items-center gap-1 transition-all ${
+                            formData.characterImage === '/assets/plans/plan1-pointing.jpg'
+                              ? 'border-[#16A34A] bg-emerald-100/50 shadow-sm'
+                              : 'border-gray-200 bg-white hover:border-gray-300'
+                          }`}
+                        >
+                          <img src="/assets/plans/plan1-pointing.jpg" alt="Pointing" className="w-12 h-12 object-cover rounded-lg" />
+                          <span className="text-[9px] font-bold text-gray-700">Pointing</span>
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() => setFormData({ ...formData, characterImage: '/assets/plans/plan2-thumbsup.jpg' })}
+                          className={`p-1.5 rounded-xl border flex flex-col items-center gap-1 transition-all ${
+                            formData.characterImage === '/assets/plans/plan2-thumbsup.jpg'
+                              ? 'border-[#16A34A] bg-emerald-100/50 shadow-sm'
+                              : 'border-gray-200 bg-white hover:border-gray-300'
+                          }`}
+                        >
+                          <img src="/assets/plans/plan2-thumbsup.jpg" alt="Thumbs Up" className="w-12 h-12 object-cover rounded-lg" />
+                          <span className="text-[9px] font-bold text-gray-700">Thumbs Up</span>
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() => setFormData({ ...formData, characterImage: '/assets/plans/plan3-cheering.jpg' })}
+                          className={`p-1.5 rounded-xl border flex flex-col items-center gap-1 transition-all ${
+                            formData.characterImage === '/assets/plans/plan3-cheering.jpg'
+                              ? 'border-[#16A34A] bg-emerald-100/50 shadow-sm'
+                              : 'border-gray-200 bg-white hover:border-gray-300'
+                          }`}
+                        >
+                          <img src="/assets/plans/plan3-cheering.jpg" alt="Cheering" className="w-12 h-12 object-cover rounded-lg" />
+                          <span className="text-[9px] font-bold text-gray-700">Cheering</span>
+                        </button>
+                      </div>
+
+                      <input
+                        type="text"
+                        value={formData.characterImage}
+                        onChange={(e) => setFormData({ ...formData, characterImage: e.target.value })}
+                        placeholder="Or custom Image URL"
+                        className="w-full bg-white border border-gray-200 rounded-xl py-2 px-3 text-xs font-medium outline-none"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-[10px] font-bold text-gray-500 uppercase mb-1">Custom CTA Button Text (Optional)</label>
+                      <input
+                        type="text"
+                        value={formData.buttonText}
+                        onChange={(e) => setFormData({ ...formData, buttonText: e.target.value })}
+                        placeholder={`Choose ${formData.name || 'Plan'} Plan ->`}
+                        className="w-full bg-white border border-gray-200 rounded-xl py-2 px-3 text-xs font-medium outline-none"
+                      />
+                    </div>
+                  </div>
+                </>
+              )}
 
               <div>
                 <label className="block text-[11px] font-bold text-gray-400 uppercase tracking-widest mb-1.5 ml-1">Applicable Cities</label>
@@ -628,18 +903,111 @@ const SubscriptionManagement = () => {
 
               {/* Feature Management */}
               <div>
-                 <div className="flex justify-between items-center mb-2 px-1">
-                   <label className="block text-[11px] font-bold text-gray-400 uppercase tracking-widest">In-App Features</label>
-                   <button 
-                     type="button" 
-                     onClick={() => setFormData({ ...formData, features: [...formData.features, { id: Date.now().toString(), text: '' }] })}
-                     className="text-[10px] font-bold text-primary hover:bg-primary/5 px-2 py-1 rounded-lg border border-primary/20 transition-all"
-                   >
-                     + Add Feature
-                   </button>
-                 </div>
-                 
-                 <div className="space-y-2">
+                <div className="flex justify-between items-center mb-2 px-1">
+                  <div>
+                    <label className="block text-[11px] font-bold text-gray-400 uppercase tracking-widest">Plan Features</label>
+                    {formData.planType === 'merchant' && (
+                      <p className="text-[10px] text-gray-400">Configure feature icon, bold title, and subtitle</p>
+                    )}
+                  </div>
+                  <button 
+                    type="button" 
+                    onClick={() => {
+                      if (formData.planType === 'merchant') {
+                        setFormData({
+                          ...formData,
+                          structuredFeatures: [
+                            ...(formData.structuredFeatures || []),
+                            { id: Date.now().toString(), title: '', description: '', icon: 'tag' }
+                          ]
+                        });
+                      } else {
+                        setFormData({
+                          ...formData,
+                          features: [...formData.features, { id: Date.now().toString(), text: '' }]
+                        });
+                      }
+                    }}
+                    className="text-[10px] font-bold text-primary hover:bg-primary/5 px-2.5 py-1 rounded-lg border border-primary/20 transition-all"
+                  >
+                    + Add Feature
+                  </button>
+                </div>
+
+                {formData.planType === 'merchant' ? (
+                  <div className="space-y-3">
+                    {(formData.structuredFeatures || []).map((feature, index) => (
+                      <div key={feature.id || index} className="p-3 bg-gray-50 rounded-xl border border-gray-200/80 space-y-2 relative group">
+                        <div className="flex items-center gap-2">
+                          {/* Icon Selector */}
+                          <div className="flex items-center gap-1.5 bg-white border border-gray-200 rounded-lg px-2 py-1 shrink-0">
+                            <div className="w-5 h-5 flex items-center justify-center text-[#16A34A]">
+                              {renderPlanIcon(feature.icon, { size: 16 })}
+                            </div>
+                            <select
+                              value={feature.icon || 'check'}
+                              onChange={(e) => {
+                                const newFeatures = [...formData.structuredFeatures];
+                                newFeatures[index].icon = e.target.value;
+                                setFormData({ ...formData, structuredFeatures: newFeatures });
+                              }}
+                              className="text-[11px] font-bold text-gray-700 bg-transparent outline-none cursor-pointer"
+                            >
+                              {ICON_OPTIONS.map(opt => (
+                                <option key={opt.id} value={opt.id}>{opt.label}</option>
+                              ))}
+                            </select>
+                          </div>
+
+                          {/* Feature Title */}
+                          <input
+                            type="text"
+                            value={feature.title}
+                            placeholder="Feature Title (e.g. 15 Offers Per Month)"
+                            onChange={(e) => {
+                              const newFeatures = [...formData.structuredFeatures];
+                              newFeatures[index].title = e.target.value;
+                              setFormData({ ...formData, structuredFeatures: newFeatures });
+                            }}
+                            className="flex-1 bg-white border border-gray-200 rounded-lg py-1.5 px-3 text-xs font-bold text-gray-800 outline-none"
+                          />
+
+                          {/* Delete Button */}
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const newFeatures = formData.structuredFeatures.filter((_, i) => i !== index);
+                              setFormData({ ...formData, structuredFeatures: newFeatures });
+                            }}
+                            className="text-gray-300 hover:text-red-500 p-1 transition-colors"
+                          >
+                            <CloseRoundedIcon sx={{ fontSize: 18 }} />
+                          </button>
+                        </div>
+
+                        {/* Feature Subtitle / Description */}
+                        <input
+                          type="text"
+                          value={feature.description}
+                          placeholder="Feature Subtitle (e.g. Show exciting offers to attract customers)"
+                          onChange={(e) => {
+                            const newFeatures = [...formData.structuredFeatures];
+                            newFeatures[index].description = e.target.value;
+                            setFormData({ ...formData, structuredFeatures: newFeatures });
+                          }}
+                          className="w-full bg-white border border-gray-200 rounded-lg py-1.5 px-3 text-[11px] font-medium text-gray-500 outline-none"
+                        />
+                      </div>
+                    ))}
+
+                    {(!formData.structuredFeatures || formData.structuredFeatures.length === 0) && (
+                      <p className="text-[11px] text-gray-400 italic text-center py-4 bg-white rounded-xl border border-dashed border-gray-100">
+                        No features configured for this tier.
+                      </p>
+                    )}
+                  </div>
+                ) : (
+                  <div className="space-y-2">
                     {formData.features.map((feature, index) => (
                       <div key={feature.id} className="flex gap-2 items-center">
                         <input
@@ -651,7 +1019,7 @@ const SubscriptionManagement = () => {
                             newFeatures[index].text = e.target.value;
                             setFormData({ ...formData, features: newFeatures });
                           }}
-                           className="w-full bg-white border border-gray-100 rounded-xl py-2.5 px-4 text-sm font-medium focus:ring-2 focus:ring-primary/10 focus:border-primary outline-none transition-all"
+                          className="w-full bg-white border border-gray-100 rounded-xl py-2.5 px-4 text-sm font-medium focus:ring-2 focus:ring-primary/10 focus:border-primary outline-none transition-all"
                         />
                         <button 
                           type="button" 
@@ -665,7 +1033,8 @@ const SubscriptionManagement = () => {
                     {formData.features.length === 0 && (
                       <p className="text-[11px] text-gray-400 italic text-center py-4 bg-white rounded-xl border border-dashed border-gray-100">No features listed for this tier.</p>
                     )}
-                 </div>
+                  </div>
+                )}
               </div>
             </div>
 
@@ -694,8 +1063,8 @@ const SubscriptionManagement = () => {
       </SlideOver>
 
       {/* Delete Confirmation Modal */}
-      {isDeleteModalOpen && (
-        <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4" onClick={() => setIsDeleteModalOpen(false)}>
+      {isDeleteModalOpen && createPortal(
+        <div className="fixed inset-0 bg-black/50 z-[9999] flex items-center justify-center p-4 backdrop-blur-sm" onClick={() => setIsDeleteModalOpen(false)}>
           <div className="bg-white rounded-2xl shadow-xl max-w-sm w-full p-6 text-center" onClick={(e) => e.stopPropagation()}>
             <div className="w-14 h-14 bg-red-50 rounded-2xl flex items-center justify-center mx-auto mb-4">
               <DeleteRoundedIcon className="text-red-500" sx={{ fontSize: 28 }} />
@@ -707,7 +1076,8 @@ const SubscriptionManagement = () => {
               <button onClick={confirmDelete} className="flex-1 bg-red-500 text-white py-3 rounded-xl font-bold text-sm">Archive</button>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   );

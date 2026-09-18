@@ -35,6 +35,61 @@ const planSchema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
+    badge: {
+      type: String,
+      default: '',
+      trim: true,
+    },
+    tagline: {
+      type: String,
+      default: '',
+      trim: true,
+    },
+    description: {
+      type: String,
+      default: '',
+      trim: true,
+    },
+    isPopular: {
+      type: Boolean,
+      default: false,
+    },
+    popularBadgeText: {
+      type: String,
+      default: 'Most Popular',
+      trim: true,
+    },
+    cardTheme: {
+      type: String,
+      enum: ['standard', 'highlighted'],
+      default: 'standard',
+    },
+    characterImage: {
+      type: String,
+      default: '',
+      trim: true,
+    },
+    floatingTagline: {
+      type: String,
+      default: '',
+      trim: true,
+    },
+    buttonText: {
+      type: String,
+      default: '',
+      trim: true,
+    },
+    structuredFeatures: [
+      {
+        title: { type: String, trim: true },
+        description: { type: String, trim: true },
+        icon: { type: String, default: 'check', trim: true },
+      },
+    ],
+    sortOrder: {
+      type: Number,
+      default: 0,
+    },
     features: [String],
     applicableCities: {
       type: [String],

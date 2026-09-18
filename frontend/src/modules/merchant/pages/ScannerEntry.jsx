@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import SearchRoundedIcon from '@mui/icons-material/SearchRounded';
 import QrCodeScannerRoundedIcon from '@mui/icons-material/QrCodeScannerRounded';
@@ -22,6 +23,11 @@ const buildItemsPayload = (items) => items.map((it) => ({ productId: it.productI
 const BookingVerificationModal = ({ booking, onFulfill, onClose, onCancelBooking, onUpdateItems, fulfilling, updatingItems, cancelling, otherOpenCount }) => {
   const canRemoveItems = booking.items.length > 1;
 
+  useEffect(() => {
+    document.body.style.overflow = 'hidden';
+    return () => { document.body.style.overflow = ''; };
+  }, []);
+
   const handleQtyChange = (idx, delta) => {
     const nextItems = booking.items.map((it, i) => (i === idx ? { ...it, qty: it.qty + delta } : it));
     if (nextItems[idx].qty <= 0) {
@@ -42,8 +48,8 @@ const BookingVerificationModal = ({ booking, onFulfill, onClose, onCancelBooking
     onUpdateItems(booking._id, nextItems);
   };
 
-  return (
-    <div className="fixed inset-0 bg-gray-950/40 backdrop-blur-sm flex items-center justify-center p-4 z-[100]">
+  return createPortal(
+    <div className="fixed inset-0 bg-gray-950/60 backdrop-blur-md flex items-center justify-center p-4 z-[9999]">
       <motion.div
         initial={{ scale: 0.95, opacity: 0, y: 20 }}
         animate={{ scale: 1, opacity: 1, y: 0 }}
@@ -109,12 +115,17 @@ const BookingVerificationModal = ({ booking, onFulfill, onClose, onCancelBooking
                             onClick={() => handleRemoveItem(idx)}
                             className="text-red-400 hover:text-red-500 disabled:opacity-30 transition-colors"
                           >
-                            <DeleteOutlineRoundedIcon sx={{ fontSize: 15 }} />
+                            <DeleteOutlineRoundedIcon sx={{ fontSize: 16 }} />
                           </button>
                         )}
                       </div>
                     </div>
-                    <span className="text-gray-900 shrink-0">₹{(it.qty * (it.product?.offerPrice || it.product?.price || 0)).toLocaleString()}</span>
+                    <div className="text-right">
+                      <span className="text-gray-900">₹{((it.product?.offerPrice || it.product?.price || 0) * it.qty).toLocaleString()}</span>
+                      {it.product?.offerPrice && it.product?.price > it.product.offerPrice && (
+                        <p className="text-[10px] text-gray-400 line-through">₹{(it.product.price * it.qty).toLocaleString()}</p>
+                      )}
+                    </div>
                   </div>
                 ))}
              </div>
@@ -123,18 +134,26 @@ const BookingVerificationModal = ({ booking, onFulfill, onClose, onCancelBooking
                <p className="mt-3 text-[9px] font-bold text-amber-600 uppercase tracking-wide">Last item — use Cancel Booking below to reject the cart</p>
              )}
 
-             <div className="mt-4">
-                <AddProductToCartPicker
-                  excludeIds={booking.items.map((it) => it.productId)}
-                  onAdd={handleAddProduct}
-                />
+             <div className="mt-4 pt-3 border-t border-gray-200">
+               <AddProductToCartPicker
+                 onSelectProduct={handleAddProduct}
+                 disabled={updatingItems}
+                 alreadySelectedIds={booking.items.map((i) => i.productId)}
+               />
              </div>
 
-             <div className="mt-4 pt-3 border-t border-gray-200 flex justify-between items-center">
-                <span className="text-xs font-bold text-gray-900 uppercase">Collect From Customer</span>
-                <span className="text-xl font-bold text-[#5EB929]">₹{(booking.totals?.final || 0).toLocaleString()}</span>
+             <div className="mt-3 pt-3 border-t border-gray-200 flex justify-between items-center">
+                <span className="text-xs font-bold text-gray-900 uppercase">Total to Collect</span>
+                <span className="text-lg font-bold text-[#5EB929]">₹{(booking.totals?.final || 0).toLocaleString()}</span>
              </div>
           </div>
+
+          {booking.passcode && (
+            <div className="bg-amber-500/10 border border-amber-500/20 rounded-xl p-3 flex items-center gap-2">
+               <InfoOutlinedIcon className="text-amber-600" sx={{ fontSize: 18 }} />
+               <p className="text-xs font-bold text-amber-900">Single-use pass. Token will be retired upon fulfillment.</p>
+            </div>
+          )}
         </div>
 
         <div className="p-5 bg-gray-50 flex gap-3 shrink-0">
@@ -155,7 +174,8 @@ const BookingVerificationModal = ({ booking, onFulfill, onClose, onCancelBooking
           </button>
         </div>
       </motion.div>
-    </div>
+    </div>,
+    document.body
   );
 };
 

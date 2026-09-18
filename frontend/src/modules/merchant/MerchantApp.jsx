@@ -238,7 +238,7 @@ const MerchantBottomNav = ({ unreadCount }) => {
   ];
 
   return (
-    <div className="lg:hidden fixed bottom-0 left-0 right-0 z-[9999] pointer-events-none">
+    <div className="lg:hidden fixed bottom-0 left-0 right-0 z-40 pointer-events-none">
        {/* Background glass bar stuck to edges */}
        <div className="bg-white/90 backdrop-blur-2xl border-t border-gray-100 h-16 w-full flex items-center justify-around px-2 pointer-events-auto relative shadow-[0_-10px_40px_rgba(0,0,0,0.05)]">
           {navItems.map((item) => {
@@ -469,7 +469,7 @@ const MerchantApp = () => {
         <MerchantSidebar merchant={merchant} />
         
         {/* Premium Mobile Top Nav */}
-        <div className="lg:hidden fixed top-0 left-0 right-0 z-[9999] bg-white/80 backdrop-blur-2xl border-b border-gray-100 h-14 flex items-center justify-between px-4">
+        <div className="lg:hidden fixed top-0 left-0 right-0 z-40 bg-white/80 backdrop-blur-2xl border-b border-gray-100 h-14 flex items-center justify-between px-4">
             <div className="flex items-center gap-2.5">
               {location.pathname !== '/merchant' && (
                 <button 
