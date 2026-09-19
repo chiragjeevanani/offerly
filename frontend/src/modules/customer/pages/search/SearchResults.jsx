@@ -54,26 +54,26 @@ const SearchResults = () => {
 
   return (
     <PageTransition>
-      <div className="min-h-screen bg-background px-4 py-4 pb-24 space-y-4">
+      <div className="min-h-screen bg-background px-4 py-4 pb-24 space-y-4 overflow-x-hidden max-w-full">
         
         {/* Sharp Header & Search */}
         <div className="flex flex-col gap-4">
           <div className="flex items-center gap-3">
             <button 
               onClick={() => navigate(-1)} 
-              className="w-10 h-10 rounded-2xl bg-white flex items-center justify-center text-gray-900 shadow-sm border border-gray-100 active:scale-95 transition-all"
+              className="w-10 h-10 rounded-2xl bg-white flex items-center justify-center text-gray-900 shadow-sm border border-gray-100 active:scale-95 transition-all flex-shrink-0"
             >
               <ArrowBackRoundedIcon sx={{ fontSize: 20 }} />
             </button>
             <div className="flex-1 flex items-center gap-2 bg-white border border-gray-100 rounded-2xl px-4 py-3 shadow-sm focus-within:border-[#5EB929]/30 transition-all">
-              <SearchRoundedIcon sx={{ fontSize: 18 }} className="text-[#5EB929]" />
+              <SearchRoundedIcon sx={{ fontSize: 18 }} className="text-[#5EB929] flex-shrink-0" />
               <input
                 type="text"
                 placeholder="FOOD, SALONS, CAFES..."
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
                 autoFocus
-                className="flex-1 bg-transparent text-base font-bold text-gray-900 placeholder:text-gray-400 outline-none uppercase tracking-tight"
+                className="flex-1 bg-transparent text-[16px] md:text-base font-bold text-gray-900 placeholder:text-gray-400 outline-none uppercase tracking-tight"
               />
               {query && (
                 <button 

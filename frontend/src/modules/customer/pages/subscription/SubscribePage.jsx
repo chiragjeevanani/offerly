@@ -108,7 +108,7 @@ const SubscribePage = () => {
 
   return (
     <PageTransition>
-      <div className="min-h-screen bg-background pt-safe pb-10 px-4">
+      <div className="min-h-screen bg-background pb-10 px-4">
         <div className="max-w-4xl mx-auto">
           <div className="flex items-center gap-3 py-4">
             <button

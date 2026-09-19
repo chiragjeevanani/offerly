@@ -5,6 +5,7 @@ import ExploreRoundedIcon from '@mui/icons-material/ExploreRounded';
 import LocalOfferRoundedIcon from '@mui/icons-material/LocalOfferRounded';
 import PersonRoundedIcon from '@mui/icons-material/PersonRounded';
 import MapRoundedIcon from '@mui/icons-material/MapRounded';
+import useKeyboardVisible from '../../../../hooks/useKeyboardVisible';
 
 const tabs = [
   { label: 'Home', icon: HomeRoundedIcon, path: '/home' },
@@ -17,6 +18,9 @@ const tabs = [
 const BottomNav = () => {
   const navigate = useNavigate();
   const location = useLocation();
+  const isKeyboardOpen = useKeyboardVisible();
+
+  if (isKeyboardOpen) return null;
 
   return (
     <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-white/90 backdrop-blur-2xl border-t border-gray-200/50 pb-safe shadow-[0_-4px_24px_rgba(0,0,0,0.04)]">

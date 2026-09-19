@@ -221,7 +221,7 @@ const CartView = () => {
   if (loading && (!cart || !merchant)) {
     return (
       <PageTransition>
-        <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center pt-safe">
+        <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center">
           <div className="w-10 h-10 border-4 border-[#5EB929] border-t-transparent rounded-full animate-spin" />
         </div>
       </PageTransition>
@@ -231,7 +231,7 @@ const CartView = () => {
   if (!cart || !merchant || !cart.items || cart.items.length === 0) {
     return (
       <PageTransition>
-        <div className="min-h-screen bg-gray-50 flex flex-col pt-safe">
+        <div className="min-h-screen bg-gray-50 flex flex-col">
           <div className="px-4 py-4 flex items-center bg-white shadow-sm sticky top-0 z-20">
             <h1 className="text-lg font-bold text-gray-900">Booking Cart</h1>
           </div>

@@ -65,7 +65,10 @@
     -webkit-touch-callout: default !important;
   }
 
-  /* Prevent auto-zoom on iOS Safari when focusing inputs (< 16px triggers zoom) */
+  /* Prevent auto-zoom on mobile devices (iOS / Android WebViews) when focusing inputs (< 16px triggers viewport zoom) */
+  input, select, textarea {
+    font-size: 16px !important;
+  }
   @media screen and (max-width: 768px) {
     input, select, textarea {
       font-size: 16px !important;

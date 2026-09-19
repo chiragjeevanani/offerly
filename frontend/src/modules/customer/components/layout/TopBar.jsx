@@ -52,16 +52,16 @@ const TopBar = () => {
 
         {/* Logo + Location (Mobile) */}
         <div 
-          className="lg:hidden flex items-center gap-2.5 cursor-pointer group min-w-0" 
+          className="lg:hidden flex items-center gap-2 cursor-pointer group min-w-0 flex-1" 
           onClick={() => setShowLocationSheet(true)}
         >
-          <img src="/offerly-logo-ring.png" alt="Offerly" className="w-9 h-9 object-contain drop-shadow-sm flex-shrink-0" />
-          <div className="flex flex-col min-w-0 max-w-[210px] sm:max-w-[320px]">
-            <span className="font-bold text-base text-gray-900 leading-tight">Offerly</span>
+          <img src="/offerly-logo-ring.png" alt="Offerly" className="w-8 h-8 sm:w-9 sm:h-9 object-contain drop-shadow-sm flex-shrink-0" />
+          <div className="flex flex-col min-w-0 flex-1">
+            <span className="font-bold text-sm sm:text-base text-gray-900 leading-tight">Offerly</span>
             <div className="flex items-center gap-1 mt-0.5 min-w-0">
                <LocationOnRoundedIcon sx={{ fontSize: 13 }} className="text-primary flex-shrink-0" />
                <span 
-                 className="text-xs font-medium text-gray-600 group-hover:text-primary transition-colors truncate"
+                 className="text-[11px] sm:text-xs font-medium text-gray-600 group-hover:text-primary transition-colors truncate"
                  title={activeLocation}
                >
                  {activeLocation}
