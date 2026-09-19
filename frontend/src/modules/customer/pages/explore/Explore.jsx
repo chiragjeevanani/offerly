@@ -109,19 +109,20 @@ const Explore = () => {
         
         {/* Slim Search bar */}
         <div className="sticky top-0 z-20 -mx-4 px-4 pb-2 bg-background/80 backdrop-blur-md">
-          <div className="flex items-center gap-2 bg-white border border-gray-100 rounded-2xl px-4 py-2.5 shadow-[0_4px_12px_rgba(0,0,0,0.03)] focus-within:border-[#5EB929]/30 transition-all">
-            <SearchRoundedIcon sx={{ fontSize: 18 }} className="text-gray-400" />
+          <div className="flex items-center gap-2 bg-white border border-gray-100 rounded-2xl px-4 py-3 shadow-[0_4px_12px_rgba(0,0,0,0.03)] focus-within:border-[#5EB929]/30 transition-all">
+            <SearchRoundedIcon sx={{ fontSize: 18 }} className="text-gray-400 flex-shrink-0" />
             <input
               type="text"
               placeholder="Search services or offers..."
               value={searchText}
               onChange={(e) => setSearchText(e.target.value)}
-              className="flex-1 bg-transparent text-[13px] font-bold text-gray-800 placeholder:text-gray-400 outline-none"
+              className="flex-1 bg-transparent text-[16px] md:text-sm font-bold text-gray-800 placeholder:text-gray-400 outline-none"
+              style={{ fontSize: '16px' }}
             />
             {searchText && (
               <button
                 onClick={() => setSearchText('')}
-                className="text-[10px] text-[#5EB929] font-bold uppercase tracking-widest bg-[#5EB929]/5 px-2 py-1 rounded-lg"
+                className="text-[10px] text-[#5EB929] font-bold uppercase tracking-widest bg-[#5EB929]/5 px-2 py-1 rounded-lg flex-shrink-0"
               >
                 Clear
               </button>

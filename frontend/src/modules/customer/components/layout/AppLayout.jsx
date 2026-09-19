@@ -20,8 +20,8 @@ const AppLayout = ({ children }) => {
 
   return (
     <div className="flex flex-col h-screen bg-background overflow-hidden relative">
-      {/* Top bar spanning full width */}
-      <TopBar />
+      {/* Top bar spanning full width - omitted on /search as SearchResults provides its own integrated search header */}
+      {location.pathname !== '/search' && <TopBar />}
 
       <div className="flex-1 flex overflow-hidden relative">
         {/* Desktop Sidebar - Collapsed by default, expands on hover */}

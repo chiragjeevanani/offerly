@@ -56,8 +56,8 @@ const SearchResults = () => {
     <PageTransition>
       <div className="min-h-screen bg-background px-4 py-4 pb-24 space-y-4 overflow-x-hidden max-w-full">
         
-        {/* Sharp Header & Search */}
-        <div className="flex flex-col gap-4">
+        {/* Unified Search Header */}
+        <div className="sticky top-0 z-30 bg-background/95 backdrop-blur-md pt-3 pb-3 -mx-4 px-4 border-b border-gray-100/80 shadow-sm">
           <div className="flex items-center gap-3">
             <button 
               onClick={() => navigate(-1)} 
@@ -74,11 +74,12 @@ const SearchResults = () => {
                 onChange={(e) => setQuery(e.target.value)}
                 autoFocus
                 className="flex-1 bg-transparent text-[16px] md:text-base font-bold text-gray-900 placeholder:text-gray-400 outline-none uppercase tracking-tight"
+                style={{ fontSize: '16px' }}
               />
               {query && (
                 <button 
                   onClick={() => setQuery('')} 
-                  className="text-[9px] font-bold text-[#5EB929] uppercase tracking-widest bg-[#5EB929]/5 px-2.5 py-1.5 rounded-lg"
+                  className="text-[9px] font-bold text-[#5EB929] uppercase tracking-widest bg-[#5EB929]/5 px-2.5 py-1.5 rounded-lg flex-shrink-0"
                 >
                   Clear
                 </button>
