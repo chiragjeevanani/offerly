@@ -37,14 +37,14 @@ const TopBar = () => {
       <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-xl border-b border-gray-100 px-4 py-3 flex items-center gap-3">
       
       {/* Dynamic Back Button / Mobile Logo */}
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-2.5 min-w-0 flex-1">
         {location.pathname !== '/home' && (
           <motion.button
             initial={{ opacity: 0, x: -10 }}
             animate={{ opacity: 1, x: 0 }}
             whileTap={{ scale: 0.9 }}
             onClick={() => navigate(-1)}
-            className="w-9 h-9 flex items-center justify-center rounded-xl bg-gray-50 border border-gray-100 text-gray-500 hover:text-gray-900 transition-all"
+            className="w-9 h-9 flex items-center justify-center rounded-xl bg-gray-50 border border-gray-100 text-gray-500 hover:text-gray-900 transition-all flex-shrink-0"
           >
             <ArrowBackRoundedIcon sx={{ fontSize: 20 }} />
           </motion.button>
@@ -116,33 +116,35 @@ const TopBar = () => {
          ))}
       </div>
 
-      {/* Right User Actions (Cart, Notifications, Profile) */}
-      <div className="flex items-center gap-2 ml-auto">
+      {/* Right User Actions (Cart, Notifications) */}
+      <div className="flex items-center gap-2 ml-auto flex-shrink-0">
         {/* Search Icon (Desktop only, not on home) */}
         {location.pathname !== '/home' && (
           <motion.button
             whileTap={{ scale: 0.9 }}
             onClick={() => navigate('/search')}
-            className="hidden sm:flex w-9 h-9 items-center justify-center rounded-xl bg-white border border-gray-100 shadow-sm hover:shadow-md text-gray-400 hover:text-gray-900 transition-all"
+            className="hidden sm:flex w-9 h-9 items-center justify-center rounded-xl bg-white border border-gray-100 shadow-sm hover:shadow-md text-gray-400 hover:text-gray-900 transition-all flex-shrink-0"
           >
             <SearchRoundedIcon sx={{ fontSize: 20 }} />
           </motion.button>
         )}
 
-        {/* Cart Icon (Mobile & Desktop) */}
-        <motion.button
-          whileTap={{ scale: 0.9 }}
-          onClick={() => navigate('/cart')}
-          className="w-9 h-9 flex items-center justify-center rounded-xl bg-white border border-gray-100 shadow-sm hover:shadow-md text-gray-400 hover:text-gray-900 transition-all"
-        >
-          <ShoppingCartRoundedIcon sx={{ fontSize: 20 }} />
-        </motion.button>
+        {/* Cart Icon (Mobile & Desktop) - Hidden on Profile, Saved Offers, and Cart */}
+        {!['/profile', '/saved', '/cart'].some((p) => location.pathname.startsWith(p)) && (
+          <motion.button
+            whileTap={{ scale: 0.9 }}
+            onClick={() => navigate('/cart')}
+            className="w-9 h-9 flex items-center justify-center rounded-xl bg-white border border-gray-100 shadow-sm hover:shadow-md text-gray-400 hover:text-gray-900 transition-all flex-shrink-0"
+          >
+            <ShoppingCartRoundedIcon sx={{ fontSize: 20 }} />
+          </motion.button>
+        )}
 
         {/* Notifications Icon (Mobile & Desktop) */}
         <motion.button
           whileTap={{ scale: 0.9 }}
           onClick={() => navigate('/notifications')}
-          className="w-9 h-9 flex items-center justify-center rounded-xl bg-white border border-gray-100 shadow-sm hover:shadow-md relative text-gray-400 hover:text-gray-900 transition-all"
+          className="w-9 h-9 flex items-center justify-center rounded-xl bg-white border border-gray-100 shadow-sm hover:shadow-md relative text-gray-400 hover:text-gray-900 transition-all flex-shrink-0"
         >
           <NotificationsRoundedIcon sx={{ fontSize: 20 }} />
           <AnimatePresence>
