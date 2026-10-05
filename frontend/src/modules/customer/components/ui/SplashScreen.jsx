@@ -58,7 +58,7 @@ const SplashScreen = ({ onFinish, duration = 2200, forceShow = false }) => {
             scale: 1.02,
             transition: { duration: 0.4, ease: [0.22, 1, 0.36, 1] }
           }}
-          className="fixed inset-0 z-[99999] flex items-center justify-center bg-[#EAF7E8] select-none overflow-hidden touch-none"
+          className="fixed inset-0 z-[99999] flex items-center justify-center bg-gradient-to-b from-[#E7F6E0] via-[#EAF7E8] to-[#E2F3DD] select-none overflow-hidden touch-none"
           style={{
             paddingTop: 'env(safe-area-inset-top, 0px)',
             paddingBottom: 'env(safe-area-inset-bottom, 0px)',
@@ -66,17 +66,33 @@ const SplashScreen = ({ onFinish, duration = 2200, forceShow = false }) => {
           role="dialog"
           aria-label="Offerly loading splash screen"
         >
-          {/* Main mobile screen container: Full-bleed on mobile (0 side margins), sleek centered card on desktop */}
-          <div className="relative w-full h-full h-[100dvh] md:w-auto md:max-w-[430px] md:h-[92vh] md:max-h-[880px] md:aspect-[576/1024] flex items-center justify-center md:rounded-[36px] md:shadow-[0_25px_70px_rgba(40,120,30,0.2)] md:border md:border-black/5 overflow-hidden bg-[#EAF7E8]">
+          {/* Ambient glow effects for immersive widescreen / webview experience */}
+          <div className="absolute inset-0 pointer-events-none overflow-hidden">
+            <div className="absolute -top-[25%] left-1/2 -translate-x-1/2 w-[80vw] h-[80vw] max-w-[1000px] max-h-[1000px] rounded-full bg-[#5EB929]/10 blur-[130px]" />
+            <div className="absolute -bottom-[25%] left-1/2 -translate-x-1/2 w-[70vw] h-[70vw] max-w-[900px] max-h-[900px] rounded-full bg-[#7AD032]/10 blur-[110px]" />
+          </div>
+
+          {/* Main splash container: Full-bleed on mobile, seamless full-height immersive aspect-perfect presentation on webview */}
+          <div className="relative w-full h-full h-[100dvh] md:w-auto md:h-full md:max-h-[100dvh] md:aspect-[576/1024] md:max-w-full flex items-center justify-center overflow-hidden bg-[#EAF7E8]">
             
-            {/* Ultra high-resolution 2x Retina splash screen background artwork (clean background with no static loader) */}
-            <img
-              src="/splash-screen-clean@3x.png?v=2"
-              alt="Offerly Splash Screen"
-              className="absolute inset-0 w-full h-full object-cover object-center pointer-events-none select-none"
-              draggable="false"
-              loading="eager"
-            />
+            {/* Ultra high-resolution Retina splash screen background artwork */}
+            <picture className="absolute inset-0 w-full h-full pointer-events-none select-none">
+              <source srcSet="/splash-screen-clean@3x.webp?v=5" type="image/webp" />
+              <img
+                src="/splash-screen-clean@3x.png?v=5"
+                alt="Offerly Splash Screen"
+                className="w-full h-full object-cover md:object-contain object-center pointer-events-none select-none"
+                style={{
+                  imageRendering: 'auto',
+                  WebkitBackfaceVisibility: 'hidden',
+                  transform: 'translateZ(0)',
+                }}
+                draggable="false"
+                loading="eager"
+                fetchPriority="high"
+                decoding="sync"
+              />
+            </picture>
 
             {/* Single dynamic interactive loading progress bar */}
             <div 
