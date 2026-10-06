@@ -10,19 +10,19 @@ import PageTransition from '../../components/ui/PageTransition';
 const loginBanners = [
   {
     id: 1,
-    image: '/banners/login-banner-1.png?v=2',
+    image: '/banners/login-banner-1.png?v=3',
     alt: 'Offerly - Discover Local Deals Near You',
     badge: 'Verified Deals',
   },
   {
     id: 2,
-    image: '/banners/login-banner-2.png?v=2',
+    image: '/banners/login-banner-2.png?v=3',
     alt: 'Offerly - Enter Number to Join & Save',
     badge: 'Instant Access',
   },
   {
     id: 3,
-    image: '/banners/login-banner-3.png?v=2',
+    image: '/banners/login-banner-3.png?v=3',
     alt: 'Offerly - Start Exploring Local Offers',
     badge: 'Exclusive Perks',
   },
@@ -420,14 +420,14 @@ const CustomerLogin = () => {
   return (
     <PageTransition>
       <div 
-        className="w-full h-[100dvh] max-h-[100dvh] bg-[#070809] flex flex-col justify-center items-center font-sans antialiased select-none overflow-hidden md:p-6 lg:p-10"
+        className="w-full h-[100dvh] max-h-[100dvh] bg-white md:bg-[#F8FAFC] flex flex-col justify-center items-center font-sans antialiased select-none overflow-hidden md:p-6 lg:p-10"
         style={{
           paddingTop: 'env(safe-area-inset-top, 0px)',
           paddingBottom: 'env(safe-area-inset-bottom, 0px)',
         }}
       >
         {/* Main Responsive Container: Strictly 100dvh on mobile (no scroll), split-card on desktop */}
-        <div className="w-full max-w-full md:max-w-5xl lg:max-w-6xl h-full md:h-auto md:min-h-[620px] lg:min-h-[680px] bg-[#070707] md:bg-[#0B0F0C] flex flex-col md:flex-row justify-between relative md:rounded-[32px] shadow-2xl overflow-hidden md:border md:border-white/10">
+        <div className="w-full max-w-full md:max-w-5xl lg:max-w-6xl h-full md:h-auto md:min-h-[620px] lg:min-h-[680px] bg-white flex flex-col md:flex-row justify-between relative md:rounded-[32px] shadow-2xl overflow-hidden md:border md:border-gray-100">
           
           {/* ========================================================================= */}
           {/* TOP (MOBILE) / LEFT (DESKTOP) SECTION: Brand Hero Banner                  */}
@@ -435,22 +435,22 @@ const CustomerLogin = () => {
           <div 
             onMouseEnter={() => setIsPaused(true)}
             onMouseLeave={() => setIsPaused(false)}
-            className={`relative w-full md:w-7/12 lg:w-3/5 flex flex-col justify-between items-center md:items-start p-3 sm:p-5 md:p-8 lg:p-10 overflow-hidden bg-gradient-to-b md:bg-gradient-to-br from-[#060806] via-[#090F08] to-[#040504] shrink-0 ${
+            className={`relative w-full md:w-7/12 lg:w-3/5 flex flex-col justify-between items-center md:items-start p-3 sm:p-5 md:p-8 lg:p-10 overflow-hidden bg-white md:bg-gradient-to-br from-white via-white to-[#F2FAEC] shrink-0 ${
               isKeyboardOpen ? 'h-[14vh] md:h-auto' : 'h-[30vh] sm:h-[34vh] md:h-auto md:flex-1'
             } transition-all duration-300`}
           >
             {/* Ambient Glows */}
-            <div className="absolute top-1/2 left-1/2 md:left-1/2 -translate-x-1/2 -translate-y-1/2 w-64 sm:w-80 md:w-[480px] h-64 sm:h-80 md:h-[480px] bg-[#5EB929]/15 rounded-full blur-[90px] pointer-events-none" />
-            <div className="absolute bottom-0 right-0 w-48 md:w-64 h-48 md:h-64 bg-[#5EB929]/10 rounded-full blur-[70px] pointer-events-none" />
+            <div className="absolute top-1/2 left-1/2 md:left-1/2 -translate-x-1/2 -translate-y-1/2 w-64 sm:w-80 md:w-[480px] h-64 sm:h-80 md:h-[480px] bg-[#5EB929]/10 rounded-full blur-[90px] pointer-events-none" />
+            <div className="absolute bottom-0 right-0 w-48 md:w-64 h-48 md:h-64 bg-[#5EB929]/5 rounded-full blur-[70px] pointer-events-none" />
 
             {/* Desktop Brand Identity Header */}
             <div className="hidden md:flex relative z-10 w-full items-center justify-between pb-3">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 md:w-11 md:h-11 rounded-2xl bg-white/5 border border-white/10 backdrop-blur-md p-2 flex items-center justify-center shadow-lg shadow-black/40">
+                <div className="w-10 h-10 md:w-11 md:h-11 rounded-2xl bg-[#5EB929]/5 border border-gray-100 p-2 flex items-center justify-center shadow-lg shadow-gray-200/60">
                   <img src="/offerly-logo-ring.png" alt="Offerly Logo" className="w-full h-full object-contain" />
                 </div>
                 <div>
-                  <h2 className="text-white font-black text-xl tracking-tight leading-none flex items-center gap-1.5">
+                  <h2 className="text-gray-900 font-black text-xl tracking-tight leading-none flex items-center gap-1.5">
                     Offerly
                     <span className="w-2 h-2 rounded-full bg-[#5EB929] inline-block shadow-[0_0_8px_#5EB929]" />
                   </h2>
@@ -458,9 +458,9 @@ const CustomerLogin = () => {
                 </div>
               </div>
 
-              <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/5 border border-white/10 backdrop-blur-md">
+              <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-gray-50 border border-gray-100">
                 <span className="w-2 h-2 rounded-full bg-[#5EB929] animate-pulse" />
-                <span className="text-xs font-semibold text-gray-300">Live in your city</span>
+                <span className="text-xs font-semibold text-gray-600">Live in your city</span>
               </div>
             </div>
 
@@ -491,7 +491,7 @@ const CustomerLogin = () => {
                     <img
                       src={loginBanners[activeSlide].image}
                       alt={loginBanners[activeSlide].alt}
-                      className="w-full h-full object-contain filter drop-shadow-[0_12px_24px_rgba(0,0,0,0.5)] select-none pointer-events-none"
+                      className="w-full h-full object-contain filter drop-shadow-[0_10px_18px_rgba(0,0,0,0.12)] select-none pointer-events-none"
                       draggable={false}
                     />
                   </motion.div>
@@ -502,7 +502,7 @@ const CustomerLogin = () => {
                   type="button"
                   onClick={() => paginateSlide(-1)}
                   aria-label="Previous banner"
-                  className="hidden md:flex absolute left-2 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-black/50 hover:bg-[#5EB929] border border-white/10 text-white items-center justify-center backdrop-blur-md transition-all opacity-0 group-hover:opacity-100 z-20 cursor-pointer shadow-lg active:scale-95"
+                  className="hidden md:flex absolute left-2 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-white/90 hover:bg-[#5EB929] border border-gray-200 text-gray-700 hover:text-white items-center justify-center backdrop-blur-md transition-all opacity-0 group-hover:opacity-100 z-20 cursor-pointer shadow-lg active:scale-95"
                 >
                   <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15 19l-7-7 7-7" />
@@ -512,7 +512,7 @@ const CustomerLogin = () => {
                   type="button"
                   onClick={() => paginateSlide(1)}
                   aria-label="Next banner"
-                  className="hidden md:flex absolute right-2 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-black/50 hover:bg-[#5EB929] border border-white/10 text-white items-center justify-center backdrop-blur-md transition-all opacity-0 group-hover:opacity-100 z-20 cursor-pointer shadow-lg active:scale-95"
+                  className="hidden md:flex absolute right-2 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-white/90 hover:bg-[#5EB929] border border-gray-200 text-gray-700 hover:text-white items-center justify-center backdrop-blur-md transition-all opacity-0 group-hover:opacity-100 z-20 cursor-pointer shadow-lg active:scale-95"
                 >
                   <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 5l7 7-7 7" />
@@ -525,7 +525,7 @@ const CustomerLogin = () => {
             <div className="relative z-10 w-full flex items-center justify-center md:justify-between pt-1 sm:pt-2">
               <div className="hidden md:flex items-center gap-3">
                 {highlights.map((h, i) => (
-                  <div key={i} className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/5 border border-white/5 text-xs font-semibold text-gray-300">
+                  <div key={i} className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-gray-50 border border-gray-100 text-xs font-semibold text-gray-600">
                     <span>{h.icon}</span>
                     <span>{h.label}</span>
                   </div>
@@ -545,7 +545,7 @@ const CustomerLogin = () => {
                     className={`transition-all duration-300 rounded-full cursor-pointer ${
                       activeSlide === idx
                         ? 'w-6 md:w-8 h-1.5 bg-[#5EB929] shadow-[0_0_8px_#5EB929]'
-                        : 'w-1.5 h-1.5 bg-gray-700 hover:bg-gray-500'
+                        : 'w-1.5 h-1.5 bg-gray-300 hover:bg-gray-400'
                     }`}
                     aria-label={`Slide ${idx + 1}`}
                   />
@@ -558,7 +558,7 @@ const CustomerLogin = () => {
           {/* ========================================================================= */}
           {/* BOTTOM (MOBILE) / RIGHT (DESKTOP) SECTION: White Auth Panel               */}
           {/* ========================================================================= */}
-          <div className="w-full md:w-5/12 lg:w-2/5 bg-white rounded-t-[30px] md:rounded-t-none md:rounded-r-[32px] px-5 py-4 sm:px-8 sm:py-6 md:p-10 lg:p-12 flex flex-col justify-between z-30 shadow-[0_-10px_30px_rgba(0,0,0,0.2)] md:shadow-none border-t md:border-t-0 md:border-l border-gray-100 overflow-hidden flex-1 md:flex-initial">
+          <div className="w-full md:w-5/12 lg:w-2/5 bg-white rounded-t-[30px] md:rounded-t-none md:rounded-r-[32px] px-5 py-4 sm:px-8 sm:py-6 md:p-10 lg:p-12 flex flex-col justify-between z-30 shadow-[0_-8px_24px_rgba(0,0,0,0.06)] md:shadow-none border-t md:border-t-0 md:border-l border-gray-100 overflow-hidden flex-1 md:flex-initial">
             
             <AnimatePresence mode="wait" custom={direction}>
               {step === 'phone' ? (
