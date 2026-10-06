@@ -8,6 +8,7 @@ import {
     lookupByInternalId,
     previewQR,
     updateRedemptionItems,
+    updateMyRedemptionItems,
     cancelRedemption
 } from '../controllers/redemptionController.js';
 import { protect, authorize } from '../../../middlewares/auth.js';
@@ -23,6 +24,7 @@ router.get('/lookup/:internalId', protect, authorize('merchant'), lookupByIntern
 router.post('/preview-qr', protect, authorize('merchant'), previewQR);
 router.post('/verify-qr', protect, authorize('merchant'), verifyQR);
 router.put('/:id/items', protect, authorize('merchant'), updateRedemptionItems);
+router.put('/:id/my-items', protect, updateMyRedemptionItems);
 router.post('/:id/cancel', protect, authorize('merchant'), cancelRedemption);
 router.get('/:id', protect, getRedemptionById);
 

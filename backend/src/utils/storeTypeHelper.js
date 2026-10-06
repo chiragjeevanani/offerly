@@ -35,3 +35,15 @@ export const resolveStoreType = (storeType, category) => {
   if (isServiceCategory(category)) return 'service_based';
   return 'product_based';
 };
+
+/**
+ * Product images are mandatory for retail-style product sellers (shops,
+ * fashion, electronics...) since customers pick items by sight. Food stores
+ * (restaurants, cafes) and service items are exempt - a menu line doesn't
+ * need a photo.
+ */
+export const requiresProductImage = (merchant, itemCategoryType) => {
+  if (itemCategoryType === 'service_based') return false;
+  if (resolveStoreType(merchant?.storeType, merchant?.category) === 'service_based') return false;
+  return !isFoodCategory(merchant?.category);
+};

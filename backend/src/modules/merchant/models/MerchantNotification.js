@@ -25,6 +25,7 @@ const merchantNotificationSchema = new mongoose.Schema(
       // persists, and the merchant's list silently misses every booking.
       enum: [
         'new_booking',
+        'booking_updated',
         'offer_approved',
         'subscription_expiry',
         'ad_status',

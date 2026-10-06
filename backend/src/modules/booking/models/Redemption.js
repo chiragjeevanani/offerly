@@ -7,6 +7,7 @@ const itemSnapshotSchema = new mongoose.Schema(
     category: String,
     price: Number,
     offerPrice: Number,
+    image: String,
     isVeg: mongoose.Schema.Types.Mixed,
     duration: mongoose.Schema.Types.Mixed,
   },

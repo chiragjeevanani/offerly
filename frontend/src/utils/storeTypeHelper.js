@@ -93,3 +93,13 @@ export const shouldShowVegIndicator = (merchant, product) => {
   // Must be explicitly boolean (true or false, never null/undefined)
   return product.isVeg === true || product.isVeg === false;
 };
+
+/**
+ * Mirrors backend requiresProductImage: images are mandatory for retail-style
+ * product sellers, optional for food stores (restaurants, cafes) and services.
+ */
+export const requiresProductImage = (merchant, itemCategoryType) => {
+  if (itemCategoryType === 'service_based') return false;
+  if (checkIsServiceStore(merchant)) return false;
+  return !isFoodCategory(merchant?.category);
+};

@@ -7,7 +7,7 @@ import SpaRoundedIcon from '@mui/icons-material/SpaRounded';
 import AddPhotoAlternateRoundedIcon from '@mui/icons-material/AddPhotoAlternateRounded';
 import toast from 'react-hot-toast';
 import { productCategoryAPI } from '../../../api/productCategory.api';
-import { isServiceCategory, isFoodCategory } from '../../../utils/storeTypeHelper';
+import { isServiceCategory, isFoodCategory, requiresProductImage } from '../../../utils/storeTypeHelper';
 
 const CATEGORY_BEHAVIOURS = {
   'Food': { type: 'product_based', icon: '🍔', showVeg: true },
@@ -59,6 +59,8 @@ const AddProductModal = ({ isOpen, onClose, merchant, editingProduct, onSave }) 
   });
 
   const isProductBased = formData.categoryType === 'product_based';
+  const imageRequired = requiresProductImage(merchant, formData.categoryType);
+  const imageSrc = formData.imagePreview || formData.images?.[0];
 
   const [isSaving, setIsSaving] = useState(false);
   const [uploadingImage, setUploadingImage] = useState(false);
@@ -116,6 +118,7 @@ const AddProductModal = ({ isOpen, onClose, merchant, editingProduct, onSave }) 
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!formData.name.trim() || !formData.price || !formData.categoryId) return toast.error('Fill required fields');
+    if (imageRequired && !formData.images?.some(Boolean)) return toast.error('Please add a product image');
     setIsSaving(true);
     try {
       const payload = {
@@ -199,12 +202,14 @@ const AddProductModal = ({ isOpen, onClose, merchant, editingProduct, onSave }) 
                     </div>
                  </div>
                  <div className="sm:col-span-1">
-                    <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1 block">Image</label>
+                    <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1 block">
+                      Image {imageRequired ? '*' : <span className="normal-case tracking-normal">(optional)</span>}
+                    </label>
                     <div className="relative group h-[116px]">
                        <input type="file" accept="image/*" onChange={handleImageUpload} className="absolute inset-0 opacity-0 z-10 cursor-pointer" />
                        <div className="w-full h-full rounded-xl bg-white border-2 border-dashed border-gray-100 flex flex-col items-center justify-center group-hover:border-[#5EB929]/30 transition-all shadow-sm overflow-hidden">
-                          {formData.imagePreview ? (
-                             <img src={formData.imagePreview} className="w-full h-full object-cover" alt="" />
+                          {imageSrc ? (
+                             <img src={imageSrc} className="w-full h-full object-cover" alt="" />
                           ) : (
                              <AddPhotoAlternateRoundedIcon className="text-gray-200" />
                           )}

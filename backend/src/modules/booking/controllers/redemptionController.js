@@ -26,6 +26,7 @@ export const createRedemption = async (req, res) => {
         category: Joi.string().allow('', null),
         price: Joi.number().required(),
         offerPrice: Joi.number().required(),
+        image: Joi.string().allow('', null),
         isVeg: Joi.any(),
         duration: Joi.any()
       }).required(),
@@ -374,20 +375,71 @@ export const lookupByInternalId = async (req, res) => {
   }
 };
 
+const redemptionItemsSchema = Joi.object({
+  items: Joi.array().min(1).items(Joi.object({
+    productId: Joi.string().required(),
+    qty: Joi.number().min(1).required(),
+  })).required().messages({
+    'array.min': 'A booking must have at least one item. Cancel the booking instead of removing all items.',
+  }),
+});
+
+// Re-snapshots `items` from the live catalogue onto a pending redemption and
+// recomputes its totals. Prices always come from the DB, never the client.
+// A new-customer wallet discount granted at claim time is kept, capped to the
+// new payable amount. Returns an error string if any product is unavailable.
+const applyRedemptionItems = async (redemption, items) => {
+  const productIds = items.map((i) => i.productId);
+
+  const products = await Product.find({
+    _id: { $in: productIds },
+    merchantId: redemption.merchantId,
+    isActive: true,
+  }).populate('categoryId', 'name');
+
+  const productMap = new Map(products.map((p) => [p._id.toString(), p]));
+  const missing = productIds.filter((id) => !productMap.has(id));
+  if (missing.length) {
+    return `Product(s) not found or unavailable: ${missing.join(', ')}`;
+  }
+
+  redemption.items = items.map(({ productId, qty }) => {
+    const p = productMap.get(productId);
+    return {
+      productId: p._id,
+      product: {
+        id: p._id.toString(),
+        name: p.name,
+        category: p.categoryId?.name || '',
+        price: p.price,
+        offerPrice: p.offerPrice,
+        image: p.images?.[0] || '',
+        isVeg: p.isVeg,
+        duration: p.duration,
+      },
+      qty,
+    };
+  });
+
+  const base = Math.round(redemption.items.reduce((s, it) => s + it.product.price * it.qty, 0));
+  const final = Math.round(redemption.items.reduce((s, it) => s + it.product.offerPrice * it.qty, 0));
+  const walletDiscount = Math.max(0, Math.min(redemption.totals?.walletDiscount || 0, final));
+  redemption.totals = {
+    base,
+    discount: base - final + walletDiscount,
+    final: final - walletDiscount,
+    original: base,
+    walletDiscount,
+  };
+
+  return null;
+};
+
 // @desc    Update items on a pending redemption (merchant edits scanned cart)
 // @route   PUT /api/redemptions/:id/items
 // @access  Private (Merchant Only)
 export const updateRedemptionItems = async (req, res) => {
-  const schema = Joi.object({
-    items: Joi.array().min(1).items(Joi.object({
-      productId: Joi.string().required(),
-      qty: Joi.number().min(1).required(),
-    })).required().messages({
-      'array.min': 'A booking must have at least one item. Cancel the booking instead of removing all items.',
-    }),
-  });
-
-  const { error } = schema.validate(req.body);
+  const { error } = redemptionItemsSchema.validate(req.body);
   if (error) {
     return res.status(400).json({ success: false, error: error.details[0].message });
   }
@@ -414,52 +466,88 @@ export const updateRedemptionItems = async (req, res) => {
       return res.status(400).json({ success: false, error: 'QR Token has expired' });
     }
 
-    const { items } = req.body;
-    const productIds = items.map((i) => i.productId);
-
-    const products = await Product.find({
-      _id: { $in: productIds },
-      merchantId: redemption.merchantId,
-      isActive: true,
-    }).populate('categoryId', 'name');
-
-    const productMap = new Map(products.map((p) => [p._id.toString(), p]));
-    const missing = productIds.filter((id) => !productMap.has(id));
-    if (missing.length) {
-      return res.status(400).json({ success: false, error: `Product(s) not found or unavailable: ${missing.join(', ')}` });
+    const applyError = await applyRedemptionItems(redemption, req.body.items);
+    if (applyError) {
+      return res.status(400).json({ success: false, error: applyError });
     }
-
-    redemption.items = items.map(({ productId, qty }) => {
-      const p = productMap.get(productId);
-      return {
-        productId: p._id,
-        product: {
-          id: p._id.toString(),
-          name: p.name,
-          category: p.categoryId?.name || '',
-          price: p.price,
-          offerPrice: p.offerPrice,
-          isVeg: p.isVeg,
-          duration: p.duration,
-        },
-        qty,
-      };
-    });
-
-    const base = redemption.items.reduce((s, it) => s + it.product.price * it.qty, 0);
-    const final = redemption.items.reduce((s, it) => s + it.product.offerPrice * it.qty, 0);
-    redemption.totals = {
-      base: Math.round(base),
-      discount: Math.round(base - final),
-      final: Math.round(final),
-      original: Math.round(base),
-    };
 
     await redemption.save();
 
     res.status(200).json({ success: true, data: redemption });
   } catch (err) {
     console.error('updateRedemptionItems error:', err);
+    res.status(500).json({ success: false, error: 'Server Error while updating booking items' });
+  }
+};
+
+// @desc    Update items on the customer's own pending redemption (edit after pickup generated)
+// @route   PUT /api/redemptions/:id/my-items
+// @access  Private (Customer, owner only)
+export const updateMyRedemptionItems = async (req, res) => {
+  const { error } = redemptionItemsSchema.validate(req.body);
+  if (error) {
+    return res.status(400).json({ success: false, error: error.details[0].message });
+  }
+
+  try {
+    const redemption = await RedemptionModel.findById(req.params.id);
+
+    if (!redemption) {
+      return res.status(404).json({ success: false, error: 'Redemption not found' });
+    }
+
+    if (redemption.customerId.toString() !== req.user.id.toString()) {
+      return res.status(401).json({ success: false, error: 'Not authorized for this booking' });
+    }
+
+    if (redemption.status !== 'pending') {
+      return res.status(400).json({ success: false, error: `Cannot edit a ${redemption.status} booking` });
+    }
+
+    if (new Date(redemption.qrExpiry) < new Date()) {
+      redemption.status = 'expired';
+      await redemption.save();
+      return res.status(400).json({ success: false, error: 'This pass has expired' });
+    }
+
+    // Same rule as the cart: adding or increasing items needs the store open,
+    // trimming the booking down is always allowed.
+    const { items } = req.body;
+    const previousQty = new Map(redemption.items.map((it) => [String(it.productId), it.qty]));
+    const isGrowing = items.some((i) => i.qty > (previousQty.get(i.productId) || 0));
+    if (isGrowing) {
+      const merchant = await Merchant.findById(redemption.merchantId).select('isOpen').lean();
+      if (merchant && merchant.isOpen === false) {
+        return res.status(400).json({ success: false, error: 'This store is closed for now' });
+      }
+    }
+
+    const applyError = await applyRedemptionItems(redemption, items);
+    if (applyError) {
+      return res.status(400).json({ success: false, error: applyError });
+    }
+
+    await redemption.save();
+
+    try {
+      await notifyMerchant(redemption.merchantId.toString(), {
+        type: 'booking_updated',
+        title: 'Booking updated',
+        body: `${redemption.customerName || 'A customer'} changed the items on #${redemption.internalId}.`,
+        data: {
+          redemptionId: redemption._id.toString(),
+          internalId: redemption.internalId,
+        },
+        socketData: redemption,
+        link: '/merchant/bookings',
+      });
+    } catch (notifyErr) {
+      console.error('Merchant notification error (non-blocking):', notifyErr);
+    }
+
+    res.status(200).json({ success: true, data: redemption });
+  } catch (err) {
+    console.error('updateMyRedemptionItems error:', err);
     res.status(500).json({ success: false, error: 'Server Error while updating booking items' });
   }
 };

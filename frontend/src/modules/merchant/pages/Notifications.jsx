@@ -16,7 +16,8 @@ import PushOptInCard from '../../../components/common/PushOptInCard';
 const typeConfig = {
   merchant_application: { icon: StorefrontRoundedIcon, color: 'text-indigo-600', bg: 'bg-indigo-50' },
   new_booking: { icon: ReceiptLongRoundedIcon, color: 'text-emerald-600', bg: 'bg-emerald-50' },
-  booking_fulfilled: { icon: ReceiptLongRoundedIcon, color: 'text-[#5EB929]', bg: 'bg-[#5EB929]/10' },
+  booking_updated: { icon: ReceiptLongRoundedIcon, color: 'text-amber-600', bg: 'bg-amber-50' },
+  booking_fulfilled:{ icon: ReceiptLongRoundedIcon, color: 'text-[#5EB929]', bg: 'bg-[#5EB929]/10' },
   subscription_expiry: { icon: WorkspacePremiumRoundedIcon, color: 'text-amber-600', bg: 'bg-amber-50' },
   offer_approved: { icon: LocalOfferRoundedIcon, color: 'text-indigo-600', bg: 'bg-indigo-50' },
   payment: { icon: PaymentRoundedIcon, color: 'text-blue-600', bg: 'bg-blue-50' },

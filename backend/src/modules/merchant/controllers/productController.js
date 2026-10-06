@@ -6,6 +6,10 @@ import MerchantSubscription from '../../payment/models/MerchantSubscription.js';
 import mongoose from 'mongoose';
 import { serializeProduct } from '../../../utils/serializers.js';
 import { getOrCreateUncategorized } from './productCategoryController.js';
+import { requiresProductImage } from '../../../utils/storeTypeHelper.js';
+
+const PRODUCT_IMAGE_REQUIRED_MESSAGE = 'A product image is required for your store type';
+const hasImage = (images) => Array.isArray(images) && images.some((img) => typeof img === 'string' && img.trim());
 
 // Get all products for a merchant
 export const getProductsByMerchant = async (req, res) => {
@@ -147,6 +151,13 @@ export const createProduct = async (req, res) => {
       });
     }
 
+    if (requiresProductImage(merchant, req.body.categoryType) && !hasImage(req.body.images)) {
+      return res.status(400).json({
+        success: false,
+        message: PRODUCT_IMAGE_REQUIRED_MESSAGE
+      });
+    }
+
     // Check product limit based on subscription
     const plan = await getEffectivePlan(merchant);
     const productCount = await Product.countDocuments({ merchantId, isActive: true });
@@ -259,6 +270,15 @@ export const updateProduct = async (req, res) => {
 
     // Update product
     Object.assign(product, req.body);
+
+    const merchant = await Merchant.findById(product.merchantId).select('storeType category').lean();
+    if (requiresProductImage(merchant, product.categoryType) && !hasImage(product.images)) {
+      return res.status(400).json({
+        success: false,
+        message: PRODUCT_IMAGE_REQUIRED_MESSAGE
+      });
+    }
+
     await product.save();
 
     return res.status(200).json({

@@ -17,6 +17,8 @@ import PageTransition from '../../components/ui/PageTransition';
 import { useApp } from '../../context/AppContext';
 import { useCustomerSubscription } from '../../../../hooks/useCustomerSubscription';
 import { useSocket } from '../../../../context/SocketContext';
+import ProductThumb from '../../components/ui/ProductThumb';
+import EditBookingItemsSheet from './EditBookingItemsSheet';
 
 function formatDateTime(dateString) {
   const options = { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' };
@@ -35,6 +37,7 @@ const QrScreen = () => {
   const [isFulfilled, setIsFulfilled] = useState(false);
   const [timeLeft, setTimeLeft] = useState('');
   const [isExpired, setIsExpired] = useState(false);
+  const [isEditingItems, setIsEditingItems] = useState(false);
   const { user } = useApp();
   const { enabled: subscriptionEnabled, isSubscribed } = useCustomerSubscription();
 
@@ -220,6 +223,7 @@ const QrScreen = () => {
               category: prod.categoryName,
               price: prod.price,
               offerPrice: prod.offerPrice,
+              image: prod.images?.[0] || '',
               isVeg: prod.isVeg,
               duration: prod.duration
             },
@@ -308,8 +312,9 @@ const QrScreen = () => {
                   const productName = typeof product === 'object' ? product.name : 'Product';
                   const productPrice = Math.round(typeof product === 'object' ? (product.offerPrice || 0) : 0);
                   return (
-                  <div key={idx} className="flex justify-between items-center group">
-                    <div className="flex-1">
+                  <div key={idx} className="flex justify-between items-center gap-3 group">
+                    <ProductThumb src={typeof product === 'object' ? product.images?.[0] : ''} alt={productName} className="w-11 h-11" />
+                    <div className="flex-1 min-w-0">
                        <p className="text-[13px] font-bold text-gray-800 leading-tight">{productName}</p>
                        <p className="text-[10px] font-bold text-gray-400 mt-1 uppercase tracking-tight">{it.qty} Unit(s)</p>
                     </div>
@@ -409,13 +414,23 @@ const QrScreen = () => {
                         const productName = it.product?.name || it.product?.title || 'Product';
                         const productPrice = Math.round(it.product?.offerPrice || it.product?.discountValue || 0);
                         return (
-                          <div key={idx} className="flex justify-between items-center text-[10px]">
-                            <span className="font-bold text-gray-500">{it.qty} × {productName}</span>
+                          <div key={idx} className="flex justify-between items-center gap-2 text-[10px]">
+                            <ProductThumb src={it.product?.image} alt={productName} className="w-8 h-8" />
+                            <span className="flex-1 min-w-0 truncate font-bold text-gray-500">{it.qty} × {productName}</span>
                             <span className="font-bold text-gray-900">₹{Math.round(it.qty * productPrice)}</span>
                           </div>
                         );
                       })}
                     </div>
+                  )}
+
+                  {booking.status === 'pending' && !isExpired && !isFulfilled && (
+                    <button
+                      onClick={() => setIsEditingItems(true)}
+                      className="w-full mb-3 py-2 rounded-xl border border-[#5EB929]/40 text-[#5EB929] text-[10px] font-bold uppercase tracking-widest"
+                    >
+                      Edit Items
+                    </button>
                   )}
 
                   {booking.totals?.walletDiscount > 0 && (
@@ -444,6 +459,18 @@ const QrScreen = () => {
             </motion.div>
           </div>
         ) : null}
+
+        {isEditingItems && booking && (
+          <EditBookingItemsSheet
+            booking={booking}
+            merchantId={merchant._id || merchant.id}
+            onClose={() => setIsEditingItems(false)}
+            onSaved={(updated) => {
+              setBooking((prev) => (prev ? { ...prev, items: updated.items, totals: updated.totals } : prev));
+              setIsEditingItems(false);
+            }}
+          />
+        )}
 
         {/* Fulfilled Overlay */}
         <AnimatePresence>

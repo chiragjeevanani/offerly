@@ -7,6 +7,7 @@ import AddPhotoAlternateRoundedIcon from '@mui/icons-material/AddPhotoAlternateR
 import toast from 'react-hot-toast';
 import { productAPI } from '../../../api/product.api';
 import { offerAPI } from '../../../api/offer.api';
+import { requiresProductImage } from '../../../utils/storeTypeHelper';
 
 const UnifiedOfferBuilder = ({ isOpen, onClose, merchant, onSuccess }) => {
   const [loading, setLoading] = useState(false);
@@ -41,6 +42,9 @@ const UnifiedOfferBuilder = ({ isOpen, onClose, merchant, onSuccess }) => {
   const handleLaunch = async () => {
     if (!coreData.name || !coreData.originalPrice || !coreData.description) {
       return toast.error('Please fill name, price, and description');
+    }
+    if (requiresProductImage(merchant) && !coreData.image) {
+      return toast.error('Please add a product image');
     }
     setLoading(true);
     try {

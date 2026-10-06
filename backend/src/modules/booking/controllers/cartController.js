@@ -41,7 +41,7 @@ export const getCart = async (req, res) => {
       .populate('merchantId', 'storeName logo address locality phone discountWallet')
       .populate({
         path: 'items.product',
-        select: 'name categoryId price offerPrice image isVeg',
+        select: 'name categoryId price offerPrice images isVeg',
         populate: { path: 'categoryId', select: 'name discountPercent' },
       });
 
@@ -144,7 +144,7 @@ export const updateCart = async (req, res) => {
       .populate('merchantId', 'storeName logo address locality phone discountWallet')
       .populate({
         path: 'items.product',
-        select: 'name categoryId price offerPrice image isVeg',
+        select: 'name categoryId price offerPrice images isVeg',
         populate: { path: 'categoryId', select: 'name discountPercent' },
       });
 

@@ -20,6 +20,7 @@ import { merchantAPI } from '../../../../api/merchant.api';
 import { useApp } from '../../context/AppContext';
 import { useCustomerSubscription } from '../../../../hooks/useCustomerSubscription';
 import PageTransition from '../../components/ui/PageTransition';
+import ProductThumb from '../../components/ui/ProductThumb';
 
 const CountUp = ({ to }) => {
   const [count, setCount] = useState(0);
@@ -458,8 +459,9 @@ const CartView = () => {
                  const savings = Math.round((basePrice - productPrice) * item.qty);
 
                  return (
-                  <div key={idx} className="flex justify-between items-center gap-4 relative">
-                    <div className="flex-1">
+                  <div key={idx} className="flex justify-between items-center gap-3 relative">
+                    <ProductThumb src={product.images?.[0] || product.image} alt={product.name} />
+                    <div className="flex-1 min-w-0">
                       <p className="text-[13px] font-bold text-gray-900 mb-1">{product.name}</p>
                       {product.categoryId?.name && (
                         <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wide mb-1">{product.categoryId.name}</p>

@@ -196,6 +196,10 @@ const Bookings = ({ merchant }) => {
         playNotificationSound({ type: 'chime' });
         toast.success(`New request from ${notif.data?.customerName || 'Customer'}!`);
         fetchBookings();
+      } else if (notif.type === 'booking_updated') {
+        toast(`${notif.data?.customerName || 'A customer'} changed booking #${notif.data?.internalId || ''}`);
+        setSelectedBooking(prev => (prev && notif.data?._id && prev._id === notif.data._id ? notif.data : prev));
+        fetchBookings();
       }
     };
     socket.on('merchant_notification', handleNotification);

@@ -42,6 +42,11 @@ export const bookingAPI = {
     return axiosInstance.put(`${API_ENDPOINTS.CREATE_REDEMPTION}/${id}/items`, { items });
   },
 
+  // Update items on the customer's own pending booking (after the pass is generated)
+  updateMyItems: async (id, items) => {
+    return axiosInstance.put(`${API_ENDPOINTS.CREATE_REDEMPTION}/${id}/my-items`, { items });
+  },
+
   // Cancel a pending booking (merchant rejects the whole cart)
   cancel: async (id) => {
     return axiosInstance.post(`${API_ENDPOINTS.CREATE_REDEMPTION}/${id}/cancel`);
