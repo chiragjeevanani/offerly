@@ -1,0 +1,26 @@
+{
+  "name": "Offerly — Local Deals & Offers",
+  "short_name": "Offerly",
+  "description": "Discover and redeem exclusive local offers near you",
+  "start_url": "/?splash=1",
+  "scope": "/",
+  "display": "fullscreen",
+  "display_override": ["fullscreen", "standalone", "minimal-ui"],
+  "orientation": "portrait",
+  "theme_color": "#FAFEF7",
+  "background_color": "#FAFEF7",
+  "icons": [
+    {
+      "src": "/offerly-logo-ring.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/offerly-logo-ring.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
