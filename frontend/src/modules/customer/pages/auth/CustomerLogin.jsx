@@ -10,19 +10,19 @@ import PageTransition from '../../components/ui/PageTransition';
 const loginBanners = [
   {
     id: 1,
-    image: '/banners/login-banner-1.png?v=3',
+    image: '/banners/login-banner-1.png?v=4',
     alt: 'Offerly - Discover Local Deals Near You',
     badge: 'Verified Deals',
   },
   {
     id: 2,
-    image: '/banners/login-banner-2.png?v=3',
+    image: '/banners/login-banner-2.png?v=4',
     alt: 'Offerly - Enter Number to Join & Save',
     badge: 'Instant Access',
   },
   {
     id: 3,
-    image: '/banners/login-banner-3.png?v=3',
+    image: '/banners/login-banner-3.png?v=4',
     alt: 'Offerly - Start Exploring Local Offers',
     badge: 'Exclusive Perks',
   },
@@ -491,7 +491,7 @@ const CustomerLogin = () => {
                     <img
                       src={loginBanners[activeSlide].image}
                       alt={loginBanners[activeSlide].alt}
-                      className="w-full h-full object-contain filter drop-shadow-[0_10px_18px_rgba(0,0,0,0.12)] select-none pointer-events-none"
+                      className="w-full h-full object-contain select-none pointer-events-none"
                       draggable={false}
                     />
                   </motion.div>
