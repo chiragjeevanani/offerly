@@ -13,6 +13,13 @@ const productVariantSchema = new mongoose.Schema(
       required: [true, 'Variant name is required'],
       trim: true,
     },
+    // Option values for this combination, e.g. { Size: 'M', Colour: 'Red' }.
+    // `name` holds the display label ("M / Red").
+    attributes: {
+      type: Map,
+      of: String,
+      default: {},
+    },
     sku: {
       type: String,
       default: '',

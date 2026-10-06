@@ -10,6 +10,7 @@ import { checkAndAwardMilestone } from '../../rewards/services/milestoneService.
 import { getWalletSettings } from '../../../utils/subscriptionWallet.js';
 import { getCustomerSubscriptionStatus } from '../../../utils/customerSubscription.js';
 import DiscountWalletTransaction from '../../payment/models/DiscountWalletTransaction.js';
+import { resolveLine, stockError, decrementStockForItems } from '../../merchant/services/inventoryService.js';
 
 // @desc    Create a redemption/booking
 // @route   POST /api/redemptions
@@ -20,6 +21,7 @@ export const createRedemption = async (req, res) => {
     merchantId: Joi.string().required(),
     items: Joi.array().items(Joi.object({
       productId: Joi.string().required(),
+      variantId: Joi.string().allow(null, ''),
       product: Joi.object({
         id: Joi.string().required(),
         name: Joi.string().required(),
@@ -27,6 +29,7 @@ export const createRedemption = async (req, res) => {
         price: Joi.number().required(),
         offerPrice: Joi.number().required(),
         image: Joi.string().allow('', null),
+        variantLabel: Joi.string().allow('', null),
         isVeg: Joi.any(),
         duration: Joi.any()
       }).required(),
@@ -57,6 +60,21 @@ export const createRedemption = async (req, res) => {
         error: 'An active subscription is required to claim offers.',
         code: 'SUBSCRIPTION_REQUIRED',
       });
+    }
+
+    // Stock check, and pin each line's variant + display name server-side so
+    // the pass always says which size/colour was reserved.
+    for (const item of items || []) {
+      const line = await resolveLine({ productId: item.productId, variantId: item.variantId || null });
+      if (line.error) {
+        return res.status(400).json({ success: false, error: line.error, code: line.code });
+      }
+      const stockErr = stockError(line, item.qty);
+      if (stockErr) {
+        return res.status(400).json({ success: false, error: stockErr, code: 'OUT_OF_STOCK' });
+      }
+      item.variantId = line.variant?._id || null;
+      item.product = { ...item.product, name: line.displayName, variantLabel: line.label };
     }
 
     // Extra discount for customers who've never completed a redemption anywhere
@@ -286,6 +304,8 @@ export const verifyQR = async (req, res) => {
       }
     }
 
+    updateTasks.push(decrementStockForItems(redemption.items));
+
     await Promise.all(updateTasks);
 
     const merchant = await Merchant.findById(redemption.merchantId).select("city").lean();
@@ -378,7 +398,8 @@ export const lookupByInternalId = async (req, res) => {
 const redemptionItemsSchema = Joi.object({
   items: Joi.array().min(1).items(Joi.object({
     productId: Joi.string().required(),
-    qty: Joi.number().min(1).required(),
+    variantId: Joi.string().allow(null, ''),
+    qty: Joi.number().integer().min(1).required(),
   })).required().messages({
     'array.min': 'A booking must have at least one item. Cancel the booking instead of removing all items.',
   }),
@@ -388,38 +409,47 @@ const redemptionItemsSchema = Joi.object({
 // recomputes its totals. Prices always come from the DB, never the client.
 // A new-customer wallet discount granted at claim time is kept, capped to the
 // new payable amount. Returns an error string if any product is unavailable.
-const applyRedemptionItems = async (redemption, items) => {
-  const productIds = items.map((i) => i.productId);
+// With `checkStock`, lines whose quantity grew must fit in current stock.
+const applyRedemptionItems = async (redemption, items, { checkStock = false } = {}) => {
+  const lineKey = (productId, variantId) => `${productId}|${variantId || ''}`;
+  const previousQty = new Map(
+    redemption.items.map((it) => [lineKey(String(it.productId), it.variantId ? String(it.variantId) : ''), it.qty])
+  );
 
   const products = await Product.find({
-    _id: { $in: productIds },
+    _id: { $in: items.map((i) => i.productId) },
     merchantId: redemption.merchantId,
-    isActive: true,
   }).populate('categoryId', 'name');
-
   const productMap = new Map(products.map((p) => [p._id.toString(), p]));
-  const missing = productIds.filter((id) => !productMap.has(id));
-  if (missing.length) {
-    return `Product(s) not found or unavailable: ${missing.join(', ')}`;
-  }
 
-  redemption.items = items.map(({ productId, qty }) => {
-    const p = productMap.get(productId);
-    return {
-      productId: p._id,
+  const nextItems = [];
+  for (const { productId, variantId, qty } of items) {
+    const product = productMap.get(productId);
+    if (!product) return `Product not found or unavailable: ${productId}`;
+    const line = await resolveLine({ product, variantId: variantId || null });
+    if (line.error) return line.error;
+    if (checkStock && qty > (previousQty.get(lineKey(productId, variantId)) || 0)) {
+      const stockErr = stockError(line, qty);
+      if (stockErr) return stockErr;
+    }
+    nextItems.push({
+      productId: product._id,
+      variantId: line.variant?._id || null,
       product: {
-        id: p._id.toString(),
-        name: p.name,
-        category: p.categoryId?.name || '',
-        price: p.price,
-        offerPrice: p.offerPrice,
-        image: p.images?.[0] || '',
-        isVeg: p.isVeg,
-        duration: p.duration,
+        id: product._id.toString(),
+        name: line.displayName,
+        category: product.categoryId?.name || '',
+        price: line.price,
+        offerPrice: line.offerPrice,
+        image: product.images?.[0] || '',
+        variantLabel: line.label,
+        isVeg: product.isVeg,
+        duration: product.duration,
       },
       qty,
-    };
-  });
+    });
+  }
+  redemption.items = nextItems;
 
   const base = Math.round(redemption.items.reduce((s, it) => s + it.product.price * it.qty, 0));
   const final = Math.round(redemption.items.reduce((s, it) => s + it.product.offerPrice * it.qty, 0));
@@ -513,8 +543,9 @@ export const updateMyRedemptionItems = async (req, res) => {
     // Same rule as the cart: adding or increasing items needs the store open,
     // trimming the booking down is always allowed.
     const { items } = req.body;
-    const previousQty = new Map(redemption.items.map((it) => [String(it.productId), it.qty]));
-    const isGrowing = items.some((i) => i.qty > (previousQty.get(i.productId) || 0));
+    const lineKey = (productId, variantId) => `${productId}|${variantId || ''}`;
+    const previousQty = new Map(redemption.items.map((it) => [lineKey(it.productId, it.variantId), it.qty]));
+    const isGrowing = items.some((i) => i.qty > (previousQty.get(lineKey(i.productId, i.variantId)) || 0));
     if (isGrowing) {
       const merchant = await Merchant.findById(redemption.merchantId).select('isOpen').lean();
       if (merchant && merchant.isOpen === false) {
@@ -522,7 +553,7 @@ export const updateMyRedemptionItems = async (req, res) => {
       }
     }
 
-    const applyError = await applyRedemptionItems(redemption, items);
+    const applyError = await applyRedemptionItems(redemption, items, { checkStock: true });
     if (applyError) {
       return res.status(400).json({ success: false, error: applyError });
     }

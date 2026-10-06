@@ -10,8 +10,12 @@ import { bookingAPI } from '../../../../api/booking.api';
 import { productAPI } from '../../../../api/product.api';
 import ProductThumb from '../../components/ui/ProductThumb';
 
+const lineKey = (productId, variantId) => `${productId}|${variantId || ''}`;
+
 const toLine = (it) => ({
+  key: lineKey(String(it.productId || it.product?.id || ''), it.variantId ? String(it.variantId) : ''),
   productId: String(it.productId || it.product?.id || ''),
+  variantId: it.variantId ? String(it.variantId) : null,
   name: it.product?.name || 'Product',
   price: it.product?.price || 0,
   offerPrice: it.product?.offerPrice || 0,
@@ -23,6 +27,10 @@ const toLine = (it) => ({
 // The QR / Pass ID stay the same; the server re-prices everything on save.
 const EditBookingItemsSheet = ({ booking, merchantId, onClose, onSaved }) => {
   const [lines, setLines] = useState(() => (booking.items || []).map(toLine));
+  const originalQty = useMemo(() => new Map((booking.items || []).map((it) => {
+    const l = toLine(it);
+    return [l.key, l.qty];
+  })), [booking.items]);
   const [catalog, setCatalog] = useState([]);
   const [loadingCatalog, setLoadingCatalog] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -34,45 +42,70 @@ const EditBookingItemsSheet = ({ booking, merchantId, onClose, onSaved }) => {
       .finally(() => setLoadingCatalog(false));
   }, [merchantId]);
 
-  const catalogById = useMemo(
-    () => new Map(catalog.map((p) => [String(p._id || p.id), p])),
-    [catalog]
-  );
+  // One entry per sellable unit: plain products, or each size/colour of a
+  // product with variants.
+  const catalogByKey = useMemo(() => {
+    const map = new Map();
+    for (const p of catalog) {
+      const productId = String(p._id || p.id);
+      const image = p.images?.[0] || p.image || '';
+      if (p.hasVariants) {
+        for (const v of p.variants || []) {
+          map.set(lineKey(productId, v._id), {
+            key: lineKey(productId, v._id), productId, variantId: v._id,
+            name: `${p.name} (${v.label})`, price: v.price, offerPrice: v.offerPrice, image,
+            maxQty: v.stock,
+          });
+        }
+      } else {
+        map.set(lineKey(productId, ''), {
+          key: lineKey(productId, ''), productId, variantId: null,
+          name: p.name, price: p.price, offerPrice: p.offerPrice, image,
+          maxQty: p.trackInventory ? p.stock : Infinity,
+        });
+      }
+    }
+    return map;
+  }, [catalog]);
 
   // Live catalogue prices/images win over the snapshot, since that's what the
   // server will charge once saved.
   const resolvedLines = lines.map((l) => {
-    const p = catalogById.get(l.productId);
-    if (!p) return { ...l, unavailable: !loadingCatalog };
+    const p = catalogByKey.get(l.key);
+    if (!p) return { ...l, unavailable: !loadingCatalog, maxQty: Infinity };
     return {
       ...l,
       name: p.name,
       price: p.price,
       offerPrice: p.offerPrice,
-      image: p.images?.[0] || p.image || l.image,
+      image: p.image || l.image,
+      // Already-reserved units count as available to this booking.
+      maxQty: Math.max(p.maxQty, originalQty.get(l.key) || 0),
       unavailable: false,
     };
   });
 
-  const addable = catalog.filter((p) => !lines.some((l) => l.productId === String(p._id || p.id)));
+  const addable = [...catalogByKey.values()].filter((p) => p.maxQty > 0 && !lines.some((l) => l.key === p.key));
 
   const itemsTotal = Math.round(resolvedLines.reduce((s, l) => s + l.offerPrice * l.qty, 0));
   const walletDiscount = Math.min(booking.totals?.walletDiscount || 0, itemsTotal);
   const payable = itemsTotal - walletDiscount;
 
-  const setQty = (productId, qty) => {
+  const setQty = (key, qty) => {
     setLines((prev) => (qty <= 0
-      ? prev.filter((l) => l.productId !== productId)
-      : prev.map((l) => (l.productId === productId ? { ...l, qty } : l))));
+      ? prev.filter((l) => l.key !== key)
+      : prev.map((l) => (l.key === key ? { ...l, qty } : l))));
   };
 
   const addProduct = (p) => {
     setLines((prev) => [...prev, {
-      productId: String(p._id || p.id),
+      key: p.key,
+      productId: p.productId,
+      variantId: p.variantId,
       name: p.name,
       price: p.price,
       offerPrice: p.offerPrice,
-      image: p.images?.[0] || p.image || '',
+      image: p.image,
       qty: 1,
     }]);
   };
@@ -91,7 +124,7 @@ const EditBookingItemsSheet = ({ booking, merchantId, onClose, onSaved }) => {
     try {
       const response = await bookingAPI.updateMyItems(
         booking._id || booking.id,
-        lines.map(({ productId, qty }) => ({ productId, qty }))
+        lines.map(({ productId, variantId, qty }) => ({ productId, variantId, qty }))
       );
       if (response?.success) {
         toast.success('Booking updated');
@@ -144,7 +177,7 @@ const EditBookingItemsSheet = ({ booking, merchantId, onClose, onSaved }) => {
               </p>
             )}
             {resolvedLines.map((l) => (
-              <div key={l.productId} className="flex items-center gap-3">
+              <div key={l.key} className="flex items-center gap-3">
                 <ProductThumb src={l.image} alt={l.name} className="w-12 h-12" />
                 <div className="flex-1 min-w-0">
                   <p className="text-[13px] font-bold text-gray-900 truncate">{l.name}</p>
@@ -156,15 +189,15 @@ const EditBookingItemsSheet = ({ booking, merchantId, onClose, onSaved }) => {
                 </div>
                 <div className="flex items-center bg-[#F8FAFC] rounded-xl border border-gray-100 p-0.5">
                   <button
-                    onClick={() => setQty(l.productId, l.qty - 1)}
+                    onClick={() => setQty(l.key, l.qty - 1)}
                     className="w-8 h-8 flex items-center justify-center text-gray-400 hover:text-gray-900"
                   >
                     <RemoveRoundedIcon sx={{ fontSize: 14 }} />
                   </button>
                   <span className="w-6 text-center text-[12px] font-bold text-gray-900">{l.qty}</span>
                   <button
-                    onClick={() => setQty(l.productId, l.qty + 1)}
-                    disabled={l.unavailable}
+                    onClick={() => setQty(l.key, l.qty + 1)}
+                    disabled={l.unavailable || l.qty >= l.maxQty}
                     className="w-8 h-8 flex items-center justify-center text-gray-400 hover:text-gray-900 disabled:opacity-30"
                   >
                     <AddRoundedIcon sx={{ fontSize: 14 }} />
@@ -186,8 +219,8 @@ const EditBookingItemsSheet = ({ booking, merchantId, onClose, onSaved }) => {
             ) : (
               <div className="space-y-3">
                 {addable.map((p) => (
-                  <div key={p._id || p.id} className="flex items-center gap-3">
-                    <ProductThumb src={p.images?.[0] || p.image} alt={p.name} className="w-12 h-12" />
+                  <div key={p.key} className="flex items-center gap-3">
+                    <ProductThumb src={p.image} alt={p.name} className="w-12 h-12" />
                     <div className="flex-1 min-w-0">
                       <p className="text-[13px] font-bold text-gray-900 truncate">{p.name}</p>
                       <p className="text-[11px] font-bold text-gray-400">

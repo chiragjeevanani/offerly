@@ -17,7 +17,8 @@ import { bookingAPI } from '../../../api/booking.api';
 import AddProductToCartPicker from '../components/AddProductToCartPicker';
 import toast from 'react-hot-toast';
 
-const buildItemsPayload = (items) => items.map((it) => ({ productId: it.productId, qty: it.qty }));
+const buildItemsPayload = (items) => items.map((it) => ({ productId: it.productId, variantId: it.variantId || null, qty: it.qty }));
+const lineKey = (productId, variantId) => `${productId}|${variantId || ''}`;
 
 /* ─── Premium Verification Modal ────────────────────────────────────────────── */
 const BookingVerificationModal = ({ booking, onFulfill, onClose, onCancelBooking, onUpdateItems, fulfilling, updatingItems, cancelling, otherOpenCount }) => {
@@ -43,8 +44,11 @@ const BookingVerificationModal = ({ booking, onFulfill, onClose, onCancelBooking
     onUpdateItems(booking._id, buildItemsPayload(booking.items.filter((_, i) => i !== idx)));
   };
 
-  const handleAddProduct = (product) => {
-    const nextItems = [...buildItemsPayload(booking.items), { productId: product._id || product.id, qty: 1 }];
+  const handleAddProduct = (product, variant) => {
+    const nextItems = [
+      ...buildItemsPayload(booking.items),
+      { productId: product._id || product.id, variantId: variant?._id || null, qty: 1 },
+    ];
     onUpdateItems(booking._id, nextItems);
   };
 
@@ -136,9 +140,9 @@ const BookingVerificationModal = ({ booking, onFulfill, onClose, onCancelBooking
 
              <div className="mt-4 pt-3 border-t border-gray-200">
                <AddProductToCartPicker
-                 onSelectProduct={handleAddProduct}
+                 onAdd={handleAddProduct}
                  disabled={updatingItems}
-                 alreadySelectedIds={booking.items.map((i) => i.productId)}
+                 excludeIds={booking.items.map((i) => lineKey(i.productId, i.variantId))}
                />
              </div>
 

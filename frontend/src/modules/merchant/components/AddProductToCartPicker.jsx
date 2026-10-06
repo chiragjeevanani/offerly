@@ -6,7 +6,41 @@ import CheckRoundedIcon from '@mui/icons-material/CheckRounded';
 import Inventory2RoundedIcon from '@mui/icons-material/Inventory2Rounded';
 import { productAPI } from '../../../api/product.api';
 
-const AddProductToCartPicker = ({ onAdd, excludeIds = [] }) => {
+// One selectable row per sellable unit: a product, or each size/colour of a
+// product with variants. `key` matches lineKey() in ScannerEntry.
+const toRows = (products) =>
+  products.flatMap((product) => {
+    const productId = (product._id || product.id)?.toString();
+    const options = product.variantOptions || [];
+    if (options.length && product.variants?.length) {
+      return product.variants.map((v) => {
+        const attrs = v.attributes || {};
+        const label = options.map((o) => attrs[o.name]).filter(Boolean).join(' / ') || v.name;
+        return {
+          key: `${productId}|${v._id}`,
+          product,
+          variant: v,
+          name: `${product.name} (${label})`,
+          price: v.price,
+          offerPrice: v.offerPrice,
+          stock: v.stock ?? 0,
+          tracked: true,
+        };
+      });
+    }
+    return [{
+      key: `${productId}|`,
+      product,
+      variant: null,
+      name: product.name,
+      price: product.price,
+      offerPrice: product.offerPrice,
+      stock: product.stock ?? 0,
+      tracked: Boolean(product.trackInventory),
+    }];
+  });
+
+const AddProductToCartPicker = ({ onAdd, excludeIds = [], disabled = false }) => {
   const [query, setQuery] = useState('');
   const [results, setResults] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -43,6 +77,7 @@ const AddProductToCartPicker = ({ onAdd, excludeIds = [] }) => {
   }, [query]);
 
   const excludeSet = new Set(excludeIds.map((id) => id?.toString()));
+  const rows = toRows(results);
 
   return (
     <div ref={wrapperRef} className="relative">
@@ -70,22 +105,23 @@ const AddProductToCartPicker = ({ onAdd, excludeIds = [] }) => {
               <div className="p-4 flex items-center justify-center">
                 <div className="w-5 h-5 border-2 border-primary/20 border-t-primary rounded-full animate-spin" />
               </div>
-            ) : results.length === 0 ? (
+            ) : rows.length === 0 ? (
               <div className="p-5 text-center">
                 <Inventory2RoundedIcon sx={{ fontSize: 28 }} className="text-gray-200 mb-1" />
                 <p className="text-[11px] font-bold text-gray-400">No products found</p>
               </div>
             ) : (
               <div className="p-1.5">
-                {results.map((product) => {
-                  const id = (product._id || product.id)?.toString();
-                  const alreadyAdded = excludeSet.has(id);
+                {rows.map((row) => {
+                  const { product } = row;
+                  const alreadyAdded = excludeSet.has(row.key);
+                  const soldOut = row.tracked && row.stock <= 0;
                   return (
                     <button
-                      key={id}
+                      key={row.key}
                       type="button"
-                      disabled={alreadyAdded}
-                      onClick={() => { if (!alreadyAdded) { onAdd(product); setQuery(''); setResults([]); setOpen(false); } }}
+                      disabled={alreadyAdded || disabled}
+                      onClick={() => { if (!alreadyAdded && !disabled) { onAdd(product, row.variant); setQuery(''); setResults([]); setOpen(false); } }}
                       className={`w-full flex items-center gap-3 p-2.5 rounded-lg text-left transition-colors ${alreadyAdded ? 'opacity-40 cursor-not-allowed' : 'hover:bg-gray-50'}`}
                     >
                       <div className="w-10 h-10 bg-gray-100 rounded-lg overflow-hidden shrink-0">
@@ -98,11 +134,16 @@ const AddProductToCartPicker = ({ onAdd, excludeIds = [] }) => {
                         )}
                       </div>
                       <div className="flex-1 min-w-0">
-                        <p className="text-xs font-bold text-gray-900 truncate">{product.name}</p>
+                        <p className="text-xs font-bold text-gray-900 truncate">{row.name}</p>
                         <div className="flex items-center gap-1.5 mt-0.5">
-                          <span className="text-[11px] font-bold text-gray-900">₹{product.offerPrice}</span>
-                          {product.price > product.offerPrice && (
-                            <span className="text-[10px] text-gray-400 line-through">₹{product.price}</span>
+                          <span className="text-[11px] font-bold text-gray-900">₹{row.offerPrice}</span>
+                          {row.price > row.offerPrice && (
+                            <span className="text-[10px] text-gray-400 line-through">₹{row.price}</span>
+                          )}
+                          {row.tracked && (
+                            <span className={`text-[10px] font-bold ${soldOut ? 'text-red-500' : 'text-gray-400'}`}>
+                              · {soldOut ? 'Out of stock' : `${row.stock} in stock`}
+                            </span>
                           )}
                         </div>
                       </div>

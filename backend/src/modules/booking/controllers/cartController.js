@@ -4,6 +4,7 @@ import Product from '../../merchant/models/Product.js';
 import Merchant from '../../merchant/models/Merchant.js';
 import Redemption from '../models/Redemption.js';
 import WalletSettings from '../../admin/models/WalletSettings.js';
+import { resolveLine, stockError, variantLabel } from '../../merchant/services/inventoryService.js';
 
 const calculateOfferlyExtraDiscount = async (cart, customerId) => {
   if (!cart || !cart.merchantId || !cart.items || cart.items.length === 0) return 0;
@@ -32,28 +33,59 @@ const calculateOfferlyExtraDiscount = async (cart, customerId) => {
   }
 };
 
+const populateCart = (query) =>
+  query
+    .populate('merchantId', 'storeName logo address locality phone discountWallet')
+    .populate({
+      path: 'items.product',
+      select: 'name categoryId price offerPrice images isVeg variantOptions trackInventory stock',
+      populate: { path: 'categoryId', select: 'name discountPercent' },
+    })
+    .populate('items.variant', 'attributes name price offerPrice stock isActive');
+
+// Plain cart for the client. For variant lines the variant's price is folded
+// into item.product so every existing price calculation keeps working, and
+// item.variant carries the label ("M / Red") and stock.
+const shapeCart = (cart) => {
+  const data = cart.toObject();
+  data.items = (data.items || []).map((item) => {
+    if (!item.variant || !item.product) return { ...item, variant: null };
+    const options = item.product.variantOptions || [];
+    return {
+      ...item,
+      product: { ...item.product, price: item.variant.price, offerPrice: item.variant.offerPrice },
+      variant: {
+        _id: item.variant._id,
+        attributes: item.variant.attributes,
+        label: variantLabel(item.variant.attributes, options) || item.variant.name,
+        stock: item.variant.stock,
+      },
+    };
+  });
+  return data;
+};
+
+const sendCart = async (res, cart, customerId) => {
+  const cartData = shapeCart(cart);
+  cartData.offerlyExtraDiscount = await calculateOfferlyExtraDiscount(cartData, customerId);
+  return res.status(200).json({ success: true, data: cartData });
+};
+
+const sameLine = (item, productId, variantId) =>
+  item.product.toString() === productId && String(item.variant || '') === String(variantId || '');
+
 // @desc    Get customer's cart
 // @route   GET /api/cart
 // @access  Private
 export const getCart = async (req, res) => {
   try {
-    const cart = await Cart.findOne({ customerId: req.user.id })
-      .populate('merchantId', 'storeName logo address locality phone discountWallet')
-      .populate({
-        path: 'items.product',
-        select: 'name categoryId price offerPrice images isVeg',
-        populate: { path: 'categoryId', select: 'name discountPercent' },
-      });
+    const cart = await populateCart(Cart.findOne({ customerId: req.user.id }));
 
     if (!cart) {
       return res.status(200).json({ success: true, data: null });
     }
 
-    const offerlyExtraDiscount = await calculateOfferlyExtraDiscount(cart, req.user.id);
-    const cartData = cart.toObject();
-    cartData.offerlyExtraDiscount = offerlyExtraDiscount;
-
-    res.status(200).json({ success: true, data: cartData });
+    return sendCart(res, cart, req.user.id);
   } catch (err) {
     res.status(500).json({ success: false, error: 'Server Error' });
   }
@@ -66,7 +98,8 @@ export const updateCart = async (req, res) => {
   const schema = Joi.object({
     merchantId: Joi.string().required(),
     productId: Joi.string().required(),
-    qty: Joi.number().min(0).required(), // 0 means remove item
+    variantId: Joi.string().allow(null, ''),
+    qty: Joi.number().integer().min(0).required(), // 0 means remove item
   });
 
   const { error } = schema.validate(req.body);
@@ -76,6 +109,7 @@ export const updateCart = async (req, res) => {
 
   try {
     const { merchantId, productId, qty } = req.body;
+    const variantId = req.body.variantId || null;
 
     // Validate product exists
     const product = await Product.findById(productId);
@@ -89,6 +123,15 @@ export const updateCart = async (req, res) => {
       const merchant = await Merchant.findById(merchantId).select('isOpen').lean();
       if (merchant && merchant.isOpen === false) {
         return res.status(400).json({ success: false, error: 'This store is closed for now' });
+      }
+
+      const line = await resolveLine({ product, variantId });
+      if (line.error) {
+        return res.status(400).json({ success: false, error: line.error, code: line.code });
+      }
+      const stockErr = stockError(line, qty);
+      if (stockErr) {
+        return res.status(400).json({ success: false, error: stockErr, code: 'OUT_OF_STOCK', available: line.available });
       }
     }
 
@@ -109,13 +152,11 @@ export const updateCart = async (req, res) => {
       cart = await Cart.create({
         customerId: req.user.id,
         merchantId,
-        items: [{ product: productId, qty }],
+        items: [{ product: productId, variant: variantId, qty }],
       });
     } else {
       // Same merchant - update existing cart
-      const itemIndex = cart.items.findIndex(
-        (item) => item.product.toString() === productId
-      );
+      const itemIndex = cart.items.findIndex((item) => sameLine(item, productId, variantId));
 
       if (qty === 0) {
         // Remove item
@@ -127,7 +168,7 @@ export const updateCart = async (req, res) => {
         if (itemIndex > -1) {
           cart.items[itemIndex].qty = qty;
         } else {
-          cart.items.push({ product: productId, qty });
+          cart.items.push({ product: productId, variant: variantId, qty });
         }
       }
 
@@ -140,19 +181,8 @@ export const updateCart = async (req, res) => {
 
     // Save and return updated cart
     await cart.save();
-    const updatedCart = await Cart.findById(cart._id)
-      .populate('merchantId', 'storeName logo address locality phone discountWallet')
-      .populate({
-        path: 'items.product',
-        select: 'name categoryId price offerPrice images isVeg',
-        populate: { path: 'categoryId', select: 'name discountPercent' },
-      });
-
-    const offerlyExtraDiscount = await calculateOfferlyExtraDiscount(updatedCart, req.user.id);
-    const cartData = updatedCart.toObject();
-    cartData.offerlyExtraDiscount = offerlyExtraDiscount;
-
-    res.status(200).json({ success: true, data: cartData });
+    const updatedCart = await populateCart(Cart.findById(cart._id));
+    return sendCart(res, updatedCart, req.user.id);
   } catch (err) {
     res.status(500).json({ success: false, error: err.message });
   }

@@ -52,6 +52,26 @@ const productSchema = new mongoose.Schema(
       type: Number,
       default: 0,
     },
+    // Inventory. When trackInventory is on, `stock` (simple products) or each
+    // ProductVariant's `stock` is checked at add-to-cart/claim and reduced when
+    // the merchant completes the redemption. Off by default so legacy products
+    // (stock 0, never tracked) don't suddenly show as sold out.
+    trackInventory: {
+      type: Boolean,
+      default: false,
+    },
+    // e.g. [{ name: 'Size', values: ['S','M','L'] }, { name: 'Colour', values: ['Red','Blue'] }]
+    // Each combination is a ProductVariant with its own stock (and optional price).
+    variantOptions: {
+      type: [
+        {
+          _id: false,
+          name: { type: String, trim: true, required: true },
+          values: { type: [String], default: [] },
+        },
+      ],
+      default: [],
+    },
     sku: {
       type: String,
       default: '',

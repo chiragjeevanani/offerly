@@ -15,6 +15,7 @@ import AddRoundedIcon from '@mui/icons-material/AddRounded';
 import RemoveRoundedIcon from '@mui/icons-material/RemoveRounded';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 
+import toast from 'react-hot-toast';
 import { cartAPI } from '../../../../api/cart.api';
 import { merchantAPI } from '../../../../api/merchant.api';
 import { useApp } from '../../context/AppContext';
@@ -193,11 +194,11 @@ const CartView = () => {
     }
   }, [totalDiscount, location.key]);
 
-  const handleUpdateQty = async (product, newQty) => {
+  const handleUpdateQty = async (product, newQty, variantId = null) => {
     if (!merchant) return;
     try {
       const productId = product._id || product.id;
-      const response = await cartAPI.updateCart(merchant._id || merchant.id, productId, newQty);
+      const response = await cartAPI.updateCart(merchant._id || merchant.id, productId, newQty, variantId);
       if (response && response.data) {
         setCart(response.data);
       } else {
@@ -206,6 +207,7 @@ const CartView = () => {
       loadCart(); // Refresh merchant details if needed
     } catch (error) {
       console.error('Failed to update cart:', error);
+      toast.error(error?.error || 'Failed to update cart');
     }
   };
 
@@ -457,12 +459,18 @@ const CartView = () => {
                  const basePrice = Math.round(product.price || 0);
                  const itemTotal = productPrice * item.qty;
                  const savings = Math.round((basePrice - productPrice) * item.qty);
+                 const variantId = item.variant?._id || null;
+                 // How many can still be added: the variant's stock, or the product's if it tracks stock.
+                 const maxQty = item.variant ? item.variant.stock : (product.trackInventory ? product.stock : Infinity);
 
                  return (
                   <div key={idx} className="flex justify-between items-center gap-3 relative">
                     <ProductThumb src={product.images?.[0] || product.image} alt={product.name} />
                     <div className="flex-1 min-w-0">
                       <p className="text-[13px] font-bold text-gray-900 mb-1">{product.name}</p>
+                      {item.variant?.label && (
+                        <p className="text-[11px] font-bold text-gray-500 mb-1">{item.variant.label}</p>
+                      )}
                       {product.categoryId?.name && (
                         <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wide mb-1">{product.categoryId.name}</p>
                       )}
@@ -471,7 +479,7 @@ const CartView = () => {
                          <div className="flex items-center bg-[#F8FAFC] rounded-xl border border-gray-100 p-0.5">
                             <motion.button 
                               whileTap={{ scale: 0.9 }} 
-                              onClick={() => handleUpdateQty(product, item.qty - 1)}
+                              onClick={() => handleUpdateQty(product, item.qty - 1, variantId)}
                               className="w-8 h-8 flex items-center justify-center text-gray-400 hover:text-gray-900 transition-colors"
                             >
                               <RemoveRoundedIcon sx={{ fontSize: 14 }} />
@@ -479,8 +487,9 @@ const CartView = () => {
                             <span className="w-6 text-center text-[12px] font-bold text-gray-900">{item.qty}</span>
                             <motion.button 
                               whileTap={{ scale: 0.9 }} 
-                              onClick={() => handleUpdateQty(product, item.qty + 1)}
-                              className="w-8 h-8 flex items-center justify-center text-gray-400 hover:text-gray-900 transition-colors"
+                              onClick={() => handleUpdateQty(product, item.qty + 1, variantId)}
+                              disabled={item.qty >= maxQty}
+                              className="w-8 h-8 flex items-center justify-center text-gray-400 hover:text-gray-900 transition-colors disabled:opacity-30"
                             >
                               <AddRoundedIcon sx={{ fontSize: 14 }} />
                             </motion.button>

@@ -217,9 +217,11 @@ const QrScreen = () => {
           const prod = it.product;
           return {
             productId: prod._id || prod.id,
+            variantId: it.variant?._id || null,
             product: {
               id: prod._id || prod.id,
               name: prod.name,
+              variantLabel: it.variant?.label || '',
               category: prod.categoryName,
               price: prod.price,
               offerPrice: prod.offerPrice,
@@ -316,7 +318,7 @@ const QrScreen = () => {
                     <ProductThumb src={typeof product === 'object' ? product.images?.[0] : ''} alt={productName} className="w-11 h-11" />
                     <div className="flex-1 min-w-0">
                        <p className="text-[13px] font-bold text-gray-800 leading-tight">{productName}</p>
-                       <p className="text-[10px] font-bold text-gray-400 mt-1 uppercase tracking-tight">{it.qty} Unit(s)</p>
+                       <p className="text-[10px] font-bold text-gray-400 mt-1 uppercase tracking-tight">{it.variant?.label ? `${it.variant.label} · ` : ''}{it.qty} Unit(s)</p>
                     </div>
                     <span className="text-[14px] font-bold text-gray-900">₹{Math.round(it.qty * productPrice)}</span>
                   </div>

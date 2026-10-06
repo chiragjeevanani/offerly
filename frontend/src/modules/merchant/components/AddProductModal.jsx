@@ -8,6 +8,8 @@ import AddPhotoAlternateRoundedIcon from '@mui/icons-material/AddPhotoAlternateR
 import toast from 'react-hot-toast';
 import { productCategoryAPI } from '../../../api/productCategory.api';
 import { isServiceCategory, isFoodCategory, requiresProductImage } from '../../../utils/storeTypeHelper';
+import InventoryEditor from './InventoryEditor';
+import { rebuildVariants } from '../utils/inventory';
 
 const CATEGORY_BEHAVIOURS = {
   'Food': { type: 'product_based', icon: '🍔', showVeg: true },
@@ -66,6 +68,17 @@ const AddProductModal = ({ isOpen, onClose, merchant, editingProduct, onSave }) 
   const [uploadingImage, setUploadingImage] = useState(false);
   const [categories, setCategories] = useState([]);
 
+  // Inventory: stock tracking + size/colour variants. Kept apart from formData
+  // because the product payload spreads formData wholesale.
+  const emptyInventory = () => ({
+    // Retail items track stock by default; food menus usually don't.
+    trackInventory: !behaviour.showVeg,
+    stock: '',
+    variantOptions: [],
+    variants: [],
+  });
+  const [inventory, setInventory] = useState(emptyInventory);
+
   useEffect(() => {
     if (!isOpen) return;
     productCategoryAPI.getMine()
@@ -79,7 +92,21 @@ const AddProductModal = ({ isOpen, onClose, merchant, editingProduct, onSave }) 
         ...editingProduct,
         categoryType: editingProduct.categoryType || (merchant?.storeType === 'service_based' ? 'service_based' : 'product_based')
       });
+      const options = editingProduct.variantOptions || [];
+      setInventory({
+        trackInventory: Boolean(editingProduct.trackInventory),
+        stock: editingProduct.stock ? String(editingProduct.stock) : '',
+        variantOptions: options,
+        variants: rebuildVariants(options, (editingProduct.variants || []).map((v) => ({
+          attributes: v.attributes,
+          stock: String(v.stock ?? ''),
+          // Only show a price when it differs from the main price (i.e. was overridden).
+          price: Number(v.price) !== Number(editingProduct.price) ? String(v.price) : '',
+          sku: v.sku || '',
+        }))),
+      });
     } else {
+      setInventory(emptyInventory());
       const initialType = getInitialType();
       setFormData({
         name: '', description: '', price: '', categoryId: '',
@@ -119,15 +146,38 @@ const AddProductModal = ({ isOpen, onClose, merchant, editingProduct, onSave }) 
     e.preventDefault();
     if (!formData.name.trim() || !formData.price || !formData.categoryId) return toast.error('Fill required fields');
     if (imageRequired && !formData.images?.some(Boolean)) return toast.error('Please add a product image');
+    if (isProductBased && inventory.variantOptions.length) {
+      const incomplete = inventory.variantOptions.find((o) => !o.name.trim() || o.values.length === 0);
+      if (incomplete) return toast.error(incomplete.name.trim() ? `Add at least one value for ${incomplete.name}` : 'Give every option a name (e.g. Size)');
+    }
     setIsSaving(true);
     try {
       const payload = {
-        ...formData, 
-        merchantId: merchant._id, 
+        ...formData,
+        merchantId: merchant._id,
         categoryType: isProductBased ? 'product_based' : 'service_based',
         isVeg: (behaviour.showVeg && isProductBased) ? (formData.isVeg ?? false) : null,
         price: parseFloat(formData.price),
       };
+      // Serialized products carry read-only inventory fields; never echo them back.
+      delete payload.variants;
+      delete payload.variantOptions;
+      delete payload.totalStock;
+      delete payload.inStock;
+      delete payload.hasVariants;
+      if (isProductBased) {
+        Object.assign(payload, {
+          trackInventory: inventory.trackInventory,
+          stock: Number(inventory.stock) || 0,
+          variantOptions: inventory.variantOptions,
+          variants: inventory.variants.map((v) => ({
+            attributes: v.attributes,
+            stock: Number(v.stock) || 0,
+            price: Number(v.price) > 0 ? Number(v.price) : undefined,
+            sku: v.sku || '',
+          })),
+        });
+      }
       await onSave(payload);
     } catch (err) { setIsSaving(false); }
   };
@@ -253,9 +303,8 @@ const AddProductModal = ({ isOpen, onClose, merchant, editingProduct, onSave }) 
                            </label>
                         </div>
                       )}
-                      <div className="bg-white p-3 rounded-xl border border-gray-100 shadow-sm flex items-center justify-between">
-                         <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">In Stock</label>
-                         <input type="number" value={formData.stock} onChange={(e) => handleChange('stock', e.target.value)} placeholder="Qty" className="w-16 text-right text-[13px] font-bold text-gray-900 outline-none" />
+                      <div className="sm:col-span-2">
+                        <InventoryEditor value={inventory} onChange={setInventory} basePrice={formData.price} />
                       </div>
                     </>
                  ) : (

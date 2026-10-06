@@ -7,8 +7,9 @@ export const cartAPI = {
   },
 
   // Update cart (add/update item or remove item)
-  updateCart: async (merchantId, productId, qty) => {
-    return axiosInstance.put('/cart', { merchantId, productId, qty });
+  // variantId picks the size/colour for products with variants
+  updateCart: async (merchantId, productId, qty, variantId = null) => {
+    return axiosInstance.put('/cart', { merchantId, productId, qty, variantId });
   },
 
   // Clear cart

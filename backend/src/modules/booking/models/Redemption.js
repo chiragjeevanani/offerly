@@ -8,6 +8,8 @@ const itemSnapshotSchema = new mongoose.Schema(
     price: Number,
     offerPrice: Number,
     image: String,
+    // "M / Red" - also folded into `name` so every existing view shows it.
+    variantLabel: String,
     isVeg: mongoose.Schema.Types.Mixed,
     duration: mongoose.Schema.Types.Mixed,
   },
@@ -19,6 +21,13 @@ const redemptionItemSchema = new mongoose.Schema(
     productId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'Product',
+      default: null,
+    },
+    // Size/colour combination, for products with variants. Stock is taken from
+    // this variant when the redemption completes.
+    variantId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'ProductVariant',
       default: null,
     },
     product: {

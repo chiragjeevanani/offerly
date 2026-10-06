@@ -30,6 +30,36 @@ function useDebounce(value, delay) {
   return debouncedValue;
 }
 
+const LOW_STOCK = 5;
+
+// Stock summary on a product card. Nothing for untracked items (e.g. food menus).
+const StockBadge = ({ product }) => {
+  if (!product.trackInventory) return null;
+  const total = product.totalStock || 0;
+  const soldOutVariants = (product.variants || []).filter((v) => !v.stock).length;
+
+  let tone = 'bg-gray-50 text-gray-500';
+  let text = `${total} in stock`;
+  if (total === 0) {
+    tone = 'bg-red-50 text-red-500';
+    text = 'Out of stock';
+  } else if (total <= LOW_STOCK) {
+    tone = 'bg-amber-50 text-amber-600';
+    text = `Only ${total} left`;
+  }
+
+  return (
+    <div className="flex flex-wrap items-center gap-1 mb-1">
+      <span className={`text-[8px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded-md ${tone}`}>{text}</span>
+      {product.hasVariants && (
+        <span className="text-[8px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded-md bg-gray-50 text-gray-500">
+          {product.variants.length} variants{soldOutVariants > 0 && total > 0 ? ` · ${soldOutVariants} sold out` : ''}
+        </span>
+      )}
+    </div>
+  );
+};
+
 const Products = ({ merchant }) => {
   const queryClient = useQueryClient();
   const [searchQuery, setSearchQuery] = useState('');
@@ -221,7 +251,8 @@ const Products = ({ merchant }) => {
 
                     <div className="flex flex-col flex-1">
                        <h3 className="text-[12px] font-bold text-gray-900 leading-tight mb-1 line-clamp-1">{product.name}</h3>
-                       
+                       <StockBadge product={product} />
+
                        <div className="mt-auto pt-2 border-t border-gray-50 flex items-center justify-between gap-2">
                           <div className="flex flex-col">
                              <span className="text-sm font-bold text-gray-900">₹{Math.round(product.offerPrice)}</span>

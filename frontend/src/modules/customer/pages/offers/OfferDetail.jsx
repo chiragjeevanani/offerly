@@ -120,7 +120,16 @@ const OfferDetail = () => {
       
       if (offer.productId) {
         // Add to cart and navigate to CartView
-        await cartAPI.updateCart(merchantId, offer.productId, 1);
+        try {
+          await cartAPI.updateCart(merchantId, offer.productId, 1, offer.variantId || null);
+        } catch (cartError) {
+          // Product comes in sizes/colours: let the customer pick on the store page.
+          if (cartError?.code === 'VARIANT_REQUIRED') {
+            navigate(`/store/${merchantId}`, { state: { chooseVariantFor: offer.productId } });
+            return;
+          }
+          throw cartError;
+        }
         toast.success('Added to your booking cart!');
         navigate('/cart');
       } else {
@@ -130,7 +139,7 @@ const OfferDetail = () => {
       }
     } catch (error) {
       console.error('Redemption error:', error);
-      toast.error(error.response?.data?.error || error.message || 'Failed to process. Please try again.');
+      toast.error(error?.error || error.response?.data?.error || error.message || 'Failed to process. Please try again.');
     } finally {
       setIsRedeeming(false);
     }

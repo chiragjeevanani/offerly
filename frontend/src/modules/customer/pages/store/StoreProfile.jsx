@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'react-hot-toast';
 import StarRoundedIcon from '@mui/icons-material/StarRounded';
@@ -24,6 +24,8 @@ import { offerAPI } from '../../../../api/offer.api';
 import { reviewAPI } from '../../../../api/review.api';
 import { cartAPI } from '../../../../api/cart.api';
 import PageTransition from '../../components/ui/PageTransition';
+import ProductThumb from '../../components/ui/ProductThumb';
+import VariantPickerSheet from '../../components/ui/VariantPickerSheet';
 import { checkIsServiceStore, shouldShowVegIndicator } from '../../../../utils/storeTypeHelper';
 import ConfirmDialog from '../../../../components/ui/ConfirmDialog';
 import { useOfferImpression } from '../../../../hooks/useOfferImpression';
@@ -55,6 +57,10 @@ const StoreProfile = () => {
   const [loading, setLoading] = useState(true);
   const [showHours, setShowHours] = useState(false);
   const [pendingCartAction, setPendingCartAction] = useState(null);
+  // Products with sizes/colours go through the picker sheet instead of +/-.
+  const [variantProduct, setVariantProduct] = useState(null);
+  const [variantBusy, setVariantBusy] = useState(false);
+  const location = useLocation();
 
   const getStatus = () => {
     if (!merchant || !merchant.businessHours) return { isOpen: false, label: 'Hours Not Set' };
@@ -150,11 +156,11 @@ const StoreProfile = () => {
     loadStoreData();
   }, [id, navigate]);
 
-  const applyCartUpdate = async (product, newQty) => {
+  const applyCartUpdate = async (product, newQty, variantId = null) => {
     const merchantId = merchant._id || merchant.id;
     try {
       const productId = product._id || product.id;
-      const response = await cartAPI.updateCart(merchantId, productId, newQty);
+      const response = await cartAPI.updateCart(merchantId, productId, newQty, variantId);
 
       if (response && response.data) {
         const fullCart = {
@@ -174,29 +180,55 @@ const StoreProfile = () => {
           sessionStorage.removeItem('offerly_cached_cart');
         } catch {}
       }
+      return true;
     } catch (error) {
       console.error('Failed to update cart:', error);
-      toast.error('Failed to update cart');
+      toast.error(error?.error || 'Failed to update cart');
+      return false;
     }
   };
 
-  const handleUpdateQty = (product, newQty) => {
+  const handleUpdateQty = (product, newQty, variantId = null) => {
     const merchantId = merchant._id || merchant.id;
     const cartMerchantId = cart.merchantId;
 
     // Adding from a different merchant than the one already in the cart
     // requires confirming the old cart gets cleared first.
     if (cartMerchantId && cartMerchantId !== merchantId && newQty > 0) {
-      setPendingCartAction({ product, newQty });
-      return;
+      setPendingCartAction({ product, newQty, variantId });
+      return true;
     }
 
-    applyCartUpdate(product, newQty);
+    return applyCartUpdate(product, newQty, variantId);
   };
+
+  const getVariantQty = (productId, variantId) => {
+    if (cart.merchantId !== (merchant?._id || merchant?.id)) return 0;
+    const item = cart.items.find(
+      (i) => (i.product._id || i.product) === productId && String(i.variant?._id || i.variant || '') === String(variantId)
+    );
+    return item ? item.qty : 0;
+  };
+
+  const confirmVariant = async (variant, qty) => {
+    setVariantBusy(true);
+    const ok = await handleUpdateQty(variantProduct, qty, variant._id);
+    setVariantBusy(false);
+    if (ok !== false) setVariantProduct(null);
+  };
+
+  // Arriving from an offer whose product needs a size/colour picked first.
+  useEffect(() => {
+    const wanted = location.state?.chooseVariantFor;
+    if (!wanted || !products.length) return;
+    const product = products.find((p) => (p._id || p.id) === wanted);
+    if (product?.hasVariants) setVariantProduct(product);
+    navigate(location.pathname, { replace: true, state: {} });
+  }, [location.state, products]);
 
   const confirmMerchantSwitch = () => {
     if (pendingCartAction) {
-      applyCartUpdate(pendingCartAction.product, pendingCartAction.newQty);
+      applyCartUpdate(pendingCartAction.product, pendingCartAction.newQty, pendingCartAction.variantId);
     }
     setPendingCartAction(null);
   };
@@ -204,8 +236,10 @@ const StoreProfile = () => {
   const getQty = (productId) => {
     const merchantId = merchant?._id || merchant?.id;
     if (cart.merchantId !== merchantId) return 0;
-    const item = cart.items.find(i => (i.product._id || i.product) === productId);
-    return item ? item.qty : 0;
+    // Sum across lines: a product with variants can be in the cart several times.
+    return cart.items
+      .filter(i => (i.product._id || i.product) === productId)
+      .reduce((sum, i) => sum + i.qty, 0);
   };
 
   const merchantId = merchant?._id || merchant?.id;
@@ -430,6 +464,8 @@ const StoreProfile = () => {
                       {group.products.map((product, idx) => {
                         const productId = product._id || product.id;
                         const qty = getQty(productId);
+                        const soldOut = product.inStock === false;
+                        const atStockLimit = product.trackInventory && !product.hasVariants && qty >= (product.totalStock || 0);
                         return (
                           <motion.div
                             key={productId}
@@ -438,7 +474,10 @@ const StoreProfile = () => {
                             transition={{ delay: idx * 0.05 }}
                             className="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 flex gap-4"
                           >
-                            <div className="flex-1">
+                            {(product.images?.[0] || product.image) && (
+                              <ProductThumb src={product.images?.[0] || product.image} alt={product.name} className="w-20 h-20" />
+                            )}
+                            <div className="flex-1 min-w-0">
                               {shouldShowVegIndicator(merchant, product) && (
                                 <div className={`w-3 h-3 border grid place-items-center mb-1 ${product.isVeg ? 'border-green-600' : 'border-red-600'}`}>
                                   <div className={`w-1.5 h-1.5 rounded-full ${product.isVeg ? 'bg-green-600' : 'bg-red-600'}`} />
@@ -448,11 +487,29 @@ const StoreProfile = () => {
                               <div className="flex items-center gap-2 mt-2">
                                  <span className="font-bold text-gray-900 text-sm">₹{product.price}</span>
                               </div>
+                              {product.hasVariants && (
+                                <p className="text-[11px] font-semibold text-gray-400 mt-1 truncate">
+                                  {product.variantOptions.map((o) => o.values.join(', ')).join(' · ')}
+                                </p>
+                              )}
+                              {product.trackInventory && !soldOut && product.totalStock <= 5 && (
+                                <p className="text-[11px] font-bold text-amber-600 mt-1">Only {product.totalStock} left</p>
+                              )}
                             </div>
 
                             {/* Quantity Controller */}
                             <div className="flex items-end">
-                              {qty === 0 ? (
+                              {soldOut && qty === 0 ? (
+                                <span className="px-4 py-2 bg-gray-100 text-gray-400 font-bold rounded-lg text-sm">Sold out</span>
+                              ) : product.hasVariants ? (
+                                <motion.button
+                                  whileTap={{scale:0.95}}
+                                  onClick={() => setVariantProduct(product)}
+                                  className={`px-5 py-2 font-bold rounded-lg border ${qty > 0 ? 'bg-primary text-white border-primary' : 'bg-primary-50 text-primary border-primary-200'}`}
+                                >
+                                  {qty > 0 ? `${qty} added · Edit` : 'ADD'}
+                                </motion.button>
+                              ) : qty === 0 ? (
                                 <motion.button
                                   whileTap={{scale:0.95}}
                                   onClick={() => handleUpdateQty(product, 1)}
@@ -472,7 +529,8 @@ const StoreProfile = () => {
                                   <span className="px-2 font-bold w-8 text-center">{qty}</span>
                                   <motion.button
                                     whileTap={{backgroundColor:'rgba(0,0,0,0.1)'}}
-                                    className="px-3 py-2"
+                                    className="px-3 py-2 disabled:opacity-40"
+                                    disabled={atStockLimit}
                                     onClick={() => handleUpdateQty(product, qty + 1)}
                                   >
                                     <AddRoundedIcon sx={{fontSize: 18}} />
@@ -648,6 +706,16 @@ const StoreProfile = () => {
           </div>
         )}
       </AnimatePresence>
+
+      {variantProduct && (
+        <VariantPickerSheet
+          product={variantProduct}
+          qtyInCart={(variantId) => getVariantQty(variantProduct._id || variantProduct.id, variantId)}
+          onConfirm={confirmVariant}
+          onClose={() => setVariantProduct(null)}
+          busy={variantBusy}
+        />
+      )}
 
       <ConfirmDialog
         isOpen={!!pendingCartAction}

@@ -6,6 +6,13 @@ const cartItemSchema = new mongoose.Schema({
     ref: 'Product',
     required: true,
   },
+  // Which size/colour combination, for products with variants. A product can
+  // appear on several lines, one per variant.
+  variant: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'ProductVariant',
+    default: null,
+  },
   qty: {
     type: Number,
     required: true,

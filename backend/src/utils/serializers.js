@@ -1,3 +1,4 @@
+import { serializeVariant } from '../modules/merchant/services/inventoryService.js';
 import { resolveStoreType } from './storeTypeHelper.js';
 
 export const objectIdToString = (value) => {
@@ -156,7 +157,28 @@ export const serializeOffer = (offer) => ({
   updatedAt: offer?.updatedAt || null,
 });
 
-export const serializeProduct = (product) => ({
+// `variants` are the product's active ProductVariant docs, when the caller loaded them.
+export const serializeProduct = (product, variants = []) => {
+  const variantOptions = (product?.variantOptions || []).map((o) => ({ name: o.name, values: [...(o.values || [])] }));
+  const hasVariants = variantOptions.length > 0;
+  const trackInventory = hasVariants || Boolean(product?.trackInventory);
+  const serializedVariants = hasVariants ? variants.map((v) => serializeVariant(v, variantOptions)) : [];
+  const totalStock = hasVariants
+    ? serializedVariants.reduce((sum, v) => sum + v.stock, 0)
+    : (product?.stock || 0);
+  return {
+    ...serializeProductBase(product),
+    trackInventory,
+    hasVariants,
+    variantOptions,
+    variants: serializedVariants,
+    stock: product?.stock || 0,
+    totalStock,
+    inStock: !trackInventory || totalStock > 0,
+  };
+};
+
+const serializeProductBase = (product) => ({
   id: objectIdToString(product?._id ?? product?.id),
   _id: objectIdToString(product?._id ?? product?.id),
   merchantId: objectIdToString(product?.merchantId),

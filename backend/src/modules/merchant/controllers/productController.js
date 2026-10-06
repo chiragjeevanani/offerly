@@ -7,9 +7,34 @@ import mongoose from 'mongoose';
 import { serializeProduct } from '../../../utils/serializers.js';
 import { getOrCreateUncategorized } from './productCategoryController.js';
 import { requiresProductImage } from '../../../utils/storeTypeHelper.js';
+import {
+  normalizeVariantOptions,
+  syncProductVariants,
+  getVariantsByProductIds,
+} from '../services/inventoryService.js';
 
 const PRODUCT_IMAGE_REQUIRED_MESSAGE = 'A product image is required for your store type';
 const hasImage = (images) => Array.isArray(images) && images.some((img) => typeof img === 'string' && img.trim());
+
+// Pulls the inventory fields out of a create/update body. Returns { error } or
+// { options, variants }, normalising body.variantOptions/trackInventory/stock in
+// place. Only touches variants when the client sent variantOptions, so callers
+// that don't know about inventory (e.g. the quick offer builder) leave them alone.
+const prepareInventory = (body) => {
+  const variants = body.variants;
+  delete body.variants;
+  if (!('variantOptions' in body)) {
+    if ('stock' in body) body.stock = Math.max(0, Math.floor(Number(body.stock) || 0));
+    return { options: null, variants: null };
+  }
+  const { options, error } = normalizeVariantOptions(body.variantOptions);
+  if (error) return { error };
+  body.variantOptions = options;
+  // Variants only make sense with per-variant stock, so they imply tracking.
+  body.trackInventory = options.length > 0 ? true : Boolean(body.trackInventory);
+  body.stock = options.length > 0 ? 0 : Math.max(0, Math.floor(Number(body.stock) || 0));
+  return { options, variants };
+};
 
 // Get all products for a merchant
 export const getProductsByMerchant = async (req, res) => {
@@ -52,9 +77,11 @@ export const getProductsByMerchant = async (req, res) => {
       .populate('categoryId', 'name discountPercent isActive order')
       .sort({ createdAt: -1 });
 
+    const variantsByProduct = await getVariantsByProductIds(products.map((p) => p._id));
+
     return res.status(200).json({
       success: true,
-      products: products.map(p => serializeProduct(p)),
+      products: products.map(p => serializeProduct(p, variantsByProduct.get(p._id.toString()) || [])),
       count: products.length
     });
   } catch (error) {
@@ -184,6 +211,11 @@ export const createProduct = async (req, res) => {
       category = await getOrCreateUncategorized(merchantId);
     }
 
+    const inventory = prepareInventory(req.body);
+    if (inventory.error) {
+      return res.status(400).json({ success: false, message: inventory.error });
+    }
+
     // Discount is always derived from the category, never merchant-entered
     const price = Number(req.body.price);
     const discount = category.discountPercent;
@@ -198,6 +230,10 @@ export const createProduct = async (req, res) => {
       discount,
       offerPrice,
     });
+
+    if (inventory.options?.length) {
+      await syncProductVariants(product, inventory.options, inventory.variants, discount);
+    }
 
     return res.status(201).json({
       success: true,
@@ -255,6 +291,11 @@ export const updateProduct = async (req, res) => {
       }
     }
 
+    const inventory = prepareInventory(req.body);
+    if (inventory.error) {
+      return res.status(400).json({ success: false, message: inventory.error });
+    }
+
     // Discount is always derived from the (possibly new) category, never merchant-entered
     delete req.body.discount;
     delete req.body.offerPrice;
@@ -280,6 +321,11 @@ export const updateProduct = async (req, res) => {
     }
 
     await product.save();
+
+    if (inventory.options) {
+      const discount = (category || (await ProductCategory.findById(product.categoryId)))?.discountPercent || 0;
+      await syncProductVariants(product, inventory.options, inventory.variants, discount);
+    }
 
     return res.status(200).json({
       success: true,
@@ -447,7 +493,7 @@ export const searchProducts = async (req, res) => {
       isActive: true,
       name: { $regex: searchQuery, $options: 'i' }
     })
-    .select('name price offerPrice images discount categoryId')
+    .select('name price offerPrice images discount categoryId variantOptions trackInventory stock')
     .populate('categoryId', 'name discountPercent')
     .limit(10)
     .sort({ name: 1 });
@@ -459,7 +505,7 @@ export const searchProducts = async (req, res) => {
       ? await ProductVariant.find({
           productId: { $in: productIds },
           isActive: true,
-        }).select('productId name price offerPrice discount')
+        }).select('productId name attributes price offerPrice discount stock')
       : [];
 
     const variantsByProductId = new Map();
