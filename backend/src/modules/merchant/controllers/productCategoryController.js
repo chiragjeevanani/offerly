@@ -31,11 +31,12 @@ export const recomputeCategoryPricing = async (categoryId, discountPercent) => {
     },
   ];
 
-  await Product.updateMany({ categoryId }, pipeline);
+  // Mongoose 9 refuses aggregation-pipeline updates without updatePipeline.
+  await Product.updateMany({ categoryId }, pipeline, { updatePipeline: true });
 
   const productIds = await Product.find({ categoryId }).distinct('_id');
   if (productIds.length) {
-    await ProductVariant.updateMany({ productId: { $in: productIds } }, pipeline);
+    await ProductVariant.updateMany({ productId: { $in: productIds } }, pipeline, { updatePipeline: true });
   }
 };
 
