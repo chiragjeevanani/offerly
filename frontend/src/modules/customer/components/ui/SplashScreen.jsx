@@ -123,11 +123,11 @@ const SplashScreen = ({ onFinish, duration = 2200, forceShow = false }) => {
   };
 
   useEffect(() => {
-    // Save original theme-color and adapt to splash screen top background (#FAFEF7)
+    // Save original theme-color and adapt to splash screen top background (#EAF7E8)
     const metaTheme = document.querySelector('meta[name="theme-color"]');
     if (metaTheme) {
       originalThemeColorRef.current = metaTheme.getAttribute('content') || '#5EB929';
-      metaTheme.setAttribute('content', '#FAFEF7');
+      metaTheme.setAttribute('content', '#EAF7E8');
     }
 
     // Attempt immediate immersive full-screen to cover the phone's status bar
