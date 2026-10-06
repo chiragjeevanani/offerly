@@ -25,7 +25,7 @@ export const createReview = async (req, res) => {
       merchantId,
       offerId,
       customerId: req.user.id,
-      customerName: req.user.name,
+      customerName: req.user.name?.trim() || 'Customer',
       rating,
       text,
     });

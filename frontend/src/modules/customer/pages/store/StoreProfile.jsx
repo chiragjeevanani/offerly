@@ -511,29 +511,36 @@ const StoreProfile = () => {
               {reviews.length === 0 ? (
                 <p className="text-center text-text-secondary text-sm py-8">No reviews yet</p>
               ) : (
-                reviews.map((review, idx) => (
-                  <motion.div
-                    key={review._id || review.id}
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: idx * 0.05 }}
-                    className="bg-surface rounded-2xl shadow-sm border border-gray-100 p-5"
-                  >
-                    <div className="flex items-center justify-between mb-3">
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 bg-primary-50 rounded-full flex items-center justify-center border border-primary-100">
-                          <span className="text-sm font-bold text-primary">{review.customerName.charAt(0)}</span>
+                reviews.map((review, idx) => {
+                  // Reviews left before the customer gate (or by a non-customer
+                  // account) have no customerName - dereferencing it blind
+                  // crashed the whole page, not just this card.
+                  const reviewer = review.customerName?.trim() || 'Customer';
+
+                  return (
+                    <motion.div
+                      key={review._id || review.id}
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: idx * 0.05 }}
+                      className="bg-surface rounded-2xl shadow-sm border border-gray-100 p-5"
+                    >
+                      <div className="flex items-center justify-between mb-3">
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 bg-primary-50 rounded-full flex items-center justify-center border border-primary-100">
+                            <span className="text-sm font-bold text-primary">{reviewer.charAt(0)}</span>
+                          </div>
+                          <p className="text-sm font-bold text-text-primary">{reviewer}</p>
                         </div>
-                        <p className="text-sm font-bold text-text-primary">{review.customerName}</p>
+                        <div className="flex bg-amber-50 px-1.5 py-0.5 rounded-full border border-amber-100">
+                          <StarRoundedIcon sx={{ fontSize: 14 }} className="text-amber-500" />
+                          <span className="text-xs font-bold text-amber-700 ml-1">{review.rating}</span>
+                        </div>
                       </div>
-                      <div className="flex bg-amber-50 px-1.5 py-0.5 rounded-full border border-amber-100">
-                        <StarRoundedIcon sx={{ fontSize: 14 }} className="text-amber-500" />
-                        <span className="text-xs font-bold text-amber-700 ml-1">{review.rating}</span>
-                      </div>
-                    </div>
-                    <p className="text-sm text-gray-600 leading-relaxed">{review.text}</p>
-                  </motion.div>
-                ))
+                      <p className="text-sm text-gray-600 leading-relaxed">{review.text}</p>
+                    </motion.div>
+                  );
+                })
               )}
             </div>
           )}

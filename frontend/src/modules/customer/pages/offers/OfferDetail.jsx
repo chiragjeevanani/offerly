@@ -295,9 +295,9 @@ const OfferDetail = () => {
               </div>
               <div className="space-y-3">
                 {reviews.map((review) => (
-                  <div key={review.id} className="bg-background rounded-2xl p-4">
+                  <div key={review._id || review.id} className="bg-background rounded-2xl p-4">
                     <div className="flex items-center justify-between mb-2">
-                      <p className="text-sm font-semibold text-text-primary">{review.customerName}</p>
+                      <p className="text-sm font-semibold text-text-primary">{review.customerName?.trim() || 'Customer'}</p>
                       <div className="flex">
                         {[1, 2, 3, 4, 5].map((s) => (
                           s <= review.rating
