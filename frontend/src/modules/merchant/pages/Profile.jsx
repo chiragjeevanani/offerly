@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useApp } from '../../customer/context/AppContext';
 import ArrowBackRoundedIcon from '@mui/icons-material/ArrowBackRounded';
 import BusinessRoundedIcon from '@mui/icons-material/BusinessRounded';
-import LocationOnRoundedIcon from '@mui/icons-material/LocationOnRounded';
+import AccessTimeRoundedIcon from '@mui/icons-material/AccessTimeRounded';
 import AccountBalanceRoundedIcon from '@mui/icons-material/AccountBalanceRounded';
 import LockRoundedIcon from '@mui/icons-material/LockRounded';
 import NotificationsRoundedIcon from '@mui/icons-material/NotificationsRounded';
@@ -27,13 +27,14 @@ import StorefrontRoundedIcon from '@mui/icons-material/StorefrontRounded';
 import { useEffect, useState } from 'react';
 import { merchantAPI } from '../../../api/merchant.api';
 import toast from 'react-hot-toast';
+import BusinessHoursModal from '../components/BusinessHoursModal';
 
 const menuSections = [
   {
     title: 'Commercial HQ',
     items: [
       { label: 'Store Core Profile', icon: BusinessRoundedIcon, action: 'edit-store' },
-      { label: 'Map & Service Radius', icon: LocationOnRoundedIcon, path: '/merchant/profile/location' },
+      { label: 'Business Hours', icon: AccessTimeRoundedIcon, action: 'edit-hours' },
       { label: 'Settlement Account', icon: AccountBalanceRoundedIcon, path: '/merchant/profile/bank' },
     ],
   },
@@ -64,6 +65,7 @@ const Profile = ({ merchant, onMerchantUpdate }) => {
   
   // Store Profile Edit Modal State
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [isHoursModalOpen, setIsHoursModalOpen] = useState(false);
   const [savingProfile, setSavingProfile] = useState(false);
   const [profileFormData, setProfileFormData] = useState({
     storeName: merchant?.storeName || '',
@@ -331,7 +333,9 @@ const Profile = ({ merchant, onMerchantUpdate }) => {
                         <button 
                           key={item.label} 
                           onClick={() => {
-                            if (item.action === 'edit-store') {
+                            if (item.action === 'edit-hours') {
+                              setIsHoursModalOpen(true);
+                            } else if (item.action === 'edit-store') {
                               setIsEditModalOpen(true);
                             } else if (item.path) {
                               navigate(item.path);
@@ -365,6 +369,14 @@ const Profile = ({ merchant, onMerchantUpdate }) => {
             <p className="text-[8px] font-bold text-gray-300">SECURE TERMINAL V1.0.4-SHARP</p>
          </div>
       </div>
+
+      {isHoursModalOpen && (
+        <BusinessHoursModal
+          merchant={merchant}
+          onClose={() => setIsHoursModalOpen(false)}
+          onSaved={onMerchantUpdate}
+        />
+      )}
 
       {/* Edit Store Core Profile Modal */}
       <AnimatePresence>

@@ -22,6 +22,7 @@ import ArrowDownwardRoundedIcon from '@mui/icons-material/ArrowDownwardRounded';
 import InsightsRoundedIcon from '@mui/icons-material/InsightsRounded';
 import { merchantAPI } from '../../../api/merchant.api';
 import SubscriptionRenewal from '../components/SubscriptionRenewal';
+import { nextAutoChange } from '../utils/businessHours';
 
 // Change against the same figure yesterday. A null change means there was no
 // baseline to compare against, which reads as "new" rather than a bogus +100%.
@@ -75,6 +76,15 @@ const MerchantDashboard = ({ merchant, onMerchantUpdate }) => {
   const navigate = useNavigate();
   const [togglingOpen, setTogglingOpen] = useState(false);
   const isStoreOpen = merchant?.isOpen !== false;
+  // The backend flips the toggle at opening/closing time; tell the merchant when.
+  // If they've overridden it by hand, the next scheduled change won't match the
+  // current state, so say that instead.
+  const nextChange = nextAutoChange(merchant?.businessHours);
+  const autoHint = !nextChange
+    ? null
+    : (nextChange.startsWith('Closes') === isStoreOpen
+      ? nextChange
+      : `Set manually · ${nextChange.charAt(0).toLowerCase()}${nextChange.slice(1)}`);
 
   const handleToggleOpen = async () => {
     if (togglingOpen) return;
@@ -189,6 +199,13 @@ const MerchantDashboard = ({ merchant, onMerchantUpdate }) => {
               <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mt-0.5">
                 {isStoreOpen ? 'Visible to customers as open' : 'Offers shown as closed for now'}
               </p>
+              <button
+                type="button"
+                onClick={() => navigate('/merchant/profile')}
+                className="text-[10px] font-semibold text-[#5EB929] mt-0.5 text-left"
+              >
+                {autoHint || 'Set business hours to open & close automatically'}
+              </button>
             </div>
           </div>
           <button

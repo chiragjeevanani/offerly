@@ -144,6 +144,13 @@ const merchantSchema = new mongoose.Schema(
       type: Boolean,
       default: true,
     },
+    // What businessHours said at the last cron tick. The cron flips isOpen only
+    // when this changes (opening/closing time reached), so a manual toggle holds
+    // until the next boundary. null = never synced; reset when hours are edited.
+    scheduleOpen: {
+      type: Boolean,
+      default: null,
+    },
     subscriptionPlanId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'Plan',

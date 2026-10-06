@@ -21,6 +21,7 @@ import {
   addDays,
 } from "../../../utils/analytics.js";
 import { resolveStoreType } from "../../../utils/storeTypeHelper.js";
+import { isWithinBusinessHours, validateBusinessHours } from "../../../utils/businessHours.js";
 
 const escapeRegex = (value = "") => value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 
@@ -677,6 +678,18 @@ export const updateMyStore = async (req, res) => {
         merchant[field] = req.body[field];
       }
     }
+  }
+
+  if ("businessHours" in req.body) {
+    const hoursError = validateBusinessHours(req.body.businessHours);
+    if (hoursError) {
+      return res.status(400).json({ message: hoursError });
+    }
+    merchant.businessHours = req.body.businessHours;
+    // New hours take effect right away rather than at the next boundary.
+    // (Validated above, so every day is set - all days closed means closed.)
+    merchant.scheduleOpen = isWithinBusinessHours(merchant.businessHours);
+    merchant.isOpen = merchant.scheduleOpen;
   }
 
   if ("isOpen" in req.body) {
