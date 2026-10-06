@@ -2,6 +2,7 @@ import { useState, useMemo, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import SlideOver from '../components/SlideOver';
+import MerchantWalletPanel from '../components/MerchantWalletPanel';
 import RejectionReasonModal from '../components/RejectionReasonModal';
 import AdminEntityCard from '../components/AdminEntityCard';
 import { adminAPI } from '../../../api/admin.api';
@@ -116,6 +117,7 @@ const MerchantManagement = () => {
       toast.success('Merchant approved!');
       setIsSlideOverOpen(false);
       queryClient.invalidateQueries({ queryKey: ['adminMerchants'] });
+      queryClient.invalidateQueries({ queryKey: ['adminMerchantWallet', id] });
     } catch (error) {
       toast.error('Approval failed');
     }
@@ -359,6 +361,8 @@ const MerchantManagement = () => {
                   <MoreVertRoundedIcon />
                 </button>
               </div>
+
+              <MerchantWalletPanel merchantId={viewingMerchant._id || viewingMerchant.id} />
 
               {/* Business Information Section */}
               <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">

@@ -167,13 +167,15 @@ const SubscriptionRenewal = ({ merchant }) => {
               <WorkspacePremiumRoundedIcon sx={{ fontSize: 32 }} />
             </div>
             <p className="text-[11px] font-extrabold text-[#16A34A] uppercase tracking-widest mb-1">
-              Active Subscription
+              {merchant.subscription.isTrial ? 'Free Trial' : 'Active Subscription'}
             </p>
             <h2 className="text-2xl font-black text-gray-900 mb-2">
               {merchant.subscription.planId.name}
             </h2>
             <p className="text-sm text-gray-500 font-medium mb-6">
-              Your subscription is active for the next <span className="text-gray-900 font-bold">{merchant.remainingDays} days</span>.
+              {merchant.subscription.isTrial ? 'Your free trial ends in ' : 'Your subscription is active for the next '}
+              <span className="text-gray-900 font-bold">{merchant.remainingDays} days</span>.
+              {merchant.subscription.isTrial && ' Pick a plan before then to keep your store live.'}
             </p>
 
             <div className="flex flex-col gap-3">

@@ -11,7 +11,14 @@ const discountWalletTransactionSchema = new mongoose.Schema(
     },
     type: {
       type: String,
-      enum: ["subscription_credit", "subscription_redeem", "customer_discount_debit"],
+      enum: [
+        "subscription_credit",
+        "subscription_redeem",
+        "customer_discount_debit",
+        // Manual changes made from the admin panel.
+        "admin_credit",
+        "admin_debit",
+      ],
       required: true,
     },
     amount: {
@@ -36,6 +43,12 @@ const discountWalletTransactionSchema = new mongoose.Schema(
     note: {
       type: String,
       default: "",
+    },
+    // Set for admin_credit / admin_debit.
+    adminId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Admin",
+      default: null,
     },
   },
   { timestamps: true },

@@ -25,6 +25,7 @@ import {
   getCustomerSubscriptionSettingsConfig,
   updateCustomerSubscriptionSettingsConfig
 } from '../controllers/adminController.js';
+import { getMerchantWallet, adjustMerchantWallet } from '../controllers/merchantWalletController.js';
 import { protect, authorize } from '../../../middlewares/auth.js';
 
 const router = express.Router();
@@ -43,6 +44,8 @@ router.put('/users/:id/status', authorize('admin'), updateUserStatus);
 router.get('/redemptions', authorize('admin'), getAllRedemptions);
 router.put('/merchants/:id/status', authorize('admin'), updateMerchantStatus);
 router.delete('/merchants/:id', authorize('admin'), deleteMerchant);
+router.get('/merchants/:id/wallet', authorize('admin'), getMerchantWallet);
+router.put('/merchants/:id/wallet', authorize('admin'), adjustMerchantWallet);
 router.post('/cities', authorize('admin'), saveCity);
 router.delete('/cities/:id', authorize('admin'), deleteCity);
 router.post('/plans', authorize('admin'), savePlan);

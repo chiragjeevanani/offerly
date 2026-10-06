@@ -196,14 +196,16 @@ const MerchantSidebar = ({ merchant, isMobileMenuOpen, setIsMobileMenuOpen }) =>
       {/* ── Bottom Section ─────────────────────── */}
       <div className="p-4 space-y-2">
         {/* Subscription Badge */}
-        {merchant?.subscription?.plan?.name && (
+        {(merchant?.subscription?.plan?.name || merchant?.subscription?.planId?.name) && (
           <div className="mx-2 mb-2 p-3.5 rounded-2xl bg-[#5EB929]/10 border border-[#5EB929]/20 shadow-lg shadow-[#5EB929]/5">
             <div className="flex items-center gap-2">
               <WorkspacePremiumRoundedIcon sx={{ fontSize: 16 }} className="text-[#5EB929]" />
-              <span className="text-[10px] font-bold text-[#5EB929] uppercase tracking-widest">{merchant.subscription.plan.name}</span>
+              <span className="text-[10px] font-bold text-[#5EB929] uppercase tracking-widest">{merchant.subscription.plan?.name || merchant.subscription.planId?.name}</span>
             </div>
             {merchant.remainingDays !== undefined && (
-              <p className="text-[9px] font-bold text-gray-500 mt-1 pl-6 uppercase tracking-tight">{merchant.remainingDays} Days Active</p>
+              <p className="text-[9px] font-bold text-gray-500 mt-1 pl-6 uppercase tracking-tight">
+                {merchant.subscription.isTrial ? `Free trial · ${merchant.remainingDays} days left` : `${merchant.remainingDays} Days Active`}
+              </p>
             )}
           </div>
         )}

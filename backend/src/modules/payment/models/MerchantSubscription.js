@@ -61,6 +61,12 @@ const merchantSubscriptionSchema = new mongoose.Schema(
       enum: ["merchant", "advertisement"],
       default: "merchant",
     },
+    // Free welcome trial granted on approval (see merchantTrialService.js).
+    // Charged nothing and credits nothing to the discount wallet.
+    isTrial: {
+      type: Boolean,
+      default: false,
+    },
   },
   { timestamps: true },
 );

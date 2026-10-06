@@ -16,6 +16,7 @@ import AdRequest from '../models/AdRequest.js';
 import { notifyMerchant } from '../../user/services/notificationService.js';
 import { computeSubscriptionCharge, getWalletSettings } from '../../../utils/subscriptionWallet.js';
 import { getCustomerSubscriptionSettings } from '../../../utils/customerSubscription.js';
+import { grantWelcomeTrial } from '../../merchant/services/merchantTrialService.js';
 
 // ───────────────────────── DASHBOARD STATS ─────────────────────────
 
@@ -281,11 +282,13 @@ export const updateMerchantStatus = async (req, res) => {
        });
     }
 
-    // If approved, check if they are starting a trial
-    if (req.body.status === 'approved' && merchant.subscriptionPlanId) {
-      const plan = await Plan.findById(merchant.subscriptionPlanId);
-      if (plan && (plan.trialDays > 0 || plan.name.toLowerCase().includes('trial'))) {
-        await Merchant.findByIdAndUpdate(merchant._id, { hasUsedFreeTrial: true });
+    // New merchants get a free first month of the Visible plan on approval.
+    // Never fails the approval itself.
+    if (req.body.status === 'approved') {
+      try {
+        await grantWelcomeTrial(merchant);
+      } catch (trialErr) {
+        console.error('[Trial] Failed to grant welcome trial:', trialErr);
       }
     }
 

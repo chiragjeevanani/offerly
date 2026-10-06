@@ -25,6 +25,16 @@ export const adminAPI = {
     return axiosInstance.get(API_ENDPOINTS.GET_MERCHANTS, { params });
   },
 
+  // Merchant discount wallet: balance, membership and history
+  getMerchantWallet: async (id) => {
+    return axiosInstance.get(`/admin/merchants/${id}/wallet`);
+  },
+
+  // action: 'add' | 'deduct' | 'set'
+  adjustMerchantWallet: async (id, { action, amount, note }) => {
+    return axiosInstance.put(`/admin/merchants/${id}/wallet`, { action, amount, note });
+  },
+
   // Get all cities
   getCities: async () => {
     return axiosInstance.get('/admin/cities');
