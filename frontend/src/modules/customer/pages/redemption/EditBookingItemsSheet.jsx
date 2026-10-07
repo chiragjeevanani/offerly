@@ -89,7 +89,10 @@ const EditBookingItemsSheet = ({ booking, merchantId, onClose, onSaved }) => {
 
   const itemsTotal = Math.round(resolvedLines.reduce((s, l) => s + l.offerPrice * l.qty, 0));
   const walletDiscount = Math.min(booking.totals?.walletDiscount || 0, itemsTotal);
-  const payable = itemsTotal - walletDiscount;
+  // Points already spent on this pass stay applied, capped at the new bill; the
+  // server returns any that no longer fit.
+  const referralDiscount = Math.min(booking.totals?.referralDiscount || 0, itemsTotal - walletDiscount);
+  const payable = itemsTotal - walletDiscount - referralDiscount;
 
   const setQty = (key, qty) => {
     setLines((prev) => (qty <= 0
@@ -248,6 +251,12 @@ const EditBookingItemsSheet = ({ booking, merchantId, onClose, onSaved }) => {
             <div className="flex justify-between text-[11px] font-bold text-[#5EB929] mb-1">
               <span>Offerly Extra Discount</span>
               <span>-₹{walletDiscount}</span>
+            </div>
+          )}
+          {referralDiscount > 0 && (
+            <div className="flex justify-between text-[11px] font-bold text-[#5EB929] mb-1">
+              <span>Referral Points</span>
+              <span>-₹{referralDiscount}</span>
             </div>
           )}
           <div className="flex justify-between items-end mb-3">

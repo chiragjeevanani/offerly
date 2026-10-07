@@ -22,6 +22,7 @@ import { useApp } from '../../context/AppContext';
 import { useCustomerSubscription } from '../../../../hooks/useCustomerSubscription';
 import PageTransition from '../../components/ui/PageTransition';
 import ProductThumb from '../../components/ui/ProductThumb';
+import { getUseReferralPoints, setUseReferralPoints } from '../../../../utils/referralPoints';
 
 const CountUp = ({ to }) => {
   const [count, setCount] = useState(0);
@@ -78,7 +79,18 @@ const CartView = () => {
   const storeDiscount = Math.round(totalBasePrice - totalOfferPrice);
   const offerlyExtraDiscount = Math.round(cart?.offerlyExtraDiscount || 0);
   const totalDiscount = Math.round(storeDiscount + offerlyExtraDiscount);
-  const finalPayable = Math.max(0, Math.round(totalOfferPrice - offerlyExtraDiscount));
+  const payableBeforePoints = Math.max(0, Math.round(totalOfferPrice - offerlyExtraDiscount));
+
+  // Referral points (1 point = ₹1), opt-in. The choice is remembered for the
+  // draft pass screen, where the server actually deducts the points.
+  const availablePoints = Math.max(0, Math.floor(user?.credits || 0));
+  const [useReferralPoints, setUseReferralPointsState] = useState(getUseReferralPoints);
+  const toggleReferralPoints = () => {
+    setUseReferralPoints(!useReferralPoints);
+    setUseReferralPointsState(!useReferralPoints);
+  };
+  const referralDiscount = useReferralPoints ? Math.min(availablePoints, payableBeforePoints) : 0;
+  const finalPayable = payableBeforePoints - referralDiscount;
   const discountPercent = totalBasePrice > 0 ? Math.round((totalDiscount / totalBasePrice) * 100) : 0;
 
   // showCelebrationModal is TRUE immediately on frame 0 if discount > 0!
@@ -268,7 +280,7 @@ const CartView = () => {
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               onClick={() => setShowCelebrationModal(false)}
-              className="fixed inset-0 bg-black/75 backdrop-blur-md"
+              className="fixed inset-0 bg-black/75 backdrop-blur-md keep-backdrop-blur"
             />
 
             {/* Celebration Dialog */}
@@ -544,7 +556,30 @@ const CartView = () => {
                    </span>
                  </div>
                )}
+               {referralDiscount > 0 && (
+                 <div className="flex justify-between items-center">
+                   <span className="text-[12px] font-bold text-gray-500 uppercase tracking-tight">Referral Points</span>
+                   <span className="text-[13px] font-bold text-[#5EB929]">- ₹{referralDiscount}</span>
+                 </div>
+               )}
              </div>
+
+             {availablePoints > 0 && payableBeforePoints > 0 && (
+               <label className="mb-5 flex items-center gap-3 p-3.5 rounded-2xl border border-[#5EB929]/20 bg-[#5EB929]/5 cursor-pointer select-none">
+                 <input
+                   type="checkbox"
+                   checked={useReferralPoints}
+                   onChange={toggleReferralPoints}
+                   className="w-5 h-5 accent-[#5EB929] shrink-0"
+                 />
+                 <div className="flex-1 min-w-0">
+                   <p className="text-[12px] font-bold text-gray-900">Use referral points</p>
+                   <p className="text-[10px] font-bold text-gray-400 mt-0.5">
+                     {availablePoints} points available · save up to ₹{Math.min(availablePoints, payableBeforePoints)}
+                   </p>
+                 </div>
+               </label>
+             )}
 
              <div className="pt-5 border-t border-dashed border-gray-100 flex justify-between items-end">
                 <div>

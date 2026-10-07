@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import BookmarkRoundedIcon from '@mui/icons-material/BookmarkRounded';
+import FavoriteRoundedIcon from '@mui/icons-material/FavoriteRounded';
 import { userAPI } from '../../../../api/user.api';
 import { useApp } from '../../context/AppContext';
 import OfferCard from '../../components/ui/OfferCard';
@@ -53,7 +53,7 @@ const SavedOffers = () => {
             className="flex flex-col items-center justify-center py-28 text-center"
           >
             <div className="w-20 h-20 bg-white rounded-3xl flex items-center justify-center mb-6 shadow-sm border border-gray-100">
-              <BookmarkRoundedIcon sx={{ fontSize: 32 }} className="text-gray-200" />
+              <FavoriteRoundedIcon sx={{ fontSize: 32 }} className="text-gray-200" />
             </div>
             <h2 className="text-sm font-bold text-gray-800 uppercase tracking-tight">Your vault is empty</h2>
             <p className="text-[11px] text-gray-400 font-medium px-10 mt-1 leading-relaxed">

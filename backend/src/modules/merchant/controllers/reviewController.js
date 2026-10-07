@@ -1,4 +1,6 @@
 import Joi from 'joi';
+import mongoose from 'mongoose';
+import Redemption from '../../booking/models/Redemption.js';
 import Review from '../models/Review.js';
 import Merchant from '../models/Merchant.js';
 
@@ -7,7 +9,9 @@ import Merchant from '../models/Merchant.js';
 // @access  Private
 export const createReview = async (req, res) => {
   const schema = Joi.object({
-    merchantId: Joi.string().required(),
+    redemptionId: Joi.string().required(),
+    // merchantId/offerId are still accepted from older clients but the pass decides them.
+    merchantId: Joi.string(),
     offerId: Joi.string().allow(null),
     rating: Joi.number().min(1).max(5).required(),
     text: Joi.string().required(),
@@ -19,24 +23,53 @@ export const createReview = async (req, res) => {
   }
 
   try {
-    const { merchantId, offerId, rating, text } = req.body;
+    const { redemptionId, rating, text } = req.body;
 
-    const review = await Review.create({
-      merchantId,
-      offerId,
+    if (!mongoose.isValidObjectId(redemptionId)) {
+      return res.status(400).json({ success: false, error: 'Invalid booking' });
+    }
+
+    // Only a customer who actually completed a pass can review that store, and
+    // each pass can be reviewed once.
+    const redemption = await Redemption.findOne({
+      _id: redemptionId,
       customerId: req.user.id,
-      customerName: req.user.name?.trim() || 'Customer',
-      rating,
-      text,
-    });
+      status: 'completed',
+    }).select('merchantId offerId');
+
+    if (!redemption) {
+      return res.status(403).json({ success: false, error: 'You can only review a store after a completed booking' });
+    }
+
+    const merchantId = redemption.merchantId;
+
+    let review;
+    try {
+      review = await Review.create({
+        merchantId,
+        offerId: redemption.offerId || undefined,
+        redemptionId: redemption._id,
+        customerId: req.user.id,
+        customerName: req.user.name?.trim() || 'Customer',
+        rating,
+        text,
+      });
+    } catch (createErr) {
+      if (createErr.code === 11000) {
+        return res.status(409).json({ success: false, error: 'You have already reviewed this booking' });
+      }
+      throw createErr;
+    }
 
     // Update merchant average rating
-    const reviews = await Review.find({ merchantId });
-    const avgRating = reviews.reduce((acc, item) => item.rating + acc, 0) / reviews.length;
-    
+    const [stats] = await Review.aggregate([
+      { $match: { merchantId } },
+      { $group: { _id: null, avg: { $avg: '$rating' }, count: { $sum: 1 } } },
+    ]);
+
     await Merchant.findByIdAndUpdate(merchantId, {
-      avgRating: avgRating.toFixed(1),
-      totalReviews: reviews.length,
+      avgRating: Number((stats?.avg || 0).toFixed(1)),
+      totalReviews: stats?.count || 0,
     });
 
     res.status(201).json({ success: true, data: review });

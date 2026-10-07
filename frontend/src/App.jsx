@@ -7,6 +7,7 @@ import AppLayout from './modules/customer/components/layout/AppLayout';
 import ScrollToTop from './components/common/ScrollToTop';
 import PushNotificationBridge from './components/common/PushNotificationBridge';
 import SplashScreen from './modules/customer/components/ui/SplashScreen';
+import { useRewardsEnabled } from './hooks/useRewardsEnabled';
 
 // Loading Component
 const PageLoader = () => (
@@ -55,6 +56,15 @@ const ProtectedRoute = ({ children }) => {
     return <PageLoader />;
   }
   return isLoggedIn ? children : <Navigate to="/login" replace />;
+};
+
+// /rewards is unreachable while admin has Milestones & Rewards switched off
+const RewardsRoute = ({ children }) => {
+  const { enabled, isLoading } = useRewardsEnabled();
+  if (isLoading) {
+    return <PageLoader />;
+  }
+  return enabled ? children : <Navigate to="/home" replace />;
 };
 
 const PublicOnlyRoute = ({ children }) => {
@@ -122,7 +132,7 @@ const AppRoutes = () => {
                 <Route path="review/:id" element={<ProtectedRoute><LeaveReview /></ProtectedRoute>} />
                 <Route path="store/:id" element={<ProtectedRoute><StoreProfile /></ProtectedRoute>} />
                 <Route path="profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
-                <Route path="rewards" element={<ProtectedRoute><RewardsHub /></ProtectedRoute>} />
+                <Route path="rewards" element={<ProtectedRoute><RewardsRoute><RewardsHub /></RewardsRoute></ProtectedRoute>} />
                 <Route path="referral" element={<ProtectedRoute><Referral /></ProtectedRoute>} />
                 <Route path="notifications" element={<ProtectedRoute><Notifications /></ProtectedRoute>} />
                 <Route path="search" element={<ProtectedRoute><SearchResults /></ProtectedRoute>} />

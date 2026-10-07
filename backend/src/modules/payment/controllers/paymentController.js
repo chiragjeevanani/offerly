@@ -6,6 +6,7 @@ import { serializeMerchant } from "../../../utils/serializers.js";
 import MerchantApplicationDraft from "../models/MerchantApplicationDraft.js";
 import MerchantSubscription from "../models/MerchantSubscription.js";
 import Payment from "../models/Payment.js";
+import { claimAndActivateOrder } from "../services/subscriptionActivation.js";
 
 // Plain `!==` on signatures leaks timing information an attacker can use to
 // guess the correct value byte-by-byte. Compare in constant time instead.
@@ -34,8 +35,10 @@ const getRazorpayAuthHeader = () => {
 const buildEndDate = (duration) => {
   const now = new Date();
 
+  // Lifetime is a far-future date, not null: the client reads a null endDate as
+  // the Unix epoch and would show a lifetime plan as already expired.
   if (duration === "Lifetime") {
-    return null;
+    return new Date(now.getFullYear() + 100, now.getMonth(), now.getDate());
   }
 
   if (duration === "Yearly") {
@@ -103,6 +106,36 @@ const createMerchantFromDraft = async ({ draft, payment, plan }) => {
   await draft.save();
 
   return merchant;
+};
+
+// Turns a paid draft into a Merchant + subscription exactly once, whether the
+// browser's /verify call or Razorpay's webhook gets here first. The atomic flip to
+// "activating" is the lock. Resolves to the merchant, or null when the draft is
+// already submitted or being activated by the other path. If activation throws,
+// the draft is released so a retry can finish the job.
+const activateDraft = async (draftId, payment) => {
+  const draft = await MerchantApplicationDraft.findOneAndUpdate(
+    { _id: draftId, status: { $in: ["payment_pending", "payment_verified"] } },
+    { $set: { status: "activating" } },
+    { new: true },
+  );
+  if (!draft) {
+    return null;
+  }
+
+  try {
+    const plan = await Plan.findById(draft.planId);
+    if (!plan) {
+      throw new Error(`Plan ${draft.planId} not found for paid draft ${draft._id}`);
+    }
+    return await createMerchantFromDraft({ draft, payment, plan });
+  } catch (err) {
+    await MerchantApplicationDraft.updateOne(
+      { _id: draft._id, status: "activating" },
+      { $set: { status: "payment_verified" } },
+    );
+    throw err;
+  }
 };
 
 export const createMerchantPlanOrder = async (req, res) => {
@@ -192,12 +225,6 @@ export const verifyMerchantPlanPayment = async (req, res) => {
     return res.status(404).json({ message: "Merchant application draft not found" });
   }
 
-  const plan = await Plan.findById(draft.planId);
-
-  if (!plan) {
-    return res.status(400).json({ message: "Subscription plan not found" });
-  }
-
   const expectedSignature = crypto
     .createHmac("sha256", process.env.RAZORPAY_KEY_SECRET)
     .update(`${razorpayOrderId}|${razorpayPaymentId}`)
@@ -229,11 +256,26 @@ export const verifyMerchantPlanPayment = async (req, res) => {
   };
   await payment.save();
 
-  draft.paymentId = razorpayPaymentId;
-  draft.status = "payment_verified";
-  await draft.save();
+  // updateOne, not draft.save(): the webhook may have submitted this draft
+  // already and a stale in-memory save would knock it back to payment_verified.
+  await MerchantApplicationDraft.updateOne(
+    { _id: draft._id, status: "payment_pending" },
+    { $set: { status: "payment_verified", paymentId: razorpayPaymentId } },
+  );
 
-  const merchant = await createMerchantFromDraft({ draft, payment, plan });
+  let merchant = await activateDraft(draft._id, payment);
+
+  if (!merchant) {
+    const current = await MerchantApplicationDraft.findById(draft._id).select("status");
+    if (current?.status === "submitted") {
+      merchant = await Merchant.findOne({ ownerId: draft.userId });
+    }
+    if (!merchant) {
+      return res.status(409).json({
+        message: "Your payment was received and your store is being set up. Please refresh in a moment.",
+      });
+    }
+  }
 
   return res.status(200).json({
     success: true,
@@ -265,21 +307,41 @@ export const razorpayWebhook = async (req, res) => {
     payload?.payment?.entity?.order_id || payload?.order?.entity?.id || payload?.order?.id || "";
 
   if (orderId) {
-    const payment = await Payment.findOne({ orderId });
+    const isPaid = event === "payment.captured" || event === "order.paid";
+    const razorpayPaymentId = payload?.payment?.entity?.id || "";
 
-    if (payment) {
-      payment.webhooks = [...(payment.webhooks || []), { event, payload, receivedAt: new Date() }];
+    try {
+      const payment = await Payment.findOne({ orderId });
 
-      if (event === "payment.captured" || event === "order.paid") {
-        payment.status = "paid";
-        payment.paymentId = payload?.payment?.entity?.id || payment.paymentId;
+      if (payment) {
+        payment.webhooks = [...(payment.webhooks || []), { event, payload, receivedAt: new Date() }];
+
+        if (isPaid) {
+          payment.status = "paid";
+          payment.paymentId = razorpayPaymentId || payment.paymentId;
+        }
+
+        // Don't let a late failure event undo a payment that has already succeeded.
+        if (event === "payment.failed" && payment.status !== "paid") {
+          payment.status = "failed";
+        }
+
+        await payment.save();
+
+        // New-merchant registration: the buyer may have closed the tab before the
+        // browser's /verify call, so the webhook creates the store itself.
+        if (isPaid && payment.draftId) {
+          await activateDraft(payment.draftId, payment);
+        }
+      } else if (isPaid) {
+        // Renewals, ad plans and customer subscriptions are tracked as SubscriptionOrder.
+        await claimAndActivateOrder({ orderId }, razorpayPaymentId);
       }
-
-      if (event === "payment.failed") {
-        payment.status = "failed";
-      }
-
-      await payment.save();
+    } catch (err) {
+      // A non-2xx makes Razorpay redeliver the event, which is what we want when
+      // the money is taken but activation failed.
+      console.error(`[Razorpay webhook] ${event} for order ${orderId} failed:`, err);
+      return res.status(500).json({ message: "Webhook processing failed" });
     }
   }
 

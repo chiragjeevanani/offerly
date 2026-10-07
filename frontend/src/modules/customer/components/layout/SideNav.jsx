@@ -4,11 +4,12 @@ import { motion } from 'framer-motion';
 import HomeRoundedIcon from '@mui/icons-material/HomeRounded';
 import ExploreRoundedIcon from '@mui/icons-material/ExploreRounded';
 import PersonRoundedIcon from '@mui/icons-material/PersonRounded';
-import BookmarkRoundedIcon from '@mui/icons-material/BookmarkRounded';
+import FavoriteRoundedIcon from '@mui/icons-material/FavoriteRounded';
 import ReceiptLongRoundedIcon from '@mui/icons-material/ReceiptLongRounded';
 import NotificationsRoundedIcon from '@mui/icons-material/NotificationsRounded';
 import CardGiftcardRoundedIcon from '@mui/icons-material/CardGiftcardRounded';
 import EmojiEventsRoundedIcon from '@mui/icons-material/EmojiEventsRounded';
+import { useRewardsEnabled } from '../../../../hooks/useRewardsEnabled';
 import MapRoundedIcon from '@mui/icons-material/MapRounded';
 import SavingsRoundedIcon from '@mui/icons-material/SavingsRounded';
 import { useApp } from '../../context/AppContext';
@@ -18,7 +19,7 @@ const navItems = [
   { label: 'Explore', icon: ExploreRoundedIcon, path: '/explore' },
   { label: 'Map', icon: MapRoundedIcon, path: '/map' },
   { label: 'Rewards & Milestones', icon: EmojiEventsRoundedIcon, path: '/rewards' },
-  { label: 'Saved Offers', icon: BookmarkRoundedIcon, path: '/saved' },
+  { label: 'Saved Offers', icon: FavoriteRoundedIcon, path: '/saved' },
   { label: 'My Redemptions', icon: ReceiptLongRoundedIcon, path: '/redemptions' },
   { label: 'Notifications', icon: NotificationsRoundedIcon, path: '/notifications' },
   { label: 'Referral', icon: CardGiftcardRoundedIcon, path: '/referral' },
@@ -30,6 +31,8 @@ const SideNav = () => {
   const location = useLocation();
   const { user, unreadCount } = useApp();
   const [isHovered, setIsHovered] = useState(false);
+  const { enabled: rewardsEnabled } = useRewardsEnabled();
+  const visibleNavItems = rewardsEnabled ? navItems : navItems.filter((item) => item.path !== '/rewards');
 
   // Sidebar is collapsed by default, expands on hover
   const isExpanded = isHovered;
@@ -44,7 +47,7 @@ const SideNav = () => {
     >
       {/* Nav links */}
       <nav className="flex-1 px-3 py-6 space-y-1">
-        {navItems.map((item) => {
+        {visibleNavItems.map((item) => {
           const isActive = location.pathname === item.path;
           const Icon = item.icon;
 

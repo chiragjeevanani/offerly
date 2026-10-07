@@ -110,6 +110,18 @@ const redemptionSchema = new mongoose.Schema(
         type: Number,
         default: 0,
       },
+      // Referral points the customer chose to spend on this pass (1 point = ₹1).
+      // Deducted from User.credits at claim time; also folded into `discount`/`final`.
+      referralDiscount: {
+        type: Number,
+        default: 0,
+      },
+    },
+    // Set once the referral points above have been given back after the pass
+    // expired or was cancelled, so they can never be refunded twice.
+    referralPointsRefunded: {
+      type: Boolean,
+      default: false,
     },
     internalId: String,
   },

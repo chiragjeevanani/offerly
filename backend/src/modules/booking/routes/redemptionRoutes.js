@@ -16,7 +16,7 @@ import { protect, authorize } from '../../../middlewares/auth.js';
 const router = express.Router();
 
 router.route('/')
-    .post(protect, createRedemption);
+    .post(protect, authorize('customer'), createRedemption);
 
 router.get('/customer', protect, getCustomerRedemptions);
 router.get('/merchant', protect, authorize('merchant'), getMerchantRedemptions);

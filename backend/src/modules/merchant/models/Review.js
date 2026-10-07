@@ -16,6 +16,12 @@ const reviewSchema = new mongoose.Schema(
       ref: 'User',
       required: true,
     },
+    // The completed pass this review is for. One review per pass; reviews that
+    // predate this field have none, hence the partial index below.
+    redemptionId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Redemption',
+    },
     customerName: String,
     rating: {
       type: Number,
@@ -32,5 +38,11 @@ const reviewSchema = new mongoose.Schema(
     timestamps: true,
   }
 );
+
+reviewSchema.index(
+  { redemptionId: 1 },
+  { unique: true, partialFilterExpression: { redemptionId: { $type: 'objectId' } } }
+);
+reviewSchema.index({ merchantId: 1, createdAt: -1 });
 
 export default mongoose.model('Review', reviewSchema);

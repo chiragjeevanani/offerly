@@ -2,7 +2,18 @@ import Redemption from '../../booking/models/Redemption.js';
 import MilestoneConfig from '../models/MilestoneConfig.js';
 import Reward from '../models/Reward.js';
 import ScratchCard from '../models/ScratchCard.js';
+import RewardsSettings from '../models/RewardsSettings.js';
 import { notifyUser } from '../../user/services/notificationService.js';
+
+export const getRewardsSettings = async () => {
+  const settings = await RewardsSettings.findOne();
+  return settings || RewardsSettings.create({});
+};
+
+export const isRewardsEnabled = async () => {
+  const settings = await getRewardsSettings();
+  return settings.enabled !== false;
+};
 
 /**
  * Generate unique coupon code for a reward if none is configured
@@ -20,6 +31,9 @@ const generateCouponCode = (level, discountType) => {
 export const checkAndAwardMilestone = async (userId) => {
   try {
     if (!userId) return { awarded: [] };
+
+    // Feature switched off by admin - no new scratch cards are issued
+    if (!(await isRewardsEnabled())) return { disabled: true, awarded: [] };
 
     // 1. Count total completed claimed offers for this user
     const completedClaimsCount = await Redemption.countDocuments({

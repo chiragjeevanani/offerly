@@ -126,6 +126,12 @@ const BookingDetailModal = ({ booking, onClose, onFulfilled }) => {
                   </div>
                 ))}
              </div>
+             {booking.totals?.referralDiscount > 0 && (
+               <div className="mt-3 p-2.5 rounded-lg bg-amber-50 border border-amber-200 flex justify-between items-center">
+                 <span className="text-[11px] font-bold text-amber-800 uppercase">Referral points used</span>
+                 <span className="text-sm font-bold text-amber-800">-₹{Math.round(booking.totals.referralDiscount).toLocaleString()}</span>
+               </div>
+             )}
              <div className="mt-3 pt-3 border-t border-gray-200 flex justify-between items-center">
                 <span className="text-xs font-bold text-gray-900 uppercase">Total to Collect</span>
                 <span className="text-lg font-bold text-[#5EB929]">₹{(booking.totals?.final || 0).toLocaleString()}</span>
@@ -307,6 +313,11 @@ const Bookings = ({ merchant }) => {
                         <div className="flex items-center gap-2 mt-1">
                           <span className="text-[9px] font-mono font-bold text-primary">#{booking.internalId || booking._id?.slice(-6)}</span>
                           <span className="text-[9px] text-gray-400 font-medium">• {new Date(booking.scannedAt || booking.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                          {booking.totals?.referralDiscount > 0 && (
+                            <span className="text-[8px] font-bold uppercase px-1.5 py-0.5 rounded bg-amber-50 text-amber-700">
+                              Points -₹{Math.round(booking.totals.referralDiscount)}
+                            </span>
+                          )}
                         </div>
                       </div>
                     </div>

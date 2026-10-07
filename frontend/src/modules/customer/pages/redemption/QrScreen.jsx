@@ -19,6 +19,7 @@ import { useCustomerSubscription } from '../../../../hooks/useCustomerSubscripti
 import { useSocket } from '../../../../context/SocketContext';
 import ProductThumb from '../../components/ui/ProductThumb';
 import EditBookingItemsSheet from './EditBookingItemsSheet';
+import { getUseReferralPoints, setUseReferralPoints } from '../../../../utils/referralPoints';
 
 function formatDateTime(dateString) {
   const options = { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' };
@@ -38,11 +39,18 @@ const QrScreen = () => {
   const [timeLeft, setTimeLeft] = useState('');
   const [isExpired, setIsExpired] = useState(false);
   const [isEditingItems, setIsEditingItems] = useState(false);
-  const { user } = useApp();
+  const { user, refreshUser } = useApp();
   const { enabled: subscriptionEnabled, isSubscribed } = useCustomerSubscription();
 
   const [draftData, setDraftData] = useState(null);
   const [draftMerchantId, setDraftMerchantId] = useState(null);
+
+  // Preview of the referral points the customer ticked in the cart. The server
+  // decides the real amount when the pass is created.
+  const wantsReferralPoints = getUseReferralPoints();
+  const draftReferralDiscount = wantsReferralPoints && draftData
+    ? Math.min(Math.max(0, Math.floor(user?.credits || 0)), Math.round(draftData.totals.final))
+    : 0;
 
   useEffect(() => {
     const loadBooking = async () => {
@@ -237,11 +245,16 @@ const QrScreen = () => {
           discount: draftData.totals.discount,
           final: draftData.totals.final,
           original: draftData.totals.base
-        }
+        },
+        useReferralPoints: draftReferralDiscount > 0,
       });
 
       if (response && response.success) {
         await cartAPI.clearCart();
+        if (draftReferralDiscount > 0) {
+          setUseReferralPoints(false);
+          refreshUser().catch(() => {});
+        }
         navigate(`/redeem/${response.data._id || response.data.id}`, { replace: true });
       } else {
         throw new Error('Failed to create booking');
@@ -327,13 +340,19 @@ const QrScreen = () => {
               </div>
 
               <div className="bg-[#F8FAFC] rounded-3xl p-6 border border-gray-50 mb-6">
+                {draftReferralDiscount > 0 && (
+                  <div className="flex justify-between items-center mb-3 pb-3 border-b border-dashed border-gray-200">
+                    <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Referral Points</p>
+                    <p className="text-[12px] font-bold text-[#5EB929]">-₹{draftReferralDiscount}</p>
+                  </div>
+                )}
                 <div className="flex justify-between items-center mb-1">
                    <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Total Payable</p>
                    <p className="text-[10px] font-bold text-[#5EB929] uppercase tracking-widest">At Store</p>
                 </div>
                 <div className="flex justify-between items-end">
                    <p className="text-[12px] font-bold text-gray-400">Net Amount</p>
-                   <span className="text-3xl font-bold text-[#5EB929] leading-none tracking-tight">₹{Math.round(draftData?.totals?.final)}</span>
+                   <span className="text-3xl font-bold text-[#5EB929] leading-none tracking-tight">₹{Math.round((draftData?.totals?.final || 0) - draftReferralDiscount)}</span>
                 </div>
               </div>
 
@@ -385,13 +404,15 @@ const QrScreen = () => {
                 <div className="absolute top-1/2 left-0 -translate-x-1/2 -translate-y-1/2 w-5 h-5 rounded-full bg-gray-950" />
                 <div className="absolute top-1/2 right-0 translate-x-1/2 -translate-y-1/2 w-5 h-5 rounded-full bg-gray-950" />
 
-                <div className="bg-white p-3 rounded-2xl shadow-xl shadow-[#5EB929]/5 border border-gray-50">
+                {/* Scanned phone-to-phone: keep modules large (level M, no logo needs H) and keep a quiet zone */}
+                <div className="bg-white p-2 rounded-2xl shadow-xl shadow-[#5EB929]/5 border border-gray-50">
                   <QRCodeSVG
                     value={booking.qrToken || booking.id || booking._id}
-                    size={140}
-                    fgColor="#111827"
+                    size={220}
+                    fgColor="#000000"
                     bgColor="#ffffff"
-                    level="H"
+                    level="M"
+                    marginSize={2}
                   />
                 </div>
                 <div className="mt-4 bg-[#F8FAFC] flex items-center gap-2 px-3 py-1 rounded-md border border-gray-100 text-[9px] font-bold tracking-[0.2em] text-gray-900">
@@ -439,6 +460,13 @@ const QrScreen = () => {
                     <div className="flex justify-between items-center text-[10px] mb-1.5">
                       <span className="font-bold text-[#5EB929]">Offerly Extra Discount</span>
                       <span className="font-bold text-[#5EB929]">-₹{Math.round(booking.totals.walletDiscount)}</span>
+                    </div>
+                  )}
+
+                  {booking.totals?.referralDiscount > 0 && (
+                    <div className="flex justify-between items-center text-[10px] mb-1.5">
+                      <span className="font-bold text-[#5EB929]">Referral Points Used</span>
+                      <span className="font-bold text-[#5EB929]">-₹{Math.round(booking.totals.referralDiscount)}</span>
                     </div>
                   )}
 

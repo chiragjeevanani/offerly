@@ -4,7 +4,7 @@ import { motion } from 'framer-motion';
 import PersonRoundedIcon from '@mui/icons-material/PersonRounded';
 import LocationOnRoundedIcon from '@mui/icons-material/LocationOnRounded';
 import ReceiptLongRoundedIcon from '@mui/icons-material/ReceiptLongRounded';
-import BookmarkRoundedIcon from '@mui/icons-material/BookmarkRounded';
+import FavoriteRoundedIcon from '@mui/icons-material/FavoriteRounded';
 import CardGiftcardRoundedIcon from '@mui/icons-material/CardGiftcardRounded';
 import NotificationsRoundedIcon from '@mui/icons-material/NotificationsRounded';
 import HelpOutlineRoundedIcon from '@mui/icons-material/HelpOutlineRounded';
@@ -23,6 +23,7 @@ import { cityAPI } from '../../../../api/city.api';
 import PageTransition from '../../components/ui/PageTransition';
 import BottomSheet from '../../components/ui/BottomSheet';
 import EmojiEventsRoundedIcon from '@mui/icons-material/EmojiEventsRounded';
+import { useRewardsEnabled } from '../../../../hooks/useRewardsEnabled';
 import toast from 'react-hot-toast';
 import { useEffect } from 'react';
 
@@ -32,7 +33,7 @@ const menuSections = [
     items: [
       { label: 'Claim Milestones & Rewards', icon: EmojiEventsRoundedIcon, path: '/rewards' },
       { label: 'My Redemptions', icon: ReceiptLongRoundedIcon, path: '/redemptions' },
-      { label: 'Saved Offers', icon: BookmarkRoundedIcon, path: '/saved' },
+      { label: 'Saved Offers', icon: FavoriteRoundedIcon, path: '/saved' },
       { label: 'Referral Program', icon: CardGiftcardRoundedIcon, path: '/referral' },
     ],
   },
@@ -66,6 +67,10 @@ const toDateInput = (value) => (value ? String(value).slice(0, 10) : '');
 
 const Profile = () => {
   const navigate = useNavigate();
+  const { enabled: rewardsEnabled } = useRewardsEnabled();
+  const visibleMenuSections = rewardsEnabled
+    ? menuSections
+    : menuSections.map((section) => ({ ...section, items: section.items.filter((item) => item.path !== '/rewards') }));
   const { user, logout, refreshUser } = useApp();
   const [redemptionCount, setRedemptionCount] = useState(0);
   const [lifetimeSavings, setLifetimeSavings] = useState(user?.lifetimeSavings || 0);
@@ -289,7 +294,7 @@ const Profile = () => {
           <div className="bg-white rounded-[2rem] p-4 shadow-[0_8px_30px_rgba(0,0,0,0.04)] border border-gray-50 grid grid-cols-3 gap-3">
              {[
                { label: 'Redeemed', value: redemptionCount, icon: ReceiptLongRoundedIcon },
-               { label: 'Saved Offers', value: user?.savedOffers?.length || 0, icon: BookmarkRoundedIcon },
+               { label: 'Saved Offers', value: user?.savedOffers?.length || 0, icon: FavoriteRoundedIcon },
                { label: 'Savings', value: `₹${lifetimeSavings}`, icon: SavingsRoundedIcon },
              ].map((stat) => (
                <div key={stat.label} className="text-center p-2 rounded-2xl hover:bg-gray-50 transition-colors">
@@ -356,7 +361,7 @@ const Profile = () => {
           )}
 
           {/* Menu Sections - Slim Strips */}
-          {menuSections.map((section, sIdx) => (
+          {visibleMenuSections.map((section, sIdx) => (
             <div key={section.title} className="pt-2">
               <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-3 px-1">
                 {section.title}

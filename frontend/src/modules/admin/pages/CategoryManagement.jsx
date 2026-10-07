@@ -7,15 +7,17 @@ import AddRoundedIcon from '@mui/icons-material/AddRounded';
 import EditRoundedIcon from '@mui/icons-material/EditRounded';
 import DeleteRoundedIcon from '@mui/icons-material/DeleteRounded';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
-import Inventory2RoundedIcon from '@mui/icons-material/Inventory2Rounded';
-import MiscellaneousServicesRoundedIcon from '@mui/icons-material/MiscellaneousServicesRounded';
 import RefreshRoundedIcon from '@mui/icons-material/RefreshRounded';
 import SearchRoundedIcon from '@mui/icons-material/SearchRounded';
 import MoreVertRoundedIcon from '@mui/icons-material/MoreVertRounded';
 import ChevronRightRoundedIcon from '@mui/icons-material/ChevronRightRounded';
 import toast from 'react-hot-toast';
+import AddPhotoAlternateRoundedIcon from '@mui/icons-material/AddPhotoAlternateRounded';
 import { categoryAPI } from '../../../api/category.api';
+import { uploadAPI } from '../../../api/upload.api';
 import SlideOver from '../components/SlideOver';
+import { CATEGORY_ICONS, CATEGORY_COLORS, getCategoryVisual } from '../../../utils/categoryVisuals';
+import CategoryTile from '../../../components/CategoryTile';
 
 const TabButton = ({ label, isActive, onClick }) => (
   <button
@@ -37,6 +39,7 @@ const CategoryManagement = () => {
   const [isSlideOverOpen, setIsSlideOverOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState(null);
+  const [isUploading, setIsUploading] = useState(false);
   const [formData, setFormData] = useState({ 
     name: '', 
     type: 'product', 
@@ -63,30 +66,51 @@ const CategoryManagement = () => {
 
   const handleAdd = () => {
     setSelectedCategory(null);
-    setFormData({ 
-      name: '', 
-      type: 'product', 
-      icon: '', 
-      color: '#5EB929', 
-      description: '', 
+    setFormData({
+      name: '',
+      type: 'product',
+      icon: 'storefront',
+      color: '#5EB929',
+      image: '',
+      showOnHome: true,
+      description: '',
       order: categories.length + 1,
-      status: 'active' 
+      status: 'active'
     });
     setIsSlideOverOpen(true);
   };
 
   const handleEdit = (cat) => {
     setSelectedCategory(cat);
-    setFormData({ 
-      name: cat.name, 
-      type: cat.type, 
-      icon: cat.icon || '', 
-      color: cat.color || '#5EB929', 
+    // Start from what customers currently see (includes the legacy name-based fallback).
+    const visual = getCategoryVisual(cat);
+    setFormData({
+      name: cat.name,
+      type: cat.type,
+      icon: visual.iconKey,
+      color: visual.color,
+      image: cat.image || '',
+      showOnHome: cat.showOnHome !== false,
       description: cat.description || '', 
       order: cat.order || 0,
       status: cat.status 
     });
     setIsSlideOverOpen(true);
+  };
+
+  const handleImageUpload = async (e) => {
+    const file = e.target.files?.[0];
+    e.target.value = '';
+    if (!file) return;
+    setIsUploading(true);
+    try {
+      const response = await uploadAPI.uploadImage(file);
+      setFormData(prev => ({ ...prev, image: response?.url || '' }));
+    } catch (error) {
+      toast.error(error?.response?.data?.message || 'Image upload failed');
+    } finally {
+      setIsUploading(false);
+    }
   };
 
   const handleDeleteClick = (cat) => {
@@ -193,14 +217,13 @@ const CategoryManagement = () => {
                 className="bg-white rounded-xl p-2.5 border border-gray-100 shadow-sm active:scale-[0.98] transition-all relative flex items-center justify-between group cursor-pointer"
               >
                 <div className="flex items-center gap-3">
-                  <div className={`w-10 h-10 rounded-full flex items-center justify-center border ${
-                    cat.type === 'service' ? 'bg-indigo-50 border-indigo-100 text-indigo-600' : 'bg-green-50 border-green-100 text-[#5EB929]'
-                  }`}>
-                    {cat.type === 'service' ? <MiscellaneousServicesRoundedIcon sx={{ fontSize: 20 }} /> : <Inventory2RoundedIcon sx={{ fontSize: 20 }} />}
-                  </div>
+                  <CategoryTile category={cat} size={40} iconSize={20} className="rounded-xl" />
                   <div>
                     <h4 className="text-[14px] font-semibold text-gray-800 leading-tight">{cat.name}</h4>
-                    <p className="text-[11px] text-gray-500 mt-0.5">{cat.type === 'product' ? 'Product Based' : 'Service Based'} • Rank {cat.order || 0}</p>
+                    <p className="text-[11px] text-gray-500 mt-0.5">
+                      {cat.type === 'product' ? 'Product Based' : 'Service Based'} • Rank {cat.order || 0}
+                      {cat.showOnHome === false && ' • Hidden on home'}
+                    </p>
                   </div>
                 </div>
                 
@@ -235,14 +258,101 @@ const CategoryManagement = () => {
         <form onSubmit={handleSave} className="flex flex-col h-full font-sans">
           <div className="flex-1 overflow-y-auto space-y-5 pb-32 pr-1 no-scrollbar">
             
-            {/* Category Icon Preview */}
-            <div className="flex flex-col items-center justify-center p-8 bg-gray-50 rounded-2xl border border-gray-100 mb-2">
-              <div className={`w-20 h-20 rounded-2xl flex items-center justify-center shadow-inner border-2 ${
-                formData.type === 'service' ? 'bg-indigo-50 border-indigo-200 text-indigo-600' : 'bg-green-50 border-green-200 text-[#5EB929]'
-              }`}>
-                {formData.type === 'service' ? <MiscellaneousServicesRoundedIcon sx={{ fontSize: 40 }} /> : <Inventory2RoundedIcon sx={{ fontSize: 40 }} />}
+            {/* Live preview of the customer home "Select Services" tile */}
+            <div className="flex flex-col items-center justify-center p-6 bg-gray-50 rounded-2xl border border-gray-100 mb-2">
+              <div className="flex flex-col items-center gap-1.5 w-[72px]">
+                <CategoryTile category={formData} size={64} iconSize={28} />
+                <span className="text-xs font-medium text-gray-700 text-center line-clamp-1 w-full capitalize">
+                  {formData.name || 'Category'}
+                </span>
               </div>
-              <p className="mt-3 text-[12px] font-medium text-gray-500 uppercase tracking-widest">{formData.type} Segment</p>
+              <p className="mt-3 text-[11px] font-medium text-gray-400 uppercase tracking-widest">Home preview</p>
+            </div>
+
+            {/* Home visibility */}
+            <label className="flex items-center justify-between gap-3 p-3.5 bg-white border border-gray-200 rounded-xl cursor-pointer">
+              <div>
+                <p className="text-sm font-semibold text-gray-800">Show in "Select Services"</p>
+                <p className="text-[11px] text-gray-500 mt-0.5">Shown on the customer home row, sorted by Order Index.</p>
+              </div>
+              <input
+                type="checkbox"
+                checked={formData.showOnHome}
+                onChange={(e) => setFormData({ ...formData, showOnHome: e.target.checked })}
+                className="w-5 h-5 accent-[#5EB929] flex-shrink-0"
+              />
+            </label>
+
+            {/* Icon picker */}
+            <div>
+              <label className="block text-[11px] font-bold text-gray-400 uppercase tracking-widest mb-1.5 ml-1">Icon</label>
+              <div className="grid grid-cols-6 gap-2">
+                {Object.entries(CATEGORY_ICONS).map(([key, { label, Icon }]) => {
+                  const isSelected = formData.icon === key;
+                  return (
+                    <button
+                      key={key}
+                      type="button"
+                      title={label}
+                      onClick={() => setFormData({ ...formData, icon: key })}
+                      className={`aspect-square rounded-xl flex items-center justify-center border transition-all ${
+                        isSelected ? 'border-2' : 'border-gray-100 bg-white text-gray-500 hover:border-gray-300'
+                      }`}
+                      style={isSelected ? { borderColor: formData.color, color: formData.color, backgroundColor: `${formData.color}1A` } : undefined}
+                    >
+                      <Icon sx={{ fontSize: 20 }} />
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Colour picker */}
+            <div>
+              <label className="block text-[11px] font-bold text-gray-400 uppercase tracking-widest mb-1.5 ml-1">Colour</label>
+              <div className="flex flex-wrap items-center gap-2">
+                {CATEGORY_COLORS.map((c) => (
+                  <button
+                    key={c}
+                    type="button"
+                    onClick={() => setFormData({ ...formData, color: c })}
+                    className={`w-8 h-8 rounded-full border-2 transition-all ${
+                      formData.color.toUpperCase() === c ? 'border-gray-800 scale-110' : 'border-white shadow'
+                    }`}
+                    style={{ backgroundColor: c }}
+                    aria-label={c}
+                  />
+                ))}
+                <input
+                  type="color"
+                  value={formData.color}
+                  onChange={(e) => setFormData({ ...formData, color: e.target.value.toUpperCase() })}
+                  className="w-8 h-8 rounded-full cursor-pointer border-0 p-0 bg-transparent"
+                  title="Custom colour"
+                />
+              </div>
+            </div>
+
+            {/* Optional image (overrides the icon) */}
+            <div>
+              <label className="block text-[11px] font-bold text-gray-400 uppercase tracking-widest mb-1.5 ml-1">Custom Image (optional)</label>
+              <div className="flex items-center gap-3">
+                <label className={`flex items-center gap-2 px-4 py-2.5 rounded-xl border border-dashed border-gray-300 text-xs font-semibold text-gray-600 cursor-pointer hover:border-primary hover:text-primary transition-all ${isUploading ? 'opacity-50 pointer-events-none' : ''}`}>
+                  <AddPhotoAlternateRoundedIcon sx={{ fontSize: 18 }} />
+                  {isUploading ? 'Uploading...' : formData.image ? 'Replace image' : 'Upload image'}
+                  <input type="file" accept="image/*" onChange={handleImageUpload} className="hidden" />
+                </label>
+                {formData.image && (
+                  <button
+                    type="button"
+                    onClick={() => setFormData({ ...formData, image: '' })}
+                    className="text-xs font-semibold text-red-500 hover:underline"
+                  >
+                    Remove (use icon)
+                  </button>
+                )}
+              </div>
+              <p className="text-[11px] text-gray-400 mt-1.5 ml-1">Square image works best. Replaces the icon on the home tile.</p>
             </div>
 
             {/* Basic Info */}

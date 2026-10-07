@@ -1,4 +1,6 @@
 import Joi from 'joi';
+import mongoose from 'mongoose';
+import { hasActiveMerchantSubscription } from '../../../utils/merchantSubscription.js';
 import RedemptionModel from '../models/Redemption.js';
 import Merchant from '../../merchant/models/Merchant.js';
 import Offer from '../../merchant/models/Offer.js';
@@ -7,10 +9,57 @@ import User from '../../user/models/User.js';
 import { notifyMerchant, notifyUser } from '../../user/services/notificationService.js';
 import { invalidateFeedCache } from '../../../utils/feedCache.js';
 import { checkAndAwardMilestone } from '../../rewards/services/milestoneService.js';
+import {
+  checkAndAwardReferral,
+  reserveReferralPoints,
+  refundReferralPoints,
+  releaseReferralPoints,
+} from '../../user/services/referralService.js';
 import { getWalletSettings } from '../../../utils/subscriptionWallet.js';
 import { getCustomerSubscriptionStatus } from '../../../utils/customerSubscription.js';
 import DiscountWalletTransaction from '../../payment/models/DiscountWalletTransaction.js';
 import { resolveLine, stockError, decrementStockForItems } from '../../merchant/services/inventoryService.js';
+
+// Builds pass line items from the live catalogue: name, price and offer price
+// always come from the DB, never the client. `needsStockCheck(productId,
+// variantId, qty)` says which lines must fit in current stock. Returns
+// `{ items }` or `{ error, code }`.
+const buildItemSnapshots = async (merchantId, items, needsStockCheck = () => false) => {
+  const products = await Product.find({
+    _id: { $in: items.map((i) => i.productId) },
+    merchantId,
+  }).populate('categoryId', 'name');
+  const productMap = new Map(products.map((p) => [p._id.toString(), p]));
+
+  const nextItems = [];
+  for (const { productId, variantId, qty } of items) {
+    const product = productMap.get(productId);
+    if (!product) return { error: `Product not found or unavailable: ${productId}` };
+    const line = await resolveLine({ product, variantId: variantId || null });
+    if (line.error) return { error: line.error, code: line.code };
+    if (needsStockCheck(productId, variantId, qty)) {
+      const stockErr = stockError(line, qty);
+      if (stockErr) return { error: stockErr, code: 'OUT_OF_STOCK' };
+    }
+    nextItems.push({
+      productId: product._id,
+      variantId: line.variant?._id || null,
+      product: {
+        id: product._id.toString(),
+        name: line.displayName,
+        category: product.categoryId?.name || '',
+        price: line.price,
+        offerPrice: line.offerPrice,
+        image: product.images?.[0] || '',
+        variantLabel: line.label,
+        isVeg: product.isVeg,
+        duration: product.duration,
+      },
+      qty,
+    });
+  }
+  return { items: nextItems };
+};
 
 // @desc    Create a redemption/booking
 // @route   POST /api/redemptions
@@ -19,30 +68,17 @@ export const createRedemption = async (req, res) => {
   const schema = Joi.object({
     offerId: Joi.string().allow(null),
     merchantId: Joi.string().required(),
-    items: Joi.array().items(Joi.object({
+    // Only the identity of each line is trusted from the client. Names, prices and
+    // totals are rebuilt from the catalogue below, and the fields the client still
+    // sends (product snapshot, totals) are accepted for compatibility but ignored.
+    items: Joi.array().min(1).items(Joi.object({
       productId: Joi.string().required(),
       variantId: Joi.string().allow(null, ''),
-      product: Joi.object({
-        id: Joi.string().required(),
-        name: Joi.string().required(),
-        category: Joi.string().allow('', null),
-        price: Joi.number().required(),
-        offerPrice: Joi.number().required(),
-        image: Joi.string().allow('', null),
-        variantLabel: Joi.string().allow('', null),
-        isVeg: Joi.any(),
-        duration: Joi.any()
-      }).required(),
-      qty: Joi.number().min(1).required(),
-    })),
-    totals: Joi.object({
-      base: Joi.number().required(),
-      discount: Joi.number().required(),
-      final: Joi.number().required(),
-      original: Joi.number().required(),
-      subtotal: Joi.number(), // backward compatibility
-      total: Joi.number(), // backward compatibility
-    }),
+      product: Joi.object().unknown(true),
+      qty: Joi.number().integer().min(1).required(),
+    })).required(),
+    totals: Joi.object().unknown(true),
+    useReferralPoints: Joi.boolean(),
   });
 
   const { error } = schema.validate(req.body);
@@ -51,7 +87,7 @@ export const createRedemption = async (req, res) => {
   }
 
   try {
-    const { offerId, merchantId, items, totals } = req.body;
+    const { offerId, merchantId } = req.body;
 
     const { enabled, isSubscribed } = await getCustomerSubscriptionStatus(req.user.id);
     if (enabled && !isSubscribed) {
@@ -62,42 +98,84 @@ export const createRedemption = async (req, res) => {
       });
     }
 
-    // Stock check, and pin each line's variant + display name server-side so
-    // the pass always says which size/colour was reserved.
-    for (const item of items || []) {
-      const line = await resolveLine({ productId: item.productId, variantId: item.variantId || null });
-      if (line.error) {
-        return res.status(400).json({ success: false, error: line.error, code: line.code });
-      }
-      const stockErr = stockError(line, item.qty);
-      if (stockErr) {
-        return res.status(400).json({ success: false, error: stockErr, code: 'OUT_OF_STOCK' });
-      }
-      item.variantId = line.variant?._id || null;
-      item.product = { ...item.product, name: line.displayName, variantLabel: line.label };
+    const idsValid = [merchantId, offerId, ...req.body.items.map((i) => i.productId), ...req.body.items.map((i) => i.variantId)]
+      .filter(Boolean)
+      .every((id) => mongoose.isValidObjectId(id));
+    if (!idsValid) {
+      return res.status(400).json({ success: false, error: 'Invalid booking request' });
     }
+
+    // The store must be live: approved, inside its membership, and open.
+    const merchantDoc = await Merchant.findById(merchantId).select('status isOpen discountWallet');
+    if (!merchantDoc || merchantDoc.status !== 'approved' || !(await hasActiveMerchantSubscription(merchantDoc._id))) {
+      return res.status(400).json({ success: false, error: 'This store is not accepting bookings right now', code: 'STORE_UNAVAILABLE' });
+    }
+    if (merchantDoc.isOpen === false) {
+      return res.status(400).json({ success: false, error: 'This store is closed for now', code: 'STORE_CLOSED' });
+    }
+
+    // When the claim is tied to an offer, that offer must belong to this store
+    // and still be redeemable. maxRedemptions of 0 is treated as no cap.
+    if (offerId) {
+      const offer = await Offer.findById(offerId).select('merchantId status validFrom validTo maxRedemptions currentRedemptions').lean();
+      const now = new Date();
+      if (!offer || String(offer.merchantId) !== String(merchantId) || offer.status !== 'active') {
+        return res.status(400).json({ success: false, error: 'This offer is no longer available', code: 'OFFER_UNAVAILABLE' });
+      }
+      if ((offer.validFrom && new Date(offer.validFrom) > now) || (offer.validTo && new Date(offer.validTo) < now)) {
+        return res.status(400).json({ success: false, error: 'This offer has expired', code: 'OFFER_EXPIRED' });
+      }
+      if (offer.maxRedemptions > 0 && (offer.currentRedemptions || 0) >= offer.maxRedemptions) {
+        return res.status(400).json({ success: false, error: 'This offer has reached its redemption limit', code: 'OFFER_LIMIT_REACHED' });
+      }
+    }
+
+    // Merge repeated lines so one product can't dodge the stock check by being
+    // split across several entries.
+    const lineKey = (productId, variantId) => `${productId}|${variantId || ''}`;
+    const merged = new Map();
+    for (const { productId, variantId, qty } of req.body.items) {
+      const key = lineKey(productId, variantId);
+      const existing = merged.get(key);
+      if (existing) existing.qty += qty;
+      else merged.set(key, { productId, variantId: variantId || null, qty });
+    }
+
+    const built = await buildItemSnapshots(merchantDoc._id, [...merged.values()], () => true);
+    if (built.error) {
+      return res.status(400).json({ success: false, error: built.error, code: built.code });
+    }
+    const items = built.items;
+
+    const base = Math.round(items.reduce((s, it) => s + it.product.price * it.qty, 0));
+    const subtotal = Math.round(items.reduce((s, it) => s + it.product.offerPrice * it.qty, 0));
 
     // Extra discount for customers who've never completed a redemption anywhere
     // on the platform, funded from the merchant's discount wallet. Computed
-    // server-side (never trust client-sent totals for this) and capped by
-    // whatever the merchant's wallet actually holds right now.
+    // server-side and capped by whatever the merchant's wallet actually holds.
     let walletDiscount = 0;
     const hasCompletedBefore = await RedemptionModel.exists({ customerId: req.user.id, status: 'completed' });
     if (!hasCompletedBefore) {
-      const [merchantDoc, walletSettings] = await Promise.all([
-        Merchant.findById(merchantId).select('discountWallet'),
-        getWalletSettings(),
-      ]);
+      const walletSettings = await getWalletSettings();
       const configuredAmount = walletSettings?.newUserDiscountAmount || 0;
-      const availableBalance = merchantDoc?.discountWallet?.balance || 0;
-      walletDiscount = Math.max(0, Math.round(Math.min(configuredAmount, availableBalance, totals.final || 0)));
+      const availableBalance = merchantDoc.discountWallet?.balance || 0;
+      walletDiscount = Math.max(0, Math.round(Math.min(configuredAmount, availableBalance, subtotal)));
     }
 
+    // Referral points the customer ticked to spend, 1 point = ₹1, capped at
+    // what's left to pay. Taken off their balance now and returned if the
+    // pass expires or is cancelled (see releaseReferralPoints).
+    const referralDiscount = req.body.useReferralPoints
+      ? await reserveReferralPoints(req.user.id, subtotal - walletDiscount)
+      : 0;
+
     const finalTotals = {
-      ...totals,
-      discount: Math.round((totals.discount || 0) + walletDiscount),
-      final: Math.round((totals.final || 0) - walletDiscount),
+      base,
+      original: base,
+      discount: base - subtotal + walletDiscount + referralDiscount,
+      final: subtotal - walletDiscount - referralDiscount,
       walletDiscount,
+      referralDiscount,
     };
 
     // Friendly ID generation (e.g. B-54321)
@@ -109,18 +187,24 @@ export const createRedemption = async (req, res) => {
     const qrToken = `qr_${merchantId}_${req.user.id}_${Date.now()}`;
     const qrExpiry = new Date(Date.now() + 2 * 60 * 60 * 1000); // 2 hours
 
-    const redemption = await RedemptionModel.create({
-      offerId,
-      merchantId,
-      customerId: req.user.id,
-      customerName: req.user.name || '',
-      items,
-      totals: finalTotals,
-      qrToken,
-      qrExpiry,
-      internalId,
-      status: 'pending'
-    });
+    let redemption;
+    try {
+      redemption = await RedemptionModel.create({
+        offerId,
+        merchantId,
+        customerId: req.user.id,
+        customerName: req.user.name || '',
+        items,
+        totals: finalTotals,
+        qrToken,
+        qrExpiry,
+        internalId,
+        status: 'pending'
+      });
+    } catch (createErr) {
+      await refundReferralPoints(req.user.id, referralDiscount);
+      throw createErr;
+    }
 
     // Notify the merchant: persisted record + live socket event + FCM push.
     // The socket keeps carrying the whole redemption (Bookings.jsx reads
@@ -235,6 +319,7 @@ export const verifyQR = async (req, res) => {
     if (new Date(redemption.qrExpiry) < new Date()) {
       redemption.status = 'expired';
       await redemption.save();
+      await releaseReferralPoints(redemption);
       return res.status(400).json({ success: false, error: 'QR Token has expired' });
     }
 
@@ -330,6 +415,12 @@ export const verifyQR = async (req, res) => {
       console.error('Customer notification error (non-blocking):', notifyErr);
     }
 
+    try {
+      await checkAndAwardReferral(redemption);
+    } catch (referralErr) {
+      console.error('[Referral] Award error (non-blocking):', referralErr);
+    }
+
     // Check & award milestone rewards in background (non-blocking)
     try {
       checkAndAwardMilestone(redemption.customerId).catch((err) => {
@@ -385,6 +476,7 @@ export const lookupByInternalId = async (req, res) => {
     if (new Date(redemption.qrExpiry) < new Date()) {
       redemption.status = 'expired';
       await redemption.save();
+      await releaseReferralPoints(redemption);
       return res.status(400).json({ success: false, error: `Pass ID "${internalId}" has expired.` });
     }
 
@@ -416,50 +508,31 @@ const applyRedemptionItems = async (redemption, items, { checkStock = false } = 
     redemption.items.map((it) => [lineKey(String(it.productId), it.variantId ? String(it.variantId) : ''), it.qty])
   );
 
-  const products = await Product.find({
-    _id: { $in: items.map((i) => i.productId) },
-    merchantId: redemption.merchantId,
-  }).populate('categoryId', 'name');
-  const productMap = new Map(products.map((p) => [p._id.toString(), p]));
-
-  const nextItems = [];
-  for (const { productId, variantId, qty } of items) {
-    const product = productMap.get(productId);
-    if (!product) return `Product not found or unavailable: ${productId}`;
-    const line = await resolveLine({ product, variantId: variantId || null });
-    if (line.error) return line.error;
-    if (checkStock && qty > (previousQty.get(lineKey(productId, variantId)) || 0)) {
-      const stockErr = stockError(line, qty);
-      if (stockErr) return stockErr;
-    }
-    nextItems.push({
-      productId: product._id,
-      variantId: line.variant?._id || null,
-      product: {
-        id: product._id.toString(),
-        name: line.displayName,
-        category: product.categoryId?.name || '',
-        price: line.price,
-        offerPrice: line.offerPrice,
-        image: product.images?.[0] || '',
-        variantLabel: line.label,
-        isVeg: product.isVeg,
-        duration: product.duration,
-      },
-      qty,
-    });
-  }
-  redemption.items = nextItems;
+  const built = await buildItemSnapshots(
+    redemption.merchantId,
+    items,
+    (productId, variantId, qty) => checkStock && qty > (previousQty.get(lineKey(productId, variantId)) || 0)
+  );
+  if (built.error) return built.error;
+  redemption.items = built.items;
 
   const base = Math.round(redemption.items.reduce((s, it) => s + it.product.price * it.qty, 0));
   const final = Math.round(redemption.items.reduce((s, it) => s + it.product.offerPrice * it.qty, 0));
   const walletDiscount = Math.max(0, Math.min(redemption.totals?.walletDiscount || 0, final));
+
+  // Referral points stay applied, but never more than the new bill. Any points
+  // that no longer fit go straight back to the customer.
+  const previousReferral = redemption.totals?.referralDiscount || 0;
+  const referralDiscount = Math.max(0, Math.min(previousReferral, final - walletDiscount));
+  await refundReferralPoints(redemption.customerId, previousReferral - referralDiscount);
+
   redemption.totals = {
     base,
-    discount: base - final + walletDiscount,
-    final: final - walletDiscount,
+    discount: base - final + walletDiscount + referralDiscount,
+    final: final - walletDiscount - referralDiscount,
     original: base,
     walletDiscount,
+    referralDiscount,
   };
 
   return null;
@@ -493,6 +566,7 @@ export const updateRedemptionItems = async (req, res) => {
     if (new Date(redemption.qrExpiry) < new Date()) {
       redemption.status = 'expired';
       await redemption.save();
+      await releaseReferralPoints(redemption);
       return res.status(400).json({ success: false, error: 'QR Token has expired' });
     }
 
@@ -537,6 +611,7 @@ export const updateMyRedemptionItems = async (req, res) => {
     if (new Date(redemption.qrExpiry) < new Date()) {
       redemption.status = 'expired';
       await redemption.save();
+      await releaseReferralPoints(redemption);
       return res.status(400).json({ success: false, error: 'This pass has expired' });
     }
 
@@ -604,6 +679,7 @@ export const cancelRedemption = async (req, res) => {
 
     redemption.status = 'cancelled';
     await redemption.save();
+    await releaseReferralPoints(redemption);
 
     res.status(200).json({ success: true, data: redemption });
   } catch (err) {
@@ -641,6 +717,7 @@ export const previewQR = async (req, res) => {
     if (new Date(redemption.qrExpiry) < new Date()) {
       redemption.status = 'expired';
       await redemption.save();
+      await releaseReferralPoints(redemption);
       return res.status(400).json({ success: false, error: 'QR Token has expired' });
     }
 

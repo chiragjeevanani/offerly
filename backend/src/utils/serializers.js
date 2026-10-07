@@ -301,6 +301,7 @@ export const serializeRedemption = (redemption) => ({
     final: redemption?.totals?.final ?? redemption?.totals?.total ?? 0,
     original: redemption?.totals?.original ?? redemption?.totals?.base ?? 0,
     walletDiscount: redemption?.totals?.walletDiscount ?? 0,
+    referralDiscount: redemption?.totals?.referralDiscount ?? 0,
   },
   scannedAt: redemption?.scannedAt || null,
   createdAt: redemption?.createdAt || null,

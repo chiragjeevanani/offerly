@@ -146,6 +146,13 @@ const BookingVerificationModal = ({ booking, onFulfill, onClose, onCancelBooking
                />
              </div>
 
+             {booking.totals?.referralDiscount > 0 && (
+               <div className="mt-3 p-2.5 rounded-lg bg-amber-50 border border-amber-200 flex justify-between items-center">
+                 <span className="text-[11px] font-bold text-amber-800 uppercase">Referral points used</span>
+                 <span className="text-sm font-bold text-amber-800">-₹{Math.round(booking.totals.referralDiscount).toLocaleString()}</span>
+               </div>
+             )}
+
              <div className="mt-3 pt-3 border-t border-gray-200 flex justify-between items-center">
                 <span className="text-xs font-bold text-gray-900 uppercase">Total to Collect</span>
                 <span className="text-lg font-bold text-[#5EB929]">₹{(booking.totals?.final || 0).toLocaleString()}</span>
@@ -217,7 +224,7 @@ const ScannerEntry = ({ merchant }) => {
     // Step 2: Small delay to let React finish rendering the new DOM element
     setTimeout(async () => {
       try {
-        const { Html5Qrcode } = await import('html5-qrcode');
+        const { Html5Qrcode, Html5QrcodeSupportedFormats } = await import('html5-qrcode');
         const scannerId = 'qr-scanner-region';
         const scannerContainer = document.getElementById(scannerId);
 
@@ -227,13 +234,28 @@ const ScannerEntry = ({ merchant }) => {
           return;
         }
 
-        const html5QrCode = new Html5Qrcode(scannerId);
+        // QR only + native BarcodeDetector (Android Chrome) decodes far more reliably than the JS fallback
+        const html5QrCode = new Html5Qrcode(scannerId, {
+          formatsToSupport: [Html5QrcodeSupportedFormats.QR_CODE],
+          experimentalFeatures: { useBarCodeDetectorIfSupported: true },
+          verbose: false,
+        });
         html5QrCodeRef.current = html5QrCode;
 
         const config = {
           fps: 15,
-          qrbox: { width: 250, height: 250 },
-          aspectRatio: 1.0
+          // Scan box scales with the viewfinder instead of a fixed 250px that nearly fills a 260px container
+          qrbox: (w, h) => {
+            const edge = Math.floor(Math.min(w, h) * 0.8);
+            return { width: edge, height: edge };
+          },
+          aspectRatio: 1.0,
+          disableFlip: true,
+          videoConstraints: {
+            facingMode: 'environment',
+            width: { ideal: 1280 },
+            height: { ideal: 720 },
+          },
         };
 
         await html5QrCode.start(
@@ -241,19 +263,30 @@ const ScannerEntry = ({ merchant }) => {
           config,
           async (decodedText) => {
             await stopCamera();
-            handleQrScanned(decodedText);
+            handleQrScanned(decodedText.trim());
           }
         );
       } catch (err) {
         console.error('Camera Start Error:', err);
         // Fallback for desktop/single-camera devices
         try {
-           const { Html5Qrcode } = await import('html5-qrcode');
-           const html5QrCode = new Html5Qrcode('qr-scanner-region');
+           const { Html5Qrcode, Html5QrcodeSupportedFormats } = await import('html5-qrcode');
+           try { html5QrCodeRef.current?.clear(); } catch { /* stale instance */ }
+           const html5QrCode = new Html5Qrcode('qr-scanner-region', {
+             formatsToSupport: [Html5QrcodeSupportedFormats.QR_CODE],
+             experimentalFeatures: { useBarCodeDetectorIfSupported: true },
+             verbose: false,
+           });
            html5QrCodeRef.current = html5QrCode;
-           await html5QrCode.start({ facingMode: "user" }, { fps: 15, qrbox: 250 }, async (text) => {
+           await html5QrCode.start({ facingMode: "user" }, {
+             fps: 15,
+             qrbox: (w, h) => {
+               const edge = Math.floor(Math.min(w, h) * 0.8);
+               return { width: edge, height: edge };
+             },
+           }, async (text) => {
               await stopCamera();
-              handleQrScanned(text);
+              handleQrScanned(text.trim());
            });
         } catch (retryErr) {
            setCameraError('Camera not found or permission denied.');
@@ -422,7 +455,7 @@ const ScannerEntry = ({ merchant }) => {
             </div>
 
             {cameraActive ? (
-              <div className="relative z-10 w-full max-w-[260px]">
+              <div className="relative z-10 w-full max-w-[320px]">
                 <div id="qr-scanner-region" className="rounded-xl overflow-hidden border-2 border-white/10 shadow-[0_0_40px_rgba(0,0,0,0.5)] bg-black" />
                 <button onClick={stopCamera} className="mt-6 w-full bg-red-500/10 hover:bg-red-500/20 py-3.5 rounded-xl text-red-400 font-bold text-xs border border-red-500/20 transition-all active:scale-95">
                   Stop Camera

@@ -181,15 +181,15 @@ const Contact = () => {
           {/* Quick Access Channels */}
           <div className="space-y-6">
             <div className="px-1">
-               <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Support Channels</p>
+               <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Support Center</p>
                <h2 className="text-gray-900 font-bold text-xl uppercase tracking-tight">Direct Access</h2>
             </div>
 
             <div className="grid grid-cols-1 gap-3">
               {[
-                { i: EmailRoundedIcon, t: 'Digital Mail', c: 'support@offerly.com' },
-                { i: PhoneRoundedIcon, t: 'Voice Link', c: '+91 XXXXX XXXXX' },
-                { i: AccessTimeRoundedIcon, t: 'Operating Hours', c: 'Mon - Sat: 09:00 - 18:00' },
+                { i: EmailRoundedIcon, t: 'Email ID', c: 'support@offerly.com' },
+                { i: PhoneRoundedIcon, t: 'Contact Number', c: '+91 XXXXX XXXXX' },
+                { i: AccessTimeRoundedIcon, t: 'Opening Hours', c: '10 AM to 10 PM' },
               ].map((channel, idx) => (
                 <div key={idx} className="bg-white rounded-2xl p-4 flex items-center gap-4 border border-gray-50 shadow-sm">
                    <div className="w-11 h-11 bg-[#5EB929]/5 rounded-xl flex items-center justify-center border border-[#5EB929]/10 flex-shrink-0">

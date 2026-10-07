@@ -54,7 +54,7 @@ const SearchResults = () => {
 
   return (
     <PageTransition>
-      <div className="min-h-screen bg-background px-4 py-4 pb-24 space-y-4 overflow-x-hidden max-w-full">
+      <div className="min-h-screen bg-background px-4 py-4 pb-24 space-y-4 overflow-x-clip max-w-full">
         
         {/* Unified Search Header */}
         <div className="sticky top-0 z-30 bg-background/95 backdrop-blur-md pt-3 pb-3 -mx-4 px-4 border-b border-gray-100/80 shadow-sm">
@@ -65,7 +65,7 @@ const SearchResults = () => {
             >
               <ArrowBackRoundedIcon sx={{ fontSize: 20 }} />
             </button>
-            <div className="flex-1 flex items-center gap-2 bg-white border border-gray-100 rounded-2xl px-4 py-3 shadow-sm focus-within:border-[#5EB929]/30 transition-all">
+            <div className="flex-1 min-w-0 flex items-center gap-2 bg-white border border-gray-100 rounded-2xl px-4 py-3 shadow-sm focus-within:border-[#5EB929]/30 transition-all">
               <SearchRoundedIcon sx={{ fontSize: 18 }} className="text-[#5EB929] flex-shrink-0" />
               <input
                 type="text"
@@ -73,7 +73,7 @@ const SearchResults = () => {
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
                 autoFocus
-                className="flex-1 bg-transparent text-[16px] md:text-base font-bold text-gray-900 placeholder:text-gray-400 outline-none uppercase tracking-tight"
+                className="flex-1 min-w-0 w-full bg-transparent text-[16px] md:text-base font-bold text-gray-900 placeholder:text-gray-400 outline-none uppercase tracking-tight"
                 style={{ fontSize: '16px' }}
               />
               {query && (

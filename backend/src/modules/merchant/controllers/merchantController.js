@@ -21,6 +21,7 @@ import {
   addDays,
 } from "../../../utils/analytics.js";
 import { resolveStoreType } from "../../../utils/storeTypeHelper.js";
+import { getAllActiveMerchantIds, hasActiveMerchantSubscription } from "../../../utils/merchantSubscription.js";
 import { isWithinBusinessHours, validateBusinessHours } from "../../../utils/businessHours.js";
 
 const escapeRegex = (value = "") => value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
@@ -117,6 +118,8 @@ export const getMerchants = async (req, res) => {
     }
   } else {
     query.status = "approved";
+    // Lapsed memberships are hidden from the public store list.
+    query._id = { $in: await getAllActiveMerchantIds() };
   }
 
   // Handle search query (q)
@@ -225,7 +228,7 @@ export const getMerchantById = async (req, res) => {
   }
 
   const canSeeMerchant =
-    merchant.status === "approved" ||
+    (merchant.status === "approved" && (await hasActiveMerchantSubscription(merchant._id))) ||
     (req.user &&
       (req.user.role === "admin" || merchant._id.toString() === req.user._id.toString()));
 
@@ -1240,6 +1243,7 @@ export const verifySubscription = async (req, res) => {
     const { razorpay_order_id, razorpay_payment_id, razorpay_signature, planId } = req.body;
     const { verifyRazorpayPayment } = await import('../../../utils/razorpay.js');
     const { default: SubscriptionOrder } = await import('../../payment/models/SubscriptionOrder.js');
+    const { claimAndActivateOrder } = await import('../../payment/services/subscriptionActivation.js');
 
     const isValid = verifyRazorpayPayment(razorpay_order_id, razorpay_payment_id, razorpay_signature);
 
@@ -1255,90 +1259,21 @@ export const verifySubscription = async (req, res) => {
     // The plan/amount actually paid for is whatever purchaseSubscription recorded
     // when it created this Razorpay order - never trust req.body.planId for this,
     // otherwise a payment for a cheap plan could be replayed to activate a
-    // different, more expensive one. Atomically claim the order so it can only
-    // ever be verified once.
-    const order = await SubscriptionOrder.findOneAndUpdate(
-      { orderId: razorpay_order_id, merchantId: merchant._id, status: 'created' },
-      { status: 'consumed' },
-      { new: true }
-    );
+    // different, more expensive one.
+    const order = await SubscriptionOrder.findOne({ orderId: razorpay_order_id, merchantId: merchant._id });
     if (!order) {
-      return res.status(400).json({ success: false, error: 'This order was not found, does not belong to you, or has already been used' });
+      return res.status(400).json({ success: false, error: 'This order was not found or does not belong to you' });
     }
     if (planId && String(planId) !== String(order.planId)) {
       return res.status(400).json({ success: false, error: 'Plan does not match the plan this payment was created for' });
     }
 
-    const plan = await Plan.findById(order.planId);
-    if (!plan) {
-      return res.status(404).json({ success: false, error: 'Plan not found' });
-    }
+    // Razorpay's webhook may already have activated this order, in which case
+    // there is nothing left to do - the signature above proves the payment.
+    const result = await claimAndActivateOrder({ _id: order._id }, razorpay_payment_id);
+    const plan = result?.plan || (await Plan.findById(order.planId));
 
-    const startDate = new Date();
-    const endDate = new Date();
-
-    if (plan.duration === 'Monthly') {
-      endDate.setMonth(endDate.getMonth() + 1);
-    } else if (plan.duration === 'Yearly') {
-      endDate.setFullYear(endDate.getFullYear() + 1);
-    } else if (plan.duration === 'Lifetime') {
-      endDate.setFullYear(endDate.getFullYear() + 100);
-    }
-
-    if (plan.planType === 'advertisement') {
-      // Create a NEW independent record for each Ad purchase
-      await MerchantSubscription.create({
-        userId: req.user._id,
-        merchantId: merchant._id,
-        planId: plan._id,
-        amount: order.amount,
-        status: 'active',
-        startDate,
-        endDate,
-        paymentId: razorpay_payment_id,
-        orderId: razorpay_order_id,
-        planType: 'advertisement'
-      });
-      // NO update to Merchant.subscriptionPlanId
-    } else {
-      // Use the listPrice/walletDiscount locked in when the order was created,
-      // not a fresh computeSubscriptionCharge() call - the wallet balance may
-      // have changed since then, and what was actually charged must not drift.
-      const { amount, listPrice, walletDiscountApplied } = order;
-
-      // Core Membership - Overwrite/Update existing one
-      const subscription = await MerchantSubscription.findOneAndUpdate(
-        { merchantId: merchant._id, planType: { $ne: 'advertisement' } },
-        {
-          userId: req.user._id,
-          merchantId: merchant._id,
-          planId: plan._id,
-          amount,
-          listPrice,
-          walletDiscountApplied,
-          status: 'active',
-          startDate,
-          endDate,
-          paymentId: razorpay_payment_id,
-          orderId: razorpay_order_id,
-          planType: 'merchant'
-        },
-        { upsert: true, returnDocument: 'after' }
-      );
-
-      // Update Merchant's primary tier
-      await Merchant.findByIdAndUpdate(merchant._id, { subscriptionPlanId: plan._id });
-
-      await applySubscriptionWalletEffects({
-        merchantDoc: merchant,
-        plan,
-        listPrice,
-        walletDiscount: walletDiscountApplied,
-        subscriptionId: subscription._id,
-      });
-    }
-
-    res.status(200).json({ success: true, message: `Payment verified. ${plan.name} activated!` });
+    res.status(200).json({ success: true, message: `Payment verified. ${plan?.name || 'Your plan'} activated!` });
   } catch (error) {
     console.error('Verify subscription error:', error);
     res.status(500).json({ success: false, error: 'Failed to verify payment' });

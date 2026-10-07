@@ -4,6 +4,10 @@ export const rewardsAPI = {
   // ==========================================
   // CUSTOMER ENDPOINTS
   // ==========================================
+  getSettings: async () => {
+    return axiosInstance.get('/rewards/settings');
+  },
+
   getMyProgress: async () => {
     return axiosInstance.get('/rewards/progress');
   },
@@ -20,6 +24,10 @@ export const rewardsAPI = {
   // ==========================================
   // ADMIN ENDPOINTS
   // ==========================================
+  updateAdminSettings: async (data) => {
+    return axiosInstance.put('/rewards/admin/settings', data);
+  },
+
   getAdminMilestones: async () => {
     return axiosInstance.get('/rewards/admin/milestones');
   },

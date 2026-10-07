@@ -462,14 +462,14 @@ const CustomerLogin = () => {
   return (
     <PageTransition>
       <div 
-        className="w-full h-[100dvh] max-h-[100dvh] bg-white md:bg-[#F8FAFC] flex flex-col justify-center items-center font-sans antialiased select-none overflow-hidden md:p-6 lg:p-10"
+        className="w-full h-[100dvh] max-h-[100dvh] bg-[#EAF7E8] md:bg-[#F8FAFC] flex flex-col justify-center items-center font-sans antialiased select-none overflow-hidden md:p-6 lg:p-10"
         style={{
           paddingTop: 'env(safe-area-inset-top, 0px)',
           paddingBottom: 'env(safe-area-inset-bottom, 0px)',
         }}
       >
         {/* Main Responsive Container: Strictly 100dvh on mobile (no scroll), split-card on desktop */}
-        <div className="w-full max-w-full md:max-w-5xl lg:max-w-6xl h-full md:h-auto md:min-h-[620px] lg:min-h-[680px] bg-white flex flex-col md:flex-row justify-between relative md:rounded-[32px] shadow-2xl overflow-hidden md:border md:border-gray-100">
+        <div className="w-full max-w-full md:max-w-5xl lg:max-w-6xl h-full md:h-auto md:min-h-[620px] lg:min-h-[680px] bg-[#EAF7E8] md:bg-white flex flex-col md:flex-row justify-between relative md:rounded-[32px] shadow-2xl overflow-hidden md:border md:border-gray-100">
           
           {/* ========================================================================= */}
           {/* TOP (MOBILE) / LEFT (DESKTOP) SECTION: Brand Hero Banner                  */}
@@ -477,7 +477,7 @@ const CustomerLogin = () => {
           <div 
             onMouseEnter={() => setIsPaused(true)}
             onMouseLeave={() => setIsPaused(false)}
-            className={`relative w-full md:w-7/12 lg:w-3/5 flex flex-col justify-between items-center md:items-start p-3 sm:p-5 md:p-8 lg:p-10 overflow-hidden bg-white md:bg-gradient-to-br from-white via-white to-[#F2FAEC] shrink-0 ${
+            className={`relative w-full md:w-7/12 lg:w-3/5 flex flex-col justify-between items-center md:items-start p-3 sm:p-5 md:p-8 lg:p-10 overflow-hidden bg-[#EAF7E8] md:bg-gradient-to-br from-white via-white to-[#F2FAEC] shrink-0 ${
               isKeyboardOpen ? 'h-[14vh] md:h-auto' : 'h-[30vh] sm:h-[34vh] md:h-auto md:flex-1'
             } transition-all duration-300`}
           >

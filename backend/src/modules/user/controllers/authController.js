@@ -265,30 +265,10 @@ export const registerCustomer = async (req, res) => {
       profilePhoto: req.body.profilePhoto || '',
       role: 'customer',
       status: 'active',
-      credits: referrer ? 20 : 0, // Bonus credits for being referred
+      credits: 0, // Referral credits are paid on the first redemption of ₹500+ (see referralService)
       referralCode,
       referredBy: referrer ? referrer._id : null,
     });
-
-    if (referrer) {
-      const bonusAmount = 50;
-      await User.findByIdAndUpdate(referrer._id, { $inc: { credits: bonusAmount } });
-      
-      await ReferralHistory.create({
-        userId: referrer._id,
-        referredUserId: user._id,
-        amount: bonusAmount,
-        description: `Referral bonus for inviting ${user.name}`
-      });
-
-      // History for the referred user as well
-      await ReferralHistory.create({
-        userId: user._id,
-        referredUserId: referrer._id,
-        amount: 20,
-        description: `Welcome bonus for joining via referral from ${referrer.name}`
-      });
-    }
 
     console.log('User created successfully:', user._id);
 

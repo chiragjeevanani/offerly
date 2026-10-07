@@ -355,3 +355,20 @@
     display: none;
   }
 }
+
+/*
+ * backdrop-filter makes some Android GPUs (seen on a client's phone) drop
+ * composited layers: the whole screen flashes white for a frame whenever
+ * something under a blurred bar repaints, and full-screen blurred overlays
+ * render as a blank white page. Every blurred surface already has a 70-95%
+ * opaque background, so on touch devices we drop the blur and keep the tint.
+ * .keep-backdrop-blur opts out (the cart celebration popup keeps its look).
+ */
+@media (hover: none) and (pointer: coarse) {
+  *:not(.keep-backdrop-blur),
+  *::before,
+  *::after {
+    -webkit-backdrop-filter: none !important;
+    backdrop-filter: none !important;
+  }
+}

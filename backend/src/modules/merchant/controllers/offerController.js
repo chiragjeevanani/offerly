@@ -10,6 +10,11 @@ import Merchant from "../models/Merchant.js";
 import Offer from "../models/Offer.js";
 import OfferView from "../models/OfferView.js";
 import { viewBucketFor } from "../../../utils/analytics.js";
+import {
+  filterActiveMerchants,
+  getAllActiveMerchantIds,
+  hasActiveMerchantSubscription,
+} from "../../../utils/merchantSubscription.js";
 
 const escapeRegex = (value = "") => value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 
@@ -298,6 +303,9 @@ export const getOffersFeed = async (req, res) => {
       )
       .lean();
   }
+
+  // Stores whose membership lapsed drop out of the feed until they renew.
+  cityMerchants = await filterActiveMerchants(cityMerchants);
 
   // Narrow to the customer's zone when possible, but never let zone under-adoption
   // (most merchants/customers still have no zone set) produce an empty feed.
@@ -640,7 +648,7 @@ export const getOffers = async (req, res) => {
         .select("_id")
         .lean();
 
-      if (!merchant) {
+      if (!merchant || !(await hasActiveMerchantSubscription(merchant._id))) {
         return res.status(200).json({ offers: [] });
       }
 
@@ -652,7 +660,10 @@ export const getOffers = async (req, res) => {
         query.status = req.query.status;
       }
     } else {
-      const approvedMerchants = await Merchant.find({ status: "approved" })
+      const approvedMerchants = await Merchant.find({
+        status: "approved",
+        _id: { $in: await getAllActiveMerchantIds() },
+      })
         .select("_id")
         .lean();
       query.merchantId = { $in: approvedMerchants.map((item) => item._id) };
@@ -723,6 +734,12 @@ export const getOffers = async (req, res) => {
       if (zoneMerchants.length) {
         cityMerchants = zoneMerchants;
       }
+    }
+
+    // The city filter can replace a ?merchantId= filter below, so it must carry
+    // the membership rule itself rather than rely on the branches above.
+    if (!isAdmin) {
+      cityMerchants = await filterActiveMerchants(cityMerchants);
     }
 
     const cityMerchantIds = cityMerchants.map(m => m._id);
@@ -865,7 +882,9 @@ export const getOfferById = async (req, res) => {
 
   if (!isAdmin && !isOwner) {
     const isVisibleToPublic =
-      offer.status === "active" && offer.merchantId?.status === "approved";
+      offer.status === "active" &&
+      offer.merchantId?.status === "approved" &&
+      (await hasActiveMerchantSubscription(offer.merchantId._id));
     if (!isVisibleToPublic) {
       return res.status(404).json({ message: "Offer not found" });
     }

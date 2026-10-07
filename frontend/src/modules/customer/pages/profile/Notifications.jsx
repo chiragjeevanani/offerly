@@ -7,6 +7,7 @@ import CardGiftcardRoundedIcon from '@mui/icons-material/CardGiftcardRounded';
 import DoneAllRoundedIcon from '@mui/icons-material/DoneAllRounded';
 import { userAPI } from '../../../../api/user.api';
 import { useApp } from '../../context/AppContext';
+import { useRewardsEnabled } from '../../../../hooks/useRewardsEnabled';
 import PageTransition from '../../components/ui/PageTransition';
 import PushOptInCard from '../../../../components/common/PushOptInCard';
 
@@ -23,6 +24,7 @@ const Notifications = () => {
   const { refreshUnread, isLoggedIn } = useApp();
   const [notifications, setNotifications] = useState([]);
   const [loading, setLoading] = useState(true);
+  const { enabled: rewardsEnabled } = useRewardsEnabled();
 
   const fetchNotifications = async () => {
     if (!isLoggedIn) return;
@@ -56,8 +58,11 @@ const Notifications = () => {
     } catch (error) {}
   };
 
-  const unread = notifications.filter((n) => !n.isRead);
-  const read = notifications.filter((n) => n.isRead);
+  const visibleNotifications = rewardsEnabled
+    ? notifications
+    : notifications.filter((n) => n.type !== 'milestone_reward_earned');
+  const unread = visibleNotifications.filter((n) => !n.isRead);
+  const read = visibleNotifications.filter((n) => n.isRead);
 
   const formatDate = (dateStr) => {
     const date = new Date(dateStr);
@@ -122,7 +127,7 @@ const Notifications = () => {
 
         <PushOptInCard persona="customer" isLoggedIn={isLoggedIn} />
 
-        {notifications.length === 0 ? (
+        {visibleNotifications.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-28 text-center">
             <div className="w-20 h-20 bg-white rounded-3xl flex items-center justify-center mb-6 shadow-sm border border-gray-100">
               <NotificationsRoundedIcon sx={{ fontSize: 32 }} className="text-gray-200" />

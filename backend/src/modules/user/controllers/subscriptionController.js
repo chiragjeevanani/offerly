@@ -7,6 +7,7 @@ import {
   getCustomerSubscriptionStatus,
 } from "../../../utils/customerSubscription.js";
 import { serializeCustomerSubscription } from "../../../utils/serializers.js";
+import { claimAndActivateOrder } from "../../payment/services/subscriptionActivation.js";
 
 // @desc    Get the logged-in customer's subscription status (whether the
 //          gate is enabled platform-wide, and whether this customer is subscribed)
@@ -129,57 +130,33 @@ export const verifyCustomerSubscription = async (req, res) => {
     // without burning the order - a client sending back the wrong planId
     // (bug or stale state) must still be able to retry with the right one
     // instead of permanently losing an already-paid-for order.
-    const pendingOrder = await SubscriptionOrder.findOne({
+    const order = await SubscriptionOrder.findOne({
       orderId: razorpay_order_id,
       userId: req.user._id,
       planType: "customer",
-      status: "created",
     });
-    if (!pendingOrder) {
-      return res.status(400).json({ success: false, error: "This order was not found, does not belong to you, or has already been used" });
+    if (!order) {
+      return res.status(400).json({ success: false, error: "This order was not found or does not belong to you" });
     }
-    if (planId && String(planId) !== String(pendingOrder.planId)) {
+    if (planId && String(planId) !== String(order.planId)) {
       return res.status(400).json({ success: false, error: "Plan does not match the plan this payment was created for" });
     }
 
-    // Now atomically claim it so it can only ever be verified once. The
-    // plan/amount actually paid for is whatever was recorded when the order
+    // The plan/amount actually paid for is whatever was recorded when the order
     // was created - never trust req.body.planId for the activation itself.
-    const order = await SubscriptionOrder.findOneAndUpdate(
-      { _id: pendingOrder._id, status: "created" },
-      { status: "consumed" },
-      { new: true },
-    );
-    if (!order) {
-      return res.status(400).json({ success: false, error: "This order was not found, does not belong to you, or has already been used" });
+    // Razorpay's webhook may already have activated it, in which case this is a
+    // no-op: the signature above proves the payment.
+    const result = await claimAndActivateOrder({ _id: order._id }, razorpay_payment_id);
+    const plan = result?.plan || (await Plan.findById(order.planId));
+
+    const subscription = await CustomerSubscription.findOne({ userId: req.user._id }).sort({ createdAt: -1 });
+    if (!subscription) {
+      return res.status(409).json({ success: false, error: "Your payment was received and the plan is being activated. Please refresh in a moment." });
     }
-
-    const plan = await Plan.findById(order.planId);
-    if (!plan) {
-      return res.status(404).json({ success: false, error: "Plan not found" });
-    }
-
-    const startDate = new Date();
-    const endDate = computeSubscriptionEndDate(plan.duration, startDate);
-
-    const subscription = await CustomerSubscription.findOneAndUpdate(
-      { userId: req.user._id },
-      {
-        userId: req.user._id,
-        planId: plan._id,
-        amount: order.amount,
-        status: "active",
-        startDate,
-        endDate,
-        paymentId: razorpay_payment_id,
-        orderId: razorpay_order_id,
-      },
-      { upsert: true, new: true, setDefaultsOnInsert: true },
-    );
 
     return res.status(200).json({
       success: true,
-      message: `Payment verified. ${plan.name} activated!`,
+      message: `Payment verified. ${plan?.name || "Your plan"} activated!`,
       subscription: serializeCustomerSubscription(await subscription.populate("planId")),
     });
   } catch (err) {

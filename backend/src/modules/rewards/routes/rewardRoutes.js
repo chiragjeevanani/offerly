@@ -15,9 +15,14 @@ import {
   getAdminCards,
   deleteAdminCard,
   triggerMilestoneCheckAdmin,
+  getRewardsSettingsConfig,
+  updateRewardsSettingsConfig,
 } from '../controllers/rewardController.js';
 
 const router = express.Router();
+
+// Public: whether the Milestones & Rewards feature is switched on
+router.get('/settings', getRewardsSettingsConfig);
 
 // ==========================================
 // Customer Routes
@@ -29,6 +34,8 @@ router.post('/scratch/:cardId', protect, scratchCard);
 // ==========================================
 // Admin Routes
 // ==========================================
+router.put('/admin/settings', protect, authorize('admin'), updateRewardsSettingsConfig);
+
 router.get('/admin/milestones', protect, authorize('admin'), getAdminMilestones);
 router.post('/admin/milestones', protect, authorize('admin'), createAdminMilestone);
 router.put('/admin/milestones/:id', protect, authorize('admin'), updateAdminMilestone);

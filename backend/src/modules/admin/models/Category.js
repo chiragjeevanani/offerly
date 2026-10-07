@@ -36,6 +36,19 @@ const categorySchema = new mongoose.Schema(
       default: '#3D7A4F',
       match: [/^#[0-9A-F]{6}$/i, 'Please provide a valid hex color code'],
     },
+    // Optional uploaded image; when set it replaces the icon on the customer
+    // home "Select Services" tile.
+    image: {
+      type: String,
+      default: '',
+      trim: true,
+    },
+    // Whether the category appears in the customer home "Select Services" row.
+    // Independent of `status` - an inactive category is hidden everywhere.
+    showOnHome: {
+      type: Boolean,
+      default: true,
+    },
     description: {
       type: String,
       default: '',

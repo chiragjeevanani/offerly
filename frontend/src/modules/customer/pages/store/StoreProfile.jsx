@@ -45,16 +45,23 @@ const StoreOfferTag = ({ offer }) => {
   );
 };
 
-const StoreProfile = () => {
+// Last-loaded data per store, kept for the life of the tab. Coming Back from
+// the cart re-ran five API calls behind a spinner, which on slow networks read
+// as a blank white screen; now the cached copy paints instantly and refreshes
+// in the background.
+const storeCache = new Map();
+
+const StoreProfilePage = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const [merchant, setMerchant] = useState(null);
-  const [products, setProducts] = useState([]);
-  const [offers, setOffers] = useState([]);
-  const [reviews, setReviews] = useState([]);
-  const [cart, setCart] = useState({ merchantId: null, items: [] });
+  const cached = storeCache.get(id);
+  const [merchant, setMerchant] = useState(cached?.merchant || null);
+  const [products, setProducts] = useState(cached?.products || []);
+  const [offers, setOffers] = useState(cached?.offers || []);
+  const [reviews, setReviews] = useState(cached?.reviews || []);
+  const [cart, setCart] = useState(cached?.cart || { merchantId: null, items: [] });
   const [activeTab, setActiveTab] = useState('menu');
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(!cached);
   const [showHours, setShowHours] = useState(false);
   const [pendingCartAction, setPendingCartAction] = useState(null);
   // Products with sizes/colours go through the picker sheet instead of +/-.
@@ -105,7 +112,7 @@ const StoreProfile = () => {
 
   useEffect(() => {
     const loadStoreData = async () => {
-      setLoading(true);
+      if (!storeCache.has(id)) setLoading(true);
       try {
         const merchantResponse = await merchantAPI.getById(id);
         
@@ -113,6 +120,7 @@ const StoreProfile = () => {
           const m = merchantResponse.merchant;
           
           if (m.status !== 'approved') {
+            storeCache.delete(id);
             toast.error('This merchant is no longer available.');
             navigate('/explore');
             return;
@@ -134,20 +142,26 @@ const StoreProfile = () => {
           
           // Only set cart if it belongs to this merchant
           const backendCart = cartRes.data;
-          if (backendCart && backendCart.merchantId && 
-              (backendCart.merchantId._id || backendCart.merchantId) === id) {
-            setCart({
-              merchantId: backendCart.merchantId._id || backendCart.merchantId,
-              items: backendCart.items || []
-            });
-          } else {
-            setCart({ merchantId: null, items: [] });
-          }
+          const nextCart = backendCart && backendCart.merchantId &&
+              (backendCart.merchantId._id || backendCart.merchantId) === id
+            ? { merchantId: backendCart.merchantId._id || backendCart.merchantId, items: backendCart.items || [] }
+            : { merchantId: null, items: [] };
+          setCart(nextCart);
+
+          storeCache.set(id, {
+            merchant: m,
+            products: productsRes.products || [],
+            offers: offersRes.offers || [],
+            reviews: reviewRes.data || [],
+            cart: nextCart,
+          });
           
           setLoading(false);
         }
       } catch (error) {
         console.error('Failed to fetch store data:', error);
+        // A failed background refresh keeps the cached page on screen
+        if (storeCache.has(id)) return;
         toast.error('Store not found or unavailable');
         navigate('/explore');
       }
@@ -155,6 +169,12 @@ const StoreProfile = () => {
     
     loadStoreData();
   }, [id, navigate]);
+
+  // Keep the cached cart in step with +/- taps so Back shows the latest count
+  useEffect(() => {
+    const hit = storeCache.get(id);
+    if (hit) hit.cart = cart;
+  }, [cart, id]);
 
   const applyCartUpdate = async (product, newQty, variantId = null) => {
     const merchantId = merchant._id || merchant.id;
@@ -728,6 +748,12 @@ const StoreProfile = () => {
       />
     </PageTransition>
   );
+};
+
+// Keyed by id so store-to-store navigation remounts and seeds state from that store's cache
+const StoreProfile = () => {
+  const { id } = useParams();
+  return <StoreProfilePage key={id} />;
 };
 
 export default StoreProfile;

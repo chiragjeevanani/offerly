@@ -46,8 +46,7 @@ const LeaveReview = () => {
     setIsSubmitting(true);
     try {
       await reviewAPI.create({
-        merchantId: redemption.merchantId._id || redemption.merchantId,
-        offerId: redemption.offerId?._id || redemption.offerId,
+        redemptionId: redemption._id || redemption.id,
         rating,
         text
       });
@@ -55,7 +54,7 @@ const LeaveReview = () => {
       navigate('/redemptions');
     } catch (error) {
       console.error('Failed to submit review:', error);
-      toast.error('Failed to submit review');
+      toast.error(error?.error || 'Failed to submit review');
     } finally {
       setIsSubmitting(false);
     }

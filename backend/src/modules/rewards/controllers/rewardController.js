@@ -5,7 +5,45 @@ import {
   getUserMilestoneProgress,
   revealScratchCard,
   checkAndAwardMilestone,
+  getRewardsSettings,
+  isRewardsEnabled,
 } from '../services/milestoneService.js';
+
+const rewardsDisabledResponse = (res) =>
+  res.status(403).json({
+    success: false,
+    code: 'REWARDS_DISABLED',
+    message: 'Milestones & Rewards are currently unavailable',
+  });
+
+// ==========================================
+// SETTINGS (global on/off toggle)
+// ==========================================
+
+// Public - the customer app reads this to decide whether to show rewards UI
+export const getRewardsSettingsConfig = async (_req, res, next) => {
+  try {
+    const settings = await getRewardsSettings();
+    return res.status(200).json({ success: true, enabled: settings.enabled !== false });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const updateRewardsSettingsConfig = async (req, res, next) => {
+  try {
+    const { enabled } = req.body;
+    if (typeof enabled !== 'boolean') {
+      return res.status(400).json({ success: false, message: 'enabled must be a boolean' });
+    }
+    const settings = await getRewardsSettings();
+    settings.enabled = enabled;
+    await settings.save();
+    return res.status(200).json({ success: true, enabled: settings.enabled });
+  } catch (error) {
+    next(error);
+  }
+};
 
 // ==========================================
 // CUSTOMER CONTROLLERS
@@ -13,6 +51,7 @@ import {
 
 export const getMyProgress = async (req, res, next) => {
   try {
+    if (!(await isRewardsEnabled())) return rewardsDisabledResponse(res);
     const progress = await getUserMilestoneProgress(req.user._id);
     return res.status(200).json({ success: true, ...progress });
   } catch (error) {
@@ -22,6 +61,7 @@ export const getMyProgress = async (req, res, next) => {
 
 export const getMyCards = async (req, res, next) => {
   try {
+    if (!(await isRewardsEnabled())) return rewardsDisabledResponse(res);
     const { status } = req.query;
     const query = { userId: req.user._id };
     if (status) query.status = status;
@@ -35,6 +75,7 @@ export const getMyCards = async (req, res, next) => {
 
 export const scratchCard = async (req, res, next) => {
   try {
+    if (!(await isRewardsEnabled())) return rewardsDisabledResponse(res);
     const { cardId } = req.params;
     const card = await revealScratchCard(req.user._id, cardId);
     return res.status(200).json({ success: true, card });

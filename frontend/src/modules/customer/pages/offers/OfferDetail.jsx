@@ -6,8 +6,8 @@ import StarBorderRoundedIcon from '@mui/icons-material/StarBorderRounded';
 import LocationOnRoundedIcon from '@mui/icons-material/LocationOnRounded';
 import AccessTimeRoundedIcon from '@mui/icons-material/AccessTimeRounded';
 import VerifiedRoundedIcon from '@mui/icons-material/VerifiedRounded';
-import BookmarkRoundedIcon from '@mui/icons-material/BookmarkRounded';
-import BookmarkBorderRoundedIcon from '@mui/icons-material/BookmarkBorderRounded';
+import FavoriteRoundedIcon from '@mui/icons-material/FavoriteRounded';
+import FavoriteBorderRoundedIcon from '@mui/icons-material/FavoriteBorderRounded';
 import QrCodeScannerRoundedIcon from '@mui/icons-material/QrCodeScannerRounded';
 import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
 import ReceiptLongRoundedIcon from '@mui/icons-material/ReceiptLongRounded';
@@ -192,8 +192,8 @@ const OfferDetail = () => {
             className="absolute top-4 right-4 w-11 h-11 bg-white rounded-full shadow-lg flex items-center justify-center"
           >
             {isSaved
-              ? <BookmarkRoundedIcon sx={{ fontSize: 22 }} className="text-primary" />
-              : <BookmarkBorderRoundedIcon sx={{ fontSize: 22 }} className="text-gray-600" />}
+              ? <FavoriteRoundedIcon sx={{ fontSize: 22 }} className="text-primary" />
+              : <FavoriteBorderRoundedIcon sx={{ fontSize: 22 }} className="text-gray-600" />}
           </motion.button>
           {/* Category badge */}
           <div className="absolute bottom-4 left-4">

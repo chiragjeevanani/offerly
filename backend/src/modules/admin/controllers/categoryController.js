@@ -86,7 +86,7 @@ export const getCategoryById = async (req, res) => {
 // @access  Private/Admin
 export const createCategory = async (req, res) => {
   try {
-    const { name, type, icon, color, description, order } = req.body;
+    const { name, type, icon, color, image, showOnHome, description, order } = req.body;
 
     // Check if category already exists
     const existingCategory = await Category.findOne({ 
@@ -105,6 +105,8 @@ export const createCategory = async (req, res) => {
       type,
       icon: icon || 'category',
       color: color || '#3D7A4F',
+      image: image || '',
+      showOnHome: showOnHome !== false,
       description: description || '',
       order: order || 0,
       status: 'active',
@@ -136,7 +138,7 @@ export const createCategory = async (req, res) => {
 // @access  Private/Admin
 export const updateCategory = async (req, res) => {
   try {
-    const { name, type, icon, color, description, order, status } = req.body;
+    const { name, type, icon, color, image, showOnHome, description, order, status } = req.body;
 
     const category = await Category.findById(req.params.id);
 
@@ -167,6 +169,8 @@ export const updateCategory = async (req, res) => {
     if (type) category.type = type;
     if (icon !== undefined) category.icon = icon;
     if (color) category.color = color;
+    if (image !== undefined) category.image = image;
+    if (showOnHome !== undefined) category.showOnHome = Boolean(showOnHome);
     if (description !== undefined) category.description = description;
     if (order !== undefined) category.order = order;
     if (status) category.status = status;

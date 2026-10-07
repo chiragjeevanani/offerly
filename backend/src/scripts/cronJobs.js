@@ -3,6 +3,7 @@ import Redemption from '../modules/booking/models/Redemption.js';
 import Merchant from '../modules/merchant/models/Merchant.js';
 import { hasBusinessHours, isWithinBusinessHours } from '../utils/businessHours.js';
 import { invalidateFeedCache } from '../utils/feedCache.js';
+import { releaseUnrefundedReferralPoints } from '../modules/user/services/referralService.js';
 
 /**
  * Keeps each merchant's open/closed toggle in step with their business hours.
@@ -50,6 +51,11 @@ export const initCronJobs = () => {
 
       if (result.modifiedCount > 0) {
         console.log(`[Cron] Marked ${result.modifiedCount} pending redemptions as expired.`);
+      }
+
+      const refunded = await releaseUnrefundedReferralPoints();
+      if (refunded > 0) {
+        console.log(`[Cron] Returned referral points for ${refunded} expired/cancelled pass(es).`);
       }
     } catch (err) {
       console.error('[Cron Error] Failed to expire redemptions:', err);

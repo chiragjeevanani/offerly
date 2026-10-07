@@ -15,6 +15,7 @@ import CasinoRoundedIcon from '@mui/icons-material/CasinoRounded';
 import CalendarMonthRoundedIcon from '@mui/icons-material/CalendarMonthRounded';
 import FavoriteRoundedIcon from '@mui/icons-material/FavoriteRounded';
 import toast from 'react-hot-toast';
+import { useRewardsEnabled } from '../../../../hooks/useRewardsEnabled';
 
 // Helper to format opening time tomorrow from merchant.businessHours
 export const getTomorrowOpeningTime = (merchant) => {
@@ -116,6 +117,7 @@ const AllStoresClosedView = ({
   isSimulated = false,
 }) => {
   const navigate = useNavigate();
+  const { enabled: rewardsEnabled } = useRewardsEnabled();
   const [activeBannerSlide, setActiveBannerSlide] = useState(0);
 
   // Store reminder IDs in local storage
@@ -358,6 +360,7 @@ const AllStoresClosedView = ({
       </motion.div>
 
       {/* 4. Green Lucky Reel Reward Banner */}
+      {rewardsEnabled && (
       <motion.div
         initial={{ opacity: 0, y: 16 }}
         animate={{ opacity: 1, y: 0 }}
@@ -374,6 +377,7 @@ const AllStoresClosedView = ({
           />
         </div>
       </motion.div>
+      )}
 
       {/* 4. UPCOMING OFFERS (Store → Offer → Opening time → “Remind me”) */}
       <motion.section

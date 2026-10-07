@@ -69,6 +69,21 @@ const RewardsManagement = () => {
     },
   });
 
+  const { data: rewardsSettings } = useQuery({
+    queryKey: ['rewardsSettings'],
+    queryFn: () => rewardsAPI.getSettings(),
+  });
+  const rewardsEnabled = rewardsSettings?.enabled === true;
+
+  const toggleRewardsMutation = useMutation({
+    mutationFn: (enabled) => rewardsAPI.updateAdminSettings({ enabled }),
+    onSuccess: (_res, enabled) => {
+      queryClient.invalidateQueries({ queryKey: ['rewardsSettings'] });
+      toast.success(enabled ? 'Milestones & Rewards are now visible to customers' : 'Milestones & Rewards hidden from customers');
+    },
+    onError: () => toast.error('Failed to update rewards setting'),
+  });
+
   // Milestone Mutations
   const saveMilestoneMutation = useMutation({
     mutationFn: async (payload) => {
@@ -260,6 +275,29 @@ const RewardsManagement = () => {
             </button>
           )}
         </div>
+      </div>
+
+      {/* Global feature toggle */}
+      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 flex flex-col sm:flex-row sm:items-center gap-3">
+        <div className="w-10 h-10 rounded-xl bg-[#5EB929]/10 flex items-center justify-center text-[#5EB929] shrink-0">
+          <EmojiEventsRoundedIcon sx={{ fontSize: 20 }} />
+        </div>
+        <div className="flex-1">
+          <p className="text-[12px] font-bold text-gray-800">Show Claim Milestones & Rewards to customers</p>
+          <p className="text-[10px] text-gray-400">
+            {rewardsEnabled
+              ? 'On — customers see the rewards banner, menu items and earn scratch cards on completed claims.'
+              : 'Off — all milestone & reward UI is hidden from the customer app and no new scratch cards are issued.'}
+          </p>
+        </div>
+        <button
+          type="button"
+          disabled={!rewardsSettings || toggleRewardsMutation.isPending}
+          onClick={() => toggleRewardsMutation.mutate(!rewardsEnabled)}
+          className={`relative w-11 h-6 rounded-full transition-colors flex-shrink-0 disabled:opacity-60 ${rewardsEnabled ? 'bg-[#5EB929]' : 'bg-gray-300'}`}
+        >
+          <span className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow-sm transition-transform ${rewardsEnabled ? 'translate-x-5' : 'translate-x-0'}`} />
+        </button>
       </div>
 
       {/* Tabs */}

@@ -15,7 +15,7 @@ const merchantApplicationDraftSchema = new mongoose.Schema(
     },
     status: {
       type: String,
-      enum: ["payment_pending", "payment_verified", "submitted", "failed", "expired"],
+      enum: ["payment_pending", "payment_verified", "activating", "submitted", "failed", "expired"],
       default: "payment_pending",
       index: true,
     },

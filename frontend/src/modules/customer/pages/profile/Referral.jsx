@@ -31,20 +31,6 @@ const Referral = () => {
     fetchHistory();
   }, [isLoggedIn]);
 
-  const handleRedeem = async () => {
-    if (!user?.credits || user.credits < 100) {
-      toast.error('Minimum ₹100 credits required to redeem');
-      return;
-    }
-    try {
-      await userAPI.redeemCredits(user.credits);
-      toast.success('Redemption request submitted! 💰');
-      fetchHistory();
-    } catch (error) {
-      toast.error('Failed to submit redemption request');
-    }
-  };
-
   const handleCopy = () => {
     navigator.clipboard.writeText(user?.referralCode || '');
     toast.success('Referral code copied! 🎉');
@@ -86,7 +72,7 @@ const Referral = () => {
           
           <h2 className="text-white font-bold text-xl uppercase tracking-tight">Invite & Earn</h2>
           <p className="text-white/70 text-[9px] font-bold uppercase tracking-widest mt-1.5 leading-relaxed px-4">
-            Earn ₹50 credits for every friend joined
+            Earn ₹50 credits when your friend redeems an offer worth ₹500+
           </p>
 
           {/* Referral Code Terminal - Slim */}
@@ -133,16 +119,10 @@ const Referral = () => {
                <span className="text-lg">💰</span>
              </div>
              <div>
-                <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest leading-none">Available Balance</p>
-                <p className="text-lg font-bold text-gray-900 tracking-tight mt-1">₹{user?.credits || 0}</p>
+                <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest leading-none">Available Points</p>
+                <p className="text-lg font-bold text-gray-900 tracking-tight mt-1">{user?.credits || 0}</p>
              </div>
           </div>
-          <button 
-            onClick={handleRedeem}
-            className="text-[10px] font-bold text-white uppercase tracking-widest bg-[#5EB929] px-5 py-2.5 rounded-xl shadow-lg shadow-[#5EB929]/10 active:scale-95 transition-all"
-          >
-            Redeem Now
-          </button>
         </div>
 
         {/* How it Works - Slim Rows */}
@@ -150,9 +130,9 @@ const Referral = () => {
            <p className="text-[11px] font-bold text-gray-900 uppercase tracking-tight mb-4 px-1">How it works</p>
            <div className="space-y-2.5">
              {[
-               { step: '01', label: 'Share your code with friends' },
-               { step: '02', label: 'Friends sign up on the platform' },
-               { step: '03', label: 'Earn ₹50 credits instantly' },
+               { step: '01', label: 'Share your referral code' },
+               { step: '02', label: 'Your friend uses the code while signing up' },
+               { step: '03', label: 'When your friend redeems 1 offer worth ₹500 or more, you get 50 referral points credited to your account (your friend gets 20)' },
              ].map((item) => (
                <div key={item.step} className="flex items-center gap-4 bg-white rounded-2xl p-3 border border-gray-50">
                  <div className="w-8 h-8 bg-[#5EB929]/5 rounded-xl flex items-center justify-center flex-shrink-0">

@@ -7,19 +7,13 @@ import ChevronRightRoundedIcon from '@mui/icons-material/ChevronRightRounded';
 import LocationOnRoundedIcon from '@mui/icons-material/LocationOnRounded';
 import TrendingUpRoundedIcon from '@mui/icons-material/TrendingUpRounded';
 import StorefrontRoundedIcon from '@mui/icons-material/StorefrontRounded';
-import RestaurantRoundedIcon from '@mui/icons-material/RestaurantRounded';
-import ContentCutRoundedIcon from '@mui/icons-material/ContentCutRounded';
-import ShoppingCartRoundedIcon from '@mui/icons-material/ShoppingCartRounded';
-import FitnessCenterRoundedIcon from '@mui/icons-material/FitnessCenterRounded';
-import BuildRoundedIcon from '@mui/icons-material/BuildRounded';
-import LocalCafeRoundedIcon from '@mui/icons-material/LocalCafeRounded';
-import MedicalServicesRoundedIcon from '@mui/icons-material/MedicalServicesRounded';
 import MoreHorizRoundedIcon from '@mui/icons-material/MoreHorizRounded';
 import LocalOfferRoundedIcon from '@mui/icons-material/LocalOfferRounded';
 import EmojiEventsRoundedIcon from '@mui/icons-material/EmojiEventsRounded';
 import CardGiftcardRoundedIcon from '@mui/icons-material/CardGiftcardRounded';
 
 import { useApp } from '../../context/AppContext';
+import { useRewardsEnabled } from '../../../../hooks/useRewardsEnabled';
 import BottomSheet from '../../components/ui/BottomSheet';
 import StoreCard from '../../components/ui/StoreCard';
 import PageTransition from '../../components/ui/PageTransition';
@@ -30,6 +24,7 @@ import { cityAPI } from '../../../../api/city.api';
 import { adAPI } from '../../../../api/adRequest.api';
 import OfferCard from '../../components/ui/OfferCard';
 import AllStoresClosedView from '../../components/home/AllStoresClosedView';
+import CategoryTile from '../../../../components/CategoryTile';
 
 // Helper to check if a merchant is currently open based on isOpen flag and businessHours
 export const isMerchantOpen = (merchant) => {
@@ -86,41 +81,15 @@ const SectionHeader = ({ title, icon: Icon, onAction, actionText = 'View All' })
   </div>
 );
 
-// Modern Category Icon mapper with proper MUI icons
-const getIconForCategory = (label) => {
-  const map = {
-    'Food': RestaurantRoundedIcon,
-    'Saloon': ContentCutRoundedIcon,
-    'Shops': ShoppingCartRoundedIcon,
-    'Gym': FitnessCenterRoundedIcon,
-    'Services': BuildRoundedIcon,
-    'Cafe': LocalCafeRoundedIcon,
-    'Health': MedicalServicesRoundedIcon,
-    'Other': StorefrontRoundedIcon,
-  };
-  return map[label] || StorefrontRoundedIcon;
-};
-
-// Map colors for categories to make them look vibrant and distinct
-const getColorForCategory = (label) => {
-  const map = {
-    'Food': 'text-orange-500 bg-orange-50 hover:border-orange-200',
-    'Saloon': 'text-purple-500 bg-purple-50 hover:border-purple-200',
-    'Shops': 'text-blue-500 bg-blue-50 hover:border-blue-200',
-    'Gym': 'text-red-500 bg-red-50 hover:border-red-200',
-    'Services': 'text-amber-500 bg-amber-50 hover:border-amber-200',
-    'Cafe': 'text-amber-700 bg-amber-50 hover:border-amber-200',
-    'Health': 'text-teal-500 bg-teal-50 hover:border-teal-200',
-  };
-  return map[label] || 'text-primary bg-primary-light hover:border-primary/30';
-};
-
 const Home = () => {
   const navigate = useNavigate();
+  const { enabled: rewardsEnabled } = useRewardsEnabled();
   const [searchParams, setSearchParams] = useSearchParams();
   const { user, selectedCity, setSelectedCity, setSelectedCategory } = useApp();
   const useUnifiedFeed = import.meta.env.VITE_USE_UNIFIED_FEED !== 'false';
   const [categories, setCategories] = useState([]);
+  // Admin controls which categories appear in "Select Services" (Category.showOnHome).
+  const homeCategories = useMemo(() => categories.filter((c) => c.showOnHome !== false), [categories]);
   const [citySheetOpen, setCitySheetOpen] = useState(false);
   const [availableCities, setAvailableCities] = useState([]);
   const [userCoords, setUserCoords] = useState(null);
@@ -373,13 +342,8 @@ const Home = () => {
           </div>
           <div className="flex gap-3.5 overflow-x-auto scrollbar-hide -mx-4 md:-mx-6 px-4 md:px-6 pb-2 snap-x min-h-[82px] items-start">
             {/* Logic: Show 5 + More on mobile, 7 + More on desktop */}
-            {categories.length > 0 ? (
-              [...categories.slice(0, window.innerWidth < 768 ? 5 : 7), { _id: 'more', name: 'More' }].map((cat, idx) => {
-                const Icon = cat._id === 'more' ? MoreHorizRoundedIcon : getIconForCategory(cat.name);
-                const customColors = cat._id === 'more' 
-                  ? 'text-gray-500 bg-gray-100/80' 
-                  : getColorForCategory(cat.name);
-
+            {homeCategories.length > 0 ? (
+              [...homeCategories.slice(0, window.innerWidth < 768 ? 5 : 7), { _id: 'more', name: 'More' }].map((cat, idx) => {
                 return (
                   <motion.button
                     key={cat._id || idx}
@@ -390,9 +354,13 @@ const Home = () => {
                     onClick={() => cat._id === 'more' ? navigate('/explore') : handleCategoryClick(cat.name)}
                     className="flex flex-col items-center gap-1.5 flex-shrink-0 snap-start group w-[60px]"
                   >
-                    <div className={`w-13 h-13 p-3 rounded-2xl shadow-sm flex items-center justify-center border border-gray-100 transition-all duration-300 group-hover:shadow-md group-hover:scale-105 ${customColors}`}>
-                      <Icon sx={{ fontSize: 22 }} className="transition-transform group-hover:scale-110" />
-                    </div>
+                    {cat._id === 'more' ? (
+                      <div className="w-13 h-13 p-3 rounded-2xl shadow-sm flex items-center justify-center border border-gray-100 transition-all duration-300 group-hover:shadow-md group-hover:scale-105 text-gray-500 bg-gray-100/80">
+                        <MoreHorizRoundedIcon sx={{ fontSize: 22 }} className="transition-transform group-hover:scale-110" />
+                      </div>
+                    ) : (
+                      <CategoryTile category={cat} className="transition-all duration-300 group-hover:shadow-md group-hover:scale-105" />
+                    )}
                     <span className="text-xs font-medium text-gray-700 text-center line-clamp-1 w-full px-0.5 capitalize">
                       {cat.name}
                     </span>
@@ -420,6 +388,7 @@ const Home = () => {
         ) : (
           <>
             {/* Claim Milestones & Scratch Cards Quick Banner */}
+            {rewardsEnabled && (
             <motion.section
               initial={{ opacity: 0, y: 12 }}
               animate={{ opacity: 1, y: 0 }}
@@ -447,6 +416,7 @@ const Home = () => {
             </div>
           </div>
         </motion.section>
+            )}
 
         {/* 3. Top Promotions (High-End Carousel) */}
         {!isLoading && featuredBanners.length > 0 && (

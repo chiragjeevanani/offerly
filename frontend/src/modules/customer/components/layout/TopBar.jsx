@@ -6,7 +6,7 @@ import ArrowBackRoundedIcon from '@mui/icons-material/ArrowBackRounded';
 import SearchRoundedIcon from '@mui/icons-material/SearchRounded';
 import CardGiftcardRoundedIcon from '@mui/icons-material/CardGiftcardRounded';
 import ExploreRoundedIcon from '@mui/icons-material/ExploreRounded';
-import BookmarkRoundedIcon from '@mui/icons-material/BookmarkRounded';
+import FavoriteRoundedIcon from '@mui/icons-material/FavoriteRounded';
 import MapRoundedIcon from '@mui/icons-material/MapRounded';
 import ShoppingCartRoundedIcon from '@mui/icons-material/ShoppingCartRounded';
 import LocationOnRoundedIcon from '@mui/icons-material/LocationOnRounded';
@@ -18,7 +18,7 @@ import { useApp } from '../../context/AppContext';
 // Nav links to display in the new top bar (desktop only)
 const navLinks = [
   { label: 'Explore', icon: ExploreRoundedIcon, path: '/explore' },
-  { label: 'Saved Objects', icon: BookmarkRoundedIcon, path: '/saved' },
+  { label: 'Saved Offers', icon: FavoriteRoundedIcon, path: '/saved' },
   { label: 'Locations', icon: MapRoundedIcon, path: '/map' },
 ];
 

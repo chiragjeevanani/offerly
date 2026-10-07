@@ -2,8 +2,8 @@ import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useState } from 'react';
 import LocationOnRoundedIcon from '@mui/icons-material/LocationOnRounded';
-import BookmarkBorderRoundedIcon from '@mui/icons-material/BookmarkBorderRounded';
-import BookmarkRoundedIcon from '@mui/icons-material/BookmarkRounded';
+import FavoriteBorderRoundedIcon from '@mui/icons-material/FavoriteBorderRounded';
+import FavoriteRoundedIcon from '@mui/icons-material/FavoriteRounded';
 import VerifiedRoundedIcon from '@mui/icons-material/VerifiedRounded';
 import { userAPI } from '../../../../api/user.api';
 import { useApp } from '../../context/AppContext';
@@ -110,8 +110,8 @@ const OfferCard = ({ offer, variant = 'list', onSaveToggle, viewSource = 'feed' 
             className="absolute top-2 right-2 w-7 h-7 bg-white/90 backdrop-blur-md rounded-full flex items-center justify-center shadow-md border border-white/20"
           >
             {isSaved
-              ? <BookmarkRoundedIcon sx={{ fontSize: 15 }} className="text-primary" />
-              : <BookmarkBorderRoundedIcon sx={{ fontSize: 15 }} className="text-gray-400" />
+              ? <FavoriteRoundedIcon sx={{ fontSize: 15 }} className="text-primary" />
+              : <FavoriteBorderRoundedIcon sx={{ fontSize: 15 }} className="text-gray-400" />
             }
           </motion.button>
         </div>
@@ -176,8 +176,8 @@ const OfferCard = ({ offer, variant = 'list', onSaveToggle, viewSource = 'feed' 
                  className="pt-0.5"
                >
                  {isSaved
-                   ? <BookmarkRoundedIcon sx={{ fontSize: 18 }} className="text-primary" />
-                   : <BookmarkBorderRoundedIcon sx={{ fontSize: 18 }} className="text-gray-300" />
+                   ? <FavoriteRoundedIcon sx={{ fontSize: 18 }} className="text-primary" />
+                   : <FavoriteBorderRoundedIcon sx={{ fontSize: 18 }} className="text-gray-300" />
                  }
                </motion.button>
              </div>
