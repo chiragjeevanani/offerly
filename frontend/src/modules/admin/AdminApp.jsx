@@ -11,7 +11,6 @@ import CampaignRoundedIcon from '@mui/icons-material/CampaignRounded';
 import ViewListRoundedIcon from '@mui/icons-material/ViewListRounded';
 import BarChartRoundedIcon from '@mui/icons-material/BarChartRounded';
 import CategoryRoundedIcon from '@mui/icons-material/CategoryRounded';
-import SettingsRoundedIcon from '@mui/icons-material/SettingsRounded';
 import SearchRoundedIcon from '@mui/icons-material/SearchRounded';
 import NotificationsRoundedIcon from '@mui/icons-material/NotificationsRounded';
 import AccountCircleRoundedIcon from '@mui/icons-material/AccountCircleRounded';
@@ -22,7 +21,6 @@ import MenuRoundedIcon from '@mui/icons-material/MenuRounded';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 import ArrowBackRoundedIcon from '@mui/icons-material/ArrowBackRounded';
 import FilterListRoundedIcon from '@mui/icons-material/FilterListRounded';
-import LocalOfferRoundedIcon from '@mui/icons-material/LocalOfferRounded';
 import MoreVertRoundedIcon from '@mui/icons-material/MoreVertRounded';
 import EmojiEventsRoundedIcon from '@mui/icons-material/EmojiEventsRounded';
 import PersonRoundedIcon from '@mui/icons-material/PersonRounded';
@@ -88,7 +86,7 @@ const AdminSidebar = ({ isMobileMenuOpen, setIsMobileMenuOpen }) => {
       )}
 
       {/* Sidebar */}
-      <div className={`w-[260px] bg-[#0E1015] h-screen fixed left-0 top-0 flex flex-col border-r border-[#1F232B] z-50 text-gray-300 shadow-2xl transition-transform duration-300 ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'} lg:translate-x-0`}>
+      <div className={`w-[260px] bg-[#0E1015] h-screen h-[100dvh] fixed left-0 top-0 flex flex-col border-r border-[#1F232B] z-50 text-gray-300 shadow-2xl transition-transform duration-300 ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'} lg:translate-x-0`}>
         {/* Brand */}
         <div className="px-6 py-6 border-b border-[#1F232B]/50 flex items-center justify-between">
           <div>
@@ -163,6 +161,7 @@ const AdminSidebar = ({ isMobileMenuOpen, setIsMobileMenuOpen }) => {
             <Link
               key={item.name}
               to={item.path}
+              onClick={() => setIsMobileMenuOpen(false)}
               className={`flex items-center gap-3 px-4 py-3 rounded-md transition-all text-sm font-bold group relative overflow-hidden ${
                 active
                   ? 'bg-gradient-to-r from-[#5EB929]/20 to-transparent text-white border-l-2 border-[#5EB929] shadow-[inset_4px_0_0_0_#5EB929]'
@@ -316,26 +315,29 @@ const AdminHeader = ({ onMenuToggle, pageTitle }) => {
   );
 };
 
-const BottomNav = () => {
+const BottomNav = ({ onMoreClick, isMoreOpen }) => {
   const navigate = useNavigate();
   const location = useLocation();
 
+  // Only routes that exist in AdminApp; everything else is reachable via "More" (the sidebar drawer).
   const navItems = [
     { label: 'Dashboard', icon: SpaceDashboardRoundedIcon, path: '/admin' },
-    { label: 'Merchants', icon: GroupRoundedIcon, path: '/admin/merchants' },
-    { label: 'Offers', icon: LocalOfferRoundedIcon, path: '/admin/offers' },
+    { label: 'Merchants', icon: StorefrontRoundedIcon, path: '/admin/merchants' },
     { label: 'Users', icon: PersonRoundedIcon, path: '/admin/users' },
-    { label: 'Settings', icon: SettingsRoundedIcon, path: '/admin/settings' },
+    { label: 'Alerts', icon: NotificationsRoundedIcon, path: '/admin/notifications' },
+    { label: 'More', icon: MenuRoundedIcon, onClick: onMoreClick },
   ];
 
   return (
     <div className="lg:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-100 px-2 py-1 flex justify-around items-center z-40 shadow-[0_-4px_20px_rgba(0,0,0,0.03)] pb-safe">
       {navItems.map((item) => {
-        const isActive = (item.path === '/admin') ? (location.pathname === '/admin' || location.pathname === '/admin/') : location.pathname.startsWith(item.path);
+        const isActive = item.onClick
+          ? isMoreOpen
+          : (item.path === '/admin') ? (location.pathname === '/admin' || location.pathname === '/admin/') : location.pathname.startsWith(item.path);
         return (
           <button
             key={item.label}
-            onClick={() => navigate(item.path)}
+            onClick={item.onClick || (() => navigate(item.path))}
             className={`flex flex-col items-center gap-1 p-2 transition-all ${
               isActive ? 'text-[#5EB929]' : 'text-gray-400'
             }`}
@@ -357,11 +359,21 @@ const AdminLayout = ({ children }) => {
 
   // Determine current page title for mobile
   const getPageTitle = () => {
-    if (location.pathname.includes('/merchants')) return 'Merchant Approvals';
-    if (location.pathname.includes('/offers')) return 'Offers';
-    if (location.pathname.includes('/users')) return 'Users';
-    if (location.pathname.includes('/settings')) return 'Settings';
-    return 'Dashboard';
+    const titles = [
+      ['/admin/merchants', 'Merchant Approvals'],
+      ['/admin/users', 'Users'],
+      ['/admin/rewards', 'Milestones & Rewards'],
+      ['/admin/categories', 'Categories'],
+      ['/admin/plans', 'Subscriptions'],
+      ['/admin/cities', 'Cities & Zones'],
+      ['/admin/ads', 'Ad Requests'],
+      ['/admin/ledger', 'Ledger'],
+      ['/admin/analytics', 'Analytics'],
+      ['/admin/notifications', 'Notifications'],
+      ['/admin/search', 'Search'],
+    ];
+    const match = titles.find(([path]) => location.pathname.startsWith(path));
+    return match ? match[1] : 'Dashboard';
   };
 
   useEffect(() => {
@@ -373,6 +385,11 @@ const AdminLayout = ({ children }) => {
       {/* Sidebar - Desktop Only */}
       <div className="hidden lg:block w-[260px] flex-shrink-0">
         <AdminSidebar isMobileMenuOpen={false} setIsMobileMenuOpen={() => {}} />
+      </div>
+
+      {/* Sidebar - Mobile drawer, opened from the bottom nav "More" tab */}
+      <div className="lg:hidden">
+        <AdminSidebar isMobileMenuOpen={isMobileMenuOpen} setIsMobileMenuOpen={setIsMobileMenuOpen} />
       </div>
 
       <div className="flex-1 flex flex-col min-w-0 relative">
@@ -395,7 +412,7 @@ const AdminLayout = ({ children }) => {
           </motion.div>
         </main>
 
-        <BottomNav />
+        <BottomNav onMoreClick={() => setIsMobileMenuOpen((open) => !open)} isMoreOpen={isMobileMenuOpen} />
       </div>
     </div>
   );
