@@ -33,7 +33,7 @@ const CustomerSignup = () => {
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
-    const refCode = params.get('ref');
+    const refCode = params.get('ref') || localStorage.getItem('offerly_signup_referral');
     if (refCode) {
       setFormData(prev => ({ ...prev, referralCode: refCode }));
     }

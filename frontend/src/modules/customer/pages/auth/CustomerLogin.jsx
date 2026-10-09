@@ -144,6 +144,10 @@ const CustomerLogin = () => {
   const [phone, setPhone] = useState(() => localStorage.getItem('offerly_login_phone') || '');
   const [countryCode, setCountryCode] = useState(() => localStorage.getItem('offerly_login_country') || '+91');
   const [rememberLogin, setRememberLogin] = useState(() => localStorage.getItem('offerly_remember_login') !== 'false');
+  const [referralCode, setReferralCode] = useState(() => {
+    const fromLink = new URLSearchParams(window.location.search).get('ref');
+    return (fromLink || localStorage.getItem('offerly_signup_referral') || '').toUpperCase().slice(0, 20);
+  });
   const [activeSlide, setActiveSlide] = useState(0);
   const [showCountryPicker, setShowCountryPicker] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -219,7 +223,8 @@ const CustomerLogin = () => {
     localStorage.setItem('offerly_login_phone', phone);
     localStorage.setItem('offerly_login_country', countryCode);
     localStorage.setItem('offerly_remember_login', rememberLogin);
-  }, [phone, countryCode, rememberLogin]);
+    localStorage.setItem('offerly_signup_referral', referralCode);
+  }, [phone, countryCode, rememberLogin, referralCode]);
 
   // Resend OTP cooldown timer
   useEffect(() => {
@@ -321,6 +326,7 @@ const CustomerLogin = () => {
           if (pendingData.name) {
             const registerResponse = await authAPI.registerCustomer(verifyResponse.verificationToken, {
               ...pendingData,
+              ...(referralCode && !pendingData.referralCode ? { referralCode } : {}),
               phone: cleanPhone,
             });
 
@@ -745,6 +751,21 @@ const CustomerLogin = () => {
                       <span className="text-xs font-medium text-gray-700">
                         Keep me signed in on this device
                       </span>
+                    </div>
+
+                    {/* Optional referral code (only used if this turns out to be a new account) */}
+                    <div className="space-y-1">
+                      <label className="text-[11px] font-semibold text-gray-500 px-1">
+                        Referral Code <span className="font-normal text-gray-400">(optional)</span>
+                      </label>
+                      <input
+                        type="text"
+                        value={referralCode}
+                        onChange={(e) => setReferralCode(e.target.value.replace(/[^a-zA-Z0-9]/g, '').toUpperCase().slice(0, 20))}
+                        placeholder="Have a code? Enter it here"
+                        autoComplete="off"
+                        className="w-full h-[42px] px-4 bg-white border border-gray-200 rounded-2xl text-sm font-medium text-gray-900 tracking-wide placeholder:text-gray-400 placeholder:font-normal placeholder:tracking-normal outline-none focus:border-[#5EB929]"
+                      />
                     </div>
 
                     {/* Continue with OTP Button */}
