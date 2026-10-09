@@ -66,6 +66,8 @@ export const serializeMerchant = (merchant) => ({
   category: merchant?.category || '',
   city: merchant?.city || '',
   zone: merchant?.zone || '',
+  // auto | manual | admin | '' - who decided the zone (admin = locked).
+  zoneSource: merchant?.zoneSource || '',
   locality: merchant?.locality || '',
   address: merchant?.address || '',
   phone: merchant?.phone || '',

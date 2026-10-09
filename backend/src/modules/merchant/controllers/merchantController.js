@@ -594,11 +594,18 @@ export const updateLocationHours = async (req, res) => {
       };
     }
 
-    // The store's map location decides its zone; the manual pick is only the
-    // fallback for stores outside every hexagon or with no location.
-    const detectedZone = hasCoordinates ? zoneIdForPoint(cityDoc, merchant.coordinates) : '';
-    merchant.zone = detectedZone || zone || '';
-    merchant.zoneSource = detectedZone ? 'auto' : zone ? 'manual' : '';
+    // A zone is set once, here at registration. After that only an admin can
+    // change it, so a re-submitted registration keeps the existing zone (as long
+    // as it still belongs to the submitted city).
+    const existingZoneValid =
+      Boolean(merchant.zone) && cityDoc?.zones?.some((z) => String(z._id) === String(merchant.zone));
+    if (!existingZoneValid) {
+      // The store's map location decides its zone; the manual pick is only the
+      // fallback for stores outside every hexagon or with no location.
+      const detectedZone = hasCoordinates ? zoneIdForPoint(cityDoc, merchant.coordinates) : '';
+      merchant.zone = detectedZone || zone || '';
+      merchant.zoneSource = detectedZone ? 'auto' : zone ? 'manual' : '';
+    }
 
     // Update business hours
     merchant.businessHours = businessHours;
@@ -711,23 +718,8 @@ export const updateMyStore = async (req, res) => {
     merchant.isOpen = Boolean(req.body.isOpen);
   }
 
-  // Moving the store pin (or city) re-files it into whichever zone now
-  // contains it. Stores with no location keep their existing zone.
-  if (merchant.isModified("coordinates") || merchant.isModified("city")) {
-    const cityDoc = await City.findOne({ name: String(merchant.city || "").trim() });
-    const lat = Number(merchant.coordinates?.lat);
-    const lng = Number(merchant.coordinates?.lng);
-    const detected = lat && lng ? zoneIdForPoint(cityDoc, { lat, lng }) : "";
-    const zoneStillExists = cityDoc?.zones?.some((z) => String(z._id) === String(merchant.zone || ""));
-    if (detected) {
-      merchant.zone = detected;
-      merchant.zoneSource = "auto";
-    } else if (merchant.zoneSource === "auto" || !zoneStillExists) {
-      // Moved out of its auto zone, or into a city its zone doesn't belong to.
-      merchant.zone = "";
-      merchant.zoneSource = "";
-    }
-  }
+  // A merchant's zone is never changed from here: once set at registration,
+  // only an admin can move a store to another zone (PUT /admin/merchants/:id/zone).
 
   await merchant.save();
 

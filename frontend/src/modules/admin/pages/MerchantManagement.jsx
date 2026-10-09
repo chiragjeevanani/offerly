@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import SlideOver from '../components/SlideOver';
 import MerchantWalletPanel from '../components/MerchantWalletPanel';
+import MerchantZonePanel from '../components/MerchantZonePanel';
 import RejectionReasonModal from '../components/RejectionReasonModal';
 import AdminEntityCard from '../components/AdminEntityCard';
 import { adminAPI } from '../../../api/admin.api';
@@ -363,6 +364,11 @@ const MerchantManagement = () => {
               </div>
 
               <MerchantWalletPanel merchantId={viewingMerchant._id || viewingMerchant.id} />
+
+              <MerchantZonePanel
+                merchant={viewingMerchant}
+                onChanged={(patch) => setViewingMerchant((prev) => (prev ? { ...prev, ...patch } : prev))}
+              />
 
               {/* Business Information Section */}
               <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">

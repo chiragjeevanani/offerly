@@ -8,6 +8,8 @@ import LocationOnRoundedIcon from '@mui/icons-material/LocationOnRounded';
 import AccessTimeRoundedIcon from '@mui/icons-material/AccessTimeRounded';
 import SendRoundedIcon from '@mui/icons-material/SendRounded';
 import PageTransition from '../../components/ui/PageTransition';
+import WhatsAppIcon from '@mui/icons-material/WhatsApp';
+import { useSupportContacts, telHref, mailHref, whatsappHref } from '../../../../hooks/useSupportContacts';
 import toast from 'react-hot-toast';
 
 const ContactCard = ({ icon: Icon, title, content, color, bgColor }) => (
@@ -29,6 +31,14 @@ const ContactCard = ({ icon: Icon, title, content, color, bgColor }) => (
 
 const Contact = () => {
   const navigate = useNavigate();
+  // Set by admins under Support Contacts; anything left blank is hidden.
+  const { contacts } = useSupportContacts('customer');
+  const supportChannels = [
+    contacts.email && { i: EmailRoundedIcon, t: 'Email', c: contacts.email, href: mailHref(contacts.email) },
+    contacts.phone && { i: PhoneRoundedIcon, t: 'Phone', c: contacts.phone, href: telHref(contacts.phone) },
+    contacts.whatsapp && { i: WhatsAppIcon, t: 'WhatsApp', c: contacts.whatsapp, href: whatsappHref(contacts.whatsapp) },
+    contacts.hours && { i: AccessTimeRoundedIcon, t: 'Support Hours', c: contacts.hours },
+  ].filter(Boolean);
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -186,20 +196,26 @@ const Contact = () => {
             </div>
 
             <div className="grid grid-cols-1 gap-3">
-              {[
-                { i: EmailRoundedIcon, t: 'Email ID', c: 'support@offerly.com' },
-                { i: PhoneRoundedIcon, t: 'Contact Number', c: '+91 XXXXX XXXXX' },
-                { i: AccessTimeRoundedIcon, t: 'Opening Hours', c: '10 AM to 10 PM' },
-              ].map((channel, idx) => (
-                <div key={idx} className="bg-white rounded-2xl p-4 flex items-center gap-4 border border-gray-50 shadow-sm">
+              {supportChannels.length === 0 && (
+                <p className="text-[12px] text-gray-400 px-1">Our support contact details will appear here soon.</p>
+              )}
+              {supportChannels.map((channel, idx) => (
+                <a
+                  key={idx}
+                  href={channel.href}
+                  target={channel.href?.startsWith('http') ? '_blank' : undefined}
+                  rel="noreferrer"
+                  onClick={(e) => { if (!channel.href) e.preventDefault(); }}
+                  className="bg-white rounded-2xl p-4 flex items-center gap-4 border border-gray-50 shadow-sm"
+                >
                    <div className="w-11 h-11 bg-[#5EB929]/5 rounded-xl flex items-center justify-center border border-[#5EB929]/10 flex-shrink-0">
                       <channel.i sx={{ fontSize: 18 }} className="text-[#5EB929]" />
                    </div>
                    <div>
                       <p className="text-[10px] font-bold text-gray-900 uppercase tracking-tight">{channel.t}</p>
-                      <p className="text-[11px] font-bold text-gray-400 uppercase tracking-widest mt-0.5">{channel.c}</p>
+                      <p className="text-[12px] font-bold text-gray-500 mt-0.5 break-all">{channel.c}</p>
                    </div>
-                </div>
+                </a>
               ))}
             </div>
 

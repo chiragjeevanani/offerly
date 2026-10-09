@@ -305,6 +305,70 @@ export const updateMerchantStatus = async (req, res) => {
   }
 };
 
+// @desc    Move a merchant to another zone (admins only - merchants can't change their zone)
+// @route   PUT /admin/merchants/:id/zone   body: { zone: '<zoneId>' | '' | 'auto' }
+//          '<zoneId>' locks the store to that zone, '' locks it to no zone,
+//          'auto' hands it back to automatic placement from its map location.
+export const updateMerchantZone = async (req, res) => {
+  if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
+    return res.status(400).json({ success: false, error: 'Invalid merchant ID format' });
+  }
+  const requested = typeof req.body?.zone === 'string' ? req.body.zone.trim() : null;
+  if (requested === null) {
+    return res.status(400).json({ success: false, error: 'zone is required' });
+  }
+
+  try {
+    const merchant = await Merchant.findById(req.params.id).select('storeName city zone zoneSource coordinates');
+    if (!merchant) {
+      return res.status(404).json({ success: false, error: 'Merchant not found' });
+    }
+    const city = merchant.city ? await City.findOne({ name: cityNameQuery(merchant.city) }) : null;
+    const previousZone = merchant.zone || '';
+
+    if (requested === 'auto') {
+      merchant.zone = zoneIdForPoint(city, merchant.coordinates, { includeInactive: true });
+      merchant.zoneSource = merchant.zone ? 'auto' : '';
+    } else if (requested === '') {
+      merchant.zone = '';
+      merchant.zoneSource = 'admin';
+    } else {
+      const zone = city?.zones?.find((z) => String(z._id) === requested);
+      if (!zone) {
+        return res.status(400).json({ success: false, error: `That zone isn't part of ${merchant.city || 'this store\'s city'}` });
+      }
+      merchant.zone = String(zone._id);
+      merchant.zoneSource = 'admin';
+    }
+    await merchant.save();
+
+    if (city) await syncCityZoneAssignments(city); // refreshes per-zone store counts
+    invalidateFeedCache({ city: merchant.city });
+
+    if (previousZone !== (merchant.zone || '')) {
+      const zoneName = city?.zones?.find((z) => String(z._id) === merchant.zone)?.name;
+      try {
+        await notifyMerchant(String(merchant._id), {
+          title: 'Your store zone was updated',
+          body: zoneName
+            ? `Offerly has placed your store in the ${zoneName} zone.`
+            : 'Offerly has removed your store from its zone.',
+          type: 'store_status',
+          data: { zone: merchant.zone || '' },
+          link: '/merchant/profile',
+        });
+      } catch (notifyErr) {
+        console.error('Zone change notification failed (non-blocking):', notifyErr);
+      }
+    }
+
+    res.status(200).json({ success: true, data: { _id: merchant._id, zone: merchant.zone, zoneSource: merchant.zoneSource } });
+  } catch (err) {
+    console.error('Update merchant zone error:', err);
+    res.status(500).json({ success: false, error: 'Failed to update zone' });
+  }
+};
+
 export const deleteMerchant = async (req, res) => {
   try {
     const merchant = await Merchant.findByIdAndDelete(req.params.id);
@@ -379,6 +443,9 @@ export const syncCityZoneAssignments = async (city, extraZoneIds = []) => {
   const liveZoneIds = new Set(city.zones.map((zone) => String(zone._id)));
   const ops = [];
   for (const merchant of merchants) {
+    // A zone an admin set by hand is final - only re-filed if that zone was deleted.
+    if (merchant.zoneSource === 'admin' && (!merchant.zone || liveZoneIds.has(String(merchant.zone)))) continue;
+
     // Inactive zones still own their merchants - deactivating hides the zone
     // from pickers, it shouldn't silently strip stores out of it.
     const detected = zoneIdForPoint(city, merchant.coordinates, { includeInactive: true });

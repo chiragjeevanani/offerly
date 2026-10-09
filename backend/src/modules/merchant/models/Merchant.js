@@ -99,11 +99,13 @@ const merchantSchema = new mongoose.Schema(
       default: '',
     },
     // 'auto' = derived from the store's map location and re-derived whenever
-    // zones change; 'manual' = picked by the merchant because no zone covers
-    // their location, kept until one does. '' = legacy/unknown (treated as manual).
+    // zones change; 'manual' = picked by the merchant at registration because no
+    // zone covers their location, kept until one does; 'admin' = set by an admin
+    // and never changed automatically. '' = legacy/unknown (treated as manual).
+    // Merchants can't change their zone after registration - only admins can.
     zoneSource: {
       type: String,
-      enum: ['auto', 'manual', ''],
+      enum: ['auto', 'manual', 'admin', ''],
       default: '',
     },
     phone: {

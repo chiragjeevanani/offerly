@@ -24,6 +24,7 @@ import FilterListRoundedIcon from '@mui/icons-material/FilterListRounded';
 import MoreVertRoundedIcon from '@mui/icons-material/MoreVertRounded';
 import EmojiEventsRoundedIcon from '@mui/icons-material/EmojiEventsRounded';
 import PersonRoundedIcon from '@mui/icons-material/PersonRounded';
+import SupportAgentRoundedIcon from '@mui/icons-material/SupportAgentRounded';
 
 // Admin Pages (Lazy Loaded for performance and ad-blocker resilience)
 const AdminDashboard = lazy(() => import('./pages/Dashboard'));
@@ -34,6 +35,7 @@ const UserManagement = lazy(() => import('./pages/UserManagement'));
 const SubscriptionManagement = lazy(() => import('./pages/SubscriptionManagement'));
 const PromotionRequest = lazy(() => import('./pages/PromotionRequest'));
 const Analytics = lazy(() => import('./pages/Analytics'));
+const SupportContacts = lazy(() => import('./pages/SupportContacts'));
 const CategoryManagement = lazy(() => import('./pages/CategoryManagement'));
 const RewardsManagement = lazy(() => import('./pages/RewardsManagement'));
 const Notifications = lazy(() => import('./pages/Notifications'));
@@ -67,6 +69,7 @@ const AdminSidebar = ({ isMobileMenuOpen, setIsMobileMenuOpen }) => {
     { name: 'Ad Requests', path: '/admin/ads', icon: CampaignRoundedIcon },
     { name: 'Bookings', path: '/admin/ledger', icon: ViewListRoundedIcon },
     { name: 'Analytics', path: '/admin/analytics', icon: BarChartRoundedIcon },
+    { name: 'Support Contacts', path: '/admin/support', icon: SupportAgentRoundedIcon },
   ];
 
   const isActive = (path) => {
@@ -369,6 +372,7 @@ const AdminLayout = ({ children }) => {
       ['/admin/ads', 'Ad Requests'],
       ['/admin/ledger', 'Bookings'],
       ['/admin/analytics', 'Analytics'],
+      ['/admin/support', 'Support Contacts'],
       ['/admin/notifications', 'Notifications'],
       ['/admin/search', 'Search'],
     ];
@@ -468,6 +472,7 @@ const AdminApp = () => {
         <Routes>
           <Route path="/" element={<AdminDashboard />} />
           <Route path="/analytics" element={<Analytics />} />
+          <Route path="/support" element={<SupportContacts />} />
           <Route path="/cities" element={<CityManagement />} />
           <Route path="/merchants" element={<MerchantManagement />} />
           <Route path="/users" element={<UserManagement />} />

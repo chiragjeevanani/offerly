@@ -26,6 +26,8 @@ import SaveRoundedIcon from '@mui/icons-material/SaveRounded';
 import StorefrontRoundedIcon from '@mui/icons-material/StorefrontRounded';
 import { useEffect, useState } from 'react';
 import { merchantAPI } from '../../../api/merchant.api';
+import { cityAPI } from '../../../api/city.api';
+import PlaceRoundedIcon from '@mui/icons-material/PlaceRounded';
 import toast from 'react-hot-toast';
 import BusinessHoursModal from '../components/BusinessHoursModal';
 
@@ -65,6 +67,26 @@ const Profile = ({ merchant, onMerchantUpdate }) => {
   
   // Store Profile Edit Modal State
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [zoneName, setZoneName] = useState('');
+
+  // The store's zone, read-only here: it's set at registration and only
+  // Offerly admins can change it afterwards.
+  useEffect(() => {
+    if (!merchant?.zone) return undefined;
+    let cancelled = false;
+    cityAPI
+      .getAll()
+      .then((res) => {
+        const zone = (res.cities || [])
+          .flatMap((c) => c.zones || [])
+          .find((z) => String(z._id || z.id) === String(merchant.zone));
+        if (!cancelled) setZoneName(zone?.name || '');
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, [merchant?.zone]);
   const [isHoursModalOpen, setIsHoursModalOpen] = useState(false);
   const [savingProfile, setSavingProfile] = useState(false);
   const [profileFormData, setProfileFormData] = useState({
@@ -152,7 +174,7 @@ const Profile = ({ merchant, onMerchantUpdate }) => {
         <button onClick={() => navigate(-1)} className="w-9 h-9 flex items-center justify-center rounded-xl bg-gray-50 text-gray-400">
            <ArrowBackRoundedIcon sx={{ fontSize: 20 }} />
         </button>
-        <h1 className="text-[15px] font-bold text-gray-900 uppercase tracking-widest">Command Center</h1>
+        <h1 className="text-[15px] font-bold text-gray-900 uppercase tracking-widest">My Account</h1>
         <div className="w-9" />
       </div>
 
@@ -185,6 +207,16 @@ const Profile = ({ merchant, onMerchantUpdate }) => {
                   <p className="text-gray-400 font-bold text-[10px] sm:text-xs tracking-wide mt-1 truncate uppercase opacity-60">
                     {merchant?.category} • {merchant?.city} • #OFF-{merchant?._id?.slice(-6).toUpperCase()}
                   </p>
+                  <div className="mt-1.5" title="Your zone can only be changed by Offerly. Contact support if it's wrong.">
+                    <p className="text-[12px] font-semibold text-gray-200 flex items-center gap-1">
+                      <PlaceRoundedIcon sx={{ fontSize: 14 }} className="text-[#5EB929]" />
+                      Zone: {merchant?.zone ? zoneName || '...' : 'Not set'}
+                    </p>
+                    <p className="text-[10px] font-medium text-gray-400 flex items-center gap-1 mt-0.5">
+                      <LockRoundedIcon sx={{ fontSize: 10 }} />
+                      Only Offerly can change your zone
+                    </p>
+                  </div>
                   
                   {/* Store Type Badge */}
                   <div className="flex items-center gap-1.5 px-2.5 py-1 bg-white/10 rounded-full w-fit mt-2.5 border border-white/10 backdrop-blur-md">

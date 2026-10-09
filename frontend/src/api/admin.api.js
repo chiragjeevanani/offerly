@@ -64,6 +64,15 @@ export const adminAPI = {
   },
 
   // Update merchant status
+  // Support email / phone / WhatsApp / hours shown in the customer and merchant apps
+  getSupportContacts: async () => axiosInstance.get('/support'),
+  updateSupportContacts: async (data) => axiosInstance.put('/admin/support-contacts', data),
+
+  // Move a store to a zone. zone: '<zoneId>' | '' (no zone) | 'auto' (from map location)
+  updateMerchantZone: async (id, zone) => {
+    return axiosInstance.put(`/admin/merchants/${id}/zone`, { zone });
+  },
+
   updateMerchantStatus: async (id, status, rejectionReason = null) => {
     return axiosInstance.put(
       API_ENDPOINTS.UPDATE_MERCHANT_STATUS.replace(':id', id),

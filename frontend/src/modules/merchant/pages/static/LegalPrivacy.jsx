@@ -1,5 +1,6 @@
 /* eslint-disable no-unused-vars */
 import { useState, useEffect } from 'react';
+import { useSupportContacts, mailHref } from '../../../../hooks/useSupportContacts';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import SearchRoundedIcon from '@mui/icons-material/SearchRounded';
@@ -97,6 +98,7 @@ const PrivacySection = ({ section, isExpanded, onToggle }) => {
 };
 
 const LegalPrivacy = ({ isEmbedded = false }) => {
+  const { contacts: support } = useSupportContacts('merchant');
   const [searchQuery, setSearchQuery] = useState('');
   const [expandedSections, setExpandedSections] = useState({ 0: true });
 
@@ -309,7 +311,9 @@ const LegalPrivacy = ({ isEmbedded = false }) => {
           <div className="mt-3 p-3.5 bg-white rounded-xl border border-gray-100 space-y-1 font-mono text-xs text-gray-700">
             <p><strong>Offerly Privacy & Data Protection Desk</strong></p>
             <p>Email: <a href="mailto:privacy@offerly.in" className="text-[#5EB929] hover:underline">privacy@offerly.in</a></p>
-            <p>Merchant Grievance Desk: <a href="mailto:biz-support@offerly.in" className="text-[#5EB929] hover:underline">biz-support@offerly.in</a></p>
+            {support.email && (
+              <p>Merchant Support: <a href={mailHref(support.email)} className="text-[#5EB929] hover:underline">{support.email}</a></p>
+            )}
             <p>Turnaround SLA: 24 to 48 business hours</p>
           </div>
         </>
@@ -349,7 +353,7 @@ const LegalPrivacy = ({ isEmbedded = false }) => {
   return (
     <MerchantLegalLayout activeTab="privacy" isEmbedded={isEmbedded}>
       <div className="space-y-8">
-        
+
         {/* ── Hero Banner ───────────────────────────────────────────── */}
         <div className="bg-gray-900 rounded-[2rem] sm:rounded-[2.5rem] p-6 sm:p-10 relative overflow-hidden shadow-xl text-white border border-gray-800">
           <div className="absolute top-0 right-0 w-96 h-96 bg-[#5EB929]/20 rounded-full blur-[100px] -translate-y-1/2 translate-x-1/3 pointer-events-none" />

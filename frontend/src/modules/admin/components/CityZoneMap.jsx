@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
-import { MapContainer, TileLayer, Polygon, Marker, Tooltip, useMapEvents } from 'react-leaflet';
+import { MapContainer, TileLayer, Polygon, Polyline, Marker, Tooltip, useMapEvents } from 'react-leaflet';
 import AddLocationAltRoundedIcon from '@mui/icons-material/AddLocationAltRounded';
 import MyLocationRoundedIcon from '@mui/icons-material/MyLocationRounded';
 import PlaceRoundedIcon from '@mui/icons-material/PlaceRounded';
@@ -41,6 +41,12 @@ const dotIcon = (fill, stroke, size) =>
 const CITY_CENTER_ICON = dotIcon('#4338CA', '#FFFFFF', 16);
 const ZONE_CENTER_ICON = dotIcon('#5EB929', '#FFFFFF', 16);
 const RESIZE_HANDLE_ICON = dotIcon('#FFFFFF', '#5EB929', 18);
+
+// Zone size, always stated the same way: radius is centre-to-corner.
+const radiusOf = (zone) => zone?.radiusMeters || DEFAULT_ZONE_RADIUS_METERS;
+const km = (meters) => `${(meters / 1000).toFixed(2)} km`;
+// A regular hexagon's area is (3*sqrt(3)/2) * r^2.
+const areaKm2 = (meters) => ((3 * Math.sqrt(3)) / 2) * (meters / 1000) ** 2;
 
 const zoneKey = (zone, index) => zone._id || zone.id || zone.tempId || `new-${index}`;
 const hasValidCoordinates = (point) =>
@@ -212,6 +218,9 @@ const CityZoneMap = ({ coordinates, onCoordinatesChange, zones, onZonesChange })
   // Grab anywhere inside a hexagon and drag it. Leaflet has no draggable
   // polygons, so we pause map panning and follow the mouse ourselves.
   const handlePolygonMouseDown = (index, event) => {
+    // While adding a zone / setting the centre / placing a zone, a press on an
+    // existing hexagon must act on that spot of the map, not grab the hexagon.
+    if (mode || placingIndex !== null) return;
     L.DomEvent.stop(event);
     const zone = zones[index];
     if (!zone?.center || !map) return;
@@ -335,7 +344,7 @@ const CityZoneMap = ({ coordinates, onCoordinatesChange, zones, onZonesChange })
     mode === 'center'
       ? 'Tap anywhere on the map to set the city center.'
       : mode === 'zone'
-      ? 'Tap anywhere on the map to drop a new zone there.'
+      ? `Tap the map where the zone should be. It starts with a ${km(DEFAULT_ZONE_RADIUS_METERS)} radius - you can resize it after.`
       : placingIndex !== null
       ? `Tap anywhere on the map to place "${zones[placingIndex]?.name || 'this zone'}".`
       : null;
@@ -480,12 +489,16 @@ const CityZoneMap = ({ coordinates, onCoordinatesChange, zones, onZonesChange })
                   mousedown: (e) => handlePolygonMouseDown(index, e),
                   click: (e) => {
                     L.DomEvent.stop(e);
+                    if (mode || placingIndex !== null) {
+                      handleMapClick(e);
+                      return;
+                    }
                     if (!polygonDragRef.current?.moved) setSelectedIndex(index);
                   },
                 }}
               >
                 <Tooltip permanent direction="center" className="!bg-white/90 !border-0 !shadow-sm !text-[11px] !font-bold !text-gray-700 !px-1.5 !py-0.5">
-                  {zone.name || `Zone ${index + 1}`}
+                  {zone.name || `Zone ${index + 1}`} · {km(radiusOf(zone))}
                 </Tooltip>
               </Polygon>
             );
@@ -501,6 +514,13 @@ const CityZoneMap = ({ coordinates, onCoordinatesChange, zones, onZonesChange })
                 drag: (e) => moveZoneTo(selectedIndex, toLatLng(e.target.getLatLng())),
                 dragend: endMarkerDrag,
               }}
+            />
+          )}
+
+          {selectedPath.length > 0 && (
+            <Polyline
+              positions={[[selectedZone.center.lat, selectedZone.center.lng], [selectedPath[1].lat, selectedPath[1].lng]]}
+              pathOptions={{ color: '#1f2937', weight: 2, dashArray: '5 5', interactive: false }}
             />
           )}
 
@@ -524,7 +544,9 @@ const CityZoneMap = ({ coordinates, onCoordinatesChange, zones, onZonesChange })
                 },
               }}
             >
-              <Tooltip direction="right" offset={[10, 0]}>Drag to resize</Tooltip>
+              <Tooltip permanent direction="top" offset={[0, -12]} className="!font-bold !text-[11px]">
+                {km(radiusOf(selectedZone))} radius
+              </Tooltip>
             </Marker>
           )}
         </MapContainer>
@@ -554,7 +576,7 @@ const CityZoneMap = ({ coordinates, onCoordinatesChange, zones, onZonesChange })
             </button>
           </div>
           <div className="flex items-center gap-3">
-            <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wide whitespace-nowrap">Size</span>
+            <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wide whitespace-nowrap">Radius</span>
             <input
               type="range"
               min={MIN_ZONE_RADIUS_METERS}
@@ -568,9 +590,21 @@ const CityZoneMap = ({ coordinates, onCoordinatesChange, zones, onZonesChange })
               onChange={(e) => handleRadiusChange(selectedIndex, Number(e.target.value))}
               className="flex-1 accent-[#5EB929]"
             />
-            <span className="text-[11px] font-bold text-gray-600 w-14 text-right">
-              {((selectedZone.radiusMeters || DEFAULT_ZONE_RADIUS_METERS) / 1000).toFixed(2)} km
-            </span>
+            <span className="text-[13px] font-bold text-gray-900 w-16 text-right">{km(radiusOf(selectedZone))}</span>
+          </div>
+          <div className="grid grid-cols-3 gap-2 text-center">
+            <div className="bg-gray-50 rounded-lg py-1.5">
+              <p className="text-[13px] font-bold text-gray-900">{km(radiusOf(selectedZone))}</p>
+              <p className="text-[10px] text-gray-500">radius (centre to corner)</p>
+            </div>
+            <div className="bg-gray-50 rounded-lg py-1.5">
+              <p className="text-[13px] font-bold text-gray-900">{km(radiusOf(selectedZone) * 2)}</p>
+              <p className="text-[10px] text-gray-500">across</p>
+            </div>
+            <div className="bg-gray-50 rounded-lg py-1.5">
+              <p className="text-[13px] font-bold text-gray-900">{areaKm2(radiusOf(selectedZone)).toFixed(2)} km²</p>
+              <p className="text-[10px] text-gray-500">area covered</p>
+            </div>
           </div>
           <p className="text-[11px] text-gray-500 leading-snug">
             Drag the zone (or its green dot) to move it, and the white dot on its edge to resize it. Stores inside the zone are assigned to it automatically when you save.
@@ -592,8 +626,9 @@ const CityZoneMap = ({ coordinates, onCoordinatesChange, zones, onZonesChange })
               placeholder="Zone name e.g. Beltola"
               className="flex-1 min-w-0 bg-white border border-gray-200 rounded-xl h-10 px-3 text-sm font-medium focus:ring-2 focus:ring-primary/10 focus:border-primary outline-none transition-all"
             />
-            <span className="text-[10px] font-bold text-gray-400 whitespace-nowrap" title="Stores in this zone">
-              {zone.merchantCount || 0} stores
+            <span className="text-[10px] font-bold text-gray-400 whitespace-nowrap text-right leading-tight">
+              <span className="block text-gray-700" title="Radius">{zone.center ? km(radiusOf(zone)) : 'not placed'}</span>
+              <span title="Stores in this zone">{zone.merchantCount || 0} stores</span>
             </span>
             <button
               type="button"

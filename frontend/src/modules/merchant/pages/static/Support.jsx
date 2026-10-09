@@ -13,6 +13,7 @@ import PaymentRoundedIcon from '@mui/icons-material/PaymentRounded';
 import StorefrontRoundedIcon from '@mui/icons-material/StorefrontRounded';
 import TrendingUpRoundedIcon from '@mui/icons-material/TrendingUpRounded';
 import SettingsRoundedIcon from '@mui/icons-material/SettingsRounded';
+import { useSupportContacts, telHref, mailHref, whatsappHref } from '../../../../hooks/useSupportContacts';
 
 const FAQItem = ({ question, answer, idx, isOpen, onToggle }) => {
   return (
@@ -55,6 +56,7 @@ const FAQItem = ({ question, answer, idx, isOpen, onToggle }) => {
 
 const Support = () => {
   const navigate = useNavigate();
+  const { contacts } = useSupportContacts('merchant');
   const [openFaq, setOpenFaq] = useState(null);
 
   const toggleFaq = (idx) => {
@@ -83,7 +85,7 @@ const Support = () => {
       </div>
 
       <div className="max-w-4xl mx-auto px-4 py-8 space-y-10">
-        
+
         {/* Identity Strip (Hero) */}
         <div className="bg-gray-900 rounded-[2.5rem] p-6 sm:p-10 relative overflow-hidden shadow-2xl">
            <div className="absolute top-0 right-0 w-80 h-80 bg-[#5EB929]/20 rounded-full blur-[90px] -translate-y-1/2 translate-x-1/2" />
@@ -93,7 +95,7 @@ const Support = () => {
               </motion.div>
               <div className="space-y-2 text-center sm:text-left">
                  <motion.h2 initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="text-xl sm:text-2xl lg:text-3xl font-bold text-white tracking-tight leading-tight">Merchant <span className="text-[#5EB929]">Support.</span></motion.h2>
-                 <motion.p initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="text-gray-400 text-[12px] sm:text-sm font-medium leading-relaxed max-w-xl">Find rapid solutions or connect with our support architects for enterprise assistance.</motion.p>
+                 <motion.p initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="text-gray-400 text-[12px] sm:text-sm font-medium leading-relaxed max-w-xl">Find answers below, or contact our support team.</motion.p>
               </div>
            </div>
         </div>
@@ -101,15 +103,15 @@ const Support = () => {
         {/* Contact Strips */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
            {[
-              { label: 'WhatsApp Chat', value: 'Instant Response', icon: WhatsAppIcon, color: 'text-green-500', action: () => window.open('https://wa.me/911800OFFERLY') },
-              { label: 'Email Desk', value: '4hr Turnaround', icon: MailRoundedIcon, color: 'text-blue-500', action: () => window.open('mailto:support@offerly.com') },
-              { label: 'Direct Line', value: '24/7 Priority', icon: CallRoundedIcon, color: 'text-[#5EB929]', action: () => window.open('tel:+911800OFFERLY') },
-           ].map((c, i) => (
+              contacts.whatsapp && { label: 'WhatsApp', value: contacts.whatsapp, icon: WhatsAppIcon, color: 'text-green-500', action: () => window.open(whatsappHref(contacts.whatsapp)) },
+              contacts.email && { label: 'Email', value: contacts.email, icon: MailRoundedIcon, color: 'text-blue-500', action: () => window.open(mailHref(contacts.email)) },
+              contacts.phone && { label: 'Phone', value: contacts.phone, icon: CallRoundedIcon, color: 'text-[#5EB929]', action: () => window.open(telHref(contacts.phone)) },
+           ].filter(Boolean).map((c, i) => (
               <motion.button key={i} whileTap={{ scale: 0.98 }} onClick={c.action} className="bg-white p-5 rounded-2xl border border-gray-50 shadow-sm flex items-center gap-4 hover:border-[#5EB929]/20 transition-all text-left">
                  <div className={`w-10 h-10 rounded-xl bg-background ${c.color} flex items-center justify-center flex-shrink-0`}><c.icon sx={{ fontSize: 20 }} /></div>
                  <div>
                     <p className="text-[12px] font-bold text-gray-900 leading-none">{c.label}</p>
-                    <p className="text-[10px] font-bold text-gray-400 mt-1 uppercase tracking-tight">{c.value}</p>
+                    <p className="text-[11px] font-bold text-gray-400 mt-1 break-all">{c.value}</p>
                  </div>
               </motion.button>
            ))}

@@ -18,12 +18,14 @@ import { useApp } from '../../customer/context/AppContext';
 import { merchantAPI } from '../../../api/merchant.api';
 import toast from 'react-hot-toast';
 import { useSocket } from '../../../context/SocketContext';
+import { useSupportContacts, telHref, mailHref } from '../../../hooks/useSupportContacts';
 
 const MerchantStatus = ({ merchant, onStatusChange }) => {
   const navigate = useNavigate();
+  const { contacts: support } = useSupportContacts('merchant');
   const { logout } = useApp();
   const [checking, setChecking] = useState(false);
-  
+
   const isRejected = merchant?.status === 'rejected';
   const isPending = merchant?.status === 'pending';
   const isApproved = merchant?.status === 'approved';
@@ -94,7 +96,7 @@ const MerchantStatus = ({ merchant, onStatusChange }) => {
   return (
     <div className="min-h-screen bg-[#F9FAFB] flex items-center justify-center p-6 font-sans">
       <div className="max-w-2xl w-full">
-        <motion.div 
+        <motion.div
           initial={{ y: 20, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
           transition={{ duration: 0.5 }}
@@ -102,8 +104,8 @@ const MerchantStatus = ({ merchant, onStatusChange }) => {
         >
           {/* Enhanced Header */}
           <div className={`relative p-10 pb-12 bg-gradient-to-br ${
-            isRejected ? 'from-red-600 to-red-800' : 
-            isApproved ? 'from-primary-600 to-primary-800' : 
+            isRejected ? 'from-red-600 to-red-800' :
+            isApproved ? 'from-primary-600 to-primary-800' :
             'from-primary-800 to-gray-900'
           }`}>
             {/* Abstract Background Pattern */}
@@ -117,9 +119,9 @@ const MerchantStatus = ({ merchant, onStatusChange }) => {
                 <rect width="100%" height="100%" fill="url(#grid)" />
               </svg>
             </div>
-            
+
             <div className="relative z-10 flex flex-col items-center text-center">
-              <motion.div 
+              <motion.div
                 initial={{ scale: 0 }}
                 animate={{ scale: 1 }}
                 transition={{ type: 'spring', damping: 12, delay: 0.2 }}
@@ -133,7 +135,7 @@ const MerchantStatus = ({ merchant, onStatusChange }) => {
                   <HourglassEmptyRoundedIcon className="text-white animate-pulse" sx={{fontSize: 40}} />
                 )}
               </motion.div>
-              
+
               <h1 className="text-4xl font-bold text-white leading-none uppercase tracking-tight mb-2">
                 {isRejected ? 'Rejected' : isApproved ? 'Approved' : 'Pending'}
               </h1>
@@ -144,9 +146,9 @@ const MerchantStatus = ({ merchant, onStatusChange }) => {
             </div>
           </div>
 
-          <div className="p-10 -mt-8 relative z-10 bg-white rounded-t-[2.5rem] space-y-8">
+          <div className="p-6 sm:p-10 -mt-8 relative z-10 bg-white rounded-t-[2.5rem] space-y-8">
             {/* Status Stepper */}
-            <div className="flex items-center justify-between px-4">
+            <div className="flex items-start justify-between sm:px-4">
               {steps.map((step, idx) => (
                 <div key={idx} className="flex flex-col items-center gap-2 flex-1 relative">
                   <div className={`w-10 h-10 rounded-full flex items-center justify-center z-10 border-4 ${
@@ -155,15 +157,15 @@ const MerchantStatus = ({ merchant, onStatusChange }) => {
                     step.status === 'current' ? 'bg-white border-primary-600 text-primary-600' :
                     'bg-gray-100 border-gray-50 text-gray-400'
                   }`}>
-                    {step.status === 'completed' ? <CheckCircleRoundedIcon sx={{fontSize: 20}} /> : 
+                    {step.status === 'completed' ? <CheckCircleRoundedIcon sx={{fontSize: 20}} /> :
                      step.status === 'failed' ? <ErrorOutlineRoundedIcon sx={{fontSize: 20}} /> :
                      <span className="text-sm font-bold">{idx + 1}</span>}
                   </div>
-                  <span className={`text-[10px] font-bold uppercase tracking-widest ${
-                    step.status === 'completed' || step.status === 'current' ? 'text-primary-700' : 
+                  <span className={`text-[9px] sm:text-[10px] font-bold uppercase tracking-normal sm:tracking-widest text-center ${
+                    step.status === 'completed' || step.status === 'current' ? 'text-primary-700' :
                     step.status === 'failed' ? 'text-red-600' : 'text-gray-400'
                   }`}>{step.label}</span>
-                  
+
                   {idx < steps.length - 1 && (
                     <div className={`absolute top-5 left-1/2 w-full h-[2px] -z-0 ${
                       step.status === 'completed' ? 'bg-primary-600' : 'bg-gray-100'
@@ -175,29 +177,29 @@ const MerchantStatus = ({ merchant, onStatusChange }) => {
 
             {/* Main Message Card */}
             <div className={`rounded-3xl p-8 border ${
-              isRejected ? 'bg-red-50/50 border-red-100' : 
-              isApproved ? 'bg-primary-50/50 border-primary-100' : 
+              isRejected ? 'bg-red-50/50 border-red-100' :
+              isApproved ? 'bg-primary-50/50 border-primary-100' :
               'bg-blue-50/30 border-blue-100/50'
             }`}>
               <div className="flex items-start gap-4">
                 <div className={`p-2.5 rounded-2xl ${
-                  isRejected ? 'bg-red-100 text-red-600' : 
-                  isApproved ? 'bg-primary-100 text-primary-700' : 
+                  isRejected ? 'bg-red-100 text-red-600' :
+                  isApproved ? 'bg-primary-100 text-primary-700' :
                   'bg-blue-100 text-blue-600'
                 }`}>
                   <InfoRoundedIcon sx={{fontSize: 24}} />
                 </div>
                 <div>
                   <h3 className={`text-lg font-bold mb-1 ${
-                    isRejected ? 'text-red-900' : 
-                    isApproved ? 'text-primary-900' : 
+                    isRejected ? 'text-red-900' :
+                    isApproved ? 'text-primary-900' :
                     'text-blue-900'
                   }`}>
                     {isRejected ? 'Action Required' : isApproved ? 'Welcome to OfferlyBiz!' : 'Verification in Progress'}
                   </h3>
                   <p className="text-gray-600 text-sm font-medium leading-relaxed">
-                    {isRejected 
-                      ? 'Your application was not approved. Please see the rejection reason below and contact support for assistance.' 
+                    {isRejected
+                      ? 'Your application was not approved. Please see the rejection reason below and contact support for assistance.'
                       : isApproved
                         ? 'Your store is live! You can now start creating offers and growing your business with Offerly.'
                         : 'Our team is currently reviewing your documents and business details. This typically takes 24-48 hours.'}
@@ -230,7 +232,7 @@ const MerchantStatus = ({ merchant, onStatusChange }) => {
                 </div>
                 <p className="text-sm font-bold text-gray-900 ml-1">{merchant?.category}</p>
               </div>
-              
+
               <div className="bg-white border border-gray-100 rounded-3xl p-5 shadow-sm">
                 <div className="flex items-center gap-3 mb-3">
                   <div className="w-8 h-8 rounded-xl bg-gray-50 flex items-center justify-center text-gray-400">
@@ -242,24 +244,28 @@ const MerchantStatus = ({ merchant, onStatusChange }) => {
               </div>
             </div>
 
-            {/* Prominent Support for Rejected Users */}
-            {isRejected && (
+            {/* Support contacts (set by admins) - for rejected and still-pending applications */}
+            {!isApproved && (support.email || support.phone) && (
               <div className="bg-primary-900 rounded-3xl p-8 text-white relative overflow-hidden group">
                 <div className="absolute top-0 right-0 w-32 h-32 bg-white/5 rounded-full blur-2xl group-hover:bg-white/10 transition-colors" />
                 <div className="relative z-10">
                   <div className="flex items-center gap-3 mb-4">
                     <HelpOutlineRoundedIcon className="text-primary-400" />
-                    <h3 className="font-bold">Need Help or Clarification?</h3>
+                    <h3 className="font-bold">{isRejected ? 'Need help or clarification?' : 'Questions about your application?'}</h3>
                   </div>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div className="flex items-center gap-3 bg-white/5 rounded-2xl p-3 hover:bg-white/10 transition-colors cursor-pointer">
-                      <EmailRoundedIcon className="text-primary-400" sx={{fontSize: 18}} />
-                      <span className="text-xs font-medium">support@offerly.in</span>
-                    </div>
-                    <div className="flex items-center gap-3 bg-white/5 rounded-2xl p-3 hover:bg-white/10 transition-colors cursor-pointer">
-                      <PhoneRoundedIcon className="text-primary-400" sx={{fontSize: 18}} />
-                      <span className="text-xs font-medium">+91 00000 00000</span>
-                    </div>
+                    {support.email && (
+                      <a href={mailHref(support.email)} className="flex items-center gap-3 bg-white/5 rounded-2xl p-3 hover:bg-white/10 transition-colors">
+                        <EmailRoundedIcon className="text-primary-400" sx={{fontSize: 18}} />
+                        <span className="text-xs font-medium break-all">{support.email}</span>
+                      </a>
+                    )}
+                    {support.phone && (
+                      <a href={telHref(support.phone)} className="flex items-center gap-3 bg-white/5 rounded-2xl p-3 hover:bg-white/10 transition-colors">
+                        <PhoneRoundedIcon className="text-primary-400" sx={{fontSize: 18}} />
+                        <span className="text-xs font-medium">{support.phone}</span>
+                      </a>
+                    )}
                   </div>
                 </div>
               </div>
@@ -279,7 +285,7 @@ const MerchantStatus = ({ merchant, onStatusChange }) => {
                   ) : (
                     <>
                       <RefreshRoundedIcon sx={{fontSize: 20}} />
-                      <span>Sync Status</span>
+                      <span>Check Status</span>
                     </>
                   )}
                 </motion.button>
@@ -300,7 +306,7 @@ const MerchantStatus = ({ merchant, onStatusChange }) => {
               </div>
 
               {/* Minimalist Sign-out */}
-              <button 
+              <button
                 onClick={() => { logout(); navigate('/merchant'); }}
                 className="mt-4 flex items-center justify-center gap-2 text-xs font-bold text-gray-400 hover:text-gray-600 uppercase tracking-widest transition-colors py-2"
               >
@@ -310,7 +316,7 @@ const MerchantStatus = ({ merchant, onStatusChange }) => {
             </div>
           </div>
         </motion.div>
-        
+
         {/* Modern Footer */}
         <div className="mt-10 flex flex-col items-center space-y-2">
           <div className="flex items-center gap-3 text-[10px] font-bold text-gray-400">
@@ -326,7 +332,7 @@ const MerchantStatus = ({ merchant, onStatusChange }) => {
             </div>
             <span className="text-[11px] font-bold tracking-widest text-gray-900 uppercase">OFFERLY<span className="text-[#5EB929]">BIZ</span></span>
           </div>
-          <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest">Secured Merchant Portal v2.0</p>
+          <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest">Merchant app</p>
         </div>
       </div>
     </div>

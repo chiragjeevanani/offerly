@@ -10,6 +10,7 @@ import WhatsAppIcon from '@mui/icons-material/WhatsApp';
 import SupportAgentRoundedIcon from '@mui/icons-material/SupportAgentRounded';
 import SendRoundedIcon from '@mui/icons-material/SendRounded';
 import toast from 'react-hot-toast';
+import { useSupportContacts, telHref, mailHref, whatsappHref } from '../../../../hooks/useSupportContacts';
 
 const ContactStrip = ({ icon: Icon, title, value, action, color, idx }) => (
   <motion.div
@@ -32,6 +33,14 @@ const ContactStrip = ({ icon: Icon, title, value, action, color, idx }) => (
 
 const Contact = () => {
   const navigate = useNavigate();
+  // Set by admins under Support Contacts; anything left blank is hidden.
+  const { contacts } = useSupportContacts('merchant');
+  const strips = [
+    contacts.whatsapp && { icon: WhatsAppIcon, title: 'WhatsApp', value: contacts.whatsapp, color: 'text-green-500', action: () => window.open(whatsappHref(contacts.whatsapp)) },
+    contacts.email && { icon: EmailRoundedIcon, title: 'Email', value: contacts.email, color: 'text-blue-500', action: () => window.open(mailHref(contacts.email)) },
+    contacts.phone && { icon: PhoneRoundedIcon, title: 'Phone', value: contacts.phone, color: 'text-[#5EB929]', action: () => window.open(telHref(contacts.phone)) },
+    contacts.hours && { icon: AccessTimeRoundedIcon, title: 'Support Hours', value: contacts.hours, color: 'text-indigo-500', action: () => {} },
+  ].filter(Boolean);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
@@ -59,7 +68,7 @@ const Contact = () => {
       </div>
 
       <div className="max-w-4xl mx-auto px-4 py-8 space-y-10">
-        
+
         {/* Identity Strip (Hero) */}
         <div className="bg-gray-900 rounded-[2.5rem] p-6 sm:p-10 relative overflow-hidden shadow-2xl">
            <div className="absolute top-0 right-0 w-80 h-80 bg-[#5EB929]/20 rounded-full blur-[90px] -translate-y-1/2 translate-x-1/2" />
@@ -68,30 +77,20 @@ const Contact = () => {
                  <SupportAgentRoundedIcon sx={{ fontSize: 32 }} className="text-[#5EB929]" />
               </motion.div>
               <div className="space-y-2 text-center sm:text-left">
-                 <motion.h2 initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="text-xl sm:text-2xl lg:text-3xl font-bold text-white tracking-tight leading-tight">Secure <span className="text-[#5EB929]">Connect Desk.</span></motion.h2>
-                 <motion.p initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="text-gray-400 text-[12px] sm:text-sm font-medium leading-relaxed max-w-xl">Direct access to our merchant success team. Rapid response, precision assistance.</motion.p>
+                 <motion.h2 initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="text-xl sm:text-2xl lg:text-3xl font-bold text-white tracking-tight leading-tight">Talk to <span className="text-[#5EB929]">our team.</span></motion.h2>
+                 <motion.p initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="text-gray-400 text-[12px] sm:text-sm font-medium leading-relaxed max-w-xl">Reach the Offerly merchant support team by WhatsApp, email or phone.</motion.p>
               </div>
            </div>
         </div>
 
         {/* Contact Grid */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-           <ContactStrip 
-              idx={0} icon={WhatsAppIcon} title="WhatsApp Sync" value="+91 98765-43210" color="text-green-500" 
-              action={() => window.open('https://wa.me/919876543210')}
-           />
-           <ContactStrip 
-              idx={1} icon={EmailRoundedIcon} title="Support Desk" value="support@offerly.com" color="text-blue-500" 
-              action={() => window.open('mailto:support@offerly.com')}
-           />
-           <ContactStrip 
-              idx={2} icon={PhoneRoundedIcon} title="Priority Line" value="1800-OFFERLY" color="text-[#5EB929]" 
-              action={() => window.open('tel:+911800OFFERLY')}
-           />
-           <ContactStrip 
-              idx={3} icon={LocationOnRoundedIcon} title="Head Office" value="Business Park, Tech City" color="text-indigo-500" 
-              action={() => {}}
-           />
+           {strips.length === 0 && (
+              <p className="text-[12px] text-gray-400 px-1">Our support contact details will appear here soon.</p>
+           )}
+           {strips.map((strip, idx) => (
+              <ContactStrip key={strip.title} idx={idx} {...strip} />
+           ))}
         </div>
 
         {/* Message Form (Animated Terminal) */}
@@ -100,8 +99,8 @@ const Contact = () => {
               <div className="w-1 h-4 bg-[#5EB929] rounded-full" />
               <h3 className="text-[11px] font-bold text-gray-900 uppercase tracking-widest">Send a Message</h3>
            </div>
-           
-           <motion.form 
+
+           <motion.form
              initial={{ opacity: 0, y: 10 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}
              onSubmit={handleSendMessage} className="bg-white rounded-3xl p-6 sm:p-8 border border-gray-100 shadow-sm space-y-6"
            >
@@ -119,7 +118,7 @@ const Contact = () => {
                  <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest px-1">Transmission Message</label>
                  <textarea required rows="4" placeholder="Briefly describe your inquiry..." className="w-full bg-background border border-transparent focus:border-[#5EB929]/20 rounded-xl px-4 py-3 text-[13px] font-bold outline-none transition-all resize-none"></textarea>
               </div>
-              <button 
+              <button
                 disabled={loading} type="submit"
                 className="w-full sm:w-auto px-10 py-4 bg-[#5EB929] text-white rounded-2xl font-bold text-[11px] uppercase tracking-[0.2em] shadow-xl shadow-[#5EB929]/20 hover:scale-105 transition-all active:scale-95 flex items-center justify-center gap-3 disabled:opacity-50"
               >
