@@ -31,6 +31,12 @@ const BusinessDetailsStep = ({ data, onSubmit, onBack, loading }) => {
 
   const [errors, setErrors] = useState({});
 
+  const countWords = (text) => text.trim().split(/\s+/).filter(w => w.length > 0).length;
+  const descriptionWords = countWords(formData.description);
+  const activeErrors = Object.entries(errors).filter(([, msg]) => msg);
+  const fieldBorder = (name) => errors[name] ? 'border-red-300' : 'border-gray-50';
+  const renderError = (name) => errors[name] ? <p className="text-[10px] font-bold text-red-500 px-1">{errors[name]}</p> : null;
+
   useEffect(() => {
     fetchCategories();
   }, []);
@@ -83,6 +89,7 @@ const BusinessDetailsStep = ({ data, onSubmit, onBack, loading }) => {
 
     const reader = new FileReader();
     reader.onloadend = () => setFormData(prev => ({ ...prev, logo: reader.result }));
+    setErrors(prev => ({ ...prev, logo: '' }));
     reader.readAsDataURL(file);
 
     try {
@@ -120,19 +127,27 @@ const BusinessDetailsStep = ({ data, onSubmit, onBack, loading }) => {
     const newErrors = {};
     if (!formData.storeName.trim()) newErrors.storeName = 'Business name required';
     if (!formData.category) newErrors.category = 'Category required';
-    const wordCount = formData.description.trim().split(/\s+/).filter(w => w.length > 0).length;
-    if (wordCount < 10) newErrors.description = 'Min 10 words required';
-    if (!formData.businessEmail) newErrors.businessEmail = 'Business email required';
+    // Mirrors the 10-50 word rule enforced by the backend (merchantController)
+    if (descriptionWords < 10) newErrors.description = `Store description needs at least 10 words (you have ${descriptionWords})`;
+    else if (descriptionWords > 50) newErrors.description = `Store description can be at most 50 words (you have ${descriptionWords})`;
+    if (!formData.businessEmail.trim()) newErrors.businessEmail = 'Business email required';
+    else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.businessEmail.trim())) newErrors.businessEmail = 'Enter a valid email address';
     if (formData.businessPhone.length !== 10) newErrors.businessPhone = '10-digit phone required';
-    if (!formData.logo) newErrors.logo = 'Logo required';
+    if (!formData.logo) newErrors.logo = 'Business logo required - tap the store icon at the top';
     setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
+    return newErrors;
   };
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    if (validate()) onSubmit(formData);
-    else toast.error('Check entries');
+    const newErrors = validate();
+    const firstField = Object.keys(newErrors)[0];
+    if (!firstField) {
+      onSubmit(formData);
+      return;
+    }
+    toast.error(newErrors[firstField]);
+    document.querySelector(`[data-field="${firstField}"]`)?.scrollIntoView({ behavior: 'smooth', block: 'center' });
   };
 
   return (
@@ -153,11 +168,11 @@ const BusinessDetailsStep = ({ data, onSubmit, onBack, loading }) => {
 
           <form onSubmit={handleSubmit} className="space-y-6">
             {/* Logo Hub */}
-            <div className="flex flex-col items-center gap-3">
-              <motion.div 
+            <div data-field="logo" className="flex flex-col items-center gap-3">
+              <motion.div
                 whileTap={{ scale: 0.95 }}
                 onClick={() => logoInputRef.current?.click()}
-                className="w-24 h-24 rounded-[2rem] bg-background border border-gray-100 flex items-center justify-center relative cursor-pointer group hover:border-[#5EB929]/30 transition-all"
+                className={`w-24 h-24 rounded-[2rem] bg-background border ${errors.logo ? 'border-red-300' : 'border-gray-100'} flex items-center justify-center relative cursor-pointer group hover:border-[#5EB929]/30 transition-all`}
               >
                 {formData.logo ? (
                   <img src={formData.logo} className="w-full h-full object-cover rounded-[1.8rem]" alt="" />
@@ -169,29 +184,32 @@ const BusinessDetailsStep = ({ data, onSubmit, onBack, loading }) => {
                 </div>
               </motion.div>
               <p className="text-[9px] font-bold text-gray-400 tracking-tight uppercase px-1">Business Logo</p>
+              {renderError('logo')}
               <input ref={logoInputRef} type="file" accept="image/*" className="hidden" onChange={handleLogoUpload} />
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
               {/* Name */}
-              <div className="space-y-1.5">
+              <div data-field="storeName" className="space-y-1.5">
                 <label className="text-[10px] font-bold text-gray-400 px-1">Store Name</label>
                 <div className="relative group">
                   <StorefrontRoundedIcon className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-300 group-focus-within:text-[#5EB929] transition-colors" sx={{ fontSize: 18 }} />
-                  <input name="storeName" value={formData.storeName} onChange={handleChange} placeholder="e.g. FitZone Gym" className="w-full h-12 pl-11 pr-4 bg-background rounded-2xl border border-gray-50 text-sm font-bold outline-none focus:bg-white focus:border-[#5EB929]/30 transition-all" />
+                  <input name="storeName" value={formData.storeName} onChange={handleChange} placeholder="e.g. FitZone Gym" className={`w-full h-12 pl-11 pr-4 bg-background rounded-2xl border ${fieldBorder('storeName')} text-sm font-bold outline-none focus:bg-white focus:border-[#5EB929]/30 transition-all`} />
                 </div>
+                {renderError('storeName')}
               </div>
 
               {/* Category */}
-              <div className="space-y-1.5">
+              <div data-field="category" className="space-y-1.5">
                 <label className="text-[10px] font-bold text-gray-400 px-1">Category</label>
                 <div className="relative group">
                   <CategoryRoundedIcon className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-300 group-focus-within:text-[#5EB929] transition-colors z-10" sx={{ fontSize: 18 }} />
-                  <select name="category" value={formData.category} onChange={handleChange} className="w-full h-12 pl-11 pr-4 bg-background rounded-2xl border border-gray-50 text-xs font-bold outline-none focus:bg-white focus:border-[#5EB929]/30 appearance-none transition-all cursor-pointer">
+                  <select name="category" value={formData.category} onChange={handleChange} className={`w-full h-12 pl-11 pr-4 bg-background rounded-2xl border ${fieldBorder('category')} text-xs font-bold outline-none focus:bg-white focus:border-[#5EB929]/30 appearance-none transition-all cursor-pointer`}>
                     <option value="">Select</option>
                     {categories.map(c => <option key={c._id} value={c.name}>{c.name}</option>)}
                   </select>
                 </div>
+                {renderError('category')}
               </div>
 
               {/* Store Type: Product-Based vs Service-Based */}
@@ -268,37 +286,40 @@ const BusinessDetailsStep = ({ data, onSubmit, onBack, loading }) => {
               </div>
 
               {/* Description */}
-              <div className="md:col-span-2 space-y-1.5">
+              <div data-field="description" className="md:col-span-2 space-y-1.5">
                 <label className="text-[10px] font-bold text-gray-400 px-1">Store Description</label>
                 <div className="relative group">
                   <DescriptionRoundedIcon className="absolute left-4 top-4 text-gray-300 group-focus-within:text-[#5EB929] transition-colors" sx={{ fontSize: 18 }} />
-                  <textarea name="description" value={formData.description} onChange={handleChange} rows="3" placeholder="Tell consumers what makes your store unique..." className="w-full pl-11 pr-4 py-3 bg-background rounded-2xl border border-gray-50 text-sm font-bold outline-none focus:bg-white focus:border-[#5EB929]/30 transition-all resize-none" />
+                  <textarea name="description" value={formData.description} onChange={handleChange} rows="3" placeholder="Tell consumers what makes your store unique..." className={`w-full pl-11 pr-4 py-3 bg-background rounded-2xl border ${fieldBorder('description')} text-sm font-bold outline-none focus:bg-white focus:border-[#5EB929]/30 transition-all resize-none`} />
                 </div>
                 <div className="flex justify-between px-1">
-                   <p className="text-[9px] font-bold text-gray-300">Min 10 words required</p>
-                   <p className={`text-[9px] font-bold ${formData.description.split(' ').length < 10 ? 'text-red-400' : 'text-[#5EB929]'}`}>{formData.description.split(' ').filter(x => x).length} Words</p>
+                   <p className={`text-[9px] font-bold ${errors.description ? 'text-red-500' : 'text-gray-400'}`}>10–50 words required</p>
+                   <p className={`text-[9px] font-bold ${descriptionWords < 10 || descriptionWords > 50 ? 'text-red-400' : 'text-[#5EB929]'}`}>{descriptionWords} / 10–50 Words</p>
                 </div>
+                {renderError('description')}
               </div>
 
               {/* Email */}
-              <div className="space-y-1.5">
+              <div data-field="businessEmail" className="space-y-1.5">
                 <label className="text-[10px] font-bold text-gray-400 px-1">Business Email</label>
                 <div className="relative group">
                   <EmailRoundedIcon className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-300 group-focus-within:text-[#5EB929] transition-colors" sx={{ fontSize: 18 }} />
-                  <input type="email" name="businessEmail" value={formData.businessEmail} onChange={handleChange} placeholder="contact@store.com" className="w-full h-12 pl-11 pr-4 bg-background rounded-2xl border border-gray-50 text-sm font-bold outline-none focus:bg-white focus:border-[#5EB929]/30 transition-all" />
+                  <input type="email" name="businessEmail" value={formData.businessEmail} onChange={handleChange} placeholder="contact@store.com" className={`w-full h-12 pl-11 pr-4 bg-background rounded-2xl border ${fieldBorder('businessEmail')} text-sm font-bold outline-none focus:bg-white focus:border-[#5EB929]/30 transition-all`} />
                 </div>
+                {renderError('businessEmail')}
               </div>
 
               {/* Phone */}
-              <div className="space-y-1.5">
+              <div data-field="businessPhone" className="space-y-1.5">
                 <label className="text-[10px] font-bold text-gray-400 px-1">Support Phone</label>
                 <div className="flex gap-2">
                   <div className="h-12 w-14 bg-background rounded-2xl border border-gray-50 flex items-center justify-center text-[11px] font-bold text-gray-400">🇮🇳</div>
                   <div className="relative flex-1 group">
                     <PhoneRoundedIcon className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-300 group-focus-within:text-[#5EB929] transition-colors" sx={{ fontSize: 18 }} />
-                    <input type="tel" name="businessPhone" value={formData.businessPhone} onChange={handlePhoneChange} placeholder="Phone" className="w-full h-12 pl-11 pr-4 bg-background rounded-2xl border border-gray-50 text-sm font-bold outline-none focus:bg-white focus:border-[#5EB929]/30 transition-all" />
+                    <input type="tel" name="businessPhone" value={formData.businessPhone} onChange={handlePhoneChange} placeholder="Phone" className={`w-full h-12 pl-11 pr-4 bg-background rounded-2xl border ${fieldBorder('businessPhone')} text-sm font-bold outline-none focus:bg-white focus:border-[#5EB929]/30 transition-all`} />
                   </div>
                 </div>
+                {renderError('businessPhone')}
               </div>
             </div>
 
@@ -323,9 +344,12 @@ const BusinessDetailsStep = ({ data, onSubmit, onBack, loading }) => {
             </div>
 
             {/* Error Ledger */}
-            {Object.keys(errors).length > 0 && (
-              <div className="bg-red-50 border border-red-100 rounded-2xl p-3">
-                <p className="text-[9px] font-bold text-red-500 text-center">Protocol requirements missing. Please check entries.</p>
+            {activeErrors.length > 0 && (
+              <div className="bg-red-50 border border-red-100 rounded-2xl p-3 space-y-1">
+                <p className="text-[10px] font-bold text-red-500">Please fix the following:</p>
+                <ul className="list-disc pl-4 space-y-0.5">
+                  {activeErrors.map(([field, msg]) => <li key={field} className="text-[10px] font-semibold text-red-500">{msg}</li>)}
+                </ul>
               </div>
             )}
 
