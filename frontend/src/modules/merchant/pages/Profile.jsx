@@ -361,7 +361,7 @@ const Profile = ({ merchant, onMerchantUpdate }) => {
             className="w-full py-4 bg-red-50 text-red-600 rounded-2xl font-bold text-[11px] uppercase tracking-widest border border-red-100 flex items-center justify-center gap-3 hover:bg-red-100 transition-all"
          >
             <LogoutRoundedIcon sx={{ fontSize: 18 }} />
-            Terminate Session
+            Log Out
          </motion.button>
 
          <div className="text-center space-y-1 py-4">

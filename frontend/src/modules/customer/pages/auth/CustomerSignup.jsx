@@ -163,7 +163,7 @@ const CustomerSignup = () => {
                 </div>
                 <div className="mt-4 text-center">
                   <h2 className="text-gray-900 font-bold text-xl tracking-tight">Create Identity</h2>
-                  <p className="text-gray-400 text-[10px] font-bold tracking-tight">Enroll in the digital network</p>
+                  <p className="text-gray-400 text-[10px] font-bold tracking-tight">Create your Offerly account</p>
                 </div>
                 <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handlePhotoUpload} />
               </div>

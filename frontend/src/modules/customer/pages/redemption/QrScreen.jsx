@@ -531,7 +531,7 @@ const QrScreen = () => {
                 <motion.button
                   whileTap={{ scale: 0.98 }}
                   onClick={() => navigate('/home')}
-                  className="w-full py-4.5 bg-gray-900 text-white rounded-2xl font-bold text-[12px] uppercase tracking-[0.2em] shadow-xl shadow-black/10 active:scale-95 transition-all"
+                  className="w-full h-14 bg-gray-900 text-white rounded-2xl font-bold text-[12px] uppercase tracking-[0.2em] shadow-xl shadow-black/10 active:scale-95 transition-all"
                 >
                   Return to Home
                 </motion.button>

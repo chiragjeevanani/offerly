@@ -78,7 +78,7 @@ const PrivacyPolicy = () => {
            </motion.div>
            <h1 className="text-white font-bold text-2xl uppercase tracking-tight">Privacy Policy</h1>
            <p className="text-white/60 text-[10px] font-bold uppercase tracking-widest mt-2 max-w-xs mx-auto leading-relaxed">
-             Data governance protocols for the Offerly digital network
+             How Offerly handles your data
            </p>
         </div>
 

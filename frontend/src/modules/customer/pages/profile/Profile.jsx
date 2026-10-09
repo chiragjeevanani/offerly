@@ -395,12 +395,12 @@ const Profile = () => {
               className="w-full flex items-center justify-center gap-2.5 bg-red-50 rounded-[1.5rem] p-4 border border-red-100 shadow-sm group"
             >
               <LogoutRoundedIcon sx={{ fontSize: 18 }} className="text-red-500 group-hover:rotate-12 transition-transform" />
-              <span className="text-[11px] font-bold text-red-500 uppercase tracking-widest">Terminate Session</span>
+              <span className="text-[11px] font-bold text-red-500 uppercase tracking-widest">Log Out</span>
             </motion.button>
           </div>
 
           <p className="text-center text-[8px] font-bold text-gray-300 uppercase tracking-[0.2em] mt-8 pb-4">
-            Offerly Digital Network · v1.0.0
+            Offerly · v1.0.0
           </p>
         </div>
       </div>

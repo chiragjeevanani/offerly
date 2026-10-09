@@ -134,7 +134,7 @@ const Support = () => {
            </motion.div>
            <h1 className="text-white font-bold text-2xl uppercase tracking-tight">Support Center</h1>
            <p className="text-white/60 text-[10px] font-bold uppercase tracking-widest mt-2 max-w-xs mx-auto leading-relaxed">
-             Central knowledge base for the Offerly digital network
+             Answers to common questions about Offerly
            </p>
         </div>
 
@@ -144,10 +144,10 @@ const Support = () => {
               <SearchRoundedIcon className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" sx={{ fontSize: 20 }} />
               <input
                 type="text"
-                placeholder="Search Knowledge Base..."
+                placeholder="Search for help..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-12 pr-4 py-4.5 rounded-[1.5rem] border border-gray-100 bg-white shadow-sm focus:border-[#5EB929] focus:ring-4 focus:ring-[#5EB929]/5 outline-none transition-all text-[11px] font-bold uppercase tracking-widest"
+                className="w-full h-14 pl-12 pr-4 rounded-[1.5rem] border border-gray-100 bg-white shadow-sm focus:border-[#5EB929] focus:ring-4 focus:ring-[#5EB929]/5 outline-none transition-all text-[11px] font-bold uppercase tracking-widest"
               />
            </div>
         </div>

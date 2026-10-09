@@ -182,7 +182,7 @@ const Contact = () => {
           <div className="space-y-6">
             <div className="px-1">
                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Support Center</p>
-               <h2 className="text-gray-900 font-bold text-xl uppercase tracking-tight">Direct Access</h2>
+               <h2 className="text-gray-900 font-bold text-xl uppercase tracking-tight">Reach Us Directly</h2>
             </div>
 
             <div className="grid grid-cols-1 gap-3">
