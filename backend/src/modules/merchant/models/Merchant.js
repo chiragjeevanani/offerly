@@ -98,6 +98,14 @@ const merchantSchema = new mongoose.Schema(
       type: String,
       default: '',
     },
+    // 'auto' = derived from the store's map location and re-derived whenever
+    // zones change; 'manual' = picked by the merchant because no zone covers
+    // their location, kept until one does. '' = legacy/unknown (treated as manual).
+    zoneSource: {
+      type: String,
+      enum: ['auto', 'manual', ''],
+      default: '',
+    },
     phone: {
       type: String,
       required: [true, 'Please add a phone number'],

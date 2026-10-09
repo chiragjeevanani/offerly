@@ -5,6 +5,7 @@ import Notification from "../../user/models/Notification.js";
 import MerchantNotification from "../models/MerchantNotification.js";
 import { notifyMerchant } from "../../user/services/notificationService.js";
 import { grantWelcomeTrial } from "../services/merchantTrialService.js";
+import { zoneIdForPoint } from "../../../utils/zones.js";
 import { serializeMerchant, serializeRedemption } from "../../../utils/serializers.js";
 import Merchant from "../models/Merchant.js";
 import Offer from "../models/Offer.js";
@@ -568,31 +569,37 @@ export const updateLocationHours = async (req, res) => {
       });
     }
 
+    const cityDoc = await City.findOne({ name: city.trim() });
+
     // Zone must actually belong to the submitted city — never trust the client pairing.
-    if (zone) {
-      const cityDoc = await City.findOne({ name: city.trim(), 'zones._id': zone });
-      if (!cityDoc) {
-        return res.status(400).json({
-          success: false,
-          message: 'Selected zone does not belong to the selected city',
-        });
-      }
+    if (zone && !cityDoc?.zones?.some((z) => String(z._id) === String(zone))) {
+      return res.status(400).json({
+        success: false,
+        message: 'Selected zone does not belong to the selected city',
+      });
     }
 
     // Update location
     merchant.address = address.trim();
     merchant.city = city.trim();
-    merchant.zone = zone || '';
     merchant.state = state.trim();
     merchant.pincode = pincode.trim();
-    
+
     // Only update coordinates if they are provided
-    if (latitude !== undefined && latitude !== null && longitude !== undefined && longitude !== null) {
+    const hasCoordinates =
+      latitude !== undefined && latitude !== null && longitude !== undefined && longitude !== null;
+    if (hasCoordinates) {
       merchant.coordinates = {
         lat: parseFloat(latitude),
         lng: parseFloat(longitude)
       };
     }
+
+    // The store's map location decides its zone; the manual pick is only the
+    // fallback for stores outside every hexagon or with no location.
+    const detectedZone = hasCoordinates ? zoneIdForPoint(cityDoc, merchant.coordinates) : '';
+    merchant.zone = detectedZone || zone || '';
+    merchant.zoneSource = detectedZone ? 'auto' : zone ? 'manual' : '';
 
     // Update business hours
     merchant.businessHours = businessHours;
@@ -685,6 +692,8 @@ export const updateMyStore = async (req, res) => {
     "documents",
   ];
 
+  const previousCity = merchant.city;
+
   for (const field of editableFields) {
     if (field in req.body) {
       if (field === "storeType") {
@@ -711,9 +720,28 @@ export const updateMyStore = async (req, res) => {
     merchant.isOpen = Boolean(req.body.isOpen);
   }
 
+  // Moving the store pin (or city) re-files it into whichever zone now
+  // contains it. Stores with no location keep their existing zone.
+  if (merchant.isModified("coordinates") || merchant.isModified("city")) {
+    const cityDoc = await City.findOne({ name: String(merchant.city || "").trim() });
+    const lat = Number(merchant.coordinates?.lat);
+    const lng = Number(merchant.coordinates?.lng);
+    const detected = lat && lng ? zoneIdForPoint(cityDoc, { lat, lng }) : "";
+    const zoneStillExists = cityDoc?.zones?.some((z) => String(z._id) === String(merchant.zone || ""));
+    if (detected) {
+      merchant.zone = detected;
+      merchant.zoneSource = "auto";
+    } else if (merchant.zoneSource === "auto" || !zoneStillExists) {
+      // Moved out of its auto zone, or into a city its zone doesn't belong to.
+      merchant.zone = "";
+      merchant.zoneSource = "";
+    }
+  }
+
   await merchant.save();
 
   invalidateFeedCache({ city: merchant.city });
+  if (previousCity && previousCity !== merchant.city) invalidateFeedCache({ city: previousCity });
 
   return res.status(200).json({ merchant: serializeMerchant(merchant) });
 };

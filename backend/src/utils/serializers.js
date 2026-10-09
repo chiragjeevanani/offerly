@@ -51,6 +51,10 @@ export const serializeCity = (city) => ({
     name: zone?.name || '',
     merchantCount: zone?.merchantCount || 0,
     status: zone?.status || 'active',
+    // Geometry, so clients can detect "which zone am I in" locally.
+    center: zone?.center || null,
+    radiusMeters: zone?.radiusMeters || null,
+    path: zone?.path || [],
   })),
 });
 

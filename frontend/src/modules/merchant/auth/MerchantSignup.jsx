@@ -130,7 +130,7 @@ const MerchantSignup = () => {
             className="bg-white rounded-[2.5rem] p-6 md:p-8 shadow-2xl shadow-gray-200/50 border border-white relative overflow-hidden"
           >
             {/* Background Aesthetic */}
-            <div className="absolute top-0 right-0 w-32 h-32 bg-[#5EB929]/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
+            <div className="absolute inset-0 overflow-hidden pointer-events-none rounded-[inherit]"><div className="absolute top-0 right-0 w-32 h-32 bg-[#5EB929]/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" /></div>
             
             <div className="relative z-10 space-y-6">
               {/* Profile Icon Hub */}

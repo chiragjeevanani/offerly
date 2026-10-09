@@ -71,23 +71,23 @@ const CityManagement = () => {
 
     try {
       await adminAPI.saveCity({ ...formData, zones, id: selectedCity?._id || selectedCity?.id });
-      toast.success(selectedCity ? 'Region updated' : 'Region added');
+      toast.success(selectedCity ? 'City saved' : 'City added');
       setIsSlideOverOpen(false);
       queryClient.invalidateQueries(['adminCities']);
     } catch (error) {
-      toast.error(error?.response?.data?.error || 'Failed to save region');
+      toast.error(error?.error || error?.message || 'Failed to save city');
     }
   };
 
   const confirmDelete = async () => {
     try {
       await adminAPI.deleteCity(selectedCity._id || selectedCity.id);
-      toast.success('Region deleted');
+      toast.success('City deleted');
       setIsDeleteModalOpen(false);
       setIsSlideOverOpen(false);
       queryClient.invalidateQueries(['adminCities']);
     } catch (error) {
-      toast.error('Failed to delete region');
+      toast.error(error?.error || 'Failed to delete city');
     }
   };
 
@@ -97,8 +97,8 @@ const CityManagement = () => {
         {/* Header Section */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-2 mb-2">
           <div>
-            <h1 className="text-xl lg:text-2xl font-medium text-gray-800">Operational Regions</h1>
-            <p className="text-[12px] text-gray-500">Manage city deployment and operational zones</p>
+            <h1 className="text-xl lg:text-2xl font-medium text-gray-800">Cities & Zones</h1>
+            <p className="text-[12px] text-gray-500">Add cities and draw the zones inside them on the map</p>
           </div>
 
           <div className="flex items-center gap-2">
@@ -108,7 +108,7 @@ const CityManagement = () => {
               disabled={isFetching}
             >
               <RefreshRoundedIcon sx={{ fontSize: 16 }} className={isFetching ? 'animate-spin' : ''} />
-              {isFetching ? 'Syncing...' : 'Sync'}
+              {isFetching ? 'Refreshing...' : 'Refresh'}
             </button>
             <button
               onClick={handleAdd}
@@ -126,7 +126,7 @@ const CityManagement = () => {
             <SearchRoundedIcon className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" sx={{ fontSize: 18 }} />
             <input 
               type="text" 
-              placeholder="Search regions..."
+              placeholder="Search cities..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="w-full bg-white border border-gray-100 rounded-[12px] py-2 pl-11 pr-4 text-[13px] text-gray-800 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-[#5EB929]/10 focus:border-[#5EB929]/30 transition-all shadow-sm"
@@ -134,14 +134,14 @@ const CityManagement = () => {
           </div>
           
           <div className="hidden lg:block text-right">
-             <p className="text-[11px] font-medium text-gray-400">{cities.length} Active Operational Regions</p>
+             <p className="text-[11px] font-medium text-gray-400">{cities.length} {cities.length === 1 ? 'city' : 'cities'}</p>
           </div>
         </div>
 
         {loading ? (
           <div className="py-20 flex flex-col items-center justify-center gap-4">
             <div className="w-10 h-10 border-2 border-primary/20 border-t-primary rounded-full animate-spin" />
-            <p className="text-gray-500 font-medium text-xs">Loading Regions...</p>
+            <p className="text-gray-500 font-medium text-xs">Loading cities...</p>
           </div>
         ) : filteredCities.length > 0 ? (
           <div className="grid grid-cols-1 gap-2">
@@ -157,13 +157,16 @@ const CityManagement = () => {
                   </div>
                   <div>
                     <h4 className="text-[14px] font-semibold text-gray-800 leading-tight">{city.name}</h4>
-                    <p className="text-[11px] text-gray-500 mt-0.5">{city.zones?.length || 0} Zones • 100% Operational</p>
+                    <p className="text-[11px] text-gray-500 mt-0.5">
+                      {city.zones?.length || 0} {city.zones?.length === 1 ? 'zone' : 'zones'} •{' '}
+                      {(city.zones || []).reduce((sum, zone) => sum + (zone.merchantCount || 0), 0)} stores in zones
+                    </p>
                   </div>
                 </div>
                 
                 <div className="flex items-center gap-2">
-                  <span className="px-2 py-0.5 rounded-full bg-green-50 text-green-600 text-[9px] font-bold uppercase tracking-wider">
-                    Active
+                  <span className={`px-2 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider ${city.status === 'inactive' ? 'bg-gray-100 text-gray-400' : 'bg-green-50 text-green-600'}`}>
+                    {city.status === 'inactive' ? 'Inactive' : 'Active'}
                   </span>
                   <ChevronRightRoundedIcon sx={{ fontSize: 16 }} className="text-gray-300 group-hover:text-primary transition-colors" />
                 </div>
@@ -183,8 +186,8 @@ const CityManagement = () => {
       <SlideOver
         isOpen={isSlideOverOpen}
         onClose={() => setIsSlideOverOpen(false)}
-        title={selectedCity ? "Edit Region" : "Add New City"}
-        subtitle={selectedCity ? `REF: ${selectedCity._id.substring(0, 12)}` : "Deploy Offerly to a new city"}
+        title={selectedCity ? 'Edit City' : 'Add New City'}
+        subtitle={selectedCity ? 'Edit the name and zones of this city' : 'Add a city and draw its zones'}
         widthClass="max-w-3xl"
       >
         <form onSubmit={handleSave} className="flex flex-col h-full font-sans">
@@ -196,13 +199,13 @@ const CityManagement = () => {
                 <LocationCityRoundedIcon sx={{ fontSize: 40 }} />
               </div>
               <h3 className="mt-4 text-xl font-bold text-gray-800">{formData.name || 'City Name'}</h3>
-              <p className="text-[12px] font-medium text-gray-400 uppercase tracking-widest mt-1">Operational Oversight</p>
+              <p className="text-[12px] font-medium text-gray-400 mt-1">{(formData.zones || []).length} zones</p>
             </div>
 
             {/* Core Details */}
             <div className="space-y-4">
               <div>
-                <label className="block text-[11px] font-bold text-gray-400 uppercase tracking-widest mb-1.5 ml-1">Official City Name</label>
+                <label className="block text-[11px] font-bold text-gray-400 uppercase tracking-widest mb-1.5 ml-1">City Name</label>
                 <input 
                   type="text"
                   value={formData.name}
@@ -213,14 +216,17 @@ const CityManagement = () => {
               </div>
 
               <div>
-                <label className="block text-[11px] font-bold text-gray-400 uppercase tracking-widest mb-1.5 ml-1">Operational Zones</label>
+                <label className="block text-[11px] font-bold text-gray-400 uppercase tracking-widest mb-1.5 ml-1">Zones</label>
                 <CityZoneMap
+                  key={selectedCity?._id || 'new-city'}
                   coordinates={formData.coordinates}
-                  onCoordinatesChange={(coordinates) => setFormData({ ...formData, coordinates })}
+                  onCoordinatesChange={(coordinates) => setFormData((prev) => ({ ...prev, coordinates }))}
                   zones={formData.zones || []}
-                  onZonesChange={(zones) => setFormData({ ...formData, zones })}
+                  onZonesChange={(zones) => setFormData((prev) => ({ ...prev, zones }))}
                 />
-                <p className="mt-1.5 text-[10px] text-gray-400 px-1 italic">Draw hexagonal zones on the map — merchants pin their exact operating area inside one, and it restricts which offers a customer in that area can see.</p>
+                <p className="mt-1.5 text-[11px] text-gray-400 px-1">
+                  Each store is placed in a zone automatically from its map location, and customers see stores from the zone they are in first. Turn a zone Off to hide it without moving its stores.
+                </p>
               </div>
             </div>
 
@@ -231,7 +237,7 @@ const CityManagement = () => {
                 className="w-full mt-4 flex items-center justify-center gap-2 py-3 border border-red-100 text-red-500 rounded-xl text-xs font-bold hover:bg-red-50 transition-all"
               >
                 <DeleteRoundedIcon sx={{ fontSize: 18 }} />
-                Decommission Region
+                Delete City
               </button>
             )}
           </div>
@@ -253,8 +259,8 @@ const CityManagement = () => {
         isOpen={isDeleteModalOpen}
         onClose={() => setIsDeleteModalOpen(false)}
         onConfirm={confirmDelete}
-        title={`Decommission ${selectedCity?.name}?`}
-        message="This will remove the city from registration lists. Merchants already in this city will not be deleted, but no new merchants can join from this region."
+        title={`Delete ${selectedCity?.name}?`}
+        message="This removes the city and its zones. A city that still has stores in it cannot be deleted."
       />
     </div>
   );

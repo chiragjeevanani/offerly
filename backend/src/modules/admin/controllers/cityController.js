@@ -12,14 +12,27 @@ const toTitleCase = (value = '') =>
 // @access  Public
 export const getCities = async (req, res) => {
   try {
-    const [cities, merchantCities] = await Promise.all([
+    const [cities, merchantCities, zoneCounts] = await Promise.all([
       City.find({ status: 'active' })
         .select('name status coordinates zones')
         .lean(),
       Merchant.find({ status: 'approved', city: { $exists: true, $ne: '' } })
         .select('city')
         .lean(),
+      Merchant.aggregate([
+        { $match: { status: 'approved', zone: { $nin: ['', null] } } },
+        { $group: { _id: '$zone', count: { $sum: 1 } } },
+      ]),
     ]);
+
+    // Live count of approved stores per zone, so customer-facing "N partners"
+    // never drifts from reality between admin saves.
+    const countByZone = new Map(zoneCounts.map((entry) => [String(entry._id), entry.count]));
+    for (const city of cities) {
+      for (const zone of city.zones || []) {
+        zone.merchantCount = countByZone.get(String(zone._id)) || 0;
+      }
+    }
 
     const mergedCities = new Map(
       cities.map((city) => [city.name.trim().toLowerCase(), city]),

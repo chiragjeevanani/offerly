@@ -56,3 +56,42 @@ export const haversineDistance = (a, b) => {
 
 export const clampRadius = (radiusMeters) =>
   Math.min(MAX_ZONE_RADIUS_METERS, Math.max(MIN_ZONE_RADIUS_METERS, Math.round(radiusMeters)));
+
+// Ray-casting point-in-polygon; zones are small enough to treat lat/lng as flat.
+export const pointInPolygon = (point, polygon) => {
+  let inside = false;
+  for (let i = 0, j = polygon.length - 1; i < polygon.length; j = i++) {
+    const a = polygon[i];
+    const b = polygon[j];
+    const crosses =
+      a.lat > point.lat !== b.lat > point.lat &&
+      point.lng < ((b.lng - a.lng) * (point.lat - a.lat)) / (b.lat - a.lat) + a.lng;
+    if (crosses) inside = !inside;
+  }
+  return inside;
+};
+
+export const zonePath = (zone) =>
+  zone?.path?.length >= 3 ? zone.path : computeHexagonPath(zone?.center, zone?.radiusMeters || DEFAULT_ZONE_RADIUS_METERS);
+
+/**
+ * The active zone containing `point` (nearest center wins on overlap), or null.
+ * Mirrors backend/src/utils/zones.js so the UI previews what the server will save.
+ */
+export const findZoneForPoint = (zones, point) => {
+  if (!point || !Number.isFinite(Number(point.lat)) || !Number.isFinite(Number(point.lng))) return null;
+  const p = { lat: Number(point.lat), lng: Number(point.lng) };
+  let best = null;
+  let bestDistance = Infinity;
+  for (const zone of zones || []) {
+    if ((zone.status || 'active') !== 'active') continue;
+    const path = zonePath(zone);
+    if (path.length < 3 || !pointInPolygon(p, path)) continue;
+    const distance = zone.center ? haversineDistance(p, zone.center) : 0;
+    if (distance < bestDistance) {
+      best = zone;
+      bestDistance = distance;
+    }
+  }
+  return best;
+};

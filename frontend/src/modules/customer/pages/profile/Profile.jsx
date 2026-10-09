@@ -483,7 +483,7 @@ const Profile = () => {
                 onChange={(e) => setEditForm({ ...editForm, zone: e.target.value })}
                 className="w-full px-4 py-3.5 rounded-xl border border-gray-100 bg-white focus:border-[#5EB929] outline-none transition-all text-sm font-bold uppercase tracking-tight"
               >
-                <option value="">All zones in city</option>
+                <option value="">Automatic (from my location)</option>
                 {selectedCityZones.map((zone) => (
                   <option key={zone._id || zone.id} value={zone._id || zone.id}>
                     {zone.name}

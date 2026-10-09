@@ -10,6 +10,8 @@ import Merchant from "../models/Merchant.js";
 import Offer from "../models/Offer.js";
 import OfferView from "../models/OfferView.js";
 import { viewBucketFor } from "../../../utils/analytics.js";
+import City from "../../admin/models/City.js";
+import { zoneIdForPoint } from "../../../utils/zones.js";
 import {
   filterActiveMerchants,
   getAllActiveMerchantIds,
@@ -250,9 +252,20 @@ export const getOffersFeed = async (req, res) => {
   }
 
   const normalizedCityKey = normalizeCity(selectedCity);
-  const selectedZone = resolveFeedZone(req);
   const userLat = parseCoordinate(req.query.userLat);
   const userLng = parseCoordinate(req.query.userLng);
+
+  // An explicitly chosen zone wins; otherwise the customer's live location
+  // decides which zone's stores they see first.
+  let selectedZone = resolveFeedZone(req);
+  if (!selectedZone && userLat !== null && userLng !== null) {
+    const cityDoc = await City.findOne({
+      name: new RegExp(`^\\s*${escapeRegex(selectedCity.trim())}\\s*$`, "i"),
+    })
+      .select("zones")
+      .lean();
+    selectedZone = zoneIdForPoint(cityDoc, { lat: userLat, lng: userLng });
+  }
 
   const limitConfig = {
     trendingLimit: parseLimit(req.query.trendingLimit, FEED_DEFAULTS.trendingLimit),
@@ -309,9 +322,11 @@ export const getOffersFeed = async (req, res) => {
 
   // Narrow to the customer's zone when possible, but never let zone under-adoption
   // (most merchants/customers still have no zone set) produce an empty feed.
+  // Stores outside every zone stay visible city-wide, so a store never
+  // disappears just because no hexagon covers it yet.
   if (selectedZone) {
-    const zoneMerchants = cityMerchants.filter((merchant) => merchant.zone === selectedZone);
-    if (zoneMerchants.length) {
+    const zoneMerchants = cityMerchants.filter((merchant) => merchant.zone === selectedZone || !merchant.zone);
+    if (zoneMerchants.some((merchant) => merchant.zone === selectedZone)) {
       cityMerchants = zoneMerchants;
     }
   }

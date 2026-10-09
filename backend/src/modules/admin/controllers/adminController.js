@@ -17,6 +17,8 @@ import { notifyMerchant } from '../../user/services/notificationService.js';
 import { computeSubscriptionCharge, getWalletSettings } from '../../../utils/subscriptionWallet.js';
 import { getCustomerSubscriptionSettings } from '../../../utils/customerSubscription.js';
 import { grantWelcomeTrial } from '../../merchant/services/merchantTrialService.js';
+import { invalidateFeedCache } from '../../../utils/feedCache.js';
+import { zoneIdForPoint, zonePath } from '../../../utils/zones.js';
 
 // ───────────────────────── DASHBOARD STATS ─────────────────────────
 
@@ -321,55 +323,160 @@ export const deleteMerchant = async (req, res) => {
 
 // ───────────────────────── CITIES ─────────────────────────
 
+const escapeCityRegex = (value = '') => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+const cityNameQuery = (name) => ({ $regex: `^\\s*${escapeCityRegex(String(name).trim())}\\s*$`, $options: 'i' });
+const hasMerchantCoordinates = {
+  'coordinates.lat': { $exists: true, $nin: [0, null] },
+  'coordinates.lng': { $exists: true, $nin: [0, null] },
+};
+
+const toPoint = (value) => {
+  const lat = Number(value?.lat);
+  const lng = Number(value?.lng);
+  return Number.isFinite(lat) && Number.isFinite(lng) ? { lat, lng } : undefined;
+};
+
+// Only the fields an admin actually edits - merchantCount is derived, never trusted from the client.
+const sanitizeZones = (zones = []) =>
+  zones
+    .filter((zone) => zone && String(zone.name || '').trim())
+    .map((zone) => {
+      const id = zone._id || zone.id;
+      const center = toPoint(zone.center);
+      const radiusMeters = Math.min(5000, Math.max(100, Number(zone.radiusMeters) || 800));
+      // The outline is always rebuilt from center + size, never trusted from the client.
+      const path = center ? zonePath({ center, radiusMeters }) : [];
+      return {
+        ...(id && mongoose.isValidObjectId(id) ? { _id: id } : {}),
+        name: String(zone.name).trim(),
+        status: zone.status === 'inactive' ? 'inactive' : 'active',
+        ...(center ? { center } : {}),
+        radiusMeters,
+        ...(path.length >= 3 ? { path } : {}),
+      };
+    });
+
+/**
+ * Re-derives every merchant's zone in `city` from their map coordinates, so
+ * moving, resizing, adding or removing a hexagon immediately re-files the
+ * stores inside it. Merchants without coordinates keep their manual pick.
+ * Then refreshes each zone's merchantCount.
+ */
+export const syncCityZoneAssignments = async (city, extraZoneIds = []) => {
+  const zoneIds = [...city.zones.map((zone) => String(zone._id)), ...extraZoneIds];
+  const merchants = await Merchant.find({
+    $or: [{ city: cityNameQuery(city.name) }, ...(zoneIds.length ? [{ zone: { $in: zoneIds } }] : [])],
+    ...hasMerchantCoordinates,
+  })
+    .select('_id zone zoneSource coordinates')
+    .lean();
+
+  const liveZoneIds = new Set(city.zones.map((zone) => String(zone._id)));
+  const ops = [];
+  for (const merchant of merchants) {
+    // Inactive zones still own their merchants - deactivating hides the zone
+    // from pickers, it shouldn't silently strip stores out of it.
+    const detected = zoneIdForPoint(city, merchant.coordinates, { includeInactive: true });
+    let next = { zone: detected, zoneSource: 'auto' };
+    if (!detected) {
+      // No hexagon covers this store. A zone the merchant picked by hand
+      // stays (if it still exists); one we derived from the map does not.
+      const keepManual = merchant.zoneSource !== 'auto' && liveZoneIds.has(String(merchant.zone || ''));
+      next = keepManual ? { zone: merchant.zone, zoneSource: merchant.zoneSource || 'manual' } : { zone: '', zoneSource: '' };
+    }
+    if ((merchant.zone || '') !== next.zone || (merchant.zoneSource || '') !== next.zoneSource) {
+      ops.push({ updateOne: { filter: { _id: merchant._id }, update: { $set: next } } });
+    }
+  }
+  if (ops.length) await Merchant.bulkWrite(ops);
+
+  if (city.zones?.length) {
+    const counts = await Merchant.aggregate([
+      { $match: { zone: { $in: city.zones.map((zone) => String(zone._id)) } } },
+      { $group: { _id: '$zone', count: { $sum: 1 } } },
+    ]);
+    const countByZoneId = new Map(counts.map((entry) => [String(entry._id), entry.count]));
+    city.zones.forEach((zone) => {
+      zone.merchantCount = countByZoneId.get(String(zone._id)) || 0;
+    });
+    await city.save();
+  }
+
+  return ops.length;
+};
+
 export const saveCity = async (req, res) => {
   try {
-    const existing = await City.findOne({ name: req.body.name });
+    const name = String(req.body.name || '').trim();
+    if (!name) {
+      return res.status(400).json({ success: false, error: 'City name is required' });
+    }
 
-    if (existing && Array.isArray(req.body.zones)) {
-      const incomingZoneIds = new Set(
-        req.body.zones
-          .map((zone) => zone._id || zone.id)
-          .filter(Boolean)
-          .map(String)
-      );
-      const removedZoneIds = existing.zones
-        .map((zone) => String(zone._id))
-        .filter((id) => !incomingZoneIds.has(id));
+    const cityId = req.body.id || req.body._id;
+    const existing =
+      cityId && mongoose.isValidObjectId(cityId)
+        ? await City.findById(cityId)
+        : await City.findOne({ name: cityNameQuery(name) });
 
+    const clash = await City.findOne({ name: cityNameQuery(name), ...(existing ? { _id: { $ne: existing._id } } : {}) });
+    if (clash) {
+      return res.status(400).json({ success: false, error: `A city called "${clash.name}" already exists` });
+    }
+
+    const zones = sanitizeZones(Array.isArray(req.body.zones) ? req.body.zones : existing?.zones || []);
+    let removedZoneIds = [];
+
+    if (existing) {
+      const incomingZoneIds = new Set(zones.map((zone) => zone._id).filter(Boolean).map(String));
+      removedZoneIds = existing.zones.map((zone) => String(zone._id)).filter((id) => !incomingZoneIds.has(id));
+
+      // Merchants with map coordinates get re-filed automatically after the
+      // save; only stores with no location would be left pointing at nothing.
       if (removedZoneIds.length) {
-        const merchantsInRemovedZones = await Merchant.countDocuments({
+        const stranded = await Merchant.countDocuments({
           zone: { $in: removedZoneIds },
+          $nor: [hasMerchantCoordinates],
         });
-        if (merchantsInRemovedZones > 0) {
+        if (stranded > 0) {
           return res.status(400).json({
             success: false,
-            error: `Cannot remove zone(s) still assigned to ${merchantsInRemovedZones} merchant(s). Deactivate the zone instead.`,
+            error: `Cannot remove zone(s): ${stranded} merchant(s) in them have no map location to re-assign them by. Deactivate the zone instead.`,
           });
         }
       }
     }
 
-    const city = await City.findOneAndUpdate(
-      { name: req.body.name },
-      req.body,
-      { upsert: true, new: true }
-    );
+    const update = {
+      name,
+      zones,
+      ...(req.body.status ? { status: req.body.status === 'inactive' ? 'inactive' : 'active' } : {}),
+      ...(toPoint(req.body.coordinates) ? { coordinates: toPoint(req.body.coordinates) } : {}),
+    };
 
-    if (city.zones?.length) {
-      const counts = await Merchant.aggregate([
-        { $match: { zone: { $in: city.zones.map((zone) => String(zone._id)) } } },
-        { $group: { _id: '$zone', count: { $sum: 1 } } },
-      ]);
-      const countByZoneId = new Map(counts.map((entry) => [String(entry._id), entry.count]));
-      city.zones.forEach((zone) => {
-        zone.merchantCount = countByZoneId.get(String(zone._id)) || 0;
-      });
-      await city.save();
+    let city;
+    if (existing) {
+      const oldName = existing.name;
+      existing.set(update);
+      city = await existing.save();
+      if (oldName !== name) {
+        // Merchants and customers store the city by name, so carry them along.
+        await Promise.all([
+          Merchant.updateMany({ city: cityNameQuery(oldName) }, { $set: { city: name } }),
+          User.updateMany({ city: cityNameQuery(oldName) }, { $set: { city: name } }),
+        ]);
+        invalidateFeedCache({ city: oldName });
+      }
+    } else {
+      city = await City.create(update);
     }
+
+    await syncCityZoneAssignments(city, removedZoneIds);
+    invalidateFeedCache({ city: city.name });
 
     res.status(200).json({ success: true, data: city });
   } catch (err) {
-    res.status(500).json({ success: false, error: 'Operation failed' });
+    console.error('Save city error:', err);
+    res.status(500).json({ success: false, error: 'Failed to save city' });
   }
 };
 
