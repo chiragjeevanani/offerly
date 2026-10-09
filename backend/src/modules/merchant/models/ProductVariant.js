@@ -43,6 +43,11 @@ const productVariantSchema = new mongoose.Schema(
       type: Number,
       default: 0,
     },
+    // Units held for unexpired booking passes. Available = stock - reserved.
+    reserved: {
+      type: Number,
+      default: 0,
+    },
     isActive: {
       type: Boolean,
       default: true,

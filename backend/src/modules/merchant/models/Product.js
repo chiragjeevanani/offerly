@@ -52,6 +52,13 @@ const productSchema = new mongoose.Schema(
       type: Number,
       default: 0,
     },
+    // Units held for unexpired booking passes. Available = stock - reserved.
+    // Set aside when a pass is generated, released if it expires or is
+    // cancelled, and moved out of `stock` when the merchant completes it.
+    reserved: {
+      type: Number,
+      default: 0,
+    },
     // Inventory. When trackInventory is on, `stock` (simple products) or each
     // ProductVariant's `stock` is checked at add-to-cart/claim and reduced when
     // the merchant completes the redemption. Off by default so legacy products

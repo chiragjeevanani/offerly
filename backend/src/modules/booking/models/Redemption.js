@@ -123,6 +123,29 @@ const redemptionSchema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
+    // Stock set aside for this pass. 'held' while pending; 'released' once an
+    // expired/cancelled pass gives it back; 'consumed' when completed. Passes
+    // created before reservations existed stay 'none' and are deducted the
+    // old way at completion.
+    stockHold: {
+      status: {
+        type: String,
+        enum: ['none', 'held', 'released', 'consumed'],
+        default: 'none',
+      },
+      lines: {
+        type: [
+          {
+            _id: false,
+            productId: { type: mongoose.Schema.Types.ObjectId, ref: 'Product' },
+            variantId: { type: mongoose.Schema.Types.ObjectId, ref: 'ProductVariant', default: null },
+            qty: Number,
+            label: String,
+          },
+        ],
+        default: [],
+      },
+    },
     internalId: String,
   },
   {

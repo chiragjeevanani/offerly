@@ -485,7 +485,7 @@ const StoreProfilePage = () => {
                         const productId = product._id || product.id;
                         const qty = getQty(productId);
                         const soldOut = product.inStock === false;
-                        const atStockLimit = product.trackInventory && !product.hasVariants && qty >= (product.totalStock || 0);
+                        const atStockLimit = product.trackInventory && !product.hasVariants && qty >= (product.totalAvailable ?? product.totalStock ?? 0);
                         return (
                           <motion.div
                             key={productId}
@@ -512,8 +512,8 @@ const StoreProfilePage = () => {
                                   {product.variantOptions.map((o) => o.values.join(', ')).join(' · ')}
                                 </p>
                               )}
-                              {product.trackInventory && !soldOut && product.totalStock <= 5 && (
-                                <p className="text-[11px] font-bold text-amber-600 mt-1">Only {product.totalStock} left</p>
+                              {product.trackInventory && !soldOut && (product.totalAvailable ?? product.totalStock) <= 5 && (
+                                <p className="text-[11px] font-bold text-amber-600 mt-1">Only {product.totalAvailable ?? product.totalStock} left</p>
                               )}
                             </div>
 

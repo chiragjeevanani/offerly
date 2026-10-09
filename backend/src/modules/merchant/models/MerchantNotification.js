@@ -32,6 +32,7 @@ const merchantNotificationSchema = new mongoose.Schema(
         'payment',
         'store_status',
         'merchant_application',
+        'stock_alert',
         'general',
       ],
       default: 'general',

@@ -167,9 +167,17 @@ export const serializeProduct = (product, variants = []) => {
   const hasVariants = variantOptions.length > 0;
   const trackInventory = hasVariants || Boolean(product?.trackInventory);
   const serializedVariants = hasVariants ? variants.map((v) => serializeVariant(v, variantOptions)) : [];
+  // totalStock = on the shelf; totalReserved = held for unexpired passes;
+  // totalAvailable = what customers can still book.
   const totalStock = hasVariants
     ? serializedVariants.reduce((sum, v) => sum + v.stock, 0)
     : (product?.stock || 0);
+  const totalReserved = hasVariants
+    ? serializedVariants.reduce((sum, v) => sum + (v.reserved || 0), 0)
+    : (product?.reserved || 0);
+  const totalAvailable = hasVariants
+    ? serializedVariants.reduce((sum, v) => sum + (v.available ?? v.stock), 0)
+    : Math.max(0, totalStock - totalReserved);
   return {
     ...serializeProductBase(product),
     trackInventory,
@@ -177,8 +185,11 @@ export const serializeProduct = (product, variants = []) => {
     variantOptions,
     variants: serializedVariants,
     stock: product?.stock || 0,
+    reserved: product?.reserved || 0,
     totalStock,
-    inStock: !trackInventory || totalStock > 0,
+    totalReserved,
+    totalAvailable,
+    inStock: !trackInventory || totalAvailable > 0,
   };
 };
 

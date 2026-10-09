@@ -4,6 +4,7 @@ import Merchant from '../modules/merchant/models/Merchant.js';
 import { hasBusinessHours, isWithinBusinessHours } from '../utils/businessHours.js';
 import { invalidateFeedCache } from '../utils/feedCache.js';
 import { releaseUnrefundedReferralPoints } from '../modules/user/services/referralService.js';
+import { releaseUnreleasedStockHolds } from '../modules/merchant/services/stockService.js';
 
 /**
  * Keeps each merchant's open/closed toggle in step with their business hours.
@@ -51,6 +52,11 @@ export const initCronJobs = () => {
 
       if (result.modifiedCount > 0) {
         console.log(`[Cron] Marked ${result.modifiedCount} pending redemptions as expired.`);
+      }
+
+      const restocked = await releaseUnreleasedStockHolds();
+      if (restocked > 0) {
+        console.log(`[Cron] Returned held stock for ${restocked} expired/cancelled pass(es).`);
       }
 
       const refunded = await releaseUnrefundedReferralPoints();

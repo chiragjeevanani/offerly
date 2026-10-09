@@ -18,7 +18,21 @@ import {
 import { getWalletSettings } from '../../../utils/subscriptionWallet.js';
 import { getCustomerSubscriptionStatus } from '../../../utils/customerSubscription.js';
 import DiscountWalletTransaction from '../../payment/models/DiscountWalletTransaction.js';
-import { resolveLine, stockError, decrementStockForItems } from '../../merchant/services/inventoryService.js';
+import { resolveLine, stockError } from '../../merchant/services/inventoryService.js';
+import {
+  trackedLines,
+  reserveLines,
+  releaseLines,
+  releaseStockHold,
+  consumeStockForRedemption,
+  rebalanceStockHold,
+} from '../../merchant/services/stockService.js';
+
+// Everything a pass gives back when it expires or is cancelled.
+const releaseHolds = async (redemption) => {
+  await releaseReferralPoints(redemption);
+  await releaseStockHold(redemption);
+};
 
 // Builds pass line items from the live catalogue: name, price and offer price
 // always come from the DB, never the client. `needsStockCheck(productId,
@@ -162,12 +176,34 @@ export const createRedemption = async (req, res) => {
       walletDiscount = Math.max(0, Math.round(Math.min(configuredAmount, availableBalance, subtotal)));
     }
 
+    // Friendly ID generation (e.g. B-54321)
+    const letter = String.fromCharCode(65 + Math.floor(Math.random() * 26));
+    const nums = Math.floor(10000 + Math.random() * 90000);
+    const internalId = `${letter}-${nums}`;
+    const redemptionId = new mongoose.Types.ObjectId();
+
+    // Set the stock aside now, atomically, so two customers can't both book
+    // the last unit. Given back if the pass expires or is cancelled.
+    const stockLines = await trackedLines(items);
+    if (stockLines.length) {
+      const held = await reserveLines(stockLines, { redemptionId, passId: internalId });
+      if (held.error) {
+        return res.status(400).json({ success: false, error: held.error, code: 'OUT_OF_STOCK' });
+      }
+    }
+
     // Referral points the customer ticked to spend, 1 point = ₹1, capped at
     // what's left to pay. Taken off their balance now and returned if the
     // pass expires or is cancelled (see releaseReferralPoints).
-    const referralDiscount = req.body.useReferralPoints
-      ? await reserveReferralPoints(req.user.id, subtotal - walletDiscount)
-      : 0;
+    let referralDiscount = 0;
+    try {
+      referralDiscount = req.body.useReferralPoints
+        ? await reserveReferralPoints(req.user.id, subtotal - walletDiscount)
+        : 0;
+    } catch (pointsErr) {
+      await releaseLines(stockLines, { redemptionId, passId: internalId });
+      throw pointsErr;
+    }
 
     const finalTotals = {
       base,
@@ -178,11 +214,6 @@ export const createRedemption = async (req, res) => {
       referralDiscount,
     };
 
-    // Friendly ID generation (e.g. B-54321)
-    const letter = String.fromCharCode(65 + Math.floor(Math.random() * 26));
-    const nums = Math.floor(10000 + Math.random() * 90000);
-    const internalId = `${letter}-${nums}`;
-
     // Generate QR Token
     const qrToken = `qr_${merchantId}_${req.user.id}_${Date.now()}`;
     const qrExpiry = new Date(Date.now() + 2 * 60 * 60 * 1000); // 2 hours
@@ -190,6 +221,8 @@ export const createRedemption = async (req, res) => {
     let redemption;
     try {
       redemption = await RedemptionModel.create({
+        _id: redemptionId,
+        stockHold: { status: stockLines.length ? 'held' : 'none', lines: stockLines },
         offerId,
         merchantId,
         customerId: req.user.id,
@@ -203,6 +236,7 @@ export const createRedemption = async (req, res) => {
       });
     } catch (createErr) {
       await refundReferralPoints(req.user.id, referralDiscount);
+      await releaseLines(stockLines, { redemptionId, passId: internalId });
       throw createErr;
     }
 
@@ -319,7 +353,7 @@ export const verifyQR = async (req, res) => {
     if (new Date(redemption.qrExpiry) < new Date()) {
       redemption.status = 'expired';
       await redemption.save();
-      await releaseReferralPoints(redemption);
+      await releaseHolds(redemption);
       return res.status(400).json({ success: false, error: 'QR Token has expired' });
     }
 
@@ -389,7 +423,7 @@ export const verifyQR = async (req, res) => {
       }
     }
 
-    updateTasks.push(decrementStockForItems(redemption.items));
+    updateTasks.push(consumeStockForRedemption(redemption));
 
     await Promise.all(updateTasks);
 
@@ -476,7 +510,7 @@ export const lookupByInternalId = async (req, res) => {
     if (new Date(redemption.qrExpiry) < new Date()) {
       redemption.status = 'expired';
       await redemption.save();
-      await releaseReferralPoints(redemption);
+      await releaseHolds(redemption);
       return res.status(400).json({ success: false, error: `Pass ID "${internalId}" has expired.` });
     }
 
@@ -508,12 +542,20 @@ const applyRedemptionItems = async (redemption, items, { checkStock = false } = 
     redemption.items.map((it) => [lineKey(String(it.productId), it.variantId ? String(it.variantId) : ''), it.qty])
   );
 
+  // A pass holding stock is checked by re-balancing its hold below (its own
+  // reserved units count as its own). Older passes keep the plain check.
+  const isHeld = redemption.stockHold?.status === 'held';
   const built = await buildItemSnapshots(
     redemption.merchantId,
     items,
-    (productId, variantId, qty) => checkStock && qty > (previousQty.get(lineKey(productId, variantId)) || 0)
+    (productId, variantId, qty) => !isHeld && checkStock && qty > (previousQty.get(lineKey(productId, variantId)) || 0)
   );
   if (built.error) return built.error;
+
+  // Customers can only grow a pass into stock that's free; a merchant editing
+  // at the counter can see the shelf, so their edits are always honoured.
+  const holdError = await rebalanceStockHold(redemption, built.items, { force: !checkStock });
+  if (holdError) return holdError;
   redemption.items = built.items;
 
   const base = Math.round(redemption.items.reduce((s, it) => s + it.product.price * it.qty, 0));
@@ -566,7 +608,7 @@ export const updateRedemptionItems = async (req, res) => {
     if (new Date(redemption.qrExpiry) < new Date()) {
       redemption.status = 'expired';
       await redemption.save();
-      await releaseReferralPoints(redemption);
+      await releaseHolds(redemption);
       return res.status(400).json({ success: false, error: 'QR Token has expired' });
     }
 
@@ -611,7 +653,7 @@ export const updateMyRedemptionItems = async (req, res) => {
     if (new Date(redemption.qrExpiry) < new Date()) {
       redemption.status = 'expired';
       await redemption.save();
-      await releaseReferralPoints(redemption);
+      await releaseHolds(redemption);
       return res.status(400).json({ success: false, error: 'This pass has expired' });
     }
 
@@ -679,7 +721,7 @@ export const cancelRedemption = async (req, res) => {
 
     redemption.status = 'cancelled';
     await redemption.save();
-    await releaseReferralPoints(redemption);
+    await releaseHolds(redemption);
 
     res.status(200).json({ success: true, data: redemption });
   } catch (err) {
@@ -717,7 +759,7 @@ export const previewQR = async (req, res) => {
     if (new Date(redemption.qrExpiry) < new Date()) {
       redemption.status = 'expired';
       await redemption.save();
-      await releaseReferralPoints(redemption);
+      await releaseHolds(redemption);
       return res.status(400).json({ success: false, error: 'QR Token has expired' });
     }
 

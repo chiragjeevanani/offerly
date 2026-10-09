@@ -163,6 +163,9 @@ const AddProductModal = ({ isOpen, onClose, merchant, editingProduct, onSave }) 
       delete payload.variants;
       delete payload.variantOptions;
       delete payload.totalStock;
+      delete payload.totalReserved;
+      delete payload.totalAvailable;
+      delete payload.reserved;
       delete payload.inStock;
       delete payload.hasVariants;
       if (isProductBased) {

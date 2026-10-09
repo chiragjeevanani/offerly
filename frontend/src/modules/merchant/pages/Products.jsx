@@ -18,6 +18,7 @@ import AddProductModal from '../components/AddProductModal';
 import ConfirmDialog from '../components/ConfirmDialog';
 import UnifiedOfferBuilder from '../components/UnifiedOfferBuilder';
 import { productAPI } from '../../../api/product.api';
+import StockHistorySheet from '../components/StockHistorySheet';
 import { shouldShowVegIndicator } from '../../../utils/storeTypeHelper';
 
 /* ─── Custom Hook for Debouncing ──────────────── */
@@ -33,13 +34,16 @@ function useDebounce(value, delay) {
 const LOW_STOCK = 5;
 
 // Stock summary on a product card. Nothing for untracked items (e.g. food menus).
-const StockBadge = ({ product }) => {
+// "Available" is what customers can still book: the shelf count minus units
+// held for passes that haven't been collected yet.
+const StockBadge = ({ product, onHistory }) => {
   if (!product.trackInventory) return null;
-  const total = product.totalStock || 0;
-  const soldOutVariants = (product.variants || []).filter((v) => !v.stock).length;
+  const total = product.totalAvailable ?? product.totalStock ?? 0;
+  const held = product.totalReserved || 0;
+  const soldOutVariants = (product.variants || []).filter((v) => !(v.available ?? v.stock)).length;
 
   let tone = 'bg-gray-50 text-gray-500';
-  let text = `${total} in stock`;
+  let text = `${total} available`;
   if (total === 0) {
     tone = 'bg-red-50 text-red-500';
     text = 'Out of stock';
@@ -51,10 +55,24 @@ const StockBadge = ({ product }) => {
   return (
     <div className="flex flex-wrap items-center gap-1 mb-1">
       <span className={`text-[8px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded-md ${tone}`}>{text}</span>
+      {held > 0 && (
+        <span className="text-[8px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded-md bg-indigo-50 text-indigo-600">
+          {held} held for passes
+        </span>
+      )}
       {product.hasVariants && (
         <span className="text-[8px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded-md bg-gray-50 text-gray-500">
           {product.variants.length} variants{soldOutVariants > 0 && total > 0 ? ` · ${soldOutVariants} sold out` : ''}
         </span>
+      )}
+      {onHistory && (
+        <button
+          type="button"
+          onClick={(e) => { e.stopPropagation(); onHistory(product); }}
+          className="text-[8px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded-md bg-white border border-gray-200 text-gray-500 hover:text-[#5EB929] hover:border-[#5EB929]/40"
+        >
+          History
+        </button>
       )}
     </div>
   );
@@ -68,6 +86,7 @@ const Products = ({ merchant }) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState(null);
   const [confirmDeleteId, setConfirmDeleteId] = useState(null);
+  const [historyProduct, setHistoryProduct] = useState(null);
   
   const [isUnifiedBuilderOpen, setIsUnifiedBuilderOpen] = useState(false);
   const [quickOfferProduct, setQuickOfferProduct] = useState(null);
@@ -251,7 +270,7 @@ const Products = ({ merchant }) => {
 
                     <div className="flex flex-col flex-1">
                        <h3 className="text-[12px] font-bold text-gray-900 leading-tight mb-1 line-clamp-1">{product.name}</h3>
-                       <StockBadge product={product} />
+                       <StockBadge product={product} onHistory={setHistoryProduct} />
 
                        <div className="mt-auto pt-2 border-t border-gray-50 flex items-center justify-between gap-2">
                           <div className="flex flex-col">
@@ -282,6 +301,8 @@ const Products = ({ merchant }) => {
         </div>
 
         {/* Modals & Dialogs */}
+        <StockHistorySheet product={historyProduct} onClose={() => setHistoryProduct(null)} />
+
         <AddProductModal
           isOpen={isModalOpen} onClose={() => { setIsModalOpen(false); setEditingProduct(null); }}
           merchant={merchant} editingProduct={editingProduct} onSave={handleSaveProduct}

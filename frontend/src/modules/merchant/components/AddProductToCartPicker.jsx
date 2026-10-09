@@ -23,7 +23,7 @@ const toRows = (products) =>
           name: `${product.name} (${label})`,
           price: v.price,
           offerPrice: v.offerPrice,
-          stock: v.stock ?? 0,
+          stock: v.available ?? v.stock ?? 0,
           tracked: true,
         };
       });
@@ -35,7 +35,7 @@ const toRows = (products) =>
       name: product.name,
       price: product.price,
       offerPrice: product.offerPrice,
-      stock: product.stock ?? 0,
+      stock: Math.max(0, (product.stock ?? 0) - (product.reserved ?? 0)),
       tracked: Boolean(product.trackInventory),
     }];
   });
@@ -142,7 +142,7 @@ const AddProductToCartPicker = ({ onAdd, excludeIds = [], disabled = false }) =>
                           )}
                           {row.tracked && (
                             <span className={`text-[10px] font-bold ${soldOut ? 'text-red-500' : 'text-gray-400'}`}>
-                              · {soldOut ? 'Out of stock' : `${row.stock} in stock`}
+                              · {soldOut ? 'Out of stock' : `${row.stock} available`}
                             </span>
                           )}
                         </div>

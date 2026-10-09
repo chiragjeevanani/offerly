@@ -26,6 +26,11 @@ export const productAPI = {
     return axiosInstance.delete(`/products/${id}`);
   },
 
+  // Every stock change for one product: holds, returns, sales, manual edits
+  getStockHistory: async (id) => {
+    return axiosInstance.get(`/products/${id}/stock-history`);
+  },
+
   // Get product statistics
   getStats: async () => {
     return axiosInstance.get('/products/stats');

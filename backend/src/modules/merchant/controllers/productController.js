@@ -12,6 +12,8 @@ import {
   syncProductVariants,
   getVariantsByProductIds,
 } from '../services/inventoryService.js';
+import { logStockAdjustment } from '../services/stockService.js';
+import StockMovement from '../models/StockMovement.js';
 
 const PRODUCT_IMAGE_REQUIRED_MESSAGE = 'A product image is required for your store type';
 const hasImage = (images) => Array.isArray(images) && images.some((img) => typeof img === 'string' && img.trim());
@@ -23,6 +25,8 @@ const hasImage = (images) => Array.isArray(images) && images.some((img) => typeo
 const prepareInventory = (body) => {
   const variants = body.variants;
   delete body.variants;
+  // Held-for-passes counts are owned by the booking flow, never the client.
+  delete body.reserved;
   if (!('variantOptions' in body)) {
     if ('stock' in body) body.stock = Math.max(0, Math.floor(Number(body.stock) || 0));
     return { options: null, variants: null };
@@ -233,6 +237,8 @@ export const createProduct = async (req, res) => {
 
     if (inventory.options?.length) {
       await syncProductVariants(product, inventory.options, inventory.variants, discount);
+    } else if (product.trackInventory) {
+      await logStockAdjustment({ merchantId, productId: product._id, before: 0, after: product.stock, label: product.name });
     }
 
     return res.status(201).json({
@@ -310,6 +316,7 @@ export const updateProduct = async (req, res) => {
     }
 
     // Update product
+    const stockBefore = product.stock || 0;
     Object.assign(product, req.body);
 
     const merchant = await Merchant.findById(product.merchantId).select('storeType category').lean();
@@ -325,6 +332,12 @@ export const updateProduct = async (req, res) => {
     if (inventory.options) {
       const discount = (category || (await ProductCategory.findById(product.categoryId)))?.discountPercent || 0;
       await syncProductVariants(product, inventory.options, inventory.variants, discount);
+    }
+    if (product.trackInventory && !(product.variantOptions || []).length) {
+      await logStockAdjustment({
+        merchantId: product.merchantId, productId: product._id,
+        before: stockBefore, after: product.stock, reserved: product.reserved, label: product.name,
+      });
     }
 
     return res.status(200).json({
@@ -533,5 +546,48 @@ export const searchProducts = async (req, res) => {
       message: 'Failed to search products',
       error: error.message
     });
+  }
+};
+
+// Stock history for one of the merchant's own products (newest first).
+// GET /products/:id/stock-history
+export const getStockHistory = async (req, res) => {
+  try {
+    if (!mongoose.isValidObjectId(req.params.id)) {
+      return res.status(400).json({ success: false, message: 'Invalid product' });
+    }
+    const product = await Product.findById(req.params.id).select('merchantId name stock reserved trackInventory variantOptions').lean();
+    if (!product) {
+      return res.status(404).json({ success: false, message: 'Product not found' });
+    }
+    if (String(product.merchantId) !== String(req.user._id)) {
+      return res.status(403).json({ success: false, message: 'Access denied' });
+    }
+
+    const limit = Math.min(200, Math.max(1, Number.parseInt(req.query.limit, 10) || 100));
+    const movements = await StockMovement.find({ productId: product._id })
+      .sort({ createdAt: -1 })
+      .limit(limit)
+      .lean();
+
+    return res.status(200).json({
+      success: true,
+      product: { id: String(product._id), name: product.name },
+      movements: movements.map((m) => ({
+        id: String(m._id),
+        type: m.type,
+        label: m.label || product.name,
+        variantId: m.variantId ? String(m.variantId) : null,
+        stockChange: m.stockChange || 0,
+        reservedChange: m.reservedChange || 0,
+        stockAfter: m.stockAfter,
+        reservedAfter: m.reservedAfter,
+        passId: m.passId || '',
+        createdAt: m.createdAt,
+      })),
+    });
+  } catch (error) {
+    console.error('Get stock history error:', error);
+    return res.status(500).json({ success: false, message: 'Failed to load stock history' });
   }
 };

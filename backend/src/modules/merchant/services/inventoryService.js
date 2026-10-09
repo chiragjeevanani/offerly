@@ -1,5 +1,6 @@
 import Product from '../models/Product.js';
 import ProductVariant from '../models/ProductVariant.js';
+import { logStockAdjustment } from './stockService.js';
 
 const MAX_OPTIONS = 3;
 const MAX_VALUES = 30;
@@ -88,12 +89,21 @@ export const syncProductVariants = async (product, options, variantsInput, disco
     };
     const doc = existingByKey.get(key);
     if (doc) {
+      const stockBefore = doc.stock || 0;
       Object.assign(doc, fields);
       await doc.save();
       keep.add(doc._id.toString());
+      await logStockAdjustment({
+        merchantId: product.merchantId, productId: product._id, variantId: doc._id,
+        before: stockBefore, after: doc.stock, reserved: doc.reserved, label: `${product.name} (${fields.name})`,
+      });
     } else {
       const created = await ProductVariant.create({ ...fields, productId: product._id });
       keep.add(created._id.toString());
+      await logStockAdjustment({
+        merchantId: product.merchantId, productId: product._id, variantId: created._id,
+        before: 0, after: created.stock, label: `${product.name} (${fields.name})`,
+      });
     }
   }
 
@@ -122,6 +132,8 @@ export const serializeVariant = (v, options) => ({
   price: v.price,
   offerPrice: v.offerPrice,
   stock: v.stock || 0,
+  reserved: v.reserved || 0,
+  available: Math.max(0, (v.stock || 0) - (v.reserved || 0)),
 });
 
 /**
@@ -148,7 +160,7 @@ export const resolveLine = async ({ product, productId, variantId }) => {
       displayName: `${p.name} (${label})`,
       price: v.price,
       offerPrice: v.offerPrice,
-      available: v.stock || 0,
+      available: Math.max(0, (v.stock || 0) - (v.reserved || 0)),
     };
   }
 
@@ -159,7 +171,7 @@ export const resolveLine = async ({ product, productId, variantId }) => {
     displayName: p.name,
     price: p.price,
     offerPrice: p.offerPrice,
-    available: p.trackInventory ? p.stock || 0 : Infinity,
+    available: p.trackInventory ? Math.max(0, (p.stock || 0) - (p.reserved || 0)) : Infinity,
   };
 };
 

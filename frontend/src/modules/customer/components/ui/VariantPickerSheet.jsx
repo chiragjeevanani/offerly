@@ -18,10 +18,12 @@ const matches = (variant, selection) =>
 const VariantPickerSheet = ({ product, qtyInCart, onConfirm, onClose, busy = false }) => {
   const options = product.variantOptions || [];
   const variants = product.variants || [];
+  // Bookable units: the shelf count minus what other passes are holding.
+  const free = (v) => v?.available ?? v?.stock ?? 0;
 
   // Start on the first in-stock combination so the sheet opens ready to add.
   const [selection, setSelection] = useState(() => {
-    const first = variants.find((v) => v.stock > 0) || variants[0];
+    const first = variants.find((v) => free(v) > 0) || variants[0];
     return first ? { ...first.attributes } : {};
   });
 
@@ -35,11 +37,11 @@ const VariantPickerSheet = ({ product, qtyInCart, onConfirm, onClose, busy = fal
   // works with the other options already chosen (otherwise choose() switches
   // those to the nearest in-stock combination).
   const isAvailable = (optName, value) =>
-    variants.some((v) => v.stock > 0 && v.attributes?.[optName] === value);
+    variants.some((v) => free(v) > 0 && v.attributes?.[optName] === value);
   const isCompatible = (optName, value) =>
     variants.some(
       (v) =>
-        v.stock > 0 &&
+        free(v) > 0 &&
         v.attributes?.[optName] === value &&
         options.every((o) => o.name === optName || !selection[o.name] || v.attributes?.[o.name] === selection[o.name])
     );
@@ -47,8 +49,8 @@ const VariantPickerSheet = ({ product, qtyInCart, onConfirm, onClose, busy = fal
   const choose = (optName, value) => {
     const next = { ...selection, [optName]: value };
     // If the new value makes the other picks impossible, keep the closest in-stock match.
-    if (!variants.some((v) => v.stock > 0 && matches(v, next))) {
-      const fallback = variants.find((v) => v.stock > 0 && v.attributes?.[optName] === value);
+    if (!variants.some((v) => free(v) > 0 && matches(v, next))) {
+      const fallback = variants.find((v) => free(v) > 0 && v.attributes?.[optName] === value);
       if (fallback) {
         setSelection({ ...fallback.attributes });
         setQty(Math.max(1, qtyInCart(fallback._id)));
@@ -60,7 +62,7 @@ const VariantPickerSheet = ({ product, qtyInCart, onConfirm, onClose, busy = fal
     setQty(Math.max(1, v ? qtyInCart(v._id) : 1));
   };
 
-  const stock = selected?.stock ?? 0;
+  const stock = free(selected);
   const inCart = selected ? qtyInCart(selected._id) : 0;
   const image = product.images?.[0] || product.image;
 

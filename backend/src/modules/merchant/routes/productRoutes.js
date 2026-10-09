@@ -8,7 +8,8 @@ import {
   deleteProduct,
   getProductStats,
   searchProducts,
-  debugAuth
+  debugAuth,
+  getStockHistory
 } from '../controllers/productController.js';
 
 const router = express.Router();
@@ -36,6 +37,9 @@ router.put('/:id', protect, authorize('merchant'), updateProduct);
 
 // Delete product (merchant only) - must be before /:id GET route
 router.delete('/:id', protect, authorize('merchant'), deleteProduct);
+
+// Stock history for one of the merchant's products
+router.get('/:id/stock-history', protect, authorize('merchant'), getStockHistory);
 
 // Get single product - must be LAST to avoid catching other routes
 router.get('/:id', getProductById);

@@ -38,10 +38,10 @@ const populateCart = (query) =>
     .populate('merchantId', 'storeName logo address locality phone discountWallet')
     .populate({
       path: 'items.product',
-      select: 'name categoryId price offerPrice images isVeg variantOptions trackInventory stock',
+      select: 'name categoryId price offerPrice images isVeg variantOptions trackInventory stock reserved',
       populate: { path: 'categoryId', select: 'name discountPercent' },
     })
-    .populate('items.variant', 'attributes name price offerPrice stock isActive');
+    .populate('items.variant', 'attributes name price offerPrice stock reserved isActive');
 
 // Plain cart for the client. For variant lines the variant's price is folded
 // into item.product so every existing price calculation keeps working, and
@@ -59,6 +59,7 @@ const shapeCart = (cart) => {
         attributes: item.variant.attributes,
         label: variantLabel(item.variant.attributes, options) || item.variant.name,
         stock: item.variant.stock,
+        available: Math.max(0, (item.variant.stock || 0) - (item.variant.reserved || 0)),
       },
     };
   });

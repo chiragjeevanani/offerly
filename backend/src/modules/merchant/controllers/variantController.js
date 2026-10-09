@@ -1,5 +1,6 @@
 import ProductVariant from '../models/ProductVariant.js';
 import Product from '../models/Product.js';
+import { logStockAdjustment } from '../services/stockService.js';
 
 // Get all variants for a product
 export const getVariantsByProduct = async (req, res) => {
@@ -66,10 +67,15 @@ export const createVariant = async (req, res) => {
       ? Math.round(((req.body.price - req.body.offerPrice) / req.body.price) * 100)
       : 0;
 
+    delete req.body.reserved; // owned by the booking flow
     const variant = await ProductVariant.create({
       ...req.body,
       productId: req.params.productId,
       discount
+    });
+    await logStockAdjustment({
+      merchantId: product.merchantId, productId: product._id, variantId: variant._id,
+      before: 0, after: variant.stock, label: `${product.name} (${variant.name})`,
     });
 
     return res.status(201).json({
@@ -125,8 +131,15 @@ export const updateVariant = async (req, res) => {
     }
 
     // Update variant
+    delete req.body.reserved; // owned by the booking flow
+    delete req.body.productId;
+    const stockBefore = variant.stock || 0;
     Object.assign(variant, req.body);
     await variant.save();
+    await logStockAdjustment({
+      merchantId: product.merchantId, productId: product._id, variantId: variant._id,
+      before: stockBefore, after: variant.stock, reserved: variant.reserved, label: `${product.name} (${variant.name})`,
+    });
 
     return res.status(200).json({
       success: true,

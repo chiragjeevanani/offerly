@@ -54,14 +54,14 @@ const EditBookingItemsSheet = ({ booking, merchantId, onClose, onSaved }) => {
           map.set(lineKey(productId, v._id), {
             key: lineKey(productId, v._id), productId, variantId: v._id,
             name: `${p.name} (${v.label})`, price: v.price, offerPrice: v.offerPrice, image,
-            maxQty: v.stock,
+            maxQty: v.available ?? v.stock,
           });
         }
       } else {
         map.set(lineKey(productId, ''), {
           key: lineKey(productId, ''), productId, variantId: null,
           name: p.name, price: p.price, offerPrice: p.offerPrice, image,
-          maxQty: p.trackInventory ? p.stock : Infinity,
+          maxQty: p.trackInventory ? (p.totalAvailable ?? p.stock) : Infinity,
         });
       }
     }
@@ -80,7 +80,11 @@ const EditBookingItemsSheet = ({ booking, merchantId, onClose, onSaved }) => {
       offerPrice: p.offerPrice,
       image: p.image || l.image,
       // Already-reserved units count as available to this booking.
-      maxQty: Math.max(p.maxQty, originalQty.get(l.key) || 0),
+      // A pass that holds stock already owns its current units, so it can grow
+      // into whatever is free on top of them.
+      maxQty: booking.stockHold?.status === 'held'
+        ? p.maxQty + (originalQty.get(l.key) || 0)
+        : Math.max(p.maxQty, originalQty.get(l.key) || 0),
       unavailable: false,
     };
   });

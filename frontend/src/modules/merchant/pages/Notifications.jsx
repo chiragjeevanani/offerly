@@ -9,6 +9,7 @@ import PaymentRoundedIcon from '@mui/icons-material/PaymentRounded';
 import StorefrontRoundedIcon from '@mui/icons-material/StorefrontRounded';
 import WorkspacePremiumRoundedIcon from '@mui/icons-material/WorkspacePremiumRounded';
 import DoneAllRoundedIcon from '@mui/icons-material/DoneAllRounded';
+import Inventory2RoundedIcon from '@mui/icons-material/Inventory2Rounded';
 import { merchantAPI } from '../../../api/merchant.api';
 import toast from 'react-hot-toast';
 import PushOptInCard from '../../../components/common/PushOptInCard';
@@ -22,6 +23,7 @@ const typeConfig = {
   offer_approved: { icon: LocalOfferRoundedIcon, color: 'text-indigo-600', bg: 'bg-indigo-50' },
   payment: { icon: PaymentRoundedIcon, color: 'text-blue-600', bg: 'bg-blue-50' },
   store_status: { icon: StorefrontRoundedIcon, color: 'text-[#5EB929]', bg: 'bg-[#5EB929]/5' },
+  stock_alert: { icon: Inventory2RoundedIcon, color: 'text-red-500', bg: 'bg-red-50' },
   general: { icon: NotificationsRoundedIcon, color: 'text-gray-400', bg: 'bg-gray-100' },
 };
 

@@ -472,8 +472,10 @@ const CartView = () => {
                  const itemTotal = productPrice * item.qty;
                  const savings = Math.round((basePrice - productPrice) * item.qty);
                  const variantId = item.variant?._id || null;
-                 // How many can still be added: the variant's stock, or the product's if it tracks stock.
-                 const maxQty = item.variant ? item.variant.stock : (product.trackInventory ? product.stock : Infinity);
+                 // How many can still be added: what's free (shelf minus units held for other passes).
+                 const maxQty = item.variant
+                   ? (item.variant.available ?? item.variant.stock)
+                   : (product.trackInventory ? Math.max(0, (product.stock || 0) - (product.reserved || 0)) : Infinity);
 
                  return (
                   <div key={idx} className="flex justify-between items-center gap-3 relative">
