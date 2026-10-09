@@ -77,6 +77,11 @@ const buildMerchantPayload = (body) => {
   return payload;
 };
 
+// Once registration is complete a store's city is fixed: only an admin can
+// change it (PUT /admin/merchants/:id/zone with { city }).
+const isCityLocked = (merchant) =>
+  Boolean(merchant?.city) && Boolean(merchant?.hasRequestedStore) && (merchant?.onboardingStep ?? 0) >= 4;
+
 const getMerchantForOwner = async (userId) => {
   if (!userId) return null;
   return Merchant.findOne({
@@ -365,7 +370,7 @@ export const updateOnboarding = async (req, res) => {
       if (data.storeName) merchant.storeName = data.storeName;
       if (data.category) merchant.category = data.category;
       if (data.storeType) merchant.storeType = normalizeStoreType(data.storeType);
-      if (data.city) merchant.city = data.city;
+      if (data.city && !isCityLocked(merchant)) merchant.city = data.city;
       if (data.locality) merchant.locality = data.locality;
       if (data.address) merchant.address = data.address;
       if (data.businessHours) merchant.businessHours = data.businessHours;
@@ -568,6 +573,13 @@ export const updateLocationHours = async (req, res) => {
       });
     }
 
+    if (isCityLocked(merchant) && city.trim().toLowerCase() !== String(merchant.city).trim().toLowerCase()) {
+      return res.status(400).json({
+        success: false,
+        message: 'Your city can only be changed by Offerly. Please contact support.',
+      });
+    }
+
     const cityDoc = await City.findOne({ name: city.trim() });
 
     // Zone must actually belong to the submitted city — never trust the client pairing.
@@ -581,7 +593,8 @@ export const updateLocationHours = async (req, res) => {
     // Update location
     merchant.address = address.trim();
     merchant.city = city.trim();
-    merchant.state = state.trim();
+    // Like the city, the state is fixed once registered - only an admin changes it.
+    if (!isCityLocked(merchant)) merchant.state = state.trim();
     merchant.pincode = pincode.trim();
 
     // Only update coordinates if they are provided
@@ -610,9 +623,10 @@ export const updateLocationHours = async (req, res) => {
     // Update business hours
     merchant.businessHours = businessHours;
 
-    // Mark registration as complete
+    // Mark registration as complete. An already-approved store re-sending this
+    // step stays approved - only new or rejected applications go (back) to review.
     merchant.onboardingStep = 4;
-    merchant.status = 'pending';
+    if (merchant.status !== 'approved') merchant.status = 'pending';
     merchant.hasRequestedStore = true;
 
     // Assign default Trial Plan if not already set
@@ -677,7 +691,7 @@ export const updateMyStore = async (req, res) => {
     "storeName",
     "category",
     "storeType",
-    "city",
+    // "city" is deliberately not editable here - only admins can change it.
     "locality",
     "address",
     "phone",

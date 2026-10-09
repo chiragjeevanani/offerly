@@ -64,7 +64,7 @@ const Profile = ({ merchant, onMerchantUpdate }) => {
   const [stats, setStats] = useState({ revenue: 0, bookings: 0, offers: 0, rating: 0 });
   const [updatingStoreType, setUpdatingStoreType] = useState(false);
   const [storeType, setStoreType] = useState(merchant?.storeType || 'product_based');
-  
+
   // Store Profile Edit Modal State
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [zoneName, setZoneName] = useState('');
@@ -179,7 +179,7 @@ const Profile = ({ merchant, onMerchantUpdate }) => {
       </div>
 
       <div className="max-w-4xl mx-auto px-4 py-6 sm:py-10 space-y-8">
-         
+
          {/* Identity Strip */}
          <div className="bg-gray-900 rounded-[2rem] p-4 sm:p-6 lg:p-8 relative overflow-hidden shadow-2xl">
             <div className="absolute top-0 right-0 w-64 h-64 bg-[#5EB929]/20 rounded-full blur-[80px] -translate-y-1/2 translate-x-1/2" />
@@ -188,8 +188,8 @@ const Profile = ({ merchant, onMerchantUpdate }) => {
                   <div className="w-16 h-16 sm:w-20 lg:w-24 rounded-full overflow-hidden border-2 border-white/10 shadow-2xl bg-white/5 flex items-center justify-center">
                      {merchant?.logo ? <img src={merchant.logo} className="w-full h-full object-cover" alt="" /> : <span className="text-xl sm:text-2xl font-bold text-[#5EB929]">{merchant?.storeName?.charAt(0)}</span>}
                   </div>
-                  <button 
-                    onClick={() => setIsEditModalOpen(true)} 
+                  <button
+                    onClick={() => setIsEditModalOpen(true)}
                     className="absolute -bottom-0.5 -right-0.5 w-7 h-7 bg-[#5EB929] text-white rounded-full flex items-center justify-center shadow-lg border-2 border-gray-900 hover:scale-105 transition-transform"
                     title="Edit Store Details"
                   >
@@ -207,17 +207,17 @@ const Profile = ({ merchant, onMerchantUpdate }) => {
                   <p className="text-gray-400 font-bold text-[10px] sm:text-xs tracking-wide mt-1 truncate uppercase opacity-60">
                     {merchant?.category} • {merchant?.city} • #OFF-{merchant?._id?.slice(-6).toUpperCase()}
                   </p>
-                  <div className="mt-1.5" title="Your zone can only be changed by Offerly. Contact support if it's wrong.">
+                  <div className="mt-1.5" title="Your city and zone can only be changed by Offerly. Contact support if they're wrong.">
                     <p className="text-[12px] font-semibold text-gray-200 flex items-center gap-1">
                       <PlaceRoundedIcon sx={{ fontSize: 14 }} className="text-[#5EB929]" />
                       Zone: {merchant?.zone ? zoneName || '...' : 'Not set'}
                     </p>
                     <p className="text-[10px] font-medium text-gray-400 flex items-center gap-1 mt-0.5">
                       <LockRoundedIcon sx={{ fontSize: 10 }} />
-                      Only Offerly can change your zone
+                      Only Offerly can change your city, state and zone
                     </p>
                   </div>
-                  
+
                   {/* Store Type Badge */}
                   <div className="flex items-center gap-1.5 px-2.5 py-1 bg-white/10 rounded-full w-fit mt-2.5 border border-white/10 backdrop-blur-md">
                     {isService ? (
@@ -362,8 +362,8 @@ const Profile = ({ merchant, onMerchantUpdate }) => {
                   </div>
                   <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden divide-y divide-gray-50">
                      {section.items.map(item => (
-                        <button 
-                          key={item.label} 
+                        <button
+                          key={item.label}
                           onClick={() => {
                             if (item.action === 'edit-hours') {
                               setIsHoursModalOpen(true);
@@ -372,7 +372,7 @@ const Profile = ({ merchant, onMerchantUpdate }) => {
                             } else if (item.path) {
                               navigate(item.path);
                             }
-                          }} 
+                          }}
                           className="w-full flex items-center gap-3 px-4 py-3.5 hover:bg-background transition-all group text-left"
                         >
                            <div className="w-8 h-8 rounded-lg bg-background text-[#5EB929] flex items-center justify-center group-hover:scale-105 transition-transform flex-shrink-0">
@@ -388,7 +388,7 @@ const Profile = ({ merchant, onMerchantUpdate }) => {
          </div>
 
          {/* Logout Area */}
-         <motion.button 
+         <motion.button
             whileTap={{ scale: 0.98 }} onClick={() => logout() & navigate('/merchant/login')}
             className="w-full py-4 bg-red-50 text-red-600 rounded-2xl font-bold text-[11px] uppercase tracking-widest border border-red-100 flex items-center justify-center gap-3 hover:bg-red-100 transition-all"
          >

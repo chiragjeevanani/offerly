@@ -68,9 +68,10 @@ export const adminAPI = {
   getSupportContacts: async () => axiosInstance.get('/support'),
   updateSupportContacts: async (data) => axiosInstance.put('/admin/support-contacts', data),
 
-  // Move a store to a zone. zone: '<zoneId>' | '' (no zone) | 'auto' (from map location)
-  updateMerchantZone: async (id, zone) => {
-    return axiosInstance.put(`/admin/merchants/${id}/zone`, { zone });
+  // Move a store to a zone (and optionally another city).
+  // zone: '<zoneId>' | '' (no zone) | 'auto' (from map location)
+  updateMerchantZone: async (id, zone, city, state) => {
+    return axiosInstance.put(`/admin/merchants/${id}/zone`, { zone, ...(city ? { city } : {}), ...(state ? { state } : {}) });
   },
 
   updateMerchantStatus: async (id, status, rejectionReason = null) => {

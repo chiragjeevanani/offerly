@@ -165,7 +165,7 @@ const LocationHoursStep = ({ data, onSubmit, onBack, loading }) => {
         className="bg-white rounded-[2.5rem] p-6 md:p-10 shadow-2xl shadow-gray-200/50 border border-white relative overflow-hidden"
       >
         <div className="absolute inset-0 overflow-hidden pointer-events-none rounded-[inherit]"><div className="absolute top-0 right-0 w-32 h-32 bg-[#5EB929]/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" /></div>
-        
+
         <div className="relative z-10 space-y-8">
           <div className="space-y-1 text-center md:text-left">
             <h2 className="text-gray-900 font-bold text-xl tracking-tight">Location & Hours</h2>
@@ -179,7 +179,7 @@ const LocationHoursStep = ({ data, onSubmit, onBack, loading }) => {
                 <MapRoundedIcon className="text-[#5EB929]" sx={{ fontSize: 18 }} />
                 <h3 className="text-[11px] font-bold text-gray-900 uppercase tracking-widest">Store location</h3>
               </div>
-              
+
               <div className="space-y-4">
                 <div className="space-y-1.5">
                   <div className="flex items-center justify-between px-1">
@@ -202,6 +202,7 @@ const LocationHoursStep = ({ data, onSubmit, onBack, loading }) => {
                       <option value="">Select City</option>
                       {cities.map((c) => <option key={c._id} value={c.name}>{c.name}</option>)}
                     </select>
+                    <p className="text-[9px] font-bold text-amber-600 px-1">Pick carefully - after you submit, only Offerly can change your city and state.</p>
                   </div>
                   <div className="space-y-1.5">
                     <label className="text-[10px] font-bold text-gray-400 px-1">State</label>
@@ -247,12 +248,12 @@ const LocationHoursStep = ({ data, onSubmit, onBack, loading }) => {
                 <AccessTimeRoundedIcon className="text-[#5EB929]" sx={{ fontSize: 18 }} />
                 <h3 className="text-[11px] font-bold text-gray-900 uppercase tracking-widest">Business hours</h3>
               </div>
-              
+
               <div className="bg-background rounded-[2rem] p-4 md:p-6 border border-gray-50 space-y-3">
                 {days.map((day) => (
                   <div key={day} className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 py-2 border-b border-gray-100 last:border-0">
                     <div className="flex items-center gap-3">
-                      <button 
+                      <button
                         type="button" onClick={() => toggleDayClosed(day)}
                         className={`w-4 h-4 rounded border transition-all flex items-center justify-center ${formData.businessHours[day].isClosed ? 'border-gray-200 bg-white' : 'border-[#5EB929] bg-[#5EB929]'}`}
                       >
@@ -279,13 +280,13 @@ const LocationHoursStep = ({ data, onSubmit, onBack, loading }) => {
 
             {/* Action Bar */}
             <div className="flex gap-4 pt-6 border-t border-gray-50">
-               <motion.button 
+               <motion.button
                  type="button" whileTap={{ scale: 0.98 }} onClick={onBack}
                  className="flex-1 h-14 bg-gray-50 text-gray-400 rounded-2xl font-bold text-[12px] flex items-center justify-center gap-2 border border-gray-100"
                >
                  <ArrowBackRoundedIcon sx={{ fontSize: 16 }} /> Back
                </motion.button>
-               <motion.button 
+               <motion.button
                  type="submit" whileTap={{ scale: 0.98 }} disabled={loading}
                  className="flex-[2] h-14 bg-[#5EB929] text-white rounded-2xl font-bold text-[12px] shadow-lg shadow-[#5EB929]/20 flex items-center justify-center gap-2"
                >
