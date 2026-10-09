@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import KeyboardArrowDownRoundedIcon from '@mui/icons-material/KeyboardArrowDownRounded';
 import SearchRoundedIcon from '@mui/icons-material/SearchRounded';
@@ -84,7 +84,6 @@ const SectionHeader = ({ title, icon: Icon, onAction, actionText = 'View All' })
 const Home = () => {
   const navigate = useNavigate();
   const { enabled: rewardsEnabled } = useRewardsEnabled();
-  const [searchParams, setSearchParams] = useSearchParams();
   const { user, selectedCity, setSelectedCity, setSelectedCategory } = useApp();
   const useUnifiedFeed = import.meta.env.VITE_USE_UNIFIED_FEED !== 'false';
   const [categories, setCategories] = useState([]);
@@ -95,25 +94,7 @@ const Home = () => {
   const [userCoords, setUserCoords] = useState(null);
   const [cityRequired, setCityRequired] = useState(false);
 
-  // Manual / URL simulation for testing closed stores state
-  const [simulateClosed, setSimulateClosed] = useState(() => {
-    return searchParams.get('closed') === 'true';
-  });
 
-  const handleSimulateToggle = () => {
-    setSimulateClosed((prev) => {
-      const next = !prev;
-      const newParams = new URLSearchParams(searchParams);
-      if (next) {
-        newParams.set('closed', 'true');
-      } else {
-        newParams.delete('closed');
-      }
-      setSearchParams(newParams, { replace: true });
-      return next;
-    });
-  };
-  
   // Sections data
   const [featuredBanners, setFeaturedBanners] = useState([]);
   const [trendingOffers, setTrendingOffers] = useState([]);
@@ -121,7 +102,7 @@ const Home = () => {
   const [recommendedOffers, setRecommendedOffers] = useState([]);
   const [mostPopulatedStores, setMostPopulatedStores] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
-  
+
   // Carousel state
   const [currentSlide, setCurrentSlide] = useState(0);
 
@@ -203,15 +184,15 @@ const Home = () => {
           // Legacy fallback mode
           const [
             adsResponse,
-            trendingOffersResponse, 
+            trendingOffersResponse,
             nearbyOffersResponse,
             trendingMerchantsResponse
           ] = await Promise.all([
             adAPI.getApproved({ city: baseParams.city }),
             offerAPI.getAll({ ...baseParams, status: 'active', isTrending: true, limit: 5 }),
             offerAPI.getAll({ ...baseParams, status: 'active', limit: 4 }),
-            merchantAPI.getAll({ 
-              ...baseParams, 
+            merchantAPI.getAll({
+              ...baseParams,
               status: 'approved',
               sortBy: 'totalRedemptions',
               sortOrder: 'desc',
@@ -274,7 +255,6 @@ const Home = () => {
 
   // Evaluate if all stores in the selected area/city are closed
   const areAllStoresClosed = useMemo(() => {
-    if (simulateClosed) return true;
     if (isLoading || cityRequired) return false;
 
     // Check stores list: if we have stores in the city and none of them are currently open
@@ -291,7 +271,7 @@ const Home = () => {
     if (hasOffers && allOffersMerchantsClosed) return true;
 
     return false;
-  }, [simulateClosed, isLoading, cityRequired, mostPopulatedStores, trendingOffers, nearbyOffers, recommendedOffers]);
+  }, [isLoading, cityRequired, mostPopulatedStores, trendingOffers, nearbyOffers, recommendedOffers]);
 
   return (
     <PageTransition>
@@ -382,8 +362,6 @@ const Home = () => {
             city={displayCity}
             stores={mostPopulatedStores}
             rawOffers={[...trendingOffers, ...nearbyOffers, ...recommendedOffers]}
-            onSimulateToggle={handleSimulateToggle}
-            isSimulated={simulateClosed}
           />
         ) : (
           <>
@@ -468,7 +446,7 @@ const Home = () => {
                     }}
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
-                  
+
                   <div className="absolute inset-x-0 bottom-0 p-5 md:p-8">
                     <div className="flex items-center gap-2 mb-2">
                        <span className="px-3 py-1 rounded-full text-[10px] font-semibold tracking-wide backdrop-blur-md border border-white/20 shadow-lg bg-primary text-white">
@@ -531,10 +509,10 @@ const Home = () => {
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ delay: 0.45 + idx * 0.05 }}
                 >
-                  <StoreCard 
-                    merchant={merchant} 
-                    variant="row" 
-                    offerCount={merchant.offerCount || 0} 
+                  <StoreCard
+                    merchant={merchant}
+                    variant="row"
+                    offerCount={merchant.offerCount || 0}
                   />
                 </motion.div>
               ))}
@@ -588,17 +566,6 @@ const Home = () => {
           </motion.section>
         )}
 
-            {/* Discreet QA / Dev Preview toggle for testing "All Stores Closed" */}
-            {!isLoading && !cityRequired && (
-              <div className="text-center pt-2 pb-1">
-                <button
-                  onClick={handleSimulateToggle}
-                  className="text-[11px] font-medium text-gray-400 hover:text-primary transition-colors bg-white/80 border border-gray-200/80 px-3 py-1.5 rounded-full shadow-2xs hover:shadow-xs"
-                >
-                  🌙 Test "All Stores Closed" View
-                </button>
-              </div>
-            )}
           </>
         )}
 

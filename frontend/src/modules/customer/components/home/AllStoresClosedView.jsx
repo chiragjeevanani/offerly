@@ -20,11 +20,11 @@ import { useRewardsEnabled } from '../../../../hooks/useRewardsEnabled';
 // Helper to format opening time tomorrow from merchant.businessHours
 export const getTomorrowOpeningTime = (merchant) => {
   if (!merchant) return 'Opens tomorrow at 9:00 AM';
-  
+
   const days = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
   const now = new Date();
   const tomorrowDay = days[(now.getDay() + 1) % 7];
-  
+
   const tomorrowHours = merchant.businessHours?.[tomorrowDay];
   if (tomorrowHours && !tomorrowHours.isClosed && tomorrowHours.open) {
     try {
@@ -113,8 +113,6 @@ const AllStoresClosedView = ({
   city = '',
   stores = [],
   rawOffers = [],
-  onSimulateToggle,
-  isSimulated = false,
 }) => {
   const navigate = useNavigate();
   const { enabled: rewardsEnabled } = useRewardsEnabled();
@@ -243,22 +241,6 @@ const AllStoresClosedView = ({
 
   return (
     <div className="space-y-6 pt-1 pb-10">
-      {/* Simulation / Dev toggle banner */}
-      {onSimulateToggle && (
-        <div className="flex items-center justify-between bg-emerald-50/80 border border-emerald-200/80 px-3.5 py-2 rounded-xl text-xs">
-          <span className="text-emerald-800 font-medium flex items-center gap-1.5">
-            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-            {isSimulated ? 'Closed Stores Preview Active' : 'Simulate Closed State'}
-          </span>
-          <button
-            onClick={onSimulateToggle}
-            className="font-semibold text-emerald-700 bg-white border border-emerald-300 px-2.5 py-1 rounded-lg hover:bg-emerald-100 transition-colors"
-          >
-            {isSimulated ? 'Switch to Normal Feed' : 'Preview Closed View'}
-          </button>
-        </div>
-      )}
-
       {/* 1. Header matching reference image 2 */}
       <motion.div
         initial={{ opacity: 0, y: 12 }}
