@@ -565,19 +565,29 @@ const CartView = () => {
              </div>
 
              {availablePoints > 0 && payableBeforePoints > 0 && (
-               <label className="mb-5 flex items-center gap-3 p-3.5 rounded-2xl border border-[#5EB929]/20 bg-[#5EB929]/5 cursor-pointer select-none">
+               <label className="mb-4 flex items-center gap-2.5 cursor-pointer select-none">
                  <input
                    type="checkbox"
                    checked={useReferralPoints}
                    onChange={toggleReferralPoints}
-                   className="w-5 h-5 accent-[#5EB929] shrink-0"
+                   className="sr-only peer"
                  />
-                 <div className="flex-1 min-w-0">
-                   <p className="text-[12px] font-bold text-gray-900">Use referral points</p>
-                   <p className="text-[10px] font-bold text-gray-400 mt-0.5">
-                     {availablePoints} points available · save up to ₹{Math.min(availablePoints, payableBeforePoints)}
-                   </p>
-                 </div>
+                 <span
+                   aria-hidden="true"
+                   className={`w-[18px] h-[18px] rounded-md flex items-center justify-center shrink-0 transition-all peer-focus-visible:ring-2 peer-focus-visible:ring-[#5EB929]/40 ${
+                     useReferralPoints ? 'bg-[#5EB929]' : 'border-2 border-gray-300 bg-white'
+                   }`}
+                 >
+                   {useReferralPoints && (
+                     <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3.5} d="M5 13l4 4L19 7" />
+                     </svg>
+                   )}
+                 </span>
+                 <span className="text-[12px] font-semibold text-gray-700">
+                   Use {Math.min(availablePoints, payableBeforePoints)} referral points
+                   <span className="text-gray-400 font-medium"> ({availablePoints} available)</span>
+                 </span>
                </label>
              )}
 
