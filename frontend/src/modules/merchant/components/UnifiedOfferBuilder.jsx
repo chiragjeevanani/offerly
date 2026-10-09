@@ -155,7 +155,7 @@ const UnifiedOfferBuilder = ({ isOpen, onClose, merchant, onSuccess }) => {
                <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
                      <div className={`w-1 h-4 rounded-full ${campaignData.isActive ? 'bg-[#5EB929]' : 'bg-gray-300'}`} />
-                     <h3 className={`text-[11px] font-bold uppercase tracking-widest ${campaignData.isActive ? 'text-[#5EB929]' : 'text-gray-400'}`}>Offer Engine</h3>
+                     <h3 className={`text-[11px] font-bold uppercase tracking-widest ${campaignData.isActive ? 'text-[#5EB929]' : 'text-gray-400'}`}>Offer Status</h3>
                   </div>
                   <button onClick={() => setCampaignData({...campaignData, isActive: !campaignData.isActive})} className={`w-10 h-5 rounded-full relative transition-all ${campaignData.isActive ? 'bg-[#5EB929]' : 'bg-gray-300'}`}>
                      <div className={`absolute top-0.5 w-4 h-4 bg-white rounded-full transition-all ${campaignData.isActive ? 'left-5.5' : 'left-0.5'}`} />

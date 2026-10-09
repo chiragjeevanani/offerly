@@ -125,13 +125,13 @@ const TermsAndConditions = () => {
                isOpen={openSection === '04'}
                onToggle={() => toggleSection('04')}
              >
-               <p><strong>Protocol:</strong> Redemption is executed via unique QR pass verification at the merchant terminal.</p>
+               <p><strong>How it works:</strong> Redemption is executed via unique QR pass verification at the store.</p>
                <p><strong>Expiry:</strong> All digital passes carry a cryptographic timestamp and must be utilized before expiration.</p>
              </Section>
 
              <Section
                number="05"
-               title="Financial Protocols"
+               title="Payments"
                isOpen={openSection === '05'}
                onToggle={() => toggleSection('05')}
              >

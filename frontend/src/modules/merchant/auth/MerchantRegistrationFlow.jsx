@@ -272,13 +272,13 @@ const MerchantRegistrationFlow = () => {
         {/* Legal Footer */}
         <div className="mt-8 pt-4 border-t border-gray-200/60 text-center space-y-1">
           <div className="flex items-center justify-center gap-3 text-[10px] font-bold text-gray-400">
-            <Link to="/merchant/terms" className="hover:text-[#5EB929] transition-colors" target="_blank">Terms of Operation</Link>
+            <Link to="/merchant/terms" className="hover:text-[#5EB929] transition-colors" target="_blank">Terms & Conditions</Link>
             <span>•</span>
-            <Link to="/merchant/privacy" className="hover:text-[#5EB929] transition-colors" target="_blank">Privacy Protocol</Link>
+            <Link to="/merchant/privacy" className="hover:text-[#5EB929] transition-colors" target="_blank">Privacy Policy</Link>
             <span>•</span>
             <Link to="/merchant/support" className="hover:text-[#5EB929] transition-colors" target="_blank">Support</Link>
           </div>
-          <p className="text-[9px] text-gray-400 font-medium">Offerly Biz Merchant Enrollment Protocol</p>
+          <p className="text-[9px] text-gray-400 font-medium">Offerly Biz Merchant Registration</p>
         </div>
       </div>
     </div>

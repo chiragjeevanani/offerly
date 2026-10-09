@@ -146,8 +146,8 @@ const MerchantSignup = () => {
                   </div>
                 </div>
                 <div className="mt-4 text-center">
-                  <h2 className="text-gray-900 font-bold text-xl tracking-tight">Merchant Enrollment</h2>
-                  <p className="text-gray-400 text-[10px] font-bold tracking-tight">Initialize business protocol</p>
+                  <h2 className="text-gray-900 font-bold text-xl tracking-tight">Merchant Sign Up</h2>
+                  <p className="text-gray-400 text-[10px] font-bold tracking-tight">Create your business account</p>
                 </div>
                 <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handlePhotoUpload} />
               </div>
@@ -208,11 +208,11 @@ const MerchantSignup = () => {
                 <p className="text-[10px] text-gray-400 text-center leading-relaxed px-2">
                   By enrolling, you agree to Offerly Biz{' '}
                   <Link to="/merchant/terms" className="text-[#5EB929] font-bold hover:underline" target="_blank">
-                    Terms of Operation
+                    Terms & Conditions
                   </Link>{' '}
                   and{' '}
                   <Link to="/merchant/privacy" className="text-[#5EB929] font-bold hover:underline" target="_blank">
-                    Privacy Protocol
+                    Privacy Policy
                   </Link>.
                 </p>
 
@@ -224,7 +224,7 @@ const MerchantSignup = () => {
                   {loading ? (
                     <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
                   ) : (
-                    <>Confirm Enrollment <ArrowForwardRoundedIcon sx={{ fontSize: 16 }} /></>
+                    <>Sign Up <ArrowForwardRoundedIcon sx={{ fontSize: 16 }} /></>
                   )}
                 </motion.button>
               </form>
@@ -234,14 +234,14 @@ const MerchantSignup = () => {
           {/* Footer Ledger */}
           <div className="text-center space-y-1.5">
             <div className="flex items-center justify-center gap-3 text-[10px] font-bold text-gray-400">
-              <Link to="/merchant/terms" className="hover:text-[#5EB929] transition-colors">Terms of Operation</Link>
+              <Link to="/merchant/terms" className="hover:text-[#5EB929] transition-colors">Terms & Conditions</Link>
               <span>•</span>
-              <Link to="/merchant/privacy" className="hover:text-[#5EB929] transition-colors">Privacy Protocol</Link>
+              <Link to="/merchant/privacy" className="hover:text-[#5EB929] transition-colors">Privacy Policy</Link>
               <span>•</span>
               <Link to="/merchant/support" className="hover:text-[#5EB929] transition-colors">Support</Link>
             </div>
             <p className="text-center text-[9px] font-bold text-gray-300 tracking-widest">
-              Merchant Protocol Standards · v2.0.0
+              Merchant Guidelines
             </p>
           </div>
         </div>

@@ -65,7 +65,7 @@ const AdminSidebar = ({ isMobileMenuOpen, setIsMobileMenuOpen }) => {
     { name: 'Subscriptions', path: '/admin/plans', icon: PaymentsRoundedIcon },
     { name: 'Cities & Zones', path: '/admin/cities', icon: MapRoundedIcon },
     { name: 'Ad Requests', path: '/admin/ads', icon: CampaignRoundedIcon },
-    { name: 'Ledger', path: '/admin/ledger', icon: ViewListRoundedIcon },
+    { name: 'Bookings', path: '/admin/ledger', icon: ViewListRoundedIcon },
     { name: 'Analytics', path: '/admin/analytics', icon: BarChartRoundedIcon },
   ];
 
@@ -367,7 +367,7 @@ const AdminLayout = ({ children }) => {
       ['/admin/plans', 'Subscriptions'],
       ['/admin/cities', 'Cities & Zones'],
       ['/admin/ads', 'Ad Requests'],
-      ['/admin/ledger', 'Ledger'],
+      ['/admin/ledger', 'Bookings'],
       ['/admin/analytics', 'Analytics'],
       ['/admin/notifications', 'Notifications'],
       ['/admin/search', 'Search'],
@@ -464,7 +464,7 @@ const AdminApp = () => {
   console.log('✅ Admin authenticated, showing dashboard');
   return (
     <AdminLayout>
-      <Suspense fallback={<div className="p-8 text-center text-gray-500 font-bold">Initializing Portal...</div>}>
+      <Suspense fallback={<div className="p-8 text-center text-gray-500 font-bold">Loading...</div>}>
         <Routes>
           <Route path="/" element={<AdminDashboard />} />
           <Route path="/analytics" element={<Analytics />} />

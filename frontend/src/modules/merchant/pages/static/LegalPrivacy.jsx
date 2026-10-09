@@ -41,7 +41,7 @@ const PrivacySection = ({ section, isExpanded, onToggle }) => {
           <div>
             <div className="flex flex-wrap items-center gap-2 mb-1.5">
               <span className="px-2 py-0.5 rounded-md bg-gray-100 text-gray-500 font-bold text-[10px] uppercase tracking-wider">
-                Protocol {section.number}
+                Section {section.number}
               </span>
               <span className="px-2 py-0.5 rounded-md bg-[#5EB929]/10 text-[#5EB929] font-bold text-[10px] uppercase tracking-wider">
                 {section.category}
@@ -119,8 +119,8 @@ const LegalPrivacy = ({ isEmbedded = false }) => {
           <ul className="list-disc pl-5 space-y-1.5 mt-2">
             <li><strong>Store Identity:</strong> Business legal name, trade name, category, store photos, address, and geo-coordinates.</li>
             <li><strong>Owner Identification:</strong> Full name, phone number, email address, and KYB identity documents (Aadhaar, PAN).</li>
-            <li><strong>Financial Credentials:</strong> Bank account numbers, IFSC codes, and GST identification for automated weekly settlements.</li>
-            <li><strong>Transactional Telemetry:</strong> In-terminal QR scans, offer redemption counts, booking logs, and customer reviews.</li>
+            <li><strong>Financial Details:</strong> Bank account numbers, IFSC codes, and GST identification for automated weekly settlements.</li>
+            <li><strong>Transaction Data:</strong> QR scans, offer redemption counts, booking logs, and customer reviews.</li>
           </ul>
         </>
       ),
@@ -182,7 +182,7 @@ const LegalPrivacy = ({ isEmbedded = false }) => {
       number: "04",
       category: "Cryptographic Security",
       icon: LockRoundedIcon,
-      title: "Security Architecture & Encryption Standards",
+      title: "Security & Encryption",
       summary: "Enterprise-grade encryption in transit and at rest protecting all merchant transactions.",
       content: (
         <>
@@ -204,7 +204,7 @@ const LegalPrivacy = ({ isEmbedded = false }) => {
       number: "05",
       category: "Authorized Partners",
       icon: CloudQueueRoundedIcon,
-      title: "Trusted Sub-processors & Infrastructure Partners",
+      title: "Trusted Service Partners",
       summary: "Verified technical partners strictly bound by compliance and non-disclosure standards.",
       content: (
         <>
@@ -213,11 +213,11 @@ const LegalPrivacy = ({ isEmbedded = false }) => {
           </p>
           <ul className="list-disc pl-5 space-y-1.5 mt-2">
             <li><strong>Payment Gateways & Banking Partners:</strong> (e.g. Razorpay/Stripe, verified scheduled banks) for payout transfers and subscription billing.</li>
-            <li><strong>Cloud Infrastructure:</strong> High-security ISO-27001 certified cloud environments for encrypted hosting.</li>
+            <li><strong>Cloud Hosting:</strong> High-security ISO-27001 certified cloud environments for encrypted hosting.</li>
             <li><strong>Notification Relays:</strong> Google Firebase Cloud Messaging for real-time terminal alerts and order sound triggers.</li>
           </ul>
           <p className="mt-2">
-            Every sub-processor is bound by rigorous Data Protection Agreements (DPAs) meeting or exceeding the standards of this Privacy Protocol.
+            Every sub-processor is bound by rigorous Data Protection Agreements (DPAs) meeting or exceeding the standards of this Privacy Policy.
           </p>
         </>
       ),
@@ -231,8 +231,8 @@ const LegalPrivacy = ({ isEmbedded = false }) => {
       number: "06",
       category: "POS Privacy",
       icon: VerifiedUserRoundedIcon,
-      title: "Customer Voucher Data & Terminal Privacy",
-      summary: "Protocols protecting customer information displayed on your scanner screen.",
+      title: "Customer Data & Scanner Privacy",
+      summary: "Rules protecting customer information displayed on your scanner screen.",
       content: (
         <>
           <p>
@@ -262,7 +262,7 @@ const LegalPrivacy = ({ isEmbedded = false }) => {
           </p>
           <ul className="list-disc pl-5 space-y-1.5 mt-2">
             <li><strong>Right to Export:</strong> You can download comprehensive transaction ledgers, redemption reports, and review histories at any time directly from the dashboard.</li>
-            <li><strong>Right to Rectification:</strong> You can update outlet operating hours, business phone numbers, menu catalogs, and bank accounts through the Profile view or Concierge.</li>
+            <li><strong>Right to Rectification:</strong> You can update outlet operating hours, business phone numbers, menu catalogs, and bank accounts through the Profile page or Support.</li>
             <li><strong>Right to Erasure:</strong> Upon verified store de-registration, your commercial profile will be unlisted, and non-financial records will be purged following statutory tax retention periods.</li>
           </ul>
         </>
@@ -304,7 +304,7 @@ const LegalPrivacy = ({ isEmbedded = false }) => {
       content: (
         <>
           <p>
-            If you have questions regarding this Privacy Protocol, wish to report a security disclosure, or seek assistance with data rights, contact our Data Protection Office:
+            If you have questions regarding this Privacy Policy, wish to report a security disclosure, or seek assistance with data rights, contact our Data Protection Office:
           </p>
           <div className="mt-3 p-3.5 bg-white rounded-xl border border-gray-100 space-y-1 font-mono text-xs text-gray-700">
             <p><strong>Offerly Privacy & Data Protection Desk</strong></p>
@@ -362,7 +362,7 @@ const LegalPrivacy = ({ isEmbedded = false }) => {
                 <span>Data Security Hub · v2.4</span>
               </div>
               <h1 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold tracking-tight text-white leading-tight">
-                Privacy <span className="text-[#5EB929]">Protocol.</span>
+                Privacy <span className="text-[#5EB929]">Policy.</span>
               </h1>
               <p className="text-gray-400 text-xs sm:text-sm font-medium leading-relaxed">
                 Privacy by design. How we shield, manage, and encrypt your commercial intelligence, banking credentials, and terminal redemption records.
@@ -371,7 +371,7 @@ const LegalPrivacy = ({ isEmbedded = false }) => {
 
             {/* Quick Trust Pill */}
             <div className="p-4 rounded-2xl bg-white/5 border border-white/10 backdrop-blur-md flex-shrink-0 flex flex-col gap-1 w-full sm:w-auto">
-              <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Security Architecture</span>
+              <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Security</span>
               <div className="flex items-center gap-2 text-xs font-bold text-[#5EB929]">
                 <LockRoundedIcon sx={{ fontSize: 14 }} />
                 <span>AES-256 & TLS 1.3 Active</span>
@@ -388,11 +388,11 @@ const LegalPrivacy = ({ isEmbedded = false }) => {
             </div>
             <div className="flex items-center gap-2">
               <CheckCircleOutlineRoundedIcon sx={{ fontSize: 16 }} className="text-[#5EB929]" />
-              <span>Encrypted Settlement Ledgers</span>
+              <span>Encrypted Settlement Records</span>
             </div>
             <div className="flex items-center gap-2">
               <CheckCircleOutlineRoundedIcon sx={{ fontSize: 16 }} className="text-[#5EB929]" />
-              <span>Role-Based Terminal Access</span>
+              <span>Role-Based Access</span>
             </div>
             <div className="flex items-center gap-2">
               <CheckCircleOutlineRoundedIcon sx={{ fontSize: 16 }} className="text-[#5EB929]" />

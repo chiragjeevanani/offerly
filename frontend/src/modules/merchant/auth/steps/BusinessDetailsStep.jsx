@@ -365,7 +365,7 @@ const BusinessDetailsStep = ({ data, onSubmit, onBack, loading }) => {
                  type="submit" whileTap={{ scale: 0.98 }} disabled={loading}
                  className="flex-[2] h-14 bg-[#5EB929] text-white rounded-2xl font-bold text-[12px] shadow-lg shadow-[#5EB929]/20 flex items-center justify-center gap-2"
                >
-                 {loading ? <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : <>Continue Architecture <ArrowForwardRoundedIcon sx={{ fontSize: 16 }} /></>}
+                 {loading ? <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : <>Continue <ArrowForwardRoundedIcon sx={{ fontSize: 16 }} /></>}
                </motion.button>
             </div>
           </form>

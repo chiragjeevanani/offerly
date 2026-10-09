@@ -57,7 +57,7 @@ const About = () => {
               </motion.div>
               <div className="space-y-2 text-center sm:text-left">
                  <motion.h2 initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="text-xl sm:text-2xl lg:text-3xl font-bold text-white tracking-tight leading-tight">Powering the <span className="text-[#5EB929]">Local Economy.</span></motion.h2>
-                 <motion.p initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="text-gray-400 text-[12px] sm:text-sm lg:text-base font-medium leading-relaxed max-w-xl">Offerly Business provides the tools to attract and retain customers through a seamless deal ecosystem.</motion.p>
+                 <motion.p initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="text-gray-400 text-[12px] sm:text-sm lg:text-base font-medium leading-relaxed max-w-xl">Offerly Business provides the tools to attract and retain customers through an easy-to-use deals platform.</motion.p>
               </div>
            </div>
         </div>
@@ -85,10 +85,10 @@ const About = () => {
            </div>
            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               {[
-                { icon: TrendingUpRoundedIcon, title: "Hyper-Growth", desc: "Engineered to drive massive foot traffic and scale your monthly revenue through smart offers." },
+                { icon: TrendingUpRoundedIcon, title: "Fast Growth", desc: "Built to bring massive foot traffic and scale your monthly revenue through smart offers." },
                 { icon: QrCodeScannerRoundedIcon, title: "Instant Verification", desc: "Secure QR-based redemption engine for fraud-proof deal fulfillment in seconds." },
-                { icon: BarChartRoundedIcon, title: "Data Sovereignty", desc: "Access deep insights into customer behavior and campaign performance at your fingertips." },
-                { icon: VerifiedRoundedIcon, title: "Trusted Network", desc: "Join a curated ecosystem of verified local merchants and premium shoppers." }
+                { icon: BarChartRoundedIcon, title: "Business Insights", desc: "Access deep insights into customer behavior and campaign performance at your fingertips." },
+                { icon: VerifiedRoundedIcon, title: "Trusted Network", desc: "Join a community of verified local merchants and shoppers." }
               ].map((f, i) => (
                  <FeatureStrip key={i} idx={i} icon={f.icon} title={f.title} description={f.desc} />
               ))}
@@ -100,7 +100,7 @@ const About = () => {
            <h3 className="text-center text-[12px] font-bold text-[#5EB929] uppercase tracking-[0.3em] mb-8">The Fulfillment Loop</h3>
            <div className="grid grid-cols-1 sm:grid-cols-4 gap-8">
               {[
-                 { t: 'Register', d: 'Setup Store Identity' },
+                 { t: 'Register', d: 'Set up your store' },
                  { t: 'Deploy', d: 'Launch Rocket Offers' },
                  { t: 'Discover', d: 'Customer Booking' },
                  { t: 'Verify', d: 'Scan & Fulfill' },
@@ -129,7 +129,7 @@ const About = () => {
               <h3 className="text-2xl sm:text-3xl font-bold text-white leading-none">Ready to Accelerate?</h3>
               <p className="text-white/70 text-sm font-medium mt-3">Access your command center and start scaling your local reach.</p>
               <button onClick={() => navigate('/merchant')} className="mt-8 px-12 py-4 bg-white text-[#5EB929] rounded-2xl font-bold text-[11px] uppercase tracking-widest shadow-xl hover:scale-105 transition-all active:scale-95">
-                 Return to Terminal
+                 Back to Dashboard
               </button>
            </div>
         </div>

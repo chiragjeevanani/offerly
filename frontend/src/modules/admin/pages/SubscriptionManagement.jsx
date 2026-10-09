@@ -286,7 +286,7 @@ const SubscriptionManagement = () => {
         {/* Header Section */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-2 mb-1.5">
           <div>
-            <h1 className="text-xl lg:text-2xl font-medium text-gray-800 tracking-tight">Plan Architecture</h1>
+            <h1 className="text-xl lg:text-2xl font-medium text-gray-800 tracking-tight">Plans</h1>
             <p className="text-[12px] text-gray-500 tracking-tight">Configure subscription tiers, ad packages, and customer plans</p>
           </div>
 
@@ -379,7 +379,7 @@ const SubscriptionManagement = () => {
         {loading ? (
           <div className="py-20 flex flex-col items-center justify-center gap-4">
             <div className="w-10 h-10 border-2 border-primary/20 border-t-primary rounded-full animate-spin" />
-            <p className="text-gray-500 font-medium text-xs tracking-widest uppercase">Loading Architecture...</p>
+            <p className="text-gray-500 font-medium text-xs tracking-widest uppercase">Loading plans...</p>
           </div>
         ) : filteredPlans.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">

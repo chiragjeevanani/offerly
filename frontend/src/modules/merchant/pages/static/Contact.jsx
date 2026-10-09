@@ -55,7 +55,7 @@ const Contact = () => {
         <button onClick={() => navigate(-1)} className="w-9 h-9 flex items-center justify-center rounded-xl bg-gray-50 text-gray-400 hover:bg-gray-100 transition-all">
           <ArrowBackRoundedIcon sx={{ fontSize: 20 }} />
         </button>
-        <h1 className="text-[15px] font-bold text-gray-900 uppercase tracking-widest">Contact Terminal</h1>
+        <h1 className="text-[15px] font-bold text-gray-900 uppercase tracking-widest">Contact Us</h1>
       </div>
 
       <div className="max-w-4xl mx-auto px-4 py-8 space-y-10">
@@ -89,7 +89,7 @@ const Contact = () => {
               action={() => window.open('tel:+911800OFFERLY')}
            />
            <ContactStrip 
-              idx={3} icon={LocationOnRoundedIcon} title="HQ Architecture" value="Business Park, Tech City" color="text-indigo-500" 
+              idx={3} icon={LocationOnRoundedIcon} title="Head Office" value="Business Park, Tech City" color="text-indigo-500" 
               action={() => {}}
            />
         </div>
@@ -98,7 +98,7 @@ const Contact = () => {
         <div className="space-y-6">
            <div className="flex items-center gap-3 px-1">
               <div className="w-1 h-4 bg-[#5EB929] rounded-full" />
-              <h3 className="text-[11px] font-bold text-gray-900 uppercase tracking-widest">Message Terminal</h3>
+              <h3 className="text-[11px] font-bold text-gray-900 uppercase tracking-widest">Send a Message</h3>
            </div>
            
            <motion.form 
@@ -107,7 +107,7 @@ const Contact = () => {
            >
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                  <div className="space-y-2">
-                    <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest px-1">Identity Name</label>
+                    <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest px-1">Your Name</label>
                     <input required type="text" placeholder="Full Name" className="w-full bg-background border border-transparent focus:border-[#5EB929]/20 rounded-xl px-4 py-3 text-[13px] font-bold outline-none transition-all" />
                  </div>
                  <div className="space-y-2">

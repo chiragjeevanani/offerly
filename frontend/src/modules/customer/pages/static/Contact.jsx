@@ -90,7 +90,7 @@ const Contact = () => {
           {/* Communication Terminal */}
           <div className="space-y-6">
             <div className="px-1">
-               <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Inquiry Terminal</p>
+               <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Contact Us</p>
                <h2 className="text-gray-900 font-bold text-xl uppercase tracking-tight">Submit Your Request</h2>
             </div>
 
@@ -171,7 +171,7 @@ const Contact = () => {
                 ) : (
                   <>
                     <SendRoundedIcon sx={{ fontSize: 16 }} />
-                    Initialize Dispatch
+                    Send Message
                   </>
                 )}
               </button>
@@ -205,7 +205,7 @@ const Contact = () => {
 
             {/* Quick Links Footer */}
             <div className="bg-white rounded-[2rem] p-6 border border-gray-100 shadow-sm">
-               <h3 className="text-[10px] font-bold text-gray-900 uppercase tracking-widest mb-4">Quick Protocols</h3>
+               <h3 className="text-[10px] font-bold text-gray-900 uppercase tracking-widest mb-4">Quick Links</h3>
                <div className="grid grid-cols-2 gap-3">
                   <button onClick={() => navigate('/support')} className="text-[10px] font-bold text-[#5EB929] uppercase tracking-widest bg-[#5EB929]/5 py-2.5 rounded-xl border border-[#5EB929]/10">Support Hub</button>
                   <button onClick={() => navigate('/terms')} className="text-[10px] font-bold text-gray-400 uppercase tracking-widest bg-gray-50 py-2.5 rounded-xl border border-gray-100">Legal Docs</button>

@@ -154,7 +154,7 @@ const Support = () => {
 
         {/* Category Grid */}
         <div className="space-y-4">
-           <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest px-1">Protocol Categories</p>
+           <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest px-1">Help Topics</p>
            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               {categories.map((category, idx) => (
                 <button
@@ -166,7 +166,7 @@ const Support = () => {
                    </div>
                    <div>
                       <p className="text-[10px] font-bold text-gray-900 uppercase tracking-tight">{category.title}</p>
-                      <p className="text-[8px] font-bold text-gray-400 uppercase tracking-widest mt-0.5">{category.count} Protocols</p>
+                      <p className="text-[8px] font-bold text-gray-400 uppercase tracking-widest mt-0.5">{category.count} Articles</p>
                    </div>
                 </button>
               ))}
@@ -175,7 +175,7 @@ const Support = () => {
 
         {/* FAQ Terminal */}
         <div className="space-y-4">
-           <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest px-1">Active Protocols (FAQ)</p>
+           <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest px-1">FAQs</p>
            <div className="space-y-2">
               {faqs.map((faq, idx) => (
                 <FAQItem
@@ -195,7 +195,7 @@ const Support = () => {
               <h3 className="text-gray-900 font-bold text-xl uppercase tracking-tight mb-2">Still Stuck?</h3>
               <p className="text-gray-500 text-[11px] font-medium mb-6 px-4">Our specialized support squad is ready to assist with your custom request.</p>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                 <button onClick={() => navigate('/contact')} className="bg-[#5EB929] text-white font-bold text-[10px] uppercase tracking-widest py-3.5 rounded-xl">Initialize Chat</button>
+                 <button onClick={() => navigate('/contact')} className="bg-[#5EB929] text-white font-bold text-[10px] uppercase tracking-widest py-3.5 rounded-xl">Start Chat</button>
                  <button className="bg-gray-50 text-gray-400 font-bold text-[10px] uppercase tracking-widest py-3.5 rounded-xl border border-gray-100">Voice Support</button>
               </div>
            </div>

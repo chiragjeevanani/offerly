@@ -115,7 +115,7 @@ const CustomerSignup = () => {
         navigate('/verify', { state: { phone: `+91 ${formData.phone}`, isNewUser: true, userType: 'customer', devMode: response.devMode } });
       }
     } catch (error) {
-      toast.error(error.error || 'Dispatch failed');
+      toast.error(error.error || 'Sign up failed. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -239,7 +239,7 @@ const CustomerSignup = () => {
                 <AnimatePresence>
                   {Object.keys(errors).length > 0 && (
                     <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="bg-red-50 border border-red-100 rounded-2xl p-3">
-                      <p className="text-[9px] font-bold text-red-500 text-center">Protocol validation failed. Check entries.</p>
+                      <p className="text-[9px] font-bold text-red-500 text-center">Please check the details you entered.</p>
                     </motion.div>
                   )}
                 </AnimatePresence>
@@ -253,7 +253,7 @@ const CustomerSignup = () => {
                   {loading ? (
                     <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
                   ) : (
-                    <>Initialize Enrollment <ArrowForwardRoundedIcon sx={{ fontSize: 16 }} /></>
+                    <>Sign Up <ArrowForwardRoundedIcon sx={{ fontSize: 16 }} /></>
                   )}
                 </motion.button>
               </form>
@@ -261,7 +261,7 @@ const CustomerSignup = () => {
           </motion.div>
 
           <p className="text-center text-[9px] font-bold text-gray-300 tracking-widest">
-            Secure Identity Protocol · v1.0.0
+            Secure Sign Up
           </p>
         </div>
       </div>

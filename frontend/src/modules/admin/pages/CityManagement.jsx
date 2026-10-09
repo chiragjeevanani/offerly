@@ -173,7 +173,7 @@ const CityManagement = () => {
         ) : (
           <div className="py-20 text-center bg-white rounded-3xl border border-dashed border-gray-200">
             <MapRoundedIcon className="text-gray-200 mb-4" sx={{ fontSize: 64 }} />
-            <h3 className="text-lg font-semibold text-gray-400">Region Registry Empty</h3>
+            <h3 className="text-lg font-semibold text-gray-400">No Cities Yet</h3>
             <p className="text-sm text-gray-400 mt-1">Add a new city to expand operations</p>
           </div>
         )}
@@ -183,7 +183,7 @@ const CityManagement = () => {
       <SlideOver
         isOpen={isSlideOverOpen}
         onClose={() => setIsSlideOverOpen(false)}
-        title={selectedCity ? "Edit Region" : "New Region Registry"}
+        title={selectedCity ? "Edit Region" : "Add New City"}
         subtitle={selectedCity ? `REF: ${selectedCity._id.substring(0, 12)}` : "Deploy Offerly to a new city"}
         widthClass="max-w-3xl"
       >
@@ -242,7 +242,7 @@ const CityManagement = () => {
               type="submit"
               className="flex-1 bg-[#5EB929] text-white py-3.5 rounded-xl font-semibold text-[14px] shadow-lg shadow-[#5EB929]/10 hover:bg-[#2d5a3a] transition-all"
             >
-              {selectedCity ? 'Update Registry' : 'Deploy Region'}
+              {selectedCity ? 'Save Changes' : 'Add City'}
             </button>
           </div>
         </form>

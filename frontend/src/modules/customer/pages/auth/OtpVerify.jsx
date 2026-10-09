@@ -181,7 +181,7 @@ const OtpVerify = () => {
               {devMode && (
                 <div className="bg-[#5EB929]/5 border border-[#5EB929]/10 rounded-xl p-2.5 flex items-center gap-2">
                   <div className="w-1.5 h-1.5 bg-[#5EB929] rounded-full animate-pulse" />
-                  <p className="text-[9px] font-bold text-[#5EB929] tracking-tight">Dev Mode: Protocol 123456</p>
+                  <p className="text-[9px] font-bold text-[#5EB929] tracking-tight">Dev Mode: OTP 123456</p>
                 </div>
               )}
 
@@ -220,7 +220,7 @@ const OtpVerify = () => {
                     {isVerifying ? (
                       <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
                     ) : (
-                      'Verify Protocol'
+                      'Verify'
                     )}
                   </motion.button>
 
@@ -242,7 +242,7 @@ const OtpVerify = () => {
 
           {/* Footer Ledger */}
           <p className="text-center text-[9px] font-bold text-gray-300 tracking-widest">
-            Secure Verification Protocol · v1.0.0
+            Secure Verification
           </p>
         </div>
       </div>

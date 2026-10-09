@@ -79,7 +79,7 @@ const Support = () => {
         <button onClick={() => navigate(-1)} className="w-9 h-9 flex items-center justify-center rounded-xl bg-gray-50 text-gray-400 hover:bg-gray-100 transition-all">
           <ArrowBackRoundedIcon sx={{ fontSize: 20 }} />
         </button>
-        <h1 className="text-[15px] font-bold text-gray-900 uppercase tracking-widest">Support Concierge</h1>
+        <h1 className="text-[15px] font-bold text-gray-900 uppercase tracking-widest">Help & Support</h1>
       </div>
 
       <div className="max-w-4xl mx-auto px-4 py-8 space-y-10">
@@ -92,7 +92,7 @@ const Support = () => {
                  <HelpRoundedIcon sx={{ fontSize: 32 }} className="text-[#5EB929]" />
               </motion.div>
               <div className="space-y-2 text-center sm:text-left">
-                 <motion.h2 initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="text-xl sm:text-2xl lg:text-3xl font-bold text-white tracking-tight leading-tight">Merchant <span className="text-[#5EB929]">Concierge.</span></motion.h2>
+                 <motion.h2 initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="text-xl sm:text-2xl lg:text-3xl font-bold text-white tracking-tight leading-tight">Merchant <span className="text-[#5EB929]">Support.</span></motion.h2>
                  <motion.p initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="text-gray-400 text-[12px] sm:text-sm font-medium leading-relaxed max-w-xl">Find rapid solutions or connect with our support architects for enterprise assistance.</motion.p>
               </div>
            </div>
@@ -119,7 +119,7 @@ const Support = () => {
         <div className="space-y-6">
            <div className="flex items-center gap-3 px-1">
               <div className="w-1 h-4 bg-[#5EB929] rounded-full" />
-              <h3 className="text-[11px] font-bold text-gray-900 uppercase tracking-widest">Help Architecture</h3>
+              <h3 className="text-[11px] font-bold text-gray-900 uppercase tracking-widest">Help Topics</h3>
            </div>
            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
               {[
@@ -159,7 +159,7 @@ const Support = () => {
         </div>
 
         <div className="text-center py-6">
-           <p className="text-[10px] font-bold text-gray-400 uppercase tracking-[0.4em]">Secure Concierge Terminal</p>
+           <p className="text-[10px] font-bold text-gray-400 uppercase tracking-[0.4em]">We are here to help</p>
         </div>
       </div>
     </div>

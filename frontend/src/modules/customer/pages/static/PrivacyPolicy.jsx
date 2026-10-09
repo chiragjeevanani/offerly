@@ -89,7 +89,7 @@ const PrivacyPolicy = () => {
           </div>
 
           <div className="space-y-3">
-             <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest px-1">Privacy Protocols</p>
+             <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest px-1">Privacy Policy</p>
              
              <Section
                title="Data Collection"
@@ -98,7 +98,7 @@ const PrivacyPolicy = () => {
                onToggle={() => toggleSection('collection')}
              >
                <p><strong>Personal Data:</strong> We collect only essential identification markers including phone numbers and digital profiles.</p>
-               <p><strong>Telemetry:</strong> Device identifiers and location telemetry are utilized strictly for proximity offer matching.</p>
+               <p><strong>Usage Data:</strong> Device identifiers and location data are utilized strictly for proximity offer matching.</p>
              </Section>
 
              <Section
@@ -112,7 +112,7 @@ const PrivacyPolicy = () => {
              </Section>
 
              <Section
-               title="Sharing Protocols"
+               title="Sharing"
                icon={SecurityRoundedIcon}
                isOpen={openSection === 'sharing'}
                onToggle={() => toggleSection('sharing')}
@@ -122,7 +122,7 @@ const PrivacyPolicy = () => {
              </Section>
 
              <Section
-               title="Security Infrastructure"
+               title="Security"
                icon={SecurityRoundedIcon}
                isOpen={openSection === 'security'}
                onToggle={() => toggleSection('security')}
@@ -137,7 +137,7 @@ const PrivacyPolicy = () => {
                isOpen={openSection === 'sovereignty'}
                onToggle={() => toggleSection('sovereignty')}
              >
-               <p>Users maintain full sovereignty over their data. You may request identity deletion or data porting via the Support Terminal.</p>
+               <p>Users maintain full control over their data. You may request account deletion or a copy of your data via the Support page.</p>
              </Section>
           </div>
 

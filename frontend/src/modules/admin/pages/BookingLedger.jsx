@@ -71,7 +71,7 @@ const BookingLedger = () => {
         {/* Header Section */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-2 mb-2">
           <div>
-            <h1 className="text-xl lg:text-2xl font-medium text-gray-800">Global Ledger</h1>
+            <h1 className="text-xl lg:text-2xl font-medium text-gray-800">All Bookings</h1>
             <p className="text-[12px] text-gray-500">Real-time platform booking and transaction history</p>
           </div>
 
@@ -113,7 +113,7 @@ const BookingLedger = () => {
         {loading ? (
           <div className="py-20 flex flex-col items-center justify-center gap-4">
             <div className="w-10 h-10 border-2 border-primary/20 border-t-primary rounded-full animate-spin" />
-            <p className="text-gray-500 font-medium text-xs">Loading Ledger...</p>
+            <p className="text-gray-500 font-medium text-xs">Loading bookings...</p>
           </div>
         ) : filteredBookings.length > 0 ? (
           <div className="grid grid-cols-1 gap-2">
@@ -177,7 +177,7 @@ const BookingLedger = () => {
         ) : (
           <div className="py-20 text-center bg-white rounded-3xl border border-dashed border-gray-200">
             <ReceiptLongRoundedIcon className="text-gray-200 mb-4" sx={{ fontSize: 64 }} />
-            <h3 className="text-lg font-semibold text-gray-400">Ledger Empty</h3>
+            <h3 className="text-lg font-semibold text-gray-400">No bookings yet</h3>
             <p className="text-sm text-gray-400 mt-1">No transaction history found</p>
           </div>
         )}

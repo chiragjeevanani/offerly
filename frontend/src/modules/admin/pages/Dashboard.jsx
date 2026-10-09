@@ -79,7 +79,7 @@ const AdminDashboard = () => {
       {/* Header Section */}
       <div className="mb-5">
         <h1 className="text-2xl lg:text-3xl font-medium text-gray-800 mb-0.5">Admin Dashboard</h1>
-        <p className="text-sm text-gray-500 tracking-tight">Today's Activity Protocol</p>
+        <p className="text-sm text-gray-500 tracking-tight">Today's Activity</p>
       </div>
 
       {/* Top Stat Cards */}

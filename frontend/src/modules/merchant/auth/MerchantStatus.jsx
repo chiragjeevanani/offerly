@@ -314,9 +314,9 @@ const MerchantStatus = ({ merchant, onStatusChange }) => {
         {/* Modern Footer */}
         <div className="mt-10 flex flex-col items-center space-y-2">
           <div className="flex items-center gap-3 text-[10px] font-bold text-gray-400">
-            <Link to="/merchant/terms" className="hover:text-[#5EB929] transition-colors" target="_blank">Terms of Operation</Link>
+            <Link to="/merchant/terms" className="hover:text-[#5EB929] transition-colors" target="_blank">Terms & Conditions</Link>
             <span>•</span>
-            <Link to="/merchant/privacy" className="hover:text-[#5EB929] transition-colors" target="_blank">Privacy Protocol</Link>
+            <Link to="/merchant/privacy" className="hover:text-[#5EB929] transition-colors" target="_blank">Privacy Policy</Link>
             <span>•</span>
             <Link to="/merchant/support" className="hover:text-[#5EB929] transition-colors" target="_blank">Support</Link>
           </div>

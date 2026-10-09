@@ -239,7 +239,7 @@ const AdminLogin = () => {
                     loading={loading}
                     className="w-full"
                   >
-                    {loading ? 'Authenticating...' : 'Access Dashboard'}
+                    {loading ? 'Signing in...' : 'Access Dashboard'}
                   </CleanButton>
 
                   {/* Debug Info / Quick Autofill */}
@@ -266,7 +266,7 @@ const AdminLogin = () => {
                     >
                       <div className="flex items-center justify-between mb-2">
                         <p className="text-xs font-bold text-gray-700 group-hover:text-emerald-700 flex items-center gap-1.5 transition-colors">
-                          <span>🔧</span> Development Credentials:
+                          <span>🔧</span> Development Login:
                         </p>
                         <span className="text-[10px] font-bold text-emerald-600 bg-emerald-100/80 group-hover:bg-emerald-200/80 px-2 py-0.5 rounded-full transition-colors flex items-center gap-1">
                           ⚡ Click to autofill

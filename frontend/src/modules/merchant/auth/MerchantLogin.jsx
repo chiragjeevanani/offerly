@@ -62,7 +62,7 @@ const MerchantLogin = () => {
             </motion.div>
             <div className="text-center">
               <h1 className="text-gray-900 font-bold text-2xl tracking-tight">Offerly Biz</h1>
-              <p className="text-gray-400 text-[9px] font-bold tracking-widest mt-0.5">Merchant Terminal</p>
+              <p className="text-gray-400 text-[9px] font-bold tracking-widest mt-0.5">Merchant Portal</p>
             </div>
           </div>
 
@@ -126,11 +126,11 @@ const MerchantLogin = () => {
                 <p className="text-[10px] text-gray-400 leading-relaxed">
                   By accessing Offerly Biz, you agree to our{' '}
                   <Link to="/merchant/terms" className="text-[#5EB929] font-bold hover:underline">
-                    Terms of Operation
+                    Terms & Conditions
                   </Link>{' '}
                   and{' '}
                   <Link to="/merchant/privacy" className="text-[#5EB929] font-bold hover:underline">
-                    Privacy Protocol
+                    Privacy Policy
                   </Link>.
                 </p>
               </div>
@@ -140,9 +140,9 @@ const MerchantLogin = () => {
           {/* Platform Ledger */}
           <div className="text-center space-y-1.5">
             <div className="flex items-center justify-center gap-3 text-[10px] font-bold text-gray-400">
-              <Link to="/merchant/terms" className="hover:text-[#5EB929] transition-colors">Terms of Operation</Link>
+              <Link to="/merchant/terms" className="hover:text-[#5EB929] transition-colors">Terms & Conditions</Link>
               <span>•</span>
-              <Link to="/merchant/privacy" className="hover:text-[#5EB929] transition-colors">Privacy Protocol</Link>
+              <Link to="/merchant/privacy" className="hover:text-[#5EB929] transition-colors">Privacy Policy</Link>
               <span>•</span>
               <Link to="/merchant/support" className="hover:text-[#5EB929] transition-colors">Support</Link>
             </div>

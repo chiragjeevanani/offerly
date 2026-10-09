@@ -39,7 +39,7 @@ const MerchantLegalLayout = ({ children, activeTab, isEmbedded = false }) => {
               }`}
             >
               <DescriptionRoundedIcon sx={{ fontSize: 16 }} className={activeTab === 'terms' ? 'text-[#5EB929]' : ''} />
-              <span>Terms of Operation</span>
+              <span>Terms & Conditions</span>
             </Link>
             <Link
               to="/merchant/privacy"
@@ -50,7 +50,7 @@ const MerchantLegalLayout = ({ children, activeTab, isEmbedded = false }) => {
               }`}
             >
               <SecurityRoundedIcon sx={{ fontSize: 16 }} className={activeTab === 'privacy' ? 'text-[#5EB929]' : ''} />
-              <span>Privacy Protocol</span>
+              <span>Privacy Policy</span>
             </Link>
           </div>
 
@@ -115,7 +115,7 @@ const MerchantLegalLayout = ({ children, activeTab, isEmbedded = false }) => {
               }`}
             >
               <DescriptionRoundedIcon sx={{ fontSize: 16 }} className={activeTab === 'terms' ? 'text-[#5EB929]' : ''} />
-              <span>Terms of Operation</span>
+              <span>Terms & Conditions</span>
             </Link>
             <Link
               to="/merchant/privacy"
@@ -126,7 +126,7 @@ const MerchantLegalLayout = ({ children, activeTab, isEmbedded = false }) => {
               }`}
             >
               <SecurityRoundedIcon sx={{ fontSize: 16 }} className={activeTab === 'privacy' ? 'text-[#5EB929]' : ''} />
-              <span>Privacy Protocol</span>
+              <span>Privacy Policy</span>
             </Link>
           </div>
 
@@ -211,7 +211,7 @@ const MerchantLegalLayout = ({ children, activeTab, isEmbedded = false }) => {
               </p>
               <div className="inline-flex items-center gap-2 px-3 py-1 bg-gray-50 rounded-full border border-gray-100 text-[10px] font-bold text-gray-500">
                 <VerifiedUserRoundedIcon sx={{ fontSize: 14 }} className="text-[#5EB929]" />
-                <span>Encrypted & Compliant Protocol Architecture</span>
+                <span>Secure & Compliant</span>
               </div>
             </div>
 
@@ -221,12 +221,12 @@ const MerchantLegalLayout = ({ children, activeTab, isEmbedded = false }) => {
               <ul className="space-y-2 text-xs font-semibold text-gray-600">
                 <li>
                   <Link to="/merchant/terms" className="hover:text-[#5EB929] transition-colors">
-                    Terms of Operation
+                    Terms & Conditions
                   </Link>
                 </li>
                 <li>
                   <Link to="/merchant/privacy" className="hover:text-[#5EB929] transition-colors">
-                    Privacy Protocol
+                    Privacy Policy
                   </Link>
                 </li>
                 <li>
@@ -248,7 +248,7 @@ const MerchantLegalLayout = ({ children, activeTab, isEmbedded = false }) => {
               <ul className="space-y-2 text-xs font-semibold text-gray-600">
                 <li>
                   <Link to="/merchant/login" className="hover:text-[#5EB929] transition-colors">
-                    Terminal Login
+                    Merchant Login
                   </Link>
                 </li>
                 <li>
@@ -258,7 +258,7 @@ const MerchantLegalLayout = ({ children, activeTab, isEmbedded = false }) => {
                 </li>
                 <li>
                   <Link to="/merchant/support" className="hover:text-[#5EB929] transition-colors">
-                    Merchant Concierge
+                    Merchant Support
                   </Link>
                 </li>
                 <li>

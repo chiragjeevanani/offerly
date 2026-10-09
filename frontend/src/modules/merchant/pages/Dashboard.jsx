@@ -167,7 +167,7 @@ const MerchantDashboard = ({ merchant, onMerchantUpdate }) => {
           <div className="w-16 h-16 border-4 border-[#5EB929] border-t-transparent rounded-full animate-spin absolute inset-0" />
        </div>
        <div className="text-center">
-          <p className="text-gray-900 font-bold text-xs uppercase tracking-[0.2em] mb-1 animate-pulse">Initializing Engine</p>
+          <p className="text-gray-900 font-bold text-xs uppercase tracking-[0.2em] mb-1 animate-pulse">Loading...</p>
           <p className="text-gray-400 font-bold text-[10px] uppercase tracking-widest">Loading your business analytics</p>
        </div>
     </div>

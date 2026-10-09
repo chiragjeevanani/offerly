@@ -41,7 +41,7 @@ const RegistrationSuccess = ({ merchant }) => {
           <div className="bg-background rounded-[2rem] p-5 md:p-6 space-y-5 text-left border border-gray-50">
              <div className="flex items-center gap-2 mb-1">
                 <div className="w-1 h-1 bg-[#5EB929] rounded-full" />
-                <h3 className="text-[9px] font-bold text-gray-400 uppercase tracking-widest">Protocol timeline</h3>
+                <h3 className="text-[9px] font-bold text-gray-400 uppercase tracking-widest">What happens next</h3>
              </div>
 
              <div className="space-y-4">

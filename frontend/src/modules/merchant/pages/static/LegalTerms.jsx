@@ -108,12 +108,12 @@ const LegalTerms = ({ isEmbedded = false }) => {
       number: "01",
       category: "Binding Agreement",
       icon: PolicyRoundedIcon,
-      title: "Protocol Acceptance & Scope of Merchant Relationship",
+      title: "Acceptance of Terms",
       summary: "Digital legal contract establishing operational terms between your registered commercial outlet and Offerly.",
       content: (
         <>
           <p>
-            By enrolling, deploying a digital storefront, scanning customer passes, or logging into the Offerly Biz Terminal, you enter into a legally binding contract under the applicable Information Technology and electronic contract laws.
+            By enrolling, deploying a digital storefront, scanning customer passes, or logging into the Offerly Biz app, you enter into a legally binding contract under the applicable Information Technology and electronic contract laws.
           </p>
           <p>
             This agreement governs your status as an authorized commercial partner within the Offerly ecosystem. If you do not accept these operational protocols in full, you must not use the merchant terminal or advertise offerings on the platform.
@@ -174,7 +174,7 @@ const LegalTerms = ({ isEmbedded = false }) => {
       number: "04",
       category: "QR Redemption",
       icon: QrCodeScannerRoundedIcon,
-      title: "Terminal Scanner Protocol & Point-of-Sale Verification",
+      title: "QR Scanner & In-Store Verification",
       summary: "Procedures for scanning customer vouchers, preventing fraud, and completing redemptions.",
       content: (
         <>
@@ -279,13 +279,13 @@ const LegalTerms = ({ isEmbedded = false }) => {
             <li>Submission of falsified business, GST, or bank records.</li>
           </ul>
           <p className="mt-2">
-            Merchants may voluntarily deactivate their account by providing a 14-day notice through the Merchant Concierge, provided all outstanding customer vouchers and settlements are reconciled.
+            Merchants may voluntarily deactivate their account by providing a 14-day notice through the Merchant Support, provided all outstanding customer vouchers and settlements are reconciled.
           </p>
         </>
       ),
       highlights: [
         "Transparent warning and audit mechanisms",
-        "Appeals process through Merchant Grievance Concierge",
+        "Appeals process through Merchant Support",
         "Orderly 14-day exit protocol upon request"
       ]
     },
@@ -293,12 +293,12 @@ const LegalTerms = ({ isEmbedded = false }) => {
       number: "09",
       category: "Dispute Redressal",
       icon: SupportAgentRoundedIcon,
-      title: "Concierge Dispute Resolution & Governing Law",
+      title: "Dispute Resolution & Governing Law",
       summary: "Dedicated resolution timelines for merchant disputes and standard arbitration provisions.",
       content: (
         <>
           <p>
-            All merchant disputes regarding transaction settlements, customer chargebacks, or technical issues are handled with priority by the Offerly Business Concierge with a target 48-hour resolution SLA.
+            All merchant disputes regarding transaction settlements, customer chargebacks, or technical issues are handled with priority by the Offerly Support team with a target 48-hour resolution SLA.
           </p>
           <p>
             These terms are governed by and construed in accordance with the laws of India. Any unresolved dispute arising out of or in connection with this agreement shall be submitted to binding arbitration in accordance with the Arbitration and Conciliation Act.
@@ -350,7 +350,7 @@ const LegalTerms = ({ isEmbedded = false }) => {
             <div className="space-y-3 max-w-2xl">
               <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 border border-white/15 text-[10px] font-bold uppercase tracking-widest text-[#5EB929]">
                 <PolicyRoundedIcon sx={{ fontSize: 14 }} />
-                <span>Commercial Operating Protocol · v2.4</span>
+                <span>Merchant Terms · v2.4</span>
               </div>
               <h1 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold tracking-tight text-white leading-tight">
                 Terms of <span className="text-[#5EB929]">Operation.</span>
@@ -367,7 +367,7 @@ const LegalTerms = ({ isEmbedded = false }) => {
                 <div className="w-2 h-2 rounded-full bg-[#5EB929] animate-pulse" />
                 <span>Active & Legally Binding</span>
               </div>
-              <span className="text-[10px] text-gray-400">Applies to all Offerly Terminals</span>
+              <span className="text-[10px] text-gray-400">Applies to all Offerly Biz users</span>
             </div>
           </div>
 
@@ -469,13 +469,13 @@ const LegalTerms = ({ isEmbedded = false }) => {
                 to="/merchant/contact"
                 className="px-5 py-3 bg-white text-[#5EB929] rounded-xl font-bold text-xs uppercase tracking-wider hover:bg-gray-50 active:scale-95 transition-all shadow-md"
               >
-                Merchant Concierge
+                Merchant Support
               </Link>
               <Link
                 to="/merchant/privacy"
                 className="px-5 py-3 bg-black/20 hover:bg-black/30 text-white rounded-xl font-bold text-xs uppercase tracking-wider active:scale-95 transition-all"
               >
-                View Privacy Protocol
+                View Privacy Policy
               </Link>
             </div>
           </div>

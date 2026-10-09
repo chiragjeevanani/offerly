@@ -41,7 +41,7 @@ const menuSections = [
   {
     title: 'Security & Interface',
     items: [
-      { label: 'Access Credentials', icon: LockRoundedIcon, path: '/merchant/profile/change-password' },
+      { label: 'Change Password', icon: LockRoundedIcon, path: '/merchant/profile/change-password' },
       { label: 'Notification Hub', icon: NotificationsRoundedIcon, path: '/merchant/profile/notifications-settings' },
       { label: 'App Language', icon: LanguageRoundedIcon, path: '/merchant/profile/language' },
     ],
@@ -50,8 +50,8 @@ const menuSections = [
     title: 'Network & Compliance',
     items: [
       { label: 'Platform Knowledge', icon: InfoRoundedIcon, path: '/merchant/about' },
-      { label: 'Concierge Support', icon: HelpRoundedIcon, path: '/merchant/support' },
-      { label: 'Legal Architecture', icon: DescriptionRoundedIcon, path: '/merchant/terms' },
+      { label: 'Help & Support', icon: HelpRoundedIcon, path: '/merchant/support' },
+      { label: 'Legal', icon: DescriptionRoundedIcon, path: '/merchant/terms' },
     ],
   },
 ];
