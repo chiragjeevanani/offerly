@@ -264,7 +264,7 @@ const Profile = () => {
                 </span>
               </div>
               <div className="flex-1">
-                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest leading-none">Customer Identity</p>
+                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest leading-none">My Profile</p>
                 <h2 className="text-gray-900 font-bold text-2xl uppercase tracking-tight mt-1">{user?.name}</h2>
                 <div className="flex flex-col gap-1.5 mt-2">
                   <div className="flex items-center gap-1.5 bg-background w-fit px-2.5 py-1 rounded-lg border border-gray-100">
@@ -347,7 +347,7 @@ const Profile = () => {
             <div className="bg-[#5EB929] rounded-[2rem] p-5 flex items-center justify-between shadow-lg shadow-[#5EB929]/20 relative overflow-hidden">
                <div className="absolute top-0 right-0 w-24 h-24 bg-white/10 rounded-full blur-2xl -mr-12 -mt-12" />
                <div>
-                  <p className="text-white/40 text-[8px] font-bold uppercase tracking-widest">Growth Code</p>
+                  <p className="text-white/40 text-[8px] font-bold uppercase tracking-widest">Referral Code</p>
                   <p className="text-white font-bold text-lg tracking-[0.2em] mt-0.5 uppercase">{user.referralCode}</p>
                </div>
                <motion.button
