@@ -3,8 +3,9 @@ import Merchant from '../models/Merchant.js';
 import MerchantSubscription from '../../payment/models/MerchantSubscription.js';
 import { notifyMerchant } from '../../user/services/notificationService.js';
 
-// Every new merchant gets one free month of this plan when an admin approves
-// them. The trial costs nothing and - unlike a paid purchase - credits nothing
+// Every new merchant gets one free month of this plan the moment they finish
+// registration (admin approval is a fallback for anyone who somehow missed it).
+// The trial costs nothing and - unlike a paid purchase - credits nothing
 // to the discount wallet; admins can top the wallet up by hand if they want.
 export const WELCOME_TRIAL_PLAN_NAME = 'Visible';
 export const WELCOME_TRIAL_MONTHS = 1;

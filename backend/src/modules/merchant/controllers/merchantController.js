@@ -4,6 +4,7 @@ import MerchantSubscription from "../../payment/models/MerchantSubscription.js";
 import Notification from "../../user/models/Notification.js";
 import MerchantNotification from "../models/MerchantNotification.js";
 import { notifyMerchant } from "../../user/services/notificationService.js";
+import { grantWelcomeTrial } from "../services/merchantTrialService.js";
 import { serializeMerchant, serializeRedemption } from "../../../utils/serializers.js";
 import Merchant from "../models/Merchant.js";
 import Offer from "../models/Offer.js";
@@ -612,6 +613,17 @@ export const updateLocationHours = async (req, res) => {
 
     await merchant.save();
 
+    // Free first month of the Visible plan starts as soon as registration is
+    // submitted. Idempotent, and never fails the registration itself.
+    let responseMerchant = merchant;
+    try {
+      if (await grantWelcomeTrial(merchant)) {
+        responseMerchant = (await Merchant.findById(merchant._id)) || merchant;
+      }
+    } catch (trialErr) {
+      console.error('[Trial] Failed to grant welcome trial at signup:', trialErr);
+    }
+
     // Notify Admin
     try {
       const Admin = (await import("../../admin/models/Admin.js")).default;
@@ -636,7 +648,7 @@ export const updateLocationHours = async (req, res) => {
 
     return res.status(200).json({
       success: true,
-      merchant: serializeMerchant(merchant),
+      merchant: serializeMerchant(responseMerchant),
       message: 'Registration completed successfully! Your application is under review.'
     });
   } catch (error) {
