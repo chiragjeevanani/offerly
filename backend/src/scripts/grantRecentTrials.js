@@ -5,8 +5,9 @@ import { grantWelcomeTrial } from '../modules/merchant/services/merchantTrialSer
 
 dotenv.config();
 
-// One-off backfill: give the free welcome trial to merchants who finished
-// registration in the last N days (default 7) and never had a trial or plan.
+// One-off backfill: give the free welcome trial to approved merchants who
+// registered in the last N days (default 7) and never had a trial or plan.
+// Pending merchants are skipped - their trial starts when an admin approves them.
 //   node src/scripts/grantRecentTrials.js            -> dry run (lists who would get it)
 //   node src/scripts/grantRecentTrials.js --apply    -> actually grants it
 //   node src/scripts/grantRecentTrials.js --days=14  -> change the window
@@ -21,11 +22,11 @@ const run = async () => {
   const merchants = await Merchant.find({
     createdAt: { $gte: since },
     hasRequestedStore: true,
-    status: { $ne: 'rejected' },
+    status: 'approved',
     hasUsedFreeTrial: { $ne: true },
   });
 
-  console.log(`${merchants.length} merchant(s) registered since ${since.toISOString()} without a trial.`);
+  console.log(`${merchants.length} merchant(s) approved, registered since ${since.toISOString()}, without a trial.`);
 
   let granted = 0;
   for (const m of merchants) {

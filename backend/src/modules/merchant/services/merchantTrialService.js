@@ -3,8 +3,8 @@ import Merchant from '../models/Merchant.js';
 import MerchantSubscription from '../../payment/models/MerchantSubscription.js';
 import { notifyMerchant } from '../../user/services/notificationService.js';
 
-// Every new merchant gets one free month of this plan the moment they finish
-// registration (admin approval is a fallback for anyone who somehow missed it).
+// Every new merchant gets one free month of this plan when an admin approves
+// them - never before, so the month isn't used up while they wait for review.
 // The trial costs nothing and - unlike a paid purchase - credits nothing
 // to the discount wallet; admins can top the wallet up by hand if they want.
 export const WELCOME_TRIAL_PLAN_NAME = 'Visible';
@@ -69,4 +69,46 @@ export const grantWelcomeTrial = async (merchant) => {
   }
 
   return subscription;
+};
+
+/**
+ * Called when an admin approves a merchant. On the store's first approval the
+ * free month starts now: either a fresh trial, or - for merchants who signed up
+ * while trials briefly started at registration - their existing unused trial is
+ * restarted from today so the waiting time doesn't eat into it. Re-approving an
+ * already-approved-once store never extends a trial.
+ */
+export const startWelcomeTrialOnApproval = async (merchant, { firstApproval }) => {
+  if (!merchant) return null;
+
+  if (firstApproval) {
+    const signupTrial = await MerchantSubscription.findOne({
+      merchantId: merchant._id,
+      isTrial: true,
+      status: 'active',
+      planType: { $ne: 'advertisement' },
+    });
+    if (signupTrial) {
+      const startDate = new Date();
+      const endDate = new Date(startDate);
+      endDate.setMonth(endDate.getMonth() + WELCOME_TRIAL_MONTHS);
+      signupTrial.startDate = startDate;
+      signupTrial.endDate = endDate;
+      await signupTrial.save();
+      try {
+        await notifyMerchant(merchant._id.toString(), {
+          title: 'Your free month starts today 🎁',
+          body: `Your store is approved - your free trial now runs until ${endDate.toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}.`,
+          type: 'payment',
+          data: { subscriptionId: signupTrial._id.toString() },
+          link: '/merchant/subscription',
+        });
+      } catch (err) {
+        console.error('[Trial] Notification failed (non-blocking):', err);
+      }
+      return signupTrial;
+    }
+  }
+
+  return grantWelcomeTrial(merchant);
 };

@@ -16,7 +16,7 @@ import AdRequest from '../models/AdRequest.js';
 import { notifyMerchant } from '../../user/services/notificationService.js';
 import { computeSubscriptionCharge, getWalletSettings } from '../../../utils/subscriptionWallet.js';
 import { getCustomerSubscriptionSettings } from '../../../utils/customerSubscription.js';
-import { grantWelcomeTrial } from '../../merchant/services/merchantTrialService.js';
+import { startWelcomeTrialOnApproval } from '../../merchant/services/merchantTrialService.js';
 import { invalidateFeedCache } from '../../../utils/feedCache.js';
 import { zoneIdForPoint, zonePath } from '../../../utils/zones.js';
 
@@ -255,6 +255,11 @@ export const updateMerchantStatus = async (req, res) => {
       updateData.rejectedBy = req.user._id;
     }
 
+    // Whether this is the store's first ever approval decides if the free
+    // trial clock starts now (see startWelcomeTrialOnApproval).
+    const before = await Merchant.findById(req.params.id).select('approvedAt').lean();
+    const firstApproval = !before?.approvedAt;
+
     const merchant = await Merchant.findByIdAndUpdate(req.params.id, updateData, { new: true });
 
     if (!merchant) {
@@ -288,7 +293,7 @@ export const updateMerchantStatus = async (req, res) => {
     // Never fails the approval itself.
     if (req.body.status === 'approved') {
       try {
-        await grantWelcomeTrial(merchant);
+        await startWelcomeTrialOnApproval(merchant, { firstApproval });
       } catch (trialErr) {
         console.error('[Trial] Failed to grant welcome trial:', trialErr);
       }
