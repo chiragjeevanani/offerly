@@ -129,7 +129,7 @@ const ProductCategories = ({ merchant }) => {
   const list = categories || [];
 
   return (
-    <div className="min-h-screen bg-background p-3 lg:p-10 -m-6 lg:-m-10">
+    <div className="min-h-screen bg-background p-4 lg:p-10 -m-4 lg:-m-10">
       <div className="max-w-3xl mx-auto space-y-6 pb-24">
         <div className="flex items-center justify-between gap-4">
           <div>

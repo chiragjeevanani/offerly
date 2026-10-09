@@ -23,6 +23,7 @@ import CampaignRoundedIcon from '@mui/icons-material/CampaignRounded';
 import InsightsRoundedIcon from '@mui/icons-material/InsightsRounded';
 import CategoryRoundedIcon from '@mui/icons-material/CategoryRounded';
 import SpaRoundedIcon from '@mui/icons-material/SpaRounded';
+import AppsRoundedIcon from '@mui/icons-material/AppsRounded';
 
 import { useApp } from '../customer/context/AppContext';
 import { merchantAPI } from '../../api/merchant.api';
@@ -92,6 +93,7 @@ const MerchantSidebar = ({ merchant, isMobileMenuOpen, setIsMobileMenuOpen }) =>
   ];
 
   const accountNavItems = [
+    { name: 'My Plan', path: '/merchant/subscription', icon: WorkspacePremiumRoundedIcon },
     { name: 'Notifications', path: '/merchant/notifications', icon: NotificationsRoundedIcon },
     { name: 'Profile', path: '/merchant/profile', icon: PersonRoundedIcon },
   ];
@@ -227,16 +229,17 @@ const MerchantSidebar = ({ merchant, isMobileMenuOpen, setIsMobileMenuOpen }) =>
   );
 };
 
-const MerchantBottomNav = ({ unreadCount }) => {
+const MerchantBottomNav = ({ unreadCount, merchant, onOpenMenu, isMenuOpen }) => {
   const location = useLocation();
   const navigate = useNavigate();
+  const isServiceStore = merchant?.storeType === 'service_based';
 
   const navItems = [
     { label: 'Home', path: '/merchant', icon: DashboardRoundedIcon },
     { label: 'Orders', path: '/merchant/bookings', icon: ReceiptLongRoundedIcon },
     { label: 'Verify', path: '/merchant/scanner', icon: QrCodeScannerRoundedIcon, special: true },
-    { label: 'Offers', path: '/merchant/offers', icon: LocalOfferRoundedIcon },
-    { label: 'Account', path: '/merchant/profile', icon: PersonRoundedIcon },
+    { label: isServiceStore ? 'Services' : 'Products', path: '/merchant/products', icon: isServiceStore ? SpaRoundedIcon : Inventory2RoundedIcon },
+    { label: 'More', icon: AppsRoundedIcon, onClick: onOpenMenu },
   ];
 
   return (
@@ -244,13 +247,15 @@ const MerchantBottomNav = ({ unreadCount }) => {
        {/* Background glass bar stuck to edges */}
        <div className="bg-white/90 backdrop-blur-2xl border-t border-gray-100 h-16 w-full flex items-center justify-around px-2 pointer-events-auto relative shadow-[0_-10px_40px_rgba(0,0,0,0.05)]">
           {navItems.map((item) => {
-             const isActive = location.pathname === item.path;
+             const isActive = item.onClick
+               ? isMenuOpen
+               : location.pathname === item.path || (item.path !== '/merchant' && location.pathname.startsWith(`${item.path}/`));
              const Icon = item.icon;
 
              if (item.special) {
                 return (
                    <button 
-                      key={item.label} onClick={() => navigate(item.path)}
+                      key={item.label} onClick={() => (item.onClick ? item.onClick() : navigate(item.path))}
                       className="relative -top-5 w-16 h-16 bg-gray-900 text-white rounded-2xl flex items-center justify-center shadow-2xl shadow-black/40 group active:scale-90 transition-all border-4 border-[#F8FAFC]"
                    >
                       <div className="absolute inset-0 bg-[#5EB929] rounded-2xl opacity-0 group-active:opacity-100 transition-opacity" />
@@ -262,7 +267,8 @@ const MerchantBottomNav = ({ unreadCount }) => {
 
              return (
                 <button 
-                   key={item.label} onClick={() => navigate(item.path)}
+                   key={item.label} onClick={() => (item.onClick ? item.onClick() : navigate(item.path))}
+                   aria-label={item.onClick ? 'Open full menu' : item.label}
                    className="flex flex-col items-center justify-center gap-1 w-14 group transition-all relative h-full"
                 >
                    <div className="relative">
@@ -270,7 +276,7 @@ const MerchantBottomNav = ({ unreadCount }) => {
                         sx={{ fontSize: 24 }} 
                         className={`transition-all duration-300 ${isActive ? 'text-[#5EB929]' : 'text-gray-400 group-active:scale-90'}`} 
                       />
-                      {item.label === 'Account' && unreadCount > 0 && (
+                      {item.label === 'More' && unreadCount > 0 && (
                          <div className="absolute -top-0.5 -right-0.5 w-2 h-2 bg-[#5EB929] rounded-full border-2 border-white" />
                       )}
                    </div>
@@ -296,6 +302,12 @@ const MerchantApp = () => {
   const [merchant, setMerchant] = useState(null);
   const [loading, setLoading] = useState(true);
   const [unreadCount, setUnreadCount] = useState(0);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+
+  // Leaving a page (by any route, incl. the back button) closes the phone menu.
+  useEffect(() => {
+    setIsMobileMenuOpen(false);
+  }, [location.pathname]);
 
   const fetchMerchant = async () => {
     if (isLoggedIn && user) {
@@ -468,7 +480,14 @@ const MerchantApp = () => {
   if (merchant?.status === 'approved') {
     return (
       <div className="flex bg-background min-h-screen font-sans">
-        <MerchantSidebar merchant={merchant} />
+        <MerchantSidebar merchant={merchant} isMobileMenuOpen={isMobileMenuOpen} setIsMobileMenuOpen={setIsMobileMenuOpen} />
+        {isMobileMenuOpen && (
+          <div
+            className="lg:hidden fixed inset-0 z-[45] bg-black/40"
+            onClick={() => setIsMobileMenuOpen(false)}
+            aria-hidden="true"
+          />
+        )}
         
         {/* Premium Mobile Top Nav */}
         <div className="lg:hidden fixed top-0 left-0 right-0 z-40 bg-white/80 backdrop-blur-2xl border-b border-gray-100 h-14 flex items-center justify-between px-4">
@@ -486,7 +505,8 @@ const MerchantApp = () => {
                  OFFERLY<span className="text-[#5EB929] italic">BIZ</span>
               </h1>
             </div>
-           <button 
+           <div className="flex items-center gap-2">
+             <button 
              onClick={() => navigate('/merchant/notifications')}
              className="relative w-9 h-9 flex items-center justify-center rounded-xl bg-gray-50 text-gray-400 active:scale-95 transition-all"
            >
@@ -495,10 +515,23 @@ const MerchantApp = () => {
                 <div className="absolute top-2 right-2 w-2 h-2 bg-[#5EB929] rounded-full border-2 border-white animate-pulse" />
               )}
            </button>
+             <button
+               onClick={() => setIsMobileMenuOpen(true)}
+               aria-label="Open menu"
+               className="w-9 h-9 flex items-center justify-center rounded-xl bg-gray-50 text-gray-500 active:scale-95 transition-all"
+             >
+                <MenuRoundedIcon sx={{ fontSize: 20 }} />
+             </button>
+           </div>
         </div>
         
         {/* New Premium Mobile Nav Bar */}
-        <MerchantBottomNav unreadCount={unreadCount} />
+        <MerchantBottomNav
+          unreadCount={unreadCount}
+          merchant={merchant}
+          isMenuOpen={isMobileMenuOpen}
+          onOpenMenu={() => setIsMobileMenuOpen(true)}
+        />
 
         <main className="flex-1 lg:ml-[260px] p-4 lg:p-8 pt-20 pb-24 lg:pb-8 relative overflow-hidden">
           <div className="absolute -top-32 -right-32 w-[500px] h-[500px] bg-[#5EB929]/[0.03] rounded-full blur-3xl pointer-events-none" />

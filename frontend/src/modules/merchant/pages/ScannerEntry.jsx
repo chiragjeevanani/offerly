@@ -397,7 +397,7 @@ const ScannerEntry = ({ merchant }) => {
   const activeBooking = activeBookingId ? openBookings[activeBookingId] : null;
 
   return (
-    <div className="min-h-screen bg-background p-3 lg:p-8 -m-6 lg:-m-8">
+    <div className="min-h-screen bg-background p-4 lg:p-8 -m-4 lg:-m-8">
       <div className="max-w-4xl mx-auto space-y-4 lg:space-y-6 pb-20">
         <div className="flex justify-between items-end px-1">
           <div>

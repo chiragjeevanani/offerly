@@ -230,7 +230,7 @@ const Bookings = ({ merchant }) => {
   const totalRevenue = bookings.filter(b => b.status === 'completed' || b.status === 'fulfilled').reduce((sum, b) => sum + (b.totals?.final || 0), 0);
 
   return (
-    <div className="min-h-screen bg-background p-4 lg:p-8 -m-6 lg:-m-8">
+    <div className="min-h-screen bg-background p-4 lg:p-8 -m-4 lg:-m-8">
       <div className="max-w-7xl mx-auto space-y-6 pb-20">
         {/* Header */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -322,8 +322,8 @@ const Bookings = ({ merchant }) => {
                       </div>
                     </div>
                     <div className="flex items-center gap-4">
-                       <div className="text-right hidden sm:block">
-                          <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest leading-none mb-1">Total Bill</p>
+                       <div className="text-right">
+                          <p className="hidden sm:block text-[10px] font-bold text-gray-400 uppercase tracking-widest leading-none mb-1">Total Bill</p>
                           <p className="text-[14px] font-bold text-[#5EB929]">₹{(booking.totals?.final || 0).toLocaleString()}</p>
                        </div>
                        <div className="w-8 h-8 rounded-lg bg-gray-50 flex items-center justify-center text-gray-300 group-hover:bg-primary/10 group-hover:text-primary transition-all">

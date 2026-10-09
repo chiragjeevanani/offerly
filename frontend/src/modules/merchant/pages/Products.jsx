@@ -138,9 +138,11 @@ const Products = ({ merchant }) => {
   const usagePercent = isUnlimited ? 0 : Math.round((products.length / maxProducts) * 100);
   const isService = merchant?.storeType === 'service_based';
   const itemTypeLabel = isService ? 'Services' : 'Products';
+  const addLabel = isService ? 'Add Service' : 'Add Product';
+  const atProductLimit = !isUnlimited && products.length >= maxProducts;
 
   return (
-    <div className="min-h-screen bg-background p-3 lg:p-10 -m-6 lg:-m-10">
+    <div className="min-h-screen bg-background p-4 lg:p-10 -m-4 lg:-m-10">
       <div className="max-w-7xl mx-auto space-y-6 pb-24">
         
         {/* Compact Header */}
@@ -154,32 +156,43 @@ const Products = ({ merchant }) => {
                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">{products.length} {itemTypeLabel} Listed</p>
             </div>
           </div>
-          <div className="flex gap-2">
-            <Link
-              to="/merchant/categories"
-              className="w-11 h-11 flex items-center justify-center rounded-2xl bg-white text-gray-900 border border-gray-100 hover:scale-105 transition-all shadow-lg"
-              title="Manage Categories & Discounts"
-            >
-              <CategoryRoundedIcon />
-            </Link>
-            <button
-              onClick={() => { setEditingProduct(null); setIsModalOpen(true); }}
-              disabled={!isUnlimited && products.length >= maxProducts}
-              className={`w-11 h-11 flex items-center justify-center rounded-2xl transition-all shadow-lg ${
-                !isUnlimited && products.length >= maxProducts ? "bg-gray-100 text-gray-400" : "bg-white text-gray-900 border border-gray-100 hover:scale-105"
-              }`}
-            >
-              <AddRoundedIcon />
-            </button>
-            <button 
-              onClick={() => { setQuickOfferProduct(null); setIsUnifiedBuilderOpen(true); }}
-              className="px-5 h-11 bg-[#5EB929] text-white rounded-2xl font-bold text-[11px] uppercase tracking-widest shadow-xl shadow-[#5EB929]/20 hover:scale-105 transition-all flex items-center gap-2"
-            >
-              <RocketLaunchRoundedIcon sx={{ fontSize: 18 }} />
-              <span className="hidden sm:inline">Launch</span>
-            </button>
-          </div>
         </div>
+
+        {/* Actions - always labelled, so they're obvious on a phone too */}
+        <div className="grid grid-cols-2 sm:flex sm:flex-wrap gap-2 -mt-2">
+          <button
+            onClick={() => { setEditingProduct(null); setIsModalOpen(true); }}
+            disabled={atProductLimit}
+            className={`col-span-2 sm:col-span-1 h-12 px-5 flex items-center justify-center gap-2 rounded-2xl font-bold text-[12px] uppercase tracking-wide transition-all shadow-lg ${
+              atProductLimit
+                ? 'bg-gray-100 text-gray-400 shadow-none'
+                : 'bg-[#5EB929] text-white shadow-[#5EB929]/20 active:scale-[0.98]'
+            }`}
+          >
+            <AddRoundedIcon sx={{ fontSize: 20 }} />
+            {addLabel}
+          </button>
+          <button
+            onClick={() => { setQuickOfferProduct(null); setIsUnifiedBuilderOpen(true); }}
+            className="h-11 px-4 flex items-center justify-center gap-2 rounded-2xl bg-white text-gray-800 border border-gray-100 font-bold text-[11px] uppercase tracking-wide shadow-sm active:scale-[0.98] transition-all"
+          >
+            <RocketLaunchRoundedIcon sx={{ fontSize: 17 }} className="text-[#5EB929]" />
+            Create Offer
+          </button>
+          <Link
+            to="/merchant/categories"
+            className="h-11 px-4 flex items-center justify-center gap-2 rounded-2xl bg-white text-gray-800 border border-gray-100 font-bold text-[11px] uppercase tracking-wide shadow-sm active:scale-[0.98] transition-all"
+          >
+            <CategoryRoundedIcon sx={{ fontSize: 17 }} className="text-indigo-500" />
+            Categories
+          </Link>
+        </div>
+        {atProductLimit && (
+          <p className="-mt-3 text-[11px] font-semibold text-amber-600 px-1">
+            You've reached your plan's limit of {maxProducts} {itemTypeLabel.toLowerCase()}.{' '}
+            <Link to="/merchant/subscription" className="underline">Upgrade your plan</Link> to add more.
+          </p>
+        )}
 
         {/* High-Density Search & Stats */}
         <div className="grid grid-cols-1 md:grid-cols-12 gap-4 items-center bg-white p-3 rounded-[2rem] shadow-sm border border-gray-50">
@@ -194,7 +207,7 @@ const Products = ({ merchant }) => {
            </div>
            <div className="md:col-span-5 px-2">
               <div className="flex justify-between items-center mb-1.5">
-                 <p className="text-[9px] font-bold text-gray-400 uppercase tracking-[0.2em]">Storage Space</p>
+                 <p className="text-[9px] font-bold text-gray-400 uppercase tracking-[0.2em]">{itemTypeLabel} on your plan</p>
                  <p className="text-[9px] font-bold text-gray-900 uppercase">{products.length} / {isUnlimited ? '∞' : maxProducts}</p>
               </div>
               <div className="w-full h-1.5 bg-gray-100 rounded-full overflow-hidden">
@@ -209,7 +222,7 @@ const Products = ({ merchant }) => {
              <div className="col-span-full py-24 flex flex-col items-center gap-4">
                 <div className="w-10 h-10 border-2 border-[#5EB929]/20 border-t-[#5EB929] rounded-full animate-spin" />
                 <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest animate-pulse">
-                  {isService ? 'Syncing Services' : 'Syncing Inventory'}
+                  {isService ? 'Loading services...' : 'Loading products...'}
                 </p>
              </div>
           ) : (
@@ -222,8 +235,17 @@ const Products = ({ merchant }) => {
                     <Inventory2RoundedIcon sx={{ fontSize: 40 }} className="text-gray-200 mb-2" />
                   )}
                   <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">
-                    No {itemTypeLabel} Found
+                    {debouncedSearch ? `No ${itemTypeLabel} Found` : `No ${itemTypeLabel.toLowerCase()} yet`}
                   </p>
+                  {!debouncedSearch && !atProductLimit && (
+                    <button
+                      onClick={() => { setEditingProduct(null); setIsModalOpen(true); }}
+                      className="mt-4 inline-flex items-center gap-2 h-11 px-5 rounded-2xl bg-[#5EB929] text-white font-bold text-[12px] uppercase tracking-wide shadow-lg shadow-[#5EB929]/20"
+                    >
+                      <AddRoundedIcon sx={{ fontSize: 18 }} />
+                      {isService ? 'Add your first service' : 'Add your first product'}
+                    </button>
+                  )}
                 </motion.div>
               ) : (
                 filtered.map((product, idx) => (
