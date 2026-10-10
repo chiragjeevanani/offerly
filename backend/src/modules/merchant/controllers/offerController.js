@@ -26,12 +26,20 @@ const getOwnedMerchant = async (userId) => {
   return Merchant.findById(userId);
 };
 
+// Which subscription rows count as the merchant's membership: active, not an
+// advertisement purchase (those are separate rows with their own tiny plan, e.g.
+// "Ad Package" = 1 offer, and must never replace the membership's limits), and
+// either unexpired or a Lifetime row with no end date.
+const membershipQuery = (now = new Date()) => ({
+  status: "active",
+  planType: { $ne: "advertisement" },
+  $or: [{ endDate: null }, { endDate: { $gte: now } }],
+});
+
 const getEffectivePlan = async (merchant) => {
-  const now = new Date();
   const activeSubscription = await MerchantSubscription.findOne({
     merchantId: merchant._id,
-    status: "active",
-    endDate: { $gte: now }, // Ensure it hasn't expired
+    ...membershipQuery(),
   })
     .populate("planId")
     .sort({ createdAt: -1 });
@@ -61,8 +69,7 @@ const getEffectivePlansByMerchant = async (merchants) => {
 
   const subscriptions = await MerchantSubscription.find({
     merchantId: { $in: merchants.map((merchant) => merchant._id) },
-    status: "active",
-    endDate: { $gte: new Date() },
+    ...membershipQuery(),
   })
     .populate("planId")
     .sort({ createdAt: -1 })
