@@ -1,5 +1,5 @@
-import { useState, useRef, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useState, useRef, useEffect, useMemo } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import PersonRoundedIcon from '@mui/icons-material/PersonRounded';
 import EmailRoundedIcon from '@mui/icons-material/EmailRounded';
@@ -8,39 +8,63 @@ import MyLocationRoundedIcon from '@mui/icons-material/MyLocationRounded';
 import CameraAltRoundedIcon from '@mui/icons-material/CameraAltRounded';
 import ArrowForwardRoundedIcon from '@mui/icons-material/ArrowForwardRounded';
 import CardGiftcardRoundedIcon from '@mui/icons-material/CardGiftcardRounded';
+import VerifiedRoundedIcon from '@mui/icons-material/VerifiedRounded';
 import ArrowBackRoundedIcon from '@mui/icons-material/ArrowBackRounded';
 import AssignmentIndRoundedIcon from '@mui/icons-material/AssignmentIndRounded';
 import { authAPI } from '../../../../api/auth.api';
+import { storage } from '../../../../utils/storage';
+import { useApp } from '../../context/AppContext';
 import toast from 'react-hot-toast';
 import PageTransition from '../../components/ui/PageTransition';
 
 const isValidEmail = (email) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 
+const SIGNUP_DRAFT_KEY = 'offerly_customer_signup_data';
+
+const readDraft = () => {
+  try {
+    const saved = JSON.parse(localStorage.getItem(SIGNUP_DRAFT_KEY) || 'null');
+    if (saved) return saved;
+  } catch {
+    // Corrupt draft - start clean.
+  }
+  return { name: '', email: '', phone: '', age: '', gender: '', address: '', profilePhoto: '', referralCode: '' };
+};
+
 const CustomerSignup = () => {
   const navigate = useNavigate();
+  const location = useLocation();
+  const { login } = useApp();
   const [loading, setLoading] = useState(false);
   const [locationLoading, setLocationLoading] = useState(false);
   const fileInputRef = useRef(null);
 
+  // Arriving from the login screen means the number was already OTP-verified there.
+  // It travels in router state (which survives a refresh), never in a stale draft.
+  const verified = useMemo(() => {
+    const token = location.state?.verificationToken;
+    const digits = String(location.state?.phone || '').replace(/D/g, '').slice(-10);
+    return token && digits.length === 10 ? { token, phone: digits } : null;
+  }, [location.state]);
+
   const [formData, setFormData] = useState(() => {
-    const saved = localStorage.getItem('offerly_customer_signup_data');
-    return saved ? JSON.parse(saved) : {
-      name: '', email: '', phone: '', age: '', gender: '', address: '', profilePhoto: '', referralCode: ''
-    };
+    const draft = readDraft();
+    return verified ? { ...draft, phone: verified.phone } : draft;
   });
 
   const [errors, setErrors] = useState({});
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
-    const refCode = params.get('ref') || localStorage.getItem('offerly_signup_referral');
+    const refCode =
+      location.state?.referralCode || params.get('ref') || localStorage.getItem('offerly_signup_referral');
     if (refCode) {
-      setFormData(prev => ({ ...prev, referralCode: refCode }));
+      setFormData(prev => ({ ...prev, referralCode: String(refCode).toUpperCase() }));
     }
-  }, []);
+  }, [location.state]);
 
   useEffect(() => {
-    localStorage.setItem('offerly_customer_signup_data', JSON.stringify(formData));
+    localStorage.setItem(SIGNUP_DRAFT_KEY, JSON.stringify(formData));
   }, [formData]);
 
   const handleChange = (e) => {
@@ -50,6 +74,7 @@ const CustomerSignup = () => {
   };
 
   const handlePhoneChange = (e) => {
+    if (verified) return;
     const val = e.target.value.replace(/\D/g, '').slice(0, 10);
     setFormData({ ...formData, phone: val });
     if (errors.phone) setErrors({ ...errors, phone: '' });
@@ -105,6 +130,34 @@ const CustomerSignup = () => {
   const handleSignup = async (e) => {
     e.preventDefault();
     if (!validateForm()) return;
+
+    // Number already verified on the previous screen: create the account now
+    // instead of sending a second OTP for the same number.
+    if (verified) {
+      setLoading(true);
+      try {
+        const registerResponse = await authAPI.registerCustomer(verified.token, {
+          ...formData,
+          phone: verified.phone,
+          userType: 'customer',
+        });
+
+        if (registerResponse.success) {
+          storage.setToken(registerResponse.token);
+          storage.setUser(registerResponse.user);
+          login(registerResponse.user);
+          sessionStorage.removeItem('pendingRegistration');
+          localStorage.removeItem(SIGNUP_DRAFT_KEY);
+          toast.success('Account created successfully!');
+          navigate('/home', { replace: true });
+        }
+      } catch (error) {
+        toast.error(error?.error || 'Sign up failed. Please verify your number again.');
+      } finally {
+        setLoading(false);
+      }
+      return;
+    }
 
     sessionStorage.setItem('pendingRegistration', JSON.stringify({ ...formData, userType: 'customer' }));
     setLoading(true);
@@ -193,7 +246,24 @@ const CustomerSignup = () => {
                     <label className="text-[10px] font-bold text-gray-400 px-1">Mobile Identifier</label>
                     <div className="relative">
                       <PhoneRoundedIcon className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-300" sx={{ fontSize: 18 }} />
-                      <input type="tel" name="phone" value={formData.phone} onChange={handlePhoneChange} placeholder="Phone" className="w-full h-12 pl-11 pr-4 bg-background rounded-2xl border border-gray-50 text-sm font-bold outline-none focus:bg-white focus:border-[#5EB929]/30 transition-all" />
+                      <input
+                        type="tel"
+                        name="phone"
+                        value={verified ? `+91 ${formData.phone}` : formData.phone}
+                        onChange={handlePhoneChange}
+                        readOnly={Boolean(verified)}
+                        placeholder="Phone"
+                        className={`w-full h-12 pl-11 pr-4 rounded-2xl border text-sm font-bold outline-none transition-all ${
+                          verified
+                            ? 'bg-gray-100 border-gray-100 text-gray-500 cursor-not-allowed'
+                            : 'bg-background border-gray-50 focus:bg-white focus:border-[#5EB929]/30'
+                        }`}
+                      />
+                      {verified && (
+                        <span className="absolute right-4 top-1/2 -translate-y-1/2 flex items-center gap-1 text-[10px] font-bold text-[#5EB929]">
+                          <VerifiedRoundedIcon sx={{ fontSize: 14 }} /> Verified
+                        </span>
+                      )}
                     </div>
                   </div>
 

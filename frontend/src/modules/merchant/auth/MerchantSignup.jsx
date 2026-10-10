@@ -23,11 +23,18 @@ const MerchantSignup = () => {
   const fileInputRef = useRef(null);
 
   const [formData, setFormData] = useState(() => {
+    // The number just tried on the login screen (unverified here, so it stays editable).
+    const loginPhone = (localStorage.getItem('offerly_merchant_login_phone') || '').replace(/D/g, '').slice(0, 10);
+    const blank = { name: '', email: '', phone: loginPhone, businessType: '', address: '', profilePhoto: '' };
+
     const saved = localStorage.getItem('offerly_merchant_signup_data');
     if (saved) {
-      try { return JSON.parse(saved); } catch (e) { console.error(e); }
+      try {
+        const draft = JSON.parse(saved);
+        return { ...draft, phone: draft.phone || loginPhone };
+      } catch (e) { console.error(e); }
     }
-    return { name: '', email: '', phone: '', businessType: '', address: '', profilePhoto: '' };
+    return blank;
   });
 
   const [categories, setCategories] = useState([]);

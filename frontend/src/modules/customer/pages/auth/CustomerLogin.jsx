@@ -335,6 +335,7 @@ const CustomerLogin = () => {
             state: {
               phone: `${countryCode} ${cleanPhone}`,
               verificationToken: verifyResponse.verificationToken,
+              referralCode,
             },
           });
         } else {
