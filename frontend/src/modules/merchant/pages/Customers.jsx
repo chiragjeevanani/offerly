@@ -1,4 +1,5 @@
-import { useState, useEffect } from 'react';
+import { useState, useMemo } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { motion, AnimatePresence } from 'framer-motion';
 import { merchantAPI } from '../../../api/merchant.api';
 import SearchRoundedIcon from '@mui/icons-material/SearchRounded';
@@ -9,34 +10,29 @@ import HistoryRoundedIcon from '@mui/icons-material/HistoryRounded';
 import TrendingUpRoundedIcon from '@mui/icons-material/TrendingUpRounded';
 
 const Customers = ({ merchant }) => {
-  const [customerData, setCustomerData] = useState([]);
   const [searchQuery, setSearchQuery] = useState('');
-  const [loading, setLoading] = useState(true);
 
   const [activeFilter, setActiveFilter] = useState('All');
 
-  useEffect(() => {
-    if (merchant) loadCustomers();
-  }, [merchant]);
+  // Cached: the tab opens with the last list and refreshes behind it.
+  const { data: customersRes, isLoading: loading } = useQuery({
+    queryKey: ['merchantCustomers', merchant?._id],
+    queryFn: () => merchantAPI.getCustomers(),
+    enabled: Boolean(merchant),
+    staleTime: 60 * 1000,
+  });
 
-  const loadCustomers = async () => {
-    try {
-      setLoading(true);
-      const response = await merchantAPI.getCustomers();
-      if (response?.customers) {
-        const mapped = response.customers.map(c => ({
-          id: c.id,
-          name: c.name || 'Anonymous User',
-          phone: c.phone || 'N/A',
-          totalRedemptions: c.visits || 0,
-          totalSpend: c.spend || 0,
-          lastVisit: c.lastVisit || new Date().toISOString()
-        }));
-        setCustomerData(mapped.sort((a, b) => b.totalSpend - a.totalSpend));
-      }
-    } catch (error) { setCustomerData([]); }
-    finally { setLoading(false); }
-  };
+  const customerData = useMemo(() => {
+    const mapped = (customersRes?.customers || []).map(c => ({
+      id: c.id,
+      name: c.name || 'Anonymous User',
+      phone: c.phone || 'N/A',
+      totalRedemptions: c.visits || 0,
+      totalSpend: c.spend || 0,
+      lastVisit: c.lastVisit || new Date().toISOString()
+    }));
+    return mapped.sort((a, b) => b.totalSpend - a.totalSpend);
+  }, [customersRes]);
 
   const filtered = customerData.filter(c => {
     const matchesSearch = c.name.toLowerCase().includes(searchQuery.toLowerCase()) || c.phone.includes(searchQuery);

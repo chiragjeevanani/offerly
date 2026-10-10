@@ -1,6 +1,7 @@
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useState } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import LocationOnRoundedIcon from '@mui/icons-material/LocationOnRounded';
 import FavoriteBorderRoundedIcon from '@mui/icons-material/FavoriteBorderRounded';
 import FavoriteRoundedIcon from '@mui/icons-material/FavoriteRounded';
@@ -14,6 +15,7 @@ import { useOfferImpression } from '../../../../hooks/useOfferImpression';
 const OfferCard = ({ offer, variant = 'list', onSaveToggle, viewSource = 'feed' }) => {
   const navigate = useNavigate();
   const { user, isLoggedIn, refreshUser } = useApp();
+  const queryClient = useQueryClient();
   const offerId = offer._id || offer.id;
 
   // Counts towards the merchant's "offer views" once the card has been half visible
@@ -49,6 +51,7 @@ const OfferCard = ({ offer, variant = 'list', onSaveToggle, viewSource = 'feed' 
     try {
       const response = await userAPI.toggleSavedOffer(offerId);
       setIsSaved(response.isSaved);
+      queryClient.invalidateQueries({ queryKey: ['savedOffers'] });
       
       // Sync global user state immediately to avoid desync on navigation
       await refreshUser();

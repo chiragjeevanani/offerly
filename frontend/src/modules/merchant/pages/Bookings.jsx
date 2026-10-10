@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import SearchRoundedIcon from '@mui/icons-material/SearchRounded';
@@ -169,31 +170,37 @@ const BookingDetailModal = ({ booking, onClose, onFulfilled }) => {
   );
 };
 
+const NO_BOOKINGS = [];
+
 /* ─── Main Bookings Page ────────────────────────────────────────────────────── */
 const Bookings = ({ merchant }) => {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('pending');
-  const [bookings, setBookings] = useState([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedBooking, setSelectedBooking] = useState(null);
   const { socket } = useSocket();
+  const queryClient = useQueryClient();
 
-  const fetchBookings = async () => {
-    try {
+  // Cached, so the Orders tab opens with the last list instead of an empty screen,
+  // then catches up. Still polls every 20 s (paused while the tab is hidden) and
+  // refreshes on socket events below.
+  const bookingsKey = ['merchantBookings', merchant?._id];
+  const { data: bookings = NO_BOOKINGS, isError: syncFailed, refetch } = useQuery({
+    queryKey: bookingsKey,
+    enabled: Boolean(merchant),
+    refetchInterval: 20000,
+    staleTime: 10000,
+    queryFn: async () => {
       const response = await bookingAPI.getMerchantRedemptions();
-      if (response.success) setBookings(response.data);
-    } catch (err) {
-      toast.error('Sync failed');
-    }
-  };
+      if (!response.success) throw new Error('Sync failed');
+      return response.data;
+    },
+  });
+  const fetchBookings = () => refetch();
 
   useEffect(() => {
-    if (merchant) {
-      fetchBookings();
-      const interval = setInterval(fetchBookings, 20000);
-      return () => clearInterval(interval);
-    }
-  }, [merchant]);
+    if (syncFailed) toast.error('Sync failed');
+  }, [syncFailed]);
 
   useEffect(() => {
     if (!socket || !merchant) return;
@@ -213,7 +220,7 @@ const Bookings = ({ merchant }) => {
   }, [socket, merchant]);
 
   const handleFulfilled = (bookingId) => {
-    setBookings(prev => prev.map(b =>
+    queryClient.setQueryData(bookingsKey, (prev = []) => prev.map(b =>
       b._id === bookingId ? { ...b, status: 'completed', scannedAt: new Date().toISOString() } : b
     ));
     setSelectedBooking(null);

@@ -1,4 +1,6 @@
-import { useState, useEffect } from 'react';
+import { useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useQuery } from '@tanstack/react-query';
 import { motion, AnimatePresence } from 'framer-motion';
 import FavoriteRoundedIcon from '@mui/icons-material/FavoriteRounded';
 import { userAPI } from '../../../../api/user.api';
@@ -8,31 +10,24 @@ import PageTransition from '../../components/ui/PageTransition';
 import toast from 'react-hot-toast';
 
 const SavedOffers = () => {
-  const { isLoggedIn } = useApp();
-  const [saved, setSaved] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const navigate = useNavigate();
+  const { isLoggedIn, user } = useApp();
 
-  const loadSaved = async () => {
-    if (!isLoggedIn) {
-      setLoading(false);
-      return;
-    }
-    
-    setLoading(true);
-    try {
-      const response = await userAPI.getSavedOffers();
-      setSaved(response.offers || []);
-    } catch (error) {
-      console.error('Failed to load saved offers:', error);
-      toast.error('Failed to load saved offers');
-    } finally {
-      setLoading(false);
-    }
-  };
+  // Cached, so coming back to this tab shows the list instantly and refreshes quietly
+  // behind it. Saving/unsaving anywhere invalidates this key (see OfferCard/OfferDetail).
+  const { data, isLoading: loading, isError, refetch } = useQuery({
+    queryKey: ['savedOffers', user?.id || user?._id || null],
+    queryFn: () => userAPI.getSavedOffers(),
+    enabled: isLoggedIn,
+    staleTime: 30 * 1000,
+  });
+  const saved = data?.offers || [];
 
-  useEffect(() => { loadSaved(); }, [isLoggedIn]);
+  useEffect(() => {
+    if (isError) toast.error('Failed to load saved offers');
+  }, [isError]);
 
-  if (loading) {
+  if (loading && isLoggedIn) {
     return (
       <PageTransition>
         <div className="flex items-center justify-center min-h-screen">
@@ -60,7 +55,7 @@ const SavedOffers = () => {
               Save offers you love to keep them safe and access them instantly anytime.
             </p>
             <button 
-              onClick={() => window.location.href = '/explore'}
+              onClick={() => navigate('/explore')}
               className="mt-8 text-[10px] font-bold text-[#5EB929] uppercase tracking-widest bg-white border border-gray-100 px-6 py-2.5 rounded-xl shadow-sm active:scale-95 transition-all"
             >
               Discover Offers
@@ -83,9 +78,9 @@ const SavedOffers = () => {
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, x: -20 }}
-                    transition={{ delay: idx * 0.05 }}
+                    transition={{ delay: Math.min(idx, 5) * 0.03 }}
                   >
-                    <OfferCard offer={offer} variant="list" viewSource="saved" onSaveToggle={loadSaved} />
+                    <OfferCard offer={offer} variant="list" viewSource="saved" onSaveToggle={refetch} />
                   </motion.div>
                 ))}
               </div>

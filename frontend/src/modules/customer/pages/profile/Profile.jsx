@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import PersonRoundedIcon from '@mui/icons-material/PersonRounded';
@@ -72,8 +73,6 @@ const Profile = () => {
     ? menuSections
     : menuSections.map((section) => ({ ...section, items: section.items.filter((item) => item.path !== '/rewards') }));
   const { user, logout, refreshUser } = useApp();
-  const [redemptionCount, setRedemptionCount] = useState(0);
-  const [lifetimeSavings, setLifetimeSavings] = useState(user?.lifetimeSavings || 0);
   const [editSheetOpen, setEditSheetOpen] = useState(false);
   const { data: availableCities = [] } = useCities();
   const [saving, setSaving] = useState(false);
@@ -96,39 +95,40 @@ const Profile = () => {
     setPromptDismissed(true);
   };
 
-  useEffect(() => {
-    const fetchStats = async () => {
-      try {
-        const res = await bookingAPI.getCustomerRedemptions();
-        if (res && res.success) {
-          setRedemptionCount(res.data.length);
-          const computedSavings = (res.data || []).reduce((sum, r) => {
-            const discount = r.totals?.discount || 0;
-            if (discount > 0) return sum + discount;
-            if (r.totals?.original && r.totals?.final && r.totals.original > r.totals.final) {
-              return sum + (r.totals.original - r.totals.final);
-            }
-            const itemSavings = (r.items || []).reduce((itemSum, it) => {
-              const price = it.product?.price || 0;
-              const offerPrice = it.product?.offerPrice || 0;
-              const qty = it.qty || 1;
-              return itemSum + Math.max(0, (price - offerPrice) * qty);
-            }, 0);
-            return sum + itemSavings;
-          }, 0);
+  // Cached: the Profile tab opens with last time's numbers and refreshes behind them.
+  const { data: redemptionsRes } = useQuery({
+    queryKey: ['customerRedemptions', user?.id || user?._id || null],
+    queryFn: () => bookingAPI.getCustomerRedemptions(),
+    staleTime: 60 * 1000,
+  });
 
-          const finalSavings = res.lifetimeSavings !== undefined && res.lifetimeSavings > 0
-            ? res.lifetimeSavings
-            : (computedSavings > 0 ? computedSavings : (user?.lifetimeSavings || 0));
+  const { redemptionCount, lifetimeSavings } = useMemo(() => {
+    const res = redemptionsRes;
+    if (!(res && res.success)) {
+      return { redemptionCount: 0, lifetimeSavings: user?.lifetimeSavings || 0 };
+    }
 
-          setLifetimeSavings(finalSavings);
-        }
-      } catch (err) {
-        console.error('Failed to fetch profile stats:', err);
+    const computedSavings = (res.data || []).reduce((sum, r) => {
+      const discount = r.totals?.discount || 0;
+      if (discount > 0) return sum + discount;
+      if (r.totals?.original && r.totals?.final && r.totals.original > r.totals.final) {
+        return sum + (r.totals.original - r.totals.final);
       }
-    };
-    fetchStats();
-  }, [user?.lifetimeSavings]);
+      const itemSavings = (r.items || []).reduce((itemSum, it) => {
+        const price = it.product?.price || 0;
+        const offerPrice = it.product?.offerPrice || 0;
+        const qty = it.qty || 1;
+        return itemSum + Math.max(0, (price - offerPrice) * qty);
+      }, 0);
+      return sum + itemSavings;
+    }, 0);
+
+    const finalSavings = res.lifetimeSavings !== undefined && res.lifetimeSavings > 0
+      ? res.lifetimeSavings
+      : (computedSavings > 0 ? computedSavings : (user?.lifetimeSavings || 0));
+
+    return { redemptionCount: res.data.length, lifetimeSavings: finalSavings };
+  }, [redemptionsRes, user?.lifetimeSavings]);
 
   // Initialize form when user data is available or sheet opens
   useEffect(() => {

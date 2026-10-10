@@ -8,6 +8,7 @@ import ScrollToTop from './components/common/ScrollToTop';
 import PushNotificationBridge from './components/common/PushNotificationBridge';
 import SplashScreen from './modules/customer/components/ui/SplashScreen';
 import { useRewardsEnabled } from './hooks/useRewardsEnabled';
+import { customerPageLoaders as pages, preloadCustomerPages } from './routes/customerPages';
 
 // Loading Component
 const PageLoader = () => (
@@ -22,22 +23,23 @@ import CustomerSignup from './modules/customer/pages/auth/CustomerSignup';
 import OtpVerify from './modules/customer/pages/auth/OtpVerify';
 
 // Core pages (Dynamic Imports)
-const Home = lazy(() => import('./modules/customer/pages/home/Home'));
-const Explore = lazy(() => import('./modules/customer/pages/explore/Explore'));
-const MapView = lazy(() => import('./modules/customer/pages/explore/MapView'));
-const OfferDetail = lazy(() => import('./modules/customer/pages/offers/OfferDetail'));
-const SavedOffers = lazy(() => import('./modules/customer/pages/offers/SavedOffers'));
-const MyRedemptions = lazy(() => import('./modules/customer/pages/offers/MyRedemptions'));
-const QrScreen = lazy(() => import('./modules/customer/pages/redemption/QrScreen'));
-const LeaveReview = lazy(() => import('./modules/customer/pages/redemption/LeaveReview'));
-const StoreProfile = lazy(() => import('./modules/customer/pages/store/StoreProfile'));
-const Profile = lazy(() => import('./modules/customer/pages/profile/Profile'));
-const Referral = lazy(() => import('./modules/customer/pages/profile/Referral'));
-const Notifications = lazy(() => import('./modules/customer/pages/profile/Notifications'));
-const SearchResults = lazy(() => import('./modules/customer/pages/search/SearchResults'));
-const CartView = lazy(() => import('./modules/customer/pages/redemption/CartView'));
-const SubscribePage = lazy(() => import('./modules/customer/pages/subscription/SubscribePage'));
-const RewardsHub = lazy(() => import('./modules/customer/pages/rewards/RewardsHub'));
+// (The import() calls live in routes/customerPages.js so they can also be prefetched.)
+const Home = lazy(pages.home);
+const Explore = lazy(pages.explore);
+const MapView = lazy(pages.map);
+const OfferDetail = lazy(pages.offerDetail);
+const SavedOffers = lazy(pages.saved);
+const MyRedemptions = lazy(pages.redemptions);
+const QrScreen = lazy(pages.qr);
+const LeaveReview = lazy(pages.leaveReview);
+const StoreProfile = lazy(pages.store);
+const Profile = lazy(pages.profile);
+const Referral = lazy(pages.referral);
+const Notifications = lazy(pages.notifications);
+const SearchResults = lazy(pages.search);
+const CartView = lazy(pages.cart);
+const SubscribePage = lazy(pages.subscribe);
+const RewardsHub = lazy(pages.rewards);
 
 // Static pages
 const About = lazy(() => import('./modules/customer/pages/static/About'));
@@ -114,6 +116,11 @@ const AppRoutes = () => {
       setShowSplash(true);
     }
   }, [location.search]);
+
+  // Warm every page's code in the background so tab taps navigate instantly.
+  useEffect(() => {
+    if (!isBusinessRoute) preloadCustomerPages();
+  }, [isBusinessRoute]);
   
   return (
     <>

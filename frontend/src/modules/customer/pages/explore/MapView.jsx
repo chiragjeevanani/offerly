@@ -1,8 +1,9 @@
-import { useEffect, useState, useMemo, useCallback } from 'react';
+import { useState, useMemo, useCallback } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { GoogleMap, useJsApiLoader, Marker, InfoWindow } from '@react-google-maps/api';
 import { merchantAPI } from '../../../../api/merchant.api';
 import { offerAPI } from '../../../../api/offer.api';
-import { categoryAPI } from '../../../../api/category.api';
+import { useCategories } from '../../../../hooks/useReferenceData';
 import { useApp } from '../../context/AppContext';
 import PageTransition from '../../components/ui/PageTransition';
 import StoreCard from '../../components/ui/StoreCard';
@@ -35,71 +36,50 @@ const MAP_OPTIONS = {
   ]
 };
 
+const DEFAULT_CENTER = { lat: 26.5012, lng: 93.9681 };
+const NO_MERCHANTS = [];
+const NO_COUNTS = {};
+
 const MapView = () => {
-  const { user, selectedCity } = useApp();
+  // The app already tracks the user's position (and remembers the last one), so the
+  // map opens centred on them immediately instead of asking the browser again.
+  const { user, selectedCity, userLocation: knownLocation } = useApp();
   const cityFilter = selectedCity !== 'Select City' ? selectedCity : (user?.city || undefined);
   
-  const [merchants, setMerchants] = useState([]);
-  const [offerCounts, setOfferCounts] = useState({});
   const [selected, setSelected] = useState(null);
-  const [categories, setCategories] = useState([]);
+  const { data: categories = [] } = useCategories();
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [map, setMap] = useState(null);
-  const [userLocation, setUserLocation] = useState({ lat: 26.5012, lng: 93.9681 }); // Default fallback
+  const userLocation = knownLocation || DEFAULT_CENTER;
 
   const { isLoaded } = useJsApiLoader({
     id: 'google-map-script',
     googleMapsApiKey: import.meta.env.VITE_GOOGLE_MAP_API_KEY
   });
 
-  // Get real-time user position
-  useEffect(() => {
-    if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(
-        (position) => {
-          setUserLocation({
-            lat: position.coords.latitude,
-            lng: position.coords.longitude
-          });
-        },
-        () => {
-          console.log('Location permission denied, using default center.');
-        }
-      );
-    }
-  }, []);
-
   const center = useMemo(() => userLocation, [userLocation]);
 
-  useEffect(() => {
-    const loadCategories = async () => {
-      try {
-        const response = await categoryAPI.getAll();
-        setCategories(response.categories || []);
-      } catch (error) {}
-    };
-    loadCategories();
-  }, []);
-
-  useEffect(() => {
-    const loadMapData = async () => {
-      try {
-        if (!cityFilter) return;
-        const [merchantRes, offersRes] = await Promise.all([
-          merchantAPI.getAll({ status: 'approved', city: cityFilter }),
-          offerAPI.getAll({ status: 'active', city: cityFilter })
-        ]);
-        setMerchants(merchantRes.merchants || []);
-        const counts = {};
-        (offersRes.offers || []).forEach((o) => {
-          const mId = o.merchantId?._id || o.merchantId;
-          if (mId) counts[mId] = (counts[mId] || 0) + 1;
-        });
-        setOfferCounts(counts);
-      } catch (error) {}
-    };
-    loadMapData();
-  }, [cityFilter]);
+  // Cached per city: returning to the Map tab paints the pins straight away and
+  // refreshes them quietly, instead of an empty map while two requests run again.
+  const { data: mapData } = useQuery({
+    queryKey: ['mapData', cityFilter],
+    enabled: Boolean(cityFilter),
+    staleTime: 60 * 1000,
+    queryFn: async () => {
+      const [merchantRes, offersRes] = await Promise.all([
+        merchantAPI.getAll({ status: 'approved', city: cityFilter }),
+        offerAPI.getAll({ status: 'active', city: cityFilter })
+      ]);
+      const counts = {};
+      (offersRes.offers || []).forEach((o) => {
+        const mId = o.merchantId?._id || o.merchantId;
+        if (mId) counts[mId] = (counts[mId] || 0) + 1;
+      });
+      return { merchants: merchantRes.merchants || [], counts };
+    },
+  });
+  const merchants = mapData?.merchants ?? NO_MERCHANTS;
+  const offerCounts = mapData?.counts ?? NO_COUNTS;
 
   const isMerchantOpen = (merchant) => {
     if (!merchant) return false;

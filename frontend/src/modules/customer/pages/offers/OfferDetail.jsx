@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { motion, AnimatePresence } from 'framer-motion';
 import StarRoundedIcon from '@mui/icons-material/StarRounded';
 import StarBorderRoundedIcon from '@mui/icons-material/StarBorderRounded';
@@ -31,6 +31,7 @@ const OfferDetail = () => {
   const navigate = useNavigate();
   const { isLoggedIn, user, refreshUser } = useApp();
 
+  const queryClient = useQueryClient();
   const [saved, setSaved] = useState({ id: null, value: false });
   const [isRedeeming, setIsRedeeming] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
@@ -84,6 +85,7 @@ const OfferDetail = () => {
     try {
       const response = await userAPI.toggleSavedOffer(id);
       setSaved({ id, value: response.isSaved });
+      queryClient.invalidateQueries({ queryKey: ['savedOffers'] });
       
       // Sync global user state immediately
       await refreshUser();

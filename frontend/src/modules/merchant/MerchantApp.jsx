@@ -30,21 +30,23 @@ import { merchantAPI } from '../../api/merchant.api';
 import OtpVerify from '../customer/pages/auth/OtpVerify';
 import { useSocket } from '../../context/SocketContext';
 import toast from 'react-hot-toast';
+import { merchantPageLoaders as pages, preloadMerchantPages, preloadMerchantPath } from './merchantPages';
 
 // Sub-modules (Lazy Loaded to prevent ad-blockers from crashing the app)
 const MerchantLogin = lazy(() => import('./auth/MerchantLogin'));
 const MerchantSignup = lazy(() => import('./auth/MerchantSignup'));
 const MerchantStatus = lazy(() => import('./auth/MerchantStatus'));
 const MerchantRegistrationFlow = lazy(() => import('./auth/MerchantRegistrationFlow'));
-const MerchantDashboard = lazy(() => import('./pages/Dashboard'));
-const Bookings = lazy(() => import('./pages/Bookings'));
-const Products = lazy(() => import('./pages/Products'));
-const ProductCategories = lazy(() => import('./pages/ProductCategories'));
-const Offers = lazy(() => import('./pages/Offers'));
-const Customers = lazy(() => import('./pages/Customers'));
-const ScannerEntry = lazy(() => import('./pages/ScannerEntry'));
-const Advertise = lazy(() => import('./pages/Advertise'));
-const Insights = lazy(() => import('./pages/Insights'));
+// (import() calls live in merchantPages.js so they can also be prefetched.)
+const MerchantDashboard = lazy(pages.dashboard);
+const Bookings = lazy(pages.bookings);
+const Products = lazy(pages.products);
+const ProductCategories = lazy(pages.categories);
+const Offers = lazy(pages.offers);
+const Customers = lazy(pages.customers);
+const ScannerEntry = lazy(pages.scanner);
+const Advertise = lazy(pages.advertise);
+const Insights = lazy(pages.insights);
 
 // Static Pages (Risk for Ad-Blockers)
 const About = lazy(() => import('./pages/static/About'));
@@ -54,8 +56,8 @@ const Contact = lazy(() => import('./pages/static/Contact'));
 const Support = lazy(() => import('./pages/static/Support'));
 
 // Notifications & Profile
-const Notifications = lazy(() => import('./pages/Notifications'));
-const Profile = lazy(() => import('./pages/Profile'));
+const Notifications = lazy(pages.notifications);
+const Profile = lazy(pages.profile);
 
 import SubscriptionRenewal from './components/SubscriptionRenewal';
 
@@ -120,6 +122,8 @@ const MerchantSidebar = ({ merchant, isMobileMenuOpen, setIsMobileMenuOpen }) =>
         key={item.name}
         to={item.path}
         onClick={handleNavClick}
+        onPointerEnter={() => preloadMerchantPath(item.path)}
+        onPointerDown={() => preloadMerchantPath(item.path)}
         className={`flex items-center gap-3 px-4 py-2.5 rounded-xl transition-all duration-200 group relative ${isActive
             ? 'bg-[#5EB929]/10 text-white font-bold'
             : 'text-gray-400 hover:text-white hover:bg-white/[0.04] font-bold'
@@ -232,6 +236,17 @@ const MerchantSidebar = ({ merchant, isMobileMenuOpen, setIsMobileMenuOpen }) =>
 const MerchantBottomNav = ({ unreadCount, merchant, onOpenMenu, isMenuOpen }) => {
   const location = useLocation();
   const navigate = useNavigate();
+
+  // Highlight the tapped tab immediately rather than after the next page has loaded.
+  // Tied to the page the tap happened on, so it clears itself once the route changes.
+  const [tap, setTap] = useState(null);
+  const currentPath = tap && tap.from === location.pathname ? tap.to : location.pathname;
+
+  const goTo = (path) => {
+    if (path === location.pathname) return;
+    setTap({ from: location.pathname, to: path });
+    navigate(path);
+  };
   const isServiceStore = merchant?.storeType === 'service_based';
 
   const navItems = [
@@ -245,17 +260,19 @@ const MerchantBottomNav = ({ unreadCount, merchant, onOpenMenu, isMenuOpen }) =>
   return (
     <div className="lg:hidden fixed bottom-0 left-0 right-0 z-40 pointer-events-none">
        {/* Background glass bar stuck to edges */}
-       <div className="bg-white/90 backdrop-blur-2xl border-t border-gray-100 h-16 w-full flex items-center justify-around px-2 pointer-events-auto relative shadow-[0_-10px_40px_rgba(0,0,0,0.05)]">
+       <div className="bg-white/95 border-t border-gray-100 h-16 w-full flex items-center justify-around px-2 pointer-events-auto relative shadow-[0_-10px_40px_rgba(0,0,0,0.05)]">
           {navItems.map((item) => {
              const isActive = item.onClick
                ? isMenuOpen
-               : location.pathname === item.path || (item.path !== '/merchant' && location.pathname.startsWith(`${item.path}/`));
+               : currentPath === item.path || (item.path !== '/merchant' && currentPath.startsWith(`${item.path}/`));
              const Icon = item.icon;
 
              if (item.special) {
                 return (
                    <button 
-                      key={item.label} onClick={() => (item.onClick ? item.onClick() : navigate(item.path))}
+                      key={item.label}
+                      onPointerDown={() => item.path && preloadMerchantPath(item.path)}
+                      onClick={() => (item.onClick ? item.onClick() : goTo(item.path))}
                       className="relative -top-5 w-16 h-16 bg-gray-900 text-white rounded-2xl flex items-center justify-center shadow-2xl shadow-black/40 group active:scale-90 transition-all border-4 border-[#F8FAFC]"
                    >
                       <div className="absolute inset-0 bg-[#5EB929] rounded-2xl opacity-0 group-active:opacity-100 transition-opacity" />
@@ -267,14 +284,16 @@ const MerchantBottomNav = ({ unreadCount, merchant, onOpenMenu, isMenuOpen }) =>
 
              return (
                 <button 
-                   key={item.label} onClick={() => (item.onClick ? item.onClick() : navigate(item.path))}
+                   key={item.label}
+                   onPointerDown={() => item.path && preloadMerchantPath(item.path)}
+                   onClick={() => (item.onClick ? item.onClick() : goTo(item.path))}
                    aria-label={item.onClick ? 'Open full menu' : item.label}
                    className="flex flex-col items-center justify-center gap-1 w-14 group transition-all relative h-full"
                 >
                    <div className="relative">
                       <Icon 
                         sx={{ fontSize: 24 }} 
-                        className={`transition-all duration-300 ${isActive ? 'text-[#5EB929]' : 'text-gray-400 group-active:scale-90'}`} 
+                        className={`transition-colors duration-150 ${isActive ? 'text-[#5EB929]' : 'text-gray-400 group-active:scale-90'}`} 
                       />
                       {item.label === 'More' && unreadCount > 0 && (
                          <div className="absolute -top-0.5 -right-0.5 w-2 h-2 bg-[#5EB929] rounded-full border-2 border-white" />
@@ -367,6 +386,14 @@ const MerchantApp = () => {
       fetchMerchant();
     }
   }, [location.pathname, isLoggedIn, user]);
+
+  // Once the real dashboard shell is up, warm every page's code in the background
+  // so tab taps navigate instantly.
+  const isApprovedShell =
+    merchant?.status === 'approved' && !merchant?.isSubscriptionExpired && merchant?.onboardingStep >= 4;
+  useEffect(() => {
+    if (isApprovedShell) preloadMerchantPages();
+  }, [isApprovedShell]);
 
   const { socket } = useSocket();
 
@@ -493,7 +520,7 @@ const MerchantApp = () => {
         )}
         
         {/* Premium Mobile Top Nav */}
-        <div className="lg:hidden fixed top-0 left-0 right-0 z-40 bg-white/80 backdrop-blur-2xl border-b border-gray-100 h-14 flex items-center justify-between px-4">
+        <div className="lg:hidden fixed top-0 left-0 right-0 z-40 bg-white/95 border-b border-gray-100 h-14 flex items-center justify-between px-4">
             <div className="flex items-center gap-2.5">
               {location.pathname !== '/merchant' && (
                 <button 
