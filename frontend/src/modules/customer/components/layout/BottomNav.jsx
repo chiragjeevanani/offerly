@@ -82,7 +82,7 @@ const BottomNav = () => {
                 }}
                 transition={{ type: 'spring', stiffness: 450, damping: 22 }}
                 className={`relative z-10 transition-colors ${
-                  isActive ? 'text-primary' : 'text-gray-400 group-hover:text-gray-600'
+                  isActive ? 'text-primary' : 'text-gray-400'
                 }`}
               >
                 <Icon sx={{ fontSize: 20 }} />
@@ -92,7 +92,7 @@ const BottomNav = () => {
                 className={`relative z-10 text-[10px] tracking-tight leading-none mt-0.5 transition-colors ${
                   isActive
                     ? 'text-primary font-bold'
-                    : 'text-gray-400 group-hover:text-gray-600 font-medium'
+                    : 'text-gray-400 font-medium'
                 }`}
               >
                 {tab.label}

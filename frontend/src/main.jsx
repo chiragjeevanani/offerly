@@ -43,23 +43,10 @@ if (typeof window !== 'undefined') {
   document.addEventListener('gesturechange', (e) => e.preventDefault(), { passive: false });
   document.addEventListener('gestureend', (e) => e.preventDefault(), { passive: false });
 
-  // Prevent double-tap to zoom on mobile touch devices
-  let lastTouchEnd = 0;
-  document.addEventListener(
-    'touchend',
-    (event) => {
-      const now = Date.now();
-      if (now - lastTouchEnd <= 300) {
-        // Only prevent default on non-interactive double taps to avoid zoom
-        const target = event.target;
-        if (target && !['INPUT', 'TEXTAREA', 'SELECT'].includes(target.tagName)) {
-          event.preventDefault();
-        }
-      }
-      lastTouchEnd = now;
-    },
-    { passive: false }
-  );
+  // Double-tap zoom is already disabled by `touch-action: manipulation` on html/body
+  // (index.css). A JS touchend handler used to cancel any touch that followed another
+  // within 300 ms - which also cancelled the *click*, so quickly tapping the bottom
+  // nav silently dropped taps and left the app on the wrong page.
 }
 
 const queryClient = new QueryClient({
