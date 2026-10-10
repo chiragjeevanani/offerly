@@ -312,7 +312,10 @@ const MerchantApp = () => {
   const fetchMerchant = async () => {
     if (isLoggedIn && user) {
       try {
-        setLoading(true);
+        // Full-page loader only for the very first load. Refetches (user object
+        // changing, status events) must keep the current page mounted, or open
+        // modals/forms and scroll position are thrown away.
+        if (!merchant) setLoading(true);
         const [mRes, sRes] = await Promise.all([
           merchantAPI.getById('me'),
           merchantAPI.getMySubscription()

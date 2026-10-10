@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
 import ProductSearchSelect from './ProductSearchSelect';
 import VariantSelector from './VariantSelector';
@@ -24,6 +24,8 @@ const ProductOfferForm = ({ merchant, editingOffer, onSuccess, onCancel }) => {
   });
 
   const [loading, setLoading] = useState(false);
+  const [errors, setErrors] = useState({});
+  const submittingRef = useRef(false);
   const [showPreviewMobile, setShowPreviewMobile] = useState(false);
 
   // Sync with editingOffer
@@ -49,10 +51,17 @@ const ProductOfferForm = ({ merchant, editingOffer, onSuccess, onCancel }) => {
       selectedVariantId: null,
       applyToAllVariants: false
     }));
+    setErrors({});
   };
 
   const handleChange = (field, value) => {
     setFormData(prev => ({ ...prev, [field]: value }));
+    setErrors(prev => {
+      const key = field === 'selectedVariantId' || field === 'applyToAllVariants' ? 'variant' : field;
+      if (!prev[key]) return prev;
+      const { [key]: _cleared, ...rest } = prev;
+      return rest;
+    });
   };
 
   const setQuickValidity = (days) => {
@@ -61,18 +70,58 @@ const ProductOfferForm = ({ merchant, editingOffer, onSuccess, onCancel }) => {
     handleChange('validTo', futureDate.toISOString().split('T')[0]);
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    if (!formData.selectedProduct || !formData.discountValue || !formData.validTo) {
-      return toast.error('Check fields');
+  const validate = () => {
+    const next = {};
+    const product = formData.selectedProduct;
+    if (!product) next.product = 'Choose a product to run this campaign on.';
+
+    if (product?.variants?.length > 0 && !formData.applyToAllVariants && !formData.selectedVariantId) {
+      next.variant = 'Pick a variant, or tick "Apply offer to ALL variants".';
     }
 
+    const value = parseFloat(formData.discountValue);
+    if (!formData.discountValue || !Number.isFinite(value) || value <= 0) {
+      next.discountValue = 'Enter a discount greater than 0.';
+    } else if (formData.discountType === 'percentage' && value > 100) {
+      next.discountValue = 'A percentage discount cannot exceed 100.';
+    }
+
+    if (!formData.validTo) {
+      next.validTo = 'Choose an end date.';
+    } else if (formData.validFrom && formData.validTo < formData.validFrom) {
+      next.validTo = 'End date cannot be before the start date.';
+    }
+
+    if (!formData.unlimitedClaims) {
+      const claims = parseInt(formData.maxRedemptions, 10);
+      if (!Number.isFinite(claims) || claims < 1) next.maxRedemptions = 'Claims must be at least 1.';
+    }
+
+    if (product && !(formData.customImage || product.images?.[0] || merchant?.logo)) {
+      next.product = 'This product has no image. Add one to the product first.';
+    }
+    return next;
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (submittingRef.current) return;
+
+    const found = validate();
+    setErrors(found);
+    const firstKey = Object.keys(found)[0];
+    if (firstKey) {
+      document.getElementById(`offer-field-${firstKey}`)?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      return toast.error(found[firstKey]);
+    }
+
+    submittingRef.current = true;
     setLoading(true);
     try {
       const payload = {
         offerType: 'product',
         productId: formData.selectedProduct._id || formData.selectedProduct.id,
-        variantId: formData.selectedVariantId || null,
+        variantId: formData.applyToAllVariants ? null : (formData.selectedVariantId || null),
         applyToAllVariants: formData.applyToAllVariants,
         title: `${formData.discountValue}${formData.discountType === 'percentage' ? '%' : '₹'} OFF`,
         description: `Get discount on ${formData.selectedProduct.name || 'item'}`,
@@ -95,9 +144,22 @@ const ProductOfferForm = ({ merchant, editingOffer, onSuccess, onCancel }) => {
         toast.success('Campaign Launched!');
       }
       onSuccess?.();
-    } catch (error) { toast.error('Failed'); }
-    finally { setLoading(false); }
+    } catch (error) {
+      console.error('Save campaign error:', error);
+      // The axios interceptor rejects with the response body ({ message, error }) or a plain string.
+      toast.error(
+        (typeof error === 'string' ? error : error?.message || error?.error) ||
+        'Could not save the campaign. Please try again.'
+      );
+    } finally {
+      submittingRef.current = false;
+      setLoading(false);
+    }
   };
+
+  const fieldError = (key) => errors[key] && (
+    <p className="mt-1.5 text-[10px] font-bold text-red-500">{errors[key]}</p>
+  );
 
   const previewData = formData.selectedProduct ? {
     title: `${formData.discountValue || 0}${formData.discountType === 'percentage' ? '%' : '₹'} OFF`,
@@ -121,23 +183,26 @@ const ProductOfferForm = ({ merchant, editingOffer, onSuccess, onCancel }) => {
                 <h3 className="text-[11px] font-bold text-gray-900 uppercase tracking-widest">Target Product</h3>
              </div>
              <ProductSearchSelect onSelect={handleProductSelect} selectedProduct={formData.selectedProduct} />
+             {fieldError('product')}
           </div>
           {formData.selectedProduct?.variants?.length > 0 && (
-            <div className="bg-white rounded-xl border border-gray-100 p-3 lg:p-4 shadow-sm">
+            <div id="offer-field-variant" className="bg-white rounded-xl border border-gray-100 p-3 lg:p-4 shadow-sm">
                <div className="flex items-center gap-2 mb-3">
                   <span className="w-5 h-5 rounded bg-[#5EB929] text-white flex items-center justify-center text-[9px] font-bold">02</span>
                   <h3 className="text-[11px] font-bold text-gray-900 uppercase tracking-widest">Variant</h3>
                </div>
                <VariantSelector
+                  key={formData.selectedProduct._id || formData.selectedProduct.id}
                   productId={formData.selectedProduct._id || formData.selectedProduct.id}
                   selectedVariantId={formData.selectedVariantId}
                   onSelect={(vid) => handleChange('selectedVariantId', vid)}
                   applyToAll={formData.applyToAllVariants}
                   onApplyToAllChange={(checked) => handleChange('applyToAllVariants', checked)}
                />
+               {fieldError('variant')}
             </div>
           )}
-          <div className="bg-white rounded-xl border border-gray-100 p-3 lg:p-4 shadow-sm">
+          <div id="offer-field-discountValue" className="bg-white rounded-xl border border-gray-100 p-3 lg:p-4 shadow-sm">
              <div className="flex items-center gap-2 mb-3">
                 <span className="w-5 h-5 rounded bg-[#5EB929] text-white flex items-center justify-center text-[9px] font-bold">03</span>
                 <h3 className="text-[11px] font-bold text-gray-900 uppercase tracking-widest">Benefit</h3>
@@ -149,8 +214,9 @@ const ProductOfferForm = ({ merchant, editingOffer, onSuccess, onCancel }) => {
                 </select>
                 <input type="number" value={formData.discountValue} onChange={(e) => handleChange('discountValue', e.target.value)} placeholder="Value *" className="w-full px-3 py-2 bg-background rounded-lg border border-transparent text-[12px] font-bold outline-none" />
              </div>
+             {fieldError('discountValue')}
           </div>
-          <div className="bg-white rounded-xl border border-gray-100 p-3 lg:p-4 shadow-sm">
+          <div id="offer-field-validTo" className="bg-white rounded-xl border border-gray-100 p-3 lg:p-4 shadow-sm">
              <div className="flex items-center gap-2 mb-3">
                 <span className="w-5 h-5 rounded bg-[#5EB929] text-white flex items-center justify-center text-[9px] font-bold">04</span>
                 <h3 className="text-[11px] font-bold text-gray-900 uppercase tracking-widest">Timeline</h3>
@@ -163,17 +229,19 @@ const ProductOfferForm = ({ merchant, editingOffer, onSuccess, onCancel }) => {
                    ))}
                 </div>
              </div>
+             {fieldError('validTo')}
           </div>
-          <div className="lg:col-span-2 bg-[#5EB929]/5 rounded-xl border border-[#5EB929]/10 p-3 shadow-sm flex flex-col sm:flex-row items-center justify-between gap-3">
+          <div id="offer-field-maxRedemptions" className="lg:col-span-2 bg-[#5EB929]/5 rounded-xl border border-[#5EB929]/10 p-3 shadow-sm flex flex-col sm:flex-row items-center justify-between gap-3">
              <div className="flex items-center gap-4">
                 <div className="flex items-center gap-2">
                    <label className="text-[10px] font-bold text-gray-400 uppercase">Claims</label>
                    <input type="number" value={formData.maxRedemptions} onChange={(e) => handleChange('maxRedemptions', e.target.value)} className="w-20 px-2 py-1.5 bg-white rounded-lg border border-gray-100 text-[12px] font-bold outline-none" />
+                   {fieldError('maxRedemptions')}
                 </div>
              </div>
              <div className="flex items-center gap-2">
                 <button type="button" onClick={() => setShowPreviewMobile(true)} className="px-3 py-2 bg-white text-gray-500 rounded-lg text-[10px] font-bold uppercase border border-gray-200 hover:bg-gray-50 transition-all">Preview</button>
-                <button type="submit" disabled={loading} className="px-6 py-2 bg-[#5EB929] text-white rounded-lg text-[10px] font-bold uppercase shadow-lg shadow-[#5EB929]/20 active:scale-95 transition-all">
+                <button type="submit" disabled={loading} className="px-6 py-2 bg-[#5EB929] text-white rounded-lg text-[10px] font-bold uppercase shadow-lg shadow-[#5EB929]/20 active:scale-95 transition-all disabled:opacity-60 disabled:cursor-not-allowed">
                    {loading ? 'Wait...' : editingOffer ? 'Save Changes' : 'Launch Campaign'}
                 </button>
              </div>

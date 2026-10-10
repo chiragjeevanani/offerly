@@ -11,26 +11,22 @@ const VariantSelector = ({
   onApplyToAllChange 
 }) => {
   const [variants, setVariants] = useState([]);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(Boolean(productId));
 
   useEffect(() => {
-    if (productId) {
-      loadVariants();
-    }
+    if (!productId) return undefined;
+    // The parent keys this component by product, so state starts fresh per
+    // product; ignore any response that lands after unmount/product change.
+    let cancelled = false;
+    variantAPI.getByProduct(productId)
+      .then((response) => { if (!cancelled) setVariants(response.variants || []); })
+      .catch((error) => {
+        console.error('Load variants error:', error);
+        if (!cancelled) setVariants([]);
+      })
+      .finally(() => { if (!cancelled) setLoading(false); });
+    return () => { cancelled = true; };
   }, [productId]);
-
-  const loadVariants = async () => {
-    setLoading(true);
-    try {
-      const response = await variantAPI.getByProduct(productId);
-      setVariants(response.variants || []);
-    } catch (error) {
-      console.error('Load variants error:', error);
-      setVariants([]);
-    } finally {
-      setLoading(false);
-    }
-  };
 
   if (loading) {
     return (

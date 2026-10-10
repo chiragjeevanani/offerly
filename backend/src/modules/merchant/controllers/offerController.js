@@ -8,6 +8,8 @@ import { getFeedCache, setFeedCache, invalidateFeedCache } from "../../../utils/
 import mongoose from "mongoose";
 import Merchant from "../models/Merchant.js";
 import Offer from "../models/Offer.js";
+import Product from "../models/Product.js";
+import ProductVariant from "../models/ProductVariant.js";
 import OfferView from "../models/OfferView.js";
 import { viewBucketFor } from "../../../utils/analytics.js";
 import City from "../../admin/models/City.js";
@@ -59,8 +61,30 @@ const ensureOfferAllowance = async (merchant) => {
   const offersCount = await Offer.countDocuments({ merchantId: merchant._id });
 
   if (offersCount >= maxOffers) {
-    throw new Error("Current subscription plan offer limit reached");
+    const error = new Error(
+      `Your plan allows ${maxOffers} campaign${maxOffers === 1 ? "" : "s"} and you have reached that limit. End an existing campaign or upgrade your plan.`
+    );
+    error.statusCode = 403;
+    throw error;
   }
+};
+
+// Product/variant ids come from the client, so confirm they belong to this
+// merchant (and the variant to that product) before an offer links to them.
+// Returns an error message, or null when the links are valid.
+const validateProductLinks = async (merchant, { productId, variantId, applyToAllVariants }) => {
+  if (!productId) return null;
+  if (!mongoose.isValidObjectId(productId)) return "Selected product is invalid";
+
+  const product = await Product.findOne({ _id: productId, merchantId: merchant._id }).select("_id");
+  if (!product) return "Selected product was not found in your catalogue";
+
+  if (variantId && !applyToAllVariants) {
+    if (!mongoose.isValidObjectId(variantId)) return "Selected variant is invalid";
+    const variant = await ProductVariant.findOne({ _id: variantId, productId: product._id }).select("_id");
+    if (!variant) return "Selected variant does not belong to the chosen product";
+  }
+  return null;
 };
 
 const FEED_DEFAULTS = {
@@ -991,6 +1015,11 @@ export const createOffer = async (req, res) => {
   
   if (offerType === "service" && !req.body.servicePlanId) {
     return res.status(400).json({ message: "Service Plan ID is required for service-based offers" });
+  }
+
+  const linkError = await validateProductLinks(merchant, req.body);
+  if (linkError) {
+    return res.status(400).json({ message: linkError });
   }
 
   const hasMaxRedemptions =

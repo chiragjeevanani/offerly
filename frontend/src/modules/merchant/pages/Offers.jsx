@@ -74,10 +74,10 @@ const Offers = ({ merchant }) => {
   const deleteMutation = useMutation({
     mutationFn: (id) => offerAPI.delete(id),
     onSuccess: () => {
-      queryClient.invalidateQueries(['merchantOffers', merchant?._id]);
+      queryClient.invalidateQueries({ queryKey: ['merchantOffers'] });
       toast.success('Campaign terminated');
     },
-    onError: () => toast.error('Failed to end offer'),
+    onError: (err) => toast.error(err?.message || err?.error || 'Failed to end offer'),
   });
 
   const offers = useMemo(() => {
@@ -134,9 +134,9 @@ const Offers = ({ merchant }) => {
       if (editingOffer) await offerAPI.update(editingOffer._id || editingOffer.id, payload);
       else await offerAPI.create(payload);
       setIsModalOpen(false);
-      queryClient.invalidateQueries(['merchantOffers', merchant?._id]);
+      queryClient.invalidateQueries({ queryKey: ['merchantOffers'] });
       toast.success('Campaign Synced!');
-    } catch (err) { toast.error('Sync failed'); }
+    } catch (err) { toast.error(err?.message || err?.error || 'Sync failed'); }
   };
 
   return (
@@ -193,10 +193,16 @@ const Offers = ({ merchant }) => {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
           <AnimatePresence mode="popLayout">
             {loadingOffers ? (
-               <div className="col-span-full py-20 flex flex-col items-center gap-3">
-                  <div className="w-8 h-8 border-2 border-primary/20 border-t-primary rounded-full animate-spin" />
-                  <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Syncing Campaigns...</p>
-               </div>
+               [0, 1].map((i) => (
+                  <div key={i} className="bg-white rounded-2xl border border-gray-50 overflow-hidden flex flex-col sm:flex-row h-44 animate-pulse">
+                     <div className="w-full sm:w-44 bg-gray-100" />
+                     <div className="flex-1 p-5 space-y-3">
+                        <div className="h-4 w-2/3 bg-gray-100 rounded" />
+                        <div className="h-3 w-1/3 bg-gray-100 rounded" />
+                        <div className="h-3 w-full bg-gray-100 rounded" />
+                     </div>
+                  </div>
+               ))
             ) : filtered.length === 0 ? (
                <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="col-span-full py-24 text-center bg-white/50 rounded-2xl border border-dashed border-gray-200">
                   <LocalOfferRoundedIcon sx={{ fontSize: 48 }} className="text-gray-200 mb-2" />
@@ -361,9 +367,9 @@ const Offers = ({ merchant }) => {
                      </button>
                    </form>
                  ) : storeConfig?.offer_mode === 'product' || editingOffer?.offerType === 'product' ? (
-                   <ProductOfferForm merchant={merchant} editingOffer={editingOffer} onSuccess={() => { setIsModalOpen(false); queryClient.invalidateQueries(['merchantOffers']); }} onCancel={() => setIsModalOpen(false)} />
+                   <ProductOfferForm merchant={merchant} editingOffer={editingOffer} onSuccess={() => { setIsModalOpen(false); queryClient.invalidateQueries({ queryKey: ['merchantOffers'] }); }} onCancel={() => setIsModalOpen(false)} />
                  ) : (
-                   <ServiceOfferForm merchant={merchant} storeConfig={storeConfig} editingOffer={editingOffer} onSuccess={() => { setIsModalOpen(false); queryClient.invalidateQueries(['merchantOffers']); }} onCancel={() => setIsModalOpen(false)} />
+                   <ServiceOfferForm merchant={merchant} storeConfig={storeConfig} editingOffer={editingOffer} onSuccess={() => { setIsModalOpen(false); queryClient.invalidateQueries({ queryKey: ['merchantOffers'] }); }} onCancel={() => setIsModalOpen(false)} />
                  )}
                </div>
             </motion.div>
