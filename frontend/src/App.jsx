@@ -75,6 +75,25 @@ const PublicOnlyRoute = ({ children }) => {
   return isLoggedIn ? <Navigate to="/home" replace /> : children;
 };
 
+// The splash is branding, not loading - it runs on a timer, not on real progress.
+// Once per browser session is enough; replaying it on every refresh or return
+// visit just adds ~2.5 s in front of an app that is already ready.
+const SPLASH_SEEN_KEY = 'offerly_splash_seen';
+const hasSeenSplash = () => {
+  try {
+    return sessionStorage.getItem(SPLASH_SEEN_KEY) === '1';
+  } catch {
+    return false;
+  }
+};
+const markSplashSeen = () => {
+  try {
+    sessionStorage.setItem(SPLASH_SEEN_KEY, '1');
+  } catch {
+    // Private mode etc. - worst case the splash shows again.
+  }
+};
+
 const AppRoutes = () => {
   const { isLoggedIn, authStatus } = useApp();
   const location = useLocation();
@@ -86,7 +105,7 @@ const AppRoutes = () => {
     if (params.get('splash') === '1' || params.get('splash') === 'true') return true;
     const path = window.location.pathname;
     if (path.startsWith('/merchant') || path.startsWith('/admin')) return false;
-    return true;
+    return !hasSeenSplash();
   });
 
   useEffect(() => {
@@ -99,7 +118,13 @@ const AppRoutes = () => {
   return (
     <>
       {showSplash && !isBusinessRoute && (
-        <SplashScreen onFinish={() => setShowSplash(false)} />
+        <SplashScreen
+          duration={1500}
+          onFinish={() => {
+            markSplashSeen();
+            setShowSplash(false);
+          }}
+        />
       )}
       <Suspense fallback={<PageLoader />}>
       <Routes>

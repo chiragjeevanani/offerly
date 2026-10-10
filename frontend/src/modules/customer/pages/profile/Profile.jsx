@@ -19,7 +19,7 @@ import axios from 'axios';
 import { useApp } from '../../context/AppContext';
 import { bookingAPI } from '../../../../api/booking.api';
 import { userAPI } from '../../../../api/user.api';
-import { cityAPI } from '../../../../api/city.api';
+import { useCities } from '../../../../hooks/useReferenceData';
 import PageTransition from '../../components/ui/PageTransition';
 import BottomSheet from '../../components/ui/BottomSheet';
 import EmojiEventsRoundedIcon from '@mui/icons-material/EmojiEventsRounded';
@@ -75,7 +75,7 @@ const Profile = () => {
   const [redemptionCount, setRedemptionCount] = useState(0);
   const [lifetimeSavings, setLifetimeSavings] = useState(user?.lifetimeSavings || 0);
   const [editSheetOpen, setEditSheetOpen] = useState(false);
-  const [availableCities, setAvailableCities] = useState([]);
+  const { data: availableCities = [] } = useCities();
   const [saving, setSaving] = useState(false);
   const [promptDismissed, setPromptDismissed] = useState(
     () => localStorage.getItem(PROFILE_PROMPT_DISMISSED) === '1'
@@ -129,18 +129,6 @@ const Profile = () => {
     };
     fetchStats();
   }, [user?.lifetimeSavings]);
-
-  useEffect(() => {
-    const fetchCities = async () => {
-      try {
-        const response = await cityAPI.getAll();
-        setAvailableCities(response.cities || []);
-      } catch (error) {
-        console.error('Failed to fetch cities:', error);
-      }
-    };
-    fetchCities();
-  }, []);
 
   // Initialize form when user data is available or sheet opens
   useEffect(() => {

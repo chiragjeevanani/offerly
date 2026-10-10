@@ -24,6 +24,11 @@ import { zoneIdForPoint, zonePath } from '../../../utils/zones.js';
 
 export const getDashboardStats = async (req, res) => {
   try {
+    const sevenDaysAgo = new Date();
+    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+
+    // None of these depend on each other, so they all run at once rather than
+    // as a chain of round-trips.
     const [
       totalCustomers,
       totalMerchants,
@@ -35,6 +40,11 @@ export const getDashboardStats = async (req, res) => {
       totalRedemptions,
       recentMerchants,
       recentRedemptions,
+      revenueResult,
+      activeSubscriptions,
+      revenueByCategory,
+      dailySignups,
+      dailyRedemptions,
     ] = await Promise.all([
       User.countDocuments({ role: 'customer' }),
       Merchant.countDocuments(),
@@ -50,68 +60,61 @@ export const getDashboardStats = async (req, res) => {
         .limit(5)
         .populate('customerId', 'name phone')
         .lean(),
+      // Total revenue from completed redemptions
+      Redemption.aggregate([
+        { $match: { status: { $in: ['completed'] } } },
+        { $group: { _id: null, total: { $sum: '$totals.final' } } },
+      ]),
+      // Active subscriptions count
+      MerchantSubscription.countDocuments({ status: 'active' }),
+      // Revenue by category
+      Redemption.aggregate([
+        { $match: { status: { $in: ['completed'] } } },
+        {
+          $lookup: {
+            from: 'merchants',
+            localField: 'merchantId',
+            foreignField: '_id',
+            as: 'merchant',
+          },
+        },
+        { $unwind: '$merchant' },
+        {
+          $group: {
+            _id: '$merchant.category',
+            revenue: { $sum: '$totals.final' },
+            count: { $sum: 1 },
+          },
+        },
+        { $sort: { revenue: -1 } },
+        { $limit: 6 },
+      ]),
+      // Daily signups (last 7 days)
+      User.aggregate([
+        { $match: { createdAt: { $gte: sevenDaysAgo } } },
+        {
+          $group: {
+            _id: { $dateToString: { format: '%Y-%m-%d', date: '$createdAt' } },
+            count: { $sum: 1 },
+          },
+        },
+        { $sort: { _id: 1 } },
+      ]),
+      // Daily redemptions (last 7 days)
+      Redemption.aggregate([
+        { $match: { createdAt: { $gte: sevenDaysAgo } } },
+        {
+          $group: {
+            _id: { $dateToString: { format: '%Y-%m-%d', date: '$createdAt' } },
+            count: { $sum: 1 },
+            revenue: { $sum: '$totals.final' },
+          },
+        },
+        { $sort: { _id: 1 } },
+      ]),
     ]);
 
-    // Calculate total revenue from completed redemptions
-    const revenueResult = await Redemption.aggregate([
-      { $match: { status: { $in: ['completed'] } } },
-      { $group: { _id: null, total: { $sum: '$totals.final' } } },
-    ]);
     const totalRevenue = revenueResult[0]?.total || 0;
-
-    // Active subscriptions count
-    const activeSubscriptions = await MerchantSubscription.countDocuments({ status: 'active' });
-
-    // Revenue by category
-    const revenueByCategory = await Redemption.aggregate([
-      { $match: { status: { $in: ['completed'] } } },
-      {
-        $lookup: {
-          from: 'merchants',
-          localField: 'merchantId',
-          foreignField: '_id',
-          as: 'merchant',
-        },
-      },
-      { $unwind: '$merchant' },
-      {
-        $group: {
-          _id: '$merchant.category',
-          revenue: { $sum: '$totals.final' },
-          count: { $sum: 1 },
-        },
-      },
-      { $sort: { revenue: -1 } },
-      { $limit: 6 },
-    ]);
-
-    // Daily signups (last 7 days)
-    const sevenDaysAgo = new Date();
-    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
-
-    const dailySignups = await User.aggregate([
-      { $match: { createdAt: { $gte: sevenDaysAgo } } },
-      {
-        $group: {
-          _id: { $dateToString: { format: '%Y-%m-%d', date: '$createdAt' } },
-          count: { $sum: 1 },
-        },
-      },
-      { $sort: { _id: 1 } },
-    ]);
-
-    // Daily redemptions (last 7 days)
-    const dailyRedemptions = await Redemption.aggregate([
-      { $match: { createdAt: { $gte: sevenDaysAgo } } },
-      {
-        $group: {
-          _id: { $dateToString: { format: '%Y-%m-%d', date: '$createdAt' } },
-          count: { $sum: 1 },
-          revenue: { $sum: '$totals.final' },
-        },
-      },
-      { $sort: { _id: 1 } },
-    ]);
 
     res.status(200).json({
       success: true,

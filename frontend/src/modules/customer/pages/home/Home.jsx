@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useQuery } from '@tanstack/react-query';
 import { motion, AnimatePresence } from 'framer-motion';
 import KeyboardArrowDownRoundedIcon from '@mui/icons-material/KeyboardArrowDownRounded';
 import SearchRoundedIcon from '@mui/icons-material/SearchRounded';
@@ -17,11 +18,10 @@ import { useRewardsEnabled } from '../../../../hooks/useRewardsEnabled';
 import BottomSheet from '../../components/ui/BottomSheet';
 import StoreCard from '../../components/ui/StoreCard';
 import PageTransition from '../../components/ui/PageTransition';
-import { categoryAPI } from '../../../../api/category.api';
 import { offerAPI } from '../../../../api/offer.api';
 import { merchantAPI } from '../../../../api/merchant.api';
-import { cityAPI } from '../../../../api/city.api';
 import { adAPI } from '../../../../api/adRequest.api';
+import { useCities, useCategories } from '../../../../hooks/useReferenceData';
 import OfferCard from '../../components/ui/OfferCard';
 import AllStoresClosedView from '../../components/home/AllStoresClosedView';
 import CategoryTile from '../../../../components/CategoryTile';
@@ -81,161 +81,145 @@ const SectionHeader = ({ title, icon: Icon, onAction, actionText = 'View All' })
   </div>
 );
 
+// Whether Home has already played its entrance animation this session. Coming
+// back to Home from another tab would otherwise replay every fade/slide, which
+// reads as the whole page re-rendering.
+let homeEntryPlayed = false;
+
+const EMPTY_FEED = {
+  banners: [],
+  trending: [],
+  nearby: [],
+  stores: [],
+  recommended: [],
+};
+
 const Home = () => {
   const navigate = useNavigate();
   const { enabled: rewardsEnabled } = useRewardsEnabled();
-  const { user, selectedCity, setSelectedCity, setSelectedCategory } = useApp();
+  const { user, selectedCity, setSelectedCity, setSelectedCategory, userLocation } = useApp();
   const useUnifiedFeed = import.meta.env.VITE_USE_UNIFIED_FEED !== 'false';
-  const [categories, setCategories] = useState([]);
+  const { data: categories = [] } = useCategories();
+  const { data: availableCities = [] } = useCities();
   // Admin controls which categories appear in "Select Services" (Category.showOnHome).
   const homeCategories = useMemo(() => categories.filter((c) => c.showOnHome !== false), [categories]);
   const [citySheetOpen, setCitySheetOpen] = useState(false);
-  const [availableCities, setAvailableCities] = useState([]);
-  const [userCoords, setUserCoords] = useState(null);
-  const [cityRequired, setCityRequired] = useState(false);
 
-
-  // Sections data
-  const [featuredBanners, setFeaturedBanners] = useState([]);
-  const [trendingOffers, setTrendingOffers] = useState([]);
-  const [nearbyOffers, setNearbyOffers] = useState([]);
-  const [recommendedOffers, setRecommendedOffers] = useState([]);
-  const [mostPopulatedStores, setMostPopulatedStores] = useState([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const [animateEntry] = useState(() => !homeEntryPlayed);
+  useEffect(() => {
+    homeEntryPlayed = true;
+  }, []);
+  const enter = (y = 16, delay = 0) =>
+    animateEntry
+      ? { initial: { opacity: 0, y }, animate: { opacity: 1, y: 0 }, transition: { delay } }
+      : { initial: false };
 
   // Carousel state
   const [currentSlide, setCurrentSlide] = useState(0);
 
-  // 1. Get User Location on Mount
-  useEffect(() => {
-    if ("geolocation" in navigator) {
-      navigator.geolocation.getCurrentPosition(
-        (position) => {
-          setUserCoords({
-            lat: position.coords.latitude,
-            lng: position.coords.longitude
-          });
-        },
-        (error) => {
-          console.log('Location access denied or unavailable:', error.message);
-        }
-      );
-    }
-  }, []);
+  const resolvedCity = selectedCity !== 'Select City' ? selectedCity : (user?.city || '');
+  const cityRequired = !resolvedCity;
 
-  // 2. Load basic items (Categories & Cities) that don't depend on selection
-  useEffect(() => {
-    const loadBasics = async () => {
-      try {
-        const [catRes, cityRes] = await Promise.all([
-          categoryAPI.getAll(),
-          cityAPI.getAll()
-        ]);
-        setCategories(catRes.categories || []);
-        setAvailableCities(cityRes.cities || []);
-      } catch (error) {
-        console.error('Failed to load basics:', error);
-      }
-    };
-    loadBasics();
-  }, []);
+  // Zone only applies when browsing the profile's own city - switching city for
+  // browsing shouldn't carry over a zone that belongs to a different city's zone list.
+  const zone = resolvedCity === user?.city && user?.zone ? user.zone : undefined;
+  const userLat = userLocation?.lat;
+  const userLng = userLocation?.lng;
 
-  // 3. MAIN DATA SYNC: Reactive to selectedCity and userCoords
-  useEffect(() => {
-    const loadData = async () => {
-      setIsLoading(true);
-      try {
-        const resolvedCity =
-          selectedCity !== 'Select City' ? selectedCity : (user?.city || '');
+  // The key uses ~100 m precision so GPS jitter doesn't count as "a new location";
+  // the request itself still sends the exact position. Switching city or location
+  // keeps the previous feed on screen until the new one lands (no skeleton flash),
+  // and coming back to Home inside the stale window renders instantly from cache.
+  const { data: feed, isError: feedFailed } = useQuery({
+    queryKey: [
+      'homeFeed',
+      useUnifiedFeed,
+      resolvedCity,
+      zone ?? null,
+      userLat !== undefined ? Number(userLat.toFixed(3)) : null,
+      userLng !== undefined ? Number(userLng.toFixed(3)) : null,
+    ],
+    enabled: !cityRequired,
+    placeholderData: (previous, previousQuery) =>
+      previousQuery?.queryKey?.[2] === resolvedCity ? previous : undefined,
+    staleTime: 60 * 1000,
+    queryFn: async () => {
+      const baseParams = { city: resolvedCity, zone, userLat, userLng };
 
-        if (!resolvedCity) {
-          setCityRequired(true);
-          setFeaturedBanners([]);
-          setTrendingOffers([]);
-          setNearbyOffers([]);
-          setRecommendedOffers([]);
-          setMostPopulatedStores([]);
-          setIsLoading(false);
-          return;
-        }
+      if (useUnifiedFeed) {
+        const feedResponse = await offerAPI.getFeed(baseParams);
+        const buckets = feedResponse?.buckets || {};
 
-        setCityRequired(false);
-
-        // Base query parameters. Zone only applies when browsing the profile's
-        // own city — switching city for browsing shouldn't carry over a zone
-        // that belongs to a different city's zone list.
-        const baseParams = {
-          city: resolvedCity,
-          ...(resolvedCity === user?.city && user?.zone ? { zone: user.zone } : {}),
-          userLat: userCoords?.lat,
-          userLng: userCoords?.lng
+        return {
+          banners: feedResponse?.banners || [],
+          trending: buckets.trendingOffers || [],
+          nearby: buckets.nearYouOffers || [],
+          stores: buckets.mostPopulatedStores || [],
+          recommended: buckets.recommendedOffers || [],
         };
-
-        if (useUnifiedFeed) {
-          const feedResponse = await offerAPI.getFeed(baseParams);
-          const buckets = feedResponse?.buckets || {};
-
-          setFeaturedBanners(feedResponse?.banners || []);
-          setTrendingOffers(buckets.trendingOffers || []);
-          setNearbyOffers(buckets.nearYouOffers || []);
-          setMostPopulatedStores(buckets.mostPopulatedStores || []);
-          setRecommendedOffers(buckets.recommendedOffers || []);
-        } else {
-          // Legacy fallback mode
-          const [
-            adsResponse,
-            trendingOffersResponse,
-            nearbyOffersResponse,
-            trendingMerchantsResponse
-          ] = await Promise.all([
-            adAPI.getApproved({ city: baseParams.city }),
-            offerAPI.getAll({ ...baseParams, status: 'active', isTrending: true, limit: 5 }),
-            offerAPI.getAll({ ...baseParams, status: 'active', limit: 4 }),
-            merchantAPI.getAll({
-              ...baseParams,
-              status: 'approved',
-              sortBy: 'totalRedemptions',
-              sortOrder: 'desc',
-              limit: 3
-            }),
-          ]);
-
-          const allAds = adsResponse.ads || [];
-          const trendingOffersData = trendingOffersResponse.offers || [];
-          const nearbyOffersData = nearbyOffersResponse.offers || [];
-          const trendingStores = trendingMerchantsResponse.merchants || [];
-
-          const adBanners = allAds.map(ad => ({
-            ...ad,
-            id: ad._id,
-            title: ad.title || `${ad.storeName} Promotion`,
-            image: ad.image,
-            merchantId: ad.merchantId,
-            isAd: true
-          }));
-
-          const organicTrending = trendingOffersData.map(o => ({
-            ...o,
-            id: o._id,
-            isAd: false
-          }));
-
-          setFeaturedBanners([...adBanners, ...organicTrending].slice(0, 5));
-          setTrendingOffers(trendingOffersData);
-          setNearbyOffers(nearbyOffersData);
-          setMostPopulatedStores(trendingStores);
-          setRecommendedOffers([]);
-        }
-
-      } catch (error) {
-        console.error('Failed to sync home page data:', error);
-      } finally {
-        setIsLoading(false);
       }
-    };
 
-    loadData();
-  }, [selectedCity, user?.city, user?.zone, userCoords, useUnifiedFeed]);
+      // Legacy fallback mode
+      const [
+        adsResponse,
+        trendingOffersResponse,
+        nearbyOffersResponse,
+        trendingMerchantsResponse
+      ] = await Promise.all([
+        adAPI.getApproved({ city: baseParams.city }),
+        offerAPI.getAll({ ...baseParams, status: 'active', isTrending: true, limit: 5 }),
+        offerAPI.getAll({ ...baseParams, status: 'active', limit: 4 }),
+        merchantAPI.getAll({
+          ...baseParams,
+          status: 'approved',
+          sortBy: 'totalRedemptions',
+          sortOrder: 'desc',
+          limit: 3
+        }),
+      ]);
+
+      const allAds = adsResponse.ads || [];
+      const trendingOffersData = trendingOffersResponse.offers || [];
+
+      const adBanners = allAds.map(ad => ({
+        ...ad,
+        id: ad._id,
+        title: ad.title || `${ad.storeName} Promotion`,
+        image: ad.image,
+        merchantId: ad.merchantId,
+        isAd: true
+      }));
+
+      const organicTrending = trendingOffersData.map(o => ({
+        ...o,
+        id: o._id,
+        isAd: false
+      }));
+
+      return {
+        banners: [...adBanners, ...organicTrending].slice(0, 5),
+        trending: trendingOffersData,
+        nearby: nearbyOffersResponse.offers || [],
+        stores: trendingMerchantsResponse.merchants || [],
+        recommended: [],
+      };
+    },
+  });
+
+  const {
+    banners: featuredBanners,
+    trending: trendingOffers,
+    nearby: nearbyOffers,
+    stores: mostPopulatedStores,
+    recommended: recommendedOffers,
+  } = cityRequired ? EMPTY_FEED : (feed ?? EMPTY_FEED);
+
+  // Skeletons only while there is genuinely nothing to show yet (and not once a
+  // request has definitively failed, which would leave them pulsing forever).
+  const isLoading = !cityRequired && feed === undefined && !feedFailed;
+
+  // Banners can shrink after a refetch; never index past the end.
+  const activeSlide = currentSlide < featuredBanners.length ? currentSlide : 0;
 
   // 4. Auto-sliding Carousel interval
   useEffect(() => {
@@ -279,9 +263,7 @@ const Home = () => {
 
         {/* 1. Clean Search Bar */}
         <motion.section
-          variants={itemVariants}
-          initial="hidden"
-          animate="visible"
+          {...(animateEntry ? { variants: itemVariants, initial: 'hidden', animate: 'visible' } : { initial: false })}
           className="pt-0"
         >
           <button
@@ -297,8 +279,7 @@ const Home = () => {
 
         {!isLoading && cityRequired && (
           <motion.section
-            initial={{ opacity: 0, y: 12 }}
-            animate={{ opacity: 1, y: 0 }}
+            {...enter(12)}
             className="bg-amber-50 border border-amber-200 rounded-2xl p-4"
           >
             <h3 className="text-sm font-semibold text-amber-900">Select your city to see local offers</h3>
@@ -315,7 +296,7 @@ const Home = () => {
         )}
 
         {/* 2. Categories Section */}
-        <motion.section variants={containerVariants} initial="hidden" animate="visible">
+        <motion.section {...(animateEntry ? { variants: containerVariants, initial: 'hidden', animate: 'visible' } : { initial: false })}>
           <div className="flex items-center justify-between mb-3 px-0.5">
              <h2 className="text-base font-bold text-gray-900 tracking-tight">Select Services</h2>
              <button onClick={() => navigate('/explore')} className="text-xs font-semibold text-primary hover:underline">View All</button>
@@ -327,9 +308,9 @@ const Home = () => {
                 return (
                   <motion.button
                     key={cat._id || idx}
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    transition={{ delay: idx * 0.04 }}
+                    {...(animateEntry
+                      ? { initial: { opacity: 0 }, animate: { opacity: 1 }, transition: { delay: idx * 0.03 } }
+                      : { initial: false })}
                     whileTap={{ scale: 0.94 }}
                     onClick={() => cat._id === 'more' ? navigate('/explore') : handleCategoryClick(cat.name)}
                     className="flex flex-col items-center gap-1.5 flex-shrink-0 snap-start group w-[60px]"
@@ -367,11 +348,7 @@ const Home = () => {
           <>
             {/* Claim Milestones & Scratch Cards Quick Banner */}
             {rewardsEnabled && (
-            <motion.section
-              initial={{ opacity: 0, y: 12 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.15 }}
-            >
+            <motion.section {...enter(12)}>
           <div
             onClick={() => navigate('/rewards')}
             className="flex items-center justify-between bg-gradient-to-r from-primary-50 via-emerald-50 to-primary-50/50 border border-primary/20 rounded-2xl p-3.5 shadow-sm hover:shadow-md cursor-pointer transition-all active:scale-[0.99] group"
@@ -398,12 +375,7 @@ const Home = () => {
 
         {/* 3. Top Promotions (High-End Carousel) */}
         {!isLoading && featuredBanners.length > 0 && (
-          <motion.section
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.2 }}
-            className="relative"
-          >
+          <motion.section {...enter(20)} className="relative">
             <div className="flex items-center justify-between mb-2 px-0.5">
                <h2 className="text-base font-bold text-gray-900 tracking-tight flex items-center gap-2">
                   <LocalOfferRoundedIcon sx={{ fontSize: 18 }} className="text-primary" />
@@ -415,7 +387,7 @@ const Home = () => {
                       key={idx}
                       onClick={() => setCurrentSlide(idx)}
                       className={`h-1.5 rounded-full transition-all duration-300 ${
-                        idx === currentSlide ? 'bg-primary w-6' : 'bg-gray-200 w-1.5 hover:bg-gray-300'
+                        idx === activeSlide ? 'bg-primary w-6' : 'bg-gray-200 w-1.5 hover:bg-gray-300'
                       }`}
                     />
                   ))}
@@ -425,21 +397,21 @@ const Home = () => {
             <div className="relative aspect-[16/9] md:aspect-[3/1] md:max-h-[400px] rounded-3xl overflow-hidden shadow-card-hover border border-gray-100 group">
               <AnimatePresence mode="wait">
                   <motion.div
-                  key={currentSlide}
+                  key={activeSlide}
                   initial={{ opacity: 0, scale: 1.05 }}
                   animate={{ opacity: 1, scale: 1 }}
                   exit={{ opacity: 0, scale: 0.98 }}
                   transition={{ duration: 0.45, ease: "circOut" }}
                   className="absolute inset-0 cursor-pointer"
                   onClick={() => {
-                    const banner = featuredBanners[currentSlide];
+                    const banner = featuredBanners[activeSlide];
                     if (banner.isAd) navigate(`/store/${banner.merchantId}`);
                     else navigate(`/offer/${banner._id || banner.id}`);
                   }}
                 >
                   <img
-                    src={featuredBanners[currentSlide].image || '/placeholders/banner.webp'}
-                    alt={featuredBanners[currentSlide].title}
+                    src={featuredBanners[activeSlide].image || '/placeholders/banner.webp'}
+                    alt={featuredBanners[activeSlide].title}
                     className="w-full h-full object-cover transition-transform duration-[4000ms] group-hover:scale-105"
                     onError={(e) => {
                       e.currentTarget.src = '/placeholders/banner.webp';
@@ -454,7 +426,7 @@ const Home = () => {
                        </span>
                     </div>
                     <h3 className="text-white text-lg md:text-2xl font-bold leading-tight line-clamp-1 drop-shadow-md">
-                      {featuredBanners[currentSlide].title}
+                      {featuredBanners[activeSlide].title}
                     </h3>
                   </div>
                 </motion.div>
@@ -465,11 +437,7 @@ const Home = () => {
 
         {/* 4. Trending Offers */}
         {!isLoading && trendingOffers.length > 0 && (
-          <motion.section
-            initial={{ opacity: 0, y: 16 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.3 }}
-          >
+          <motion.section {...enter(16)}>
             <div className="flex items-center justify-between mb-2.5 px-0.5">
                <h2 className="text-base font-bold text-gray-900 tracking-tight flex items-center gap-2">
                   <TrendingUpRoundedIcon sx={{ fontSize: 18 }} className="text-primary" />
@@ -489,11 +457,7 @@ const Home = () => {
 
         {/* 5. Most Populated Stores */}
         {!isLoading && mostPopulatedStores.length > 0 && (
-          <motion.section
-             initial={{ opacity: 0, y: 16 }}
-             animate={{ opacity: 1, y: 0 }}
-             transition={{ delay: 0.4 }}
-          >
+          <motion.section {...enter(16)}>
             <div className="flex items-center justify-between mb-2.5 px-0.5">
                <h2 className="text-base font-bold text-gray-900 tracking-tight flex items-center gap-2">
                   <StorefrontRoundedIcon sx={{ fontSize: 18 }} className="text-primary" />
@@ -505,9 +469,9 @@ const Home = () => {
               {mostPopulatedStores.map((merchant, idx) => (
                 <motion.div
                   key={merchant._id || merchant.id}
-                  initial={{ opacity: 0, x: -8 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: 0.45 + idx * 0.05 }}
+                  {...(animateEntry
+                    ? { initial: { opacity: 0, x: -8 }, animate: { opacity: 1, x: 0 }, transition: { delay: Math.min(idx, 4) * 0.04 } }
+                    : { initial: false })}
                 >
                   <StoreCard
                     merchant={merchant}
@@ -522,19 +486,13 @@ const Home = () => {
 
         {/* 6. Nearby Offers */}
         {!isLoading && nearbyOffers.length > 0 && (
-          <motion.section
-            initial={{ opacity: 0, y: 16 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.45 }}
-          >
+          <motion.section {...enter(16)}>
             <SectionHeader title="Deals Near You" onAction={() => navigate('/explore')} />
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {nearbyOffers.map((offer, idx) => (
                 <motion.div
                   key={offer._id || offer.id}
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.5 + idx * 0.07 }}
+                  {...enter(10, Math.min(idx, 4) * 0.04)}
                 >
                   <OfferCard offer={offer} variant="list" viewSource="feed" />
                 </motion.div>
@@ -545,19 +503,13 @@ const Home = () => {
 
         {/* 7. Recommended Offers */}
         {!isLoading && recommendedOffers.length > 0 && (
-          <motion.section
-            initial={{ opacity: 0, y: 16 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.5 }}
-          >
+          <motion.section {...enter(16)}>
             <SectionHeader title="Recommended for You" onAction={() => navigate('/explore')} />
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {recommendedOffers.map((offer, idx) => (
                 <motion.div
                   key={offer._id || offer.id}
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.52 + idx * 0.06 }}
+                  {...enter(10, Math.min(idx, 4) * 0.04)}
                 >
                   <OfferCard offer={offer} variant="list" viewSource="feed" />
                 </motion.div>

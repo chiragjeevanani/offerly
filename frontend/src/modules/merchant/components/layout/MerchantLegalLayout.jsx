@@ -89,7 +89,7 @@ const MerchantLegalLayout = ({ children, activeTab, isEmbedded = false }) => {
 
             <Link to="/merchant/login" className="flex items-center gap-2.5 group">
               <img
-                src="/offerly-logo-ring.png"
+                src="/offerly-logo-ring-256.webp"
                 alt="Offerly"
                 className="w-7 h-7 object-contain group-hover:scale-105 transition-transform"
               />
@@ -201,7 +201,7 @@ const MerchantLegalLayout = ({ children, activeTab, isEmbedded = false }) => {
             {/* Column 1: Brand */}
             <div className="md:col-span-2 space-y-3">
               <div className="flex items-center gap-2.5">
-                <img src="/offerly-logo-ring.png" alt="Offerly" className="w-6 h-6 object-contain" />
+                <img src="/offerly-logo-ring-256.webp" alt="Offerly" className="w-6 h-6 object-contain" />
                 <span className="font-extrabold text-gray-900 text-sm tracking-tight uppercase">
                   OFFERLY<span className="text-[#5EB929] italic">BIZ</span>
                 </span>

@@ -1,9 +1,20 @@
-import { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import { createContext, useContext, useState, useEffect, useCallback, useMemo } from 'react';
 import { storage } from '../../../utils/storage';
 import { userAPI } from '../../../api/user.api';
 import { releasePushTokenOnLogout } from '../../../utils/push';
 
 const AuthContext = createContext(null);
+
+// The profile check on startup almost always returns exactly what is already in
+// localStorage. Swapping in a fresh-but-identical object would still re-render
+// every consumer and re-fire every effect keyed on `user`, so keep the old one.
+const isSameUser = (a, b) => {
+  try {
+    return JSON.stringify(a) === JSON.stringify(b);
+  } catch {
+    return false;
+  }
+};
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(() => storage.getUser());
@@ -22,7 +33,7 @@ export const AuthProvider = ({ children }) => {
       try {
         const response = await userAPI.getProfile();
         const profile = response.user || response;
-        setUser(profile);
+        setUser((prev) => (isSameUser(prev, profile) ? prev : profile));
         setAuthStatus('authenticated');
         storage.setUser(profile);
       } catch (error) {
@@ -69,14 +80,17 @@ export const AuthProvider = ({ children }) => {
     setAuthStatus('unauthenticated');
   }, []);
 
-  const value = {
-    user,
-    authStatus,
-    isLoggedIn: authStatus === 'authenticated',
-    login,
-    logout,
-    refreshUser,
-  };
+  const value = useMemo(
+    () => ({
+      user,
+      authStatus,
+      isLoggedIn: authStatus === 'authenticated',
+      login,
+      logout,
+      refreshUser,
+    }),
+    [user, authStatus, login, logout, refreshUser]
+  );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };

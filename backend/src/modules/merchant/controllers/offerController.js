@@ -50,6 +50,60 @@ const getEffectivePlan = async (merchant) => {
   return plan;
 };
 
+// getEffectivePlan for a whole list of merchants in two queries at most, instead of
+// one or two per merchant (or, worse, per offer). Same precedence: the newest
+// unexpired active subscription's plan wins, else the merchant's own subscriptionPlanId.
+const getEffectivePlansByMerchant = async (merchants) => {
+  const planByMerchantId = new Map();
+  if (!merchants.length) {
+    return planByMerchantId;
+  }
+
+  const subscriptions = await MerchantSubscription.find({
+    merchantId: { $in: merchants.map((merchant) => merchant._id) },
+    status: "active",
+    endDate: { $gte: new Date() },
+  })
+    .populate("planId")
+    .sort({ createdAt: -1 })
+    .lean();
+
+  const newestPlanByMerchantId = new Map();
+  for (const subscription of subscriptions) {
+    const key = toObjectIdString(subscription.merchantId);
+    if (!newestPlanByMerchantId.has(key)) {
+      newestPlanByMerchantId.set(key, subscription.planId);
+    }
+  }
+
+  const fallbackPlanIds = new Set();
+  for (const merchant of merchants) {
+    const key = toObjectIdString(merchant._id);
+    const plan = newestPlanByMerchantId.get(key);
+    if (plan) {
+      planByMerchantId.set(key, plan);
+    } else if (merchant.subscriptionPlanId) {
+      fallbackPlanIds.add(toObjectIdString(merchant.subscriptionPlanId));
+    }
+  }
+
+  if (fallbackPlanIds.size) {
+    const fallbackPlans = await Plan.find({ _id: { $in: [...fallbackPlanIds] } }).lean();
+    const fallbackPlanById = new Map(fallbackPlans.map((plan) => [toObjectIdString(plan._id), plan]));
+    for (const merchant of merchants) {
+      const key = toObjectIdString(merchant._id);
+      const plan = merchant.subscriptionPlanId
+        ? fallbackPlanById.get(toObjectIdString(merchant.subscriptionPlanId))
+        : null;
+      if (!planByMerchantId.has(key) && plan) {
+        planByMerchantId.set(key, plan);
+      }
+    }
+  }
+
+  return planByMerchantId;
+};
+
 const ensureOfferAllowance = async (merchant) => {
   const plan = await getEffectivePlan(merchant);
   const maxOffers = Number(plan?.maxOffers);
@@ -263,6 +317,145 @@ const buildAffinityWeights = async (user) => {
   };
 };
 
+// Everything in the feed that doesn't depend on who is asking: the city's stores,
+// their live offers, 30-day redemption counts, ad banners and plans. Cached per
+// city/zone so a thousand customers in one city share one set of queries instead
+// of each paying for their own, and concurrent misses share a single load.
+const feedBaseInflight = new Map();
+
+const loadFeedBase = async ({ selectedCity, normalizedCityKey, selectedZone, bannersLimit }) => {
+  // Prefixed with the city so invalidateFeedCache({ city }) clears it too.
+  const baseKey = `${normalizedCityKey}|base|zone:${selectedZone || "any"}|banners:${bannersLimit}`;
+
+  const cached = getFeedCache(baseKey);
+  if (cached) {
+    return cached;
+  }
+
+  if (feedBaseInflight.has(baseKey)) {
+    return feedBaseInflight.get(baseKey);
+  }
+
+  const loading = (async () => {
+    const exactCityRegex = new RegExp(`^${escapeRegex(selectedCity)}$`, "i");
+    const fuzzyCityRegex = new RegExp(escapeRegex(selectedCity), "i");
+    const merchantFields =
+      "_id storeName businessName verified coordinates city zone isOpen businessHours totalRedemptions avgRating totalReviews logo coverImage category";
+
+    let cityMerchants = await Merchant.find({
+      status: "approved",
+      city: exactCityRegex,
+    })
+      .select(merchantFields)
+      .lean();
+
+    if (!cityMerchants.length) {
+      cityMerchants = await Merchant.find({
+        status: "approved",
+        city: fuzzyCityRegex,
+      })
+        .select(merchantFields)
+        .lean();
+    }
+
+    // Stores whose membership lapsed drop out of the feed until they renew.
+    cityMerchants = await filterActiveMerchants(cityMerchants);
+
+    // Narrow to the customer's zone when possible, but never let zone under-adoption
+    // (most merchants/customers still have no zone set) produce an empty feed.
+    // Stores outside every zone stay visible city-wide, so a store never
+    // disappears just because no hexagon covers it yet.
+    if (selectedZone) {
+      const zoneMerchants = cityMerchants.filter((merchant) => merchant.zone === selectedZone || !merchant.zone);
+      if (zoneMerchants.some((merchant) => merchant.zone === selectedZone)) {
+        cityMerchants = zoneMerchants;
+      }
+    }
+
+    const merchantIds = cityMerchants.map((merchant) => merchant._id);
+
+    if (!merchantIds.length) {
+      return {
+        cityMerchants,
+        activeOffers: [],
+        offerRedemptionsById: new Map(),
+        storeRedemptionsById: new Map(),
+        approvedAds: [],
+        planByMerchantId: new Map(),
+      };
+    }
+
+    const now = new Date();
+    const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+
+    const [activeOffers, offerRedemptionRows, storeRedemptionRows, approvedAds, planByMerchantId] = await Promise.all([
+      Offer.find({
+        status: "active",
+        merchantId: { $in: merchantIds },
+        $or: [{ validTo: { $gte: now } }, { validTo: null }],
+      })
+        .select(
+          "_id merchantId offerType productId variantId applyToAllVariants servicePlanId bookingRequired bookingWindowDays title description discountType discountValue validFrom validTo maxRedemptions currentRedemptions image customImage useCustomImage status impressions saves terms category isTrending isNewOffer createdAt updatedAt",
+        )
+        .lean(),
+      Redemption.aggregate([
+        {
+          $match: {
+            status: "completed",
+            createdAt: { $gte: thirtyDaysAgo },
+            merchantId: { $in: merchantIds },
+            offerId: { $ne: null },
+          },
+        },
+        { $group: { _id: "$offerId", count: { $sum: 1 } } },
+      ]),
+      Redemption.aggregate([
+        {
+          $match: {
+            status: "completed",
+            createdAt: { $gte: thirtyDaysAgo },
+            merchantId: { $in: merchantIds },
+          },
+        },
+        { $group: { _id: "$merchantId", count: { $sum: 1 } } },
+      ]),
+      AdRequest.find({
+        status: "approved",
+        merchantId: { $in: merchantIds },
+        $or: [{ expiryAt: null }, { expiryAt: { $gt: now } }],
+      })
+        .select("_id merchantId storeName image")
+        .sort({ createdAt: -1 })
+        .limit(bannersLimit)
+        .lean(),
+      getEffectivePlansByMerchant(cityMerchants),
+    ]);
+
+    return {
+      cityMerchants,
+      activeOffers,
+      offerRedemptionsById: new Map(
+        offerRedemptionRows.map((item) => [toObjectIdString(item._id), Number(item.count || 0)]),
+      ),
+      storeRedemptionsById: new Map(
+        storeRedemptionRows.map((item) => [toObjectIdString(item._id), Number(item.count || 0)]),
+      ),
+      approvedAds,
+      planByMerchantId,
+    };
+  })();
+
+  feedBaseInflight.set(baseKey, loading);
+
+  try {
+    const base = await loading;
+    setFeedCache(baseKey, base);
+    return base;
+  } finally {
+    feedBaseInflight.delete(baseKey);
+  }
+};
+
 export const getOffersFeed = async (req, res) => {
   const requestStartedAt = Date.now();
   const selectedCity = resolveFeedCity(req);
@@ -282,14 +475,7 @@ export const getOffersFeed = async (req, res) => {
   // An explicitly chosen zone wins; otherwise the customer's live location
   // decides which zone's stores they see first.
   let selectedZone = resolveFeedZone(req);
-  if (!selectedZone && userLat !== null && userLng !== null) {
-    const cityDoc = await City.findOne({
-      name: new RegExp(`^\\s*${escapeRegex(selectedCity.trim())}\\s*$`, "i"),
-    })
-      .select("zones")
-      .lean();
-    selectedZone = zoneIdForPoint(cityDoc, { lat: userLat, lng: userLng });
-  }
+  const needsZoneLookup = !selectedZone && userLat !== null && userLng !== null;
 
   const limitConfig = {
     trendingLimit: parseLimit(req.query.trendingLimit, FEED_DEFAULTS.trendingLimit),
@@ -299,7 +485,21 @@ export const getOffersFeed = async (req, res) => {
     bannersLimit: parseLimit(req.query.bannersLimit, FEED_DEFAULTS.bannersLimit),
   };
 
-  const affinity = await buildAffinityWeights(req.user);
+  // The zone lookup and the affinity queries don't depend on each other.
+  const [affinity, cityDoc] = await Promise.all([
+    buildAffinityWeights(req.user),
+    needsZoneLookup
+      ? City.findOne({
+          name: new RegExp(`^\\s*${escapeRegex(selectedCity.trim())}\\s*$`, "i"),
+        })
+          .select("zones")
+          .lean()
+      : null,
+  ]);
+  if (needsZoneLookup) {
+    selectedZone = zoneIdForPoint(cityDoc, { lat: userLat, lng: userLng });
+  }
+
   const coordsKey =
     userLat !== null && userLng !== null
       ? `${userLat.toFixed(2)}:${userLng.toFixed(2)}`
@@ -318,42 +518,19 @@ export const getOffersFeed = async (req, res) => {
     });
   }
 
-  const exactCityRegex = new RegExp(`^${escapeRegex(selectedCity)}$`, "i");
-  const fuzzyCityRegex = new RegExp(escapeRegex(selectedCity), "i");
-
-  let cityMerchants = await Merchant.find({
-    status: "approved",
-    city: exactCityRegex,
-  })
-    .select(
-      "_id storeName businessName verified coordinates city zone isOpen businessHours totalRedemptions avgRating totalReviews logo coverImage category",
-    )
-    .lean();
-
-  if (!cityMerchants.length) {
-    cityMerchants = await Merchant.find({
-      status: "approved",
-      city: fuzzyCityRegex,
-    })
-      .select(
-        "_id storeName businessName verified coordinates city zone isOpen businessHours totalRedemptions avgRating totalReviews logo coverImage category",
-      )
-      .lean();
-  }
-
-  // Stores whose membership lapsed drop out of the feed until they renew.
-  cityMerchants = await filterActiveMerchants(cityMerchants);
-
-  // Narrow to the customer's zone when possible, but never let zone under-adoption
-  // (most merchants/customers still have no zone set) produce an empty feed.
-  // Stores outside every zone stay visible city-wide, so a store never
-  // disappears just because no hexagon covers it yet.
-  if (selectedZone) {
-    const zoneMerchants = cityMerchants.filter((merchant) => merchant.zone === selectedZone || !merchant.zone);
-    if (zoneMerchants.some((merchant) => merchant.zone === selectedZone)) {
-      cityMerchants = zoneMerchants;
-    }
-  }
+  const {
+    cityMerchants,
+    activeOffers,
+    offerRedemptionsById,
+    storeRedemptionsById,
+    approvedAds,
+    planByMerchantId,
+  } = await loadFeedBase({
+    selectedCity,
+    normalizedCityKey,
+    selectedZone,
+    bannersLimit: limitConfig.bannersLimit,
+  });
 
   const merchantIds = cityMerchants.map((merchant) => merchant._id);
   const generatedAt = new Date().toISOString();
@@ -387,57 +564,6 @@ export const getOffersFeed = async (req, res) => {
   }
 
   const merchantById = new Map(cityMerchants.map((merchant) => [toObjectIdString(merchant._id), merchant]));
-  const now = new Date();
-  const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
-
-  const [activeOffers, offerRedemptionRows, storeRedemptionRows, approvedAds] = await Promise.all([
-    Offer.find({
-      status: "active",
-      merchantId: { $in: merchantIds },
-      $or: [{ validTo: { $gte: now } }, { validTo: null }],
-    })
-      .select(
-        "_id merchantId offerType productId variantId applyToAllVariants servicePlanId bookingRequired bookingWindowDays title description discountType discountValue validFrom validTo maxRedemptions currentRedemptions image customImage useCustomImage status impressions saves terms category isTrending isNewOffer createdAt updatedAt",
-      )
-      .lean(),
-    Redemption.aggregate([
-      {
-        $match: {
-          status: "completed",
-          createdAt: { $gte: thirtyDaysAgo },
-          merchantId: { $in: merchantIds },
-          offerId: { $ne: null },
-        },
-      },
-      { $group: { _id: "$offerId", count: { $sum: 1 } } },
-    ]),
-    Redemption.aggregate([
-      {
-        $match: {
-          status: "completed",
-          createdAt: { $gte: thirtyDaysAgo },
-          merchantId: { $in: merchantIds },
-        },
-      },
-      { $group: { _id: "$merchantId", count: { $sum: 1 } } },
-    ]),
-    AdRequest.find({
-      status: "approved",
-      merchantId: { $in: merchantIds },
-      $or: [{ expiryAt: null }, { expiryAt: { $gt: now } }],
-    })
-      .select("_id merchantId storeName image")
-      .sort({ createdAt: -1 })
-      .limit(limitConfig.bannersLimit)
-      .lean(),
-  ]);
-
-  const offerRedemptionsById = new Map(
-    offerRedemptionRows.map((item) => [toObjectIdString(item._id), Number(item.count || 0)]),
-  );
-  const storeRedemptionsById = new Map(
-    storeRedemptionRows.map((item) => [toObjectIdString(item._id), Number(item.count || 0)]),
-  );
 
   const offerCountByMerchantId = {};
   const rankedOffers = [];
@@ -449,7 +575,7 @@ export const getOffersFeed = async (req, res) => {
     }
 
     // Get Merchant Plan for Visibility Boost
-    const plan = await getEffectivePlan(merchant);
+    const plan = planByMerchantId.get(toObjectIdString(merchant._id));
     const planBoost = plan?.name?.toLowerCase().includes('enterprise') ? 15 : (plan?.name?.toLowerCase().includes('business') ? 8 : 0);
     const planName = plan?.name || 'Starter';
 
@@ -812,15 +938,30 @@ export const getOffers = async (req, res) => {
     .skip(skip)
     .limit(limit);
 
-  const offers = await offersQuery;
-  const totalOffers = await Offer.countDocuments(query);
+  const [offers, totalOffers] = await Promise.all([offersQuery, Offer.countDocuments(query)]);
+
+  // One query for every distinct plan on the page, instead of one per offer.
+  const planIds = [
+    ...new Set(
+      offers
+        .map((offer) => offer.merchantId?.subscriptionPlanId)
+        .filter(Boolean)
+        .map(String),
+    ),
+  ];
+  const planNameById = new Map(
+    (planIds.length ? await Plan.find({ _id: { $in: planIds } }).select("name").lean() : []).map((plan) => [
+      String(plan._id),
+      plan.name,
+    ]),
+  );
 
   // Parse user coordinates for distance calculation
   const userLat = req.query.userLat ? parseFloat(req.query.userLat) : null;
   const userLng = req.query.userLng ? parseFloat(req.query.userLng) : null;
 
   // Enrich offers with merchant data and distance
-  let enrichedOffers = await Promise.all(offers.map(async (offer) => {
+  let enrichedOffers = offers.map((offer) => {
     const offerObj = offer.toObject();
 
     // Add merchant name
@@ -829,11 +970,11 @@ export const getOffers = async (req, res) => {
 
       // Plan boost logic for general list
       let planBoost = 0;
-      if (offerObj.merchantId.subscriptionPlanId) {
-        const plan = await Plan.findById(offerObj.merchantId.subscriptionPlanId);
-        if (plan) {
-           planBoost = plan.name.toLowerCase().includes('enterprise') ? 15 : (plan.name.toLowerCase().includes('business') ? 8 : 0);
-        }
+      const planName = offerObj.merchantId.subscriptionPlanId
+        ? planNameById.get(String(offerObj.merchantId.subscriptionPlanId))
+        : null;
+      if (planName) {
+        planBoost = planName.toLowerCase().includes('enterprise') ? 15 : (planName.toLowerCase().includes('business') ? 8 : 0);
       }
       offerObj.planBoost = planBoost;
 
@@ -874,7 +1015,7 @@ export const getOffers = async (req, res) => {
     }
 
     return offerObj;
-  }));
+  });
 
   // Re-sort if nearby is requested or by plan boost. Open stores always sort
   // ahead of closed ones, regardless of the requested sort mode.

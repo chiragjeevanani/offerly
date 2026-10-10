@@ -16,9 +16,8 @@ export const getCities = async (req, res) => {
       City.find({ status: 'active' })
         .select('name status coordinates zones')
         .lean(),
-      Merchant.find({ status: 'approved', city: { $exists: true, $ne: '' } })
-        .select('city')
-        .lean(),
+      // Only the distinct names are needed, not one row per approved store.
+      Merchant.distinct('city', { status: 'approved', city: { $exists: true, $ne: '' } }),
       Merchant.aggregate([
         { $match: { status: 'approved', zone: { $nin: ['', null] } } },
         { $group: { _id: '$zone', count: { $sum: 1 } } },
@@ -38,15 +37,16 @@ export const getCities = async (req, res) => {
       cities.map((city) => [city.name.trim().toLowerCase(), city]),
     );
 
-    for (const merchant of merchantCities) {
-      const normalizedKey = merchant.city.trim().toLowerCase();
-      if (mergedCities.has(normalizedKey)) {
+    for (const merchantCity of merchantCities) {
+      if (typeof merchantCity !== 'string') continue;
+      const normalizedKey = merchantCity.trim().toLowerCase();
+      if (!normalizedKey || mergedCities.has(normalizedKey)) {
         continue;
       }
 
       mergedCities.set(normalizedKey, {
         _id: `merchant-city-${normalizedKey}`,
-        name: toTitleCase(merchant.city),
+        name: toTitleCase(merchantCity),
         status: 'active',
         coordinates: { lat: 0, lng: 0 },
         zones: [],

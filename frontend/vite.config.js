@@ -11,8 +11,5 @@ export default defineConfig({
     hmr: {
       overlay: true
     }
-  },
-  optimizeDeps: {
-    force: true
   }
 })

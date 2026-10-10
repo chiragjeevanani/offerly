@@ -71,5 +71,9 @@ const merchantSubscriptionSchema = new mongoose.Schema(
   { timestamps: true },
 );
 
+// Feed, offer-allowance and renewal checks all look up a merchant's newest active
+// subscription; without this they scan every row for that merchant.
+merchantSubscriptionSchema.index({ merchantId: 1, status: 1, endDate: -1 });
+
 export default mongoose.models.MerchantSubscription ||
   mongoose.model("MerchantSubscription", merchantSubscriptionSchema);

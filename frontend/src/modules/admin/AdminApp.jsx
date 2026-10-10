@@ -94,7 +94,7 @@ const AdminSidebar = ({ isMobileMenuOpen, setIsMobileMenuOpen }) => {
         <div className="px-6 py-6 border-b border-[#1F232B]/50 flex items-center justify-between">
           <div>
             <h1 className="text-2xl font-bold tracking-tight text-white uppercase flex items-center gap-2.5">
-              <img src="/offerly-logo-ring.png" alt="Offerly" className="w-8 h-8 object-contain" />
+              <img src="/offerly-logo-ring-256.webp" alt="Offerly" className="w-8 h-8 object-contain" />
               Offerly
             </h1>
             <p className="text-[9px] font-bold text-[#5EB929] uppercase tracking-[.35em] mt-1.5 ml-10">Control Center</p>

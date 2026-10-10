@@ -10,19 +10,19 @@ import PageTransition from '../../components/ui/PageTransition';
 const loginBanners = [
   {
     id: 1,
-    image: '/banners/login-banner-1.png?v=4',
+    image: '/banners/login-banner-1.webp?v=4',
     alt: 'Offerly - Discover Local Deals Near You',
     badge: 'Verified Deals',
   },
   {
     id: 2,
-    image: '/banners/login-banner-2.png?v=4',
+    image: '/banners/login-banner-2.webp?v=4',
     alt: 'Offerly - Enter Number to Join & Save',
     badge: 'Instant Access',
   },
   {
     id: 3,
-    image: '/banners/login-banner-3.png?v=4',
+    image: '/banners/login-banner-3.webp?v=4',
     alt: 'Offerly - Start Exploring Local Offers',
     badge: 'Exclusive Perks',
   },
@@ -479,7 +479,7 @@ const CustomerLogin = () => {
             <div className="hidden md:flex relative z-10 w-full items-center justify-between pb-3">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 md:w-11 md:h-11 rounded-2xl bg-[#5EB929]/5 border border-gray-100 p-2 flex items-center justify-center shadow-lg shadow-gray-200/60">
-                  <img src="/offerly-logo-ring.png" alt="Offerly Logo" className="w-full h-full object-contain" />
+                  <img src="/offerly-logo-ring-256.webp" alt="Offerly Logo" className="w-full h-full object-contain" />
                 </div>
                 <div>
                   <h2 className="text-gray-900 font-black text-xl tracking-tight leading-none flex items-center gap-1.5">

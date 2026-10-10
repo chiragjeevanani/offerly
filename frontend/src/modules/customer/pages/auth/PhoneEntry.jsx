@@ -45,7 +45,7 @@ const PhoneEntry = () => {
             transition={{ type: 'spring', stiffness: 300, delay: 0.1 }}
             className="w-16 h-16 bg-white/20 backdrop-blur-sm rounded-2xl flex items-center justify-center p-2"
           >
-            <img src="/offerly-logo-ring.png" alt="Offerly" className="w-full h-full object-contain" />
+            <img src="/offerly-logo-ring-256.webp" alt="Offerly" className="w-full h-full object-contain" />
           </motion.div>
           <motion.div
             initial={{ opacity: 0, y: 8 }}

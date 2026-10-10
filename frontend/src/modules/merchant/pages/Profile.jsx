@@ -24,7 +24,8 @@ import SpaRoundedIcon from '@mui/icons-material/SpaRounded';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 import SaveRoundedIcon from '@mui/icons-material/SaveRounded';
 import StorefrontRoundedIcon from '@mui/icons-material/StorefrontRounded';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { merchantAPI } from '../../../api/merchant.api';
 import { cityAPI } from '../../../api/city.api';
 import PlaceRoundedIcon from '@mui/icons-material/PlaceRounded';
@@ -61,7 +62,6 @@ const menuSections = [
 const Profile = ({ merchant, onMerchantUpdate }) => {
   const navigate = useNavigate();
   const { logout } = useApp();
-  const [stats, setStats] = useState({ revenue: 0, bookings: 0, offers: 0, rating: 0 });
   const [updatingStoreType, setUpdatingStoreType] = useState(false);
   const [storeType, setStoreType] = useState(merchant?.storeType || 'product_based');
 
@@ -114,22 +114,24 @@ const Profile = ({ merchant, onMerchantUpdate }) => {
     }
   }, [merchant]);
 
-  useEffect(() => {
-    const fetchStats = async () => {
-      try {
-        const response = await merchantAPI.getDashboard();
-        if (response?.stats) {
-          setStats({
-            revenue: response.stats.revenue || 0,
-            bookings: response.stats.bookingsCount || 0,
-            offers: response.stats.offersCount || 0,
-            rating: merchant?.avgRating || 0,
-          });
-        }
-      } catch (err) {}
-    };
-    fetchStats();
-  }, [merchant]);
+  // Same query (and cache entry) as the Dashboard, so opening Profile right after
+  // it doesn't re-run the dashboard's seven aggregations. It only refetches if the
+  // cached copy is more than a minute old.
+  const { data: dashboardData } = useQuery({
+    queryKey: ['merchantDashboard', merchant?._id],
+    queryFn: () => merchantAPI.getDashboard(),
+    enabled: !!merchant?._id,
+    staleTime: 60 * 1000,
+  });
+  const stats = useMemo(
+    () => ({
+      revenue: dashboardData?.stats?.revenue || 0,
+      bookings: dashboardData?.stats?.bookingsCount || 0,
+      offers: dashboardData?.stats?.offersCount || 0,
+      rating: merchant?.avgRating || 0,
+    }),
+    [dashboardData, merchant?.avgRating]
+  );
 
   const handleStoreTypeChange = async (nextType) => {
     if (storeType === nextType || updatingStoreType) return;

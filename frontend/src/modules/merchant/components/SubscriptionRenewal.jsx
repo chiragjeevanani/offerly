@@ -134,7 +134,7 @@ const SubscriptionRenewal = ({ merchant }) => {
         {/* Brand Header */}
         <div className="flex items-center justify-between mb-8">
           <div className="flex items-center gap-2">
-            <img src="/offerly-logo-ring.png" alt="Offerly" className="w-9 h-9 object-contain" />
+            <img src="/offerly-logo-ring-256.webp" alt="Offerly" className="w-9 h-9 object-contain" />
             <span className="text-xl font-black tracking-tight text-gray-900 uppercase">
               OFFERLY<span className="text-[#16A34A] italic">BIZ</span>
             </span>

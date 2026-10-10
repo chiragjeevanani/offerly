@@ -1,12 +1,11 @@
 import { useState, useMemo, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, keepPreviousData } from '@tanstack/react-query';
 import SearchRoundedIcon from '@mui/icons-material/SearchRounded';
 import ChevronRightRoundedIcon from '@mui/icons-material/ChevronRightRounded';
 
-import { categoryAPI } from '../../../../api/category.api';
 import { offerAPI } from '../../../../api/offer.api';
-import { cityAPI } from '../../../../api/city.api';
+import { useCities, useCategories } from '../../../../hooks/useReferenceData';
 import { CategoryChip } from '../../components/ui/CategoryChip';
 import OfferCard from '../../components/ui/OfferCard';
 import PageTransition from '../../components/ui/PageTransition';
@@ -34,28 +33,16 @@ const Explore = () => {
   // Use debounced search text to trigger queries to avoid network flood
   const debouncedSearch = useDebounce(searchText, 500);
 
-  // 1. Fetch Categories and Cities (Static-ish data)
-  const { data: basics } = useQuery({
-    queryKey: ['basics'],
-    queryFn: async () => {
-      const [catRes, cityRes] = await Promise.all([
-        categoryAPI.getAll(),
-        cityAPI.getAll()
-      ]);
-      return {
-        categories: ['All', ...catRes.categories.map(c => c.name)],
-        allCities: cityRes.cities || []
-      };
-    },
-    staleTime: 1000 * 60 * 60, // 1 hour stale time for categories/cities
-  });
-
-  const categories = basics?.categories || ['All'];
-  const allCities = basics?.allCities || [];
+  // 1. Categories and Cities (shared, cached reference data)
+  const { data: categoryList } = useCategories();
+  const { data: cityList } = useCities();
+  const categories = useMemo(() => ['All', ...(categoryList || []).map((c) => c.name)], [categoryList]);
+  const allCities = useMemo(() => cityList || [], [cityList]);
 
   // 2. Fetch Offers based on filters
   const { data, isLoading: isOffersLoading } = useQuery({
-    queryKey: ['offers', cityFilter || 'no-city', selectedCategory, selectedZone, debouncedSearch, page, userLocation?.lat],
+    // ~1 km precision: a GPS wobble shouldn't count as a different query.
+    queryKey: ['offers', cityFilter || 'no-city', selectedCategory, selectedZone, debouncedSearch, page, userLocation ? Number(userLocation.lat.toFixed(2)) : null],
     queryFn: async () => {
       if (!cityFilter) {
         return { offers: [], totalPages: 1 };
@@ -80,10 +67,12 @@ const Explore = () => {
         total: response.total || 0
       };
     },
-    keepPreviousData: true,
+    // v5 spelling of keepPreviousData - the old `keepPreviousData: true` option is ignored,
+    // which made every filter/page change blank the list behind a skeleton.
+    placeholderData: keepPreviousData,
   });
 
-  const offers = data?.offers || [];
+  const offers = useMemo(() => data?.offers || [], [data]);
   const totalPages = data?.totalPages || 1;
 
   // 3. Derived states (Memoized to prevent lag during typing)

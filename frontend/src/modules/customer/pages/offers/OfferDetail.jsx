@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { useQuery } from '@tanstack/react-query';
 import { motion, AnimatePresence } from 'framer-motion';
 import StarRoundedIcon from '@mui/icons-material/StarRounded';
 import StarBorderRoundedIcon from '@mui/icons-material/StarBorderRounded';
@@ -30,46 +31,45 @@ const OfferDetail = () => {
   const navigate = useNavigate();
   const { isLoggedIn, user, refreshUser } = useApp();
 
-  const [offer, setOffer] = useState(null);
-  const [merchant, setMerchant] = useState(null);
-  const [reviews, setReviews] = useState([]);
-  const [isSaved, setIsSaved] = useState(false);
+  const [saved, setSaved] = useState({ id: null, value: false });
   const [isRedeeming, setIsRedeeming] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
-  const [loading, setLoading] = useState(true);
+
+  // Cached per offer id: opening an offer you've already seen is instant, and a
+  // refreshed `user` object no longer triggers a refetch of the whole page.
+  const {
+    data: offerData,
+    isLoading: loading,
+    isError: offerFailed,
+  } = useQuery({
+    queryKey: ['offer', id],
+    queryFn: () => offerAPI.getById(id),
+    staleTime: 60 * 1000,
+  });
+  const offer = offerData?.offer ?? null;
+  const merchant = offer?.merchant ?? null;
+  const merchantId = offer?.merchant?._id || offer?.merchantId;
+
+  // Reviews load alongside the page rather than holding it back.
+  const { data: reviews = [] } = useQuery({
+    queryKey: ['merchantReviews', merchantId],
+    enabled: Boolean(merchantId),
+    queryFn: async () => {
+      const reviewRes = await reviewAPI.getMerchantReviews(merchantId);
+      return reviewRes.data?.slice(0, 3) || [];
+    },
+    staleTime: 5 * 60 * 1000,
+  });
 
   useEffect(() => {
-    const loadOffer = async () => {
-      try {
-        const response = await offerAPI.getById(id);
-        if (response && response.offer) {
-          const o = response.offer;
-          setOffer(o);
-          setMerchant(o.merchant);
-          
-          const merchantId = o.merchant?._id || o.merchantId;
-          if (merchantId) {
-            try {
-              const reviewRes = await reviewAPI.getMerchantReviews(merchantId);
-              setReviews(reviewRes.data?.slice(0, 3) || []);
-            } catch (err) {
-              console.error('Failed to fetch reviews:', err);
-            }
-          }
-          
-          setIsSaved(user?.savedOffers?.includes(id) || false);
-        }
-      } catch (error) {
-        console.error('Failed to fetch offer:', error);
-        toast.error('Offer not found');
-        navigate('/explore');
-      } finally {
-        setLoading(false);
-      }
-    };
-    
-    loadOffer();
-  }, [id, navigate, user]);
+    if (offerFailed) {
+      toast.error('Offer not found');
+      navigate('/explore');
+    }
+  }, [offerFailed, navigate]);
+
+  // Until the customer taps save/unsave here, trust what their profile says.
+  const isSaved = saved.id === id ? saved.value : (user?.savedOffers?.includes(id) || false);
 
   const handleSave = async () => {
     if (!isLoggedIn) {
@@ -83,7 +83,7 @@ const OfferDetail = () => {
     setIsSaving(true);
     try {
       const response = await userAPI.toggleSavedOffer(id);
-      setIsSaved(response.isSaved);
+      setSaved({ id, value: response.isSaved });
       
       // Sync global user state immediately
       await refreshUser();

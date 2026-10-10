@@ -45,8 +45,12 @@ app.use(
 app.use(
   express.json({
     limit: "30mb",
+    // Only the Razorpay webhook needs the exact bytes (for its signature check).
+    // Copying every request body into a string doubles memory on big payloads.
     verify: (req, _res, buffer) => {
-      req.rawBody = buffer.toString("utf8");
+      if (req.originalUrl.includes("/razorpay/webhook")) {
+        req.rawBody = buffer.toString("utf8");
+      }
     },
   }),
 );

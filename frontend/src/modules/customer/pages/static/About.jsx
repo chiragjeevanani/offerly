@@ -64,7 +64,7 @@ const About = () => {
             animate={{ scale: 1, opacity: 1 }}
             className="w-20 h-20 bg-white/10 rounded-3xl flex items-center justify-center mx-auto mb-6 backdrop-blur-md border border-white/10 p-3"
           >
-            <img src="/offerly-logo-ring.png" alt="Offerly" className="w-full h-full object-contain" />
+            <img src="/offerly-logo-ring-256.webp" alt="Offerly" className="w-full h-full object-contain" />
           </motion.div>
           
           <motion.h1

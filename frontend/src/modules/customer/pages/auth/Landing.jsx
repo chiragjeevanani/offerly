@@ -27,7 +27,7 @@ const Landing = () => {
             className="mb-8"
           >
             <div className="w-24 h-24 bg-white rounded-3xl shadow-2xl flex items-center justify-center mb-6 mx-auto p-3">
-              <img src="/offerly-logo-ring.png" alt="Offerly" className="w-full h-full object-contain" />
+              <img src="/offerly-logo-ring-256.webp" alt="Offerly" className="w-full h-full object-contain" />
             </div>
             <img src="/offerlylogo.png" alt="Offerly" className="h-12 object-contain mx-auto mb-3 filter drop-shadow-md brightness-0 invert" onError={(e) => { e.currentTarget.style.display = 'none'; }} />
             <h1 className="text-5xl font-bold text-white tracking-wide mb-3 hidden">

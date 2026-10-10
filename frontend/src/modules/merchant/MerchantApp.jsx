@@ -155,7 +155,7 @@ const MerchantSidebar = ({ merchant, isMobileMenuOpen, setIsMobileMenuOpen }) =>
       {/* ── Brand + Store Info ─────────────────── */}
       <div className="p-6 pb-5">
         <div className="flex items-center gap-2.5">
-          <img src="/offerly-logo-ring.png" alt="Offerly" className="w-7 h-7 object-contain" />
+          <img src="/offerly-logo-ring-256.webp" alt="Offerly" className="w-7 h-7 object-contain" />
           <h1 className="text-xl font-display font-bold text-white tracking-tight uppercase">
              OFFERLY<span className="text-[#5EB929] italic">BIZ</span>
           </h1>
@@ -503,7 +503,7 @@ const MerchantApp = () => {
                   <ArrowBackIosNewRoundedIcon sx={{ fontSize: 16 }} />
                 </button>
               )}
-              <img src="/offerly-logo-ring.png" alt="Offerly" className="w-6 h-6 object-contain" />
+              <img src="/offerly-logo-ring-256.webp" alt="Offerly" className="w-6 h-6 object-contain" />
               <h1 className="text-[15px] font-bold text-gray-900 tracking-tight uppercase">
                  OFFERLY<span className="text-[#5EB929] italic">BIZ</span>
               </h1>

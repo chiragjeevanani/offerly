@@ -58,7 +58,7 @@ const MerchantLogin = () => {
               animate={{ scale: 1, opacity: 1 }}
               className="w-16 h-16 bg-gray-900 rounded-[1.5rem] flex items-center justify-center shadow-xl shadow-black/20 p-2.5"
             >
-              <img src="/offerly-logo-ring.png" alt="Offerly" className="w-full h-full object-contain" />
+              <img src="/offerly-logo-ring-256.webp" alt="Offerly" className="w-full h-full object-contain" />
             </motion.div>
             <div className="text-center">
               <h1 className="text-gray-900 font-bold text-2xl tracking-tight">Offerly Biz</h1>

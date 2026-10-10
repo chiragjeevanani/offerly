@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import NotificationsRoundedIcon from '@mui/icons-material/NotificationsRounded';
@@ -14,6 +14,7 @@ import KeyboardArrowDownRoundedIcon from '@mui/icons-material/KeyboardArrowDownR
 import MyLocationRoundedIcon from '@mui/icons-material/MyLocationRounded';
 import BottomSheet from '../ui/BottomSheet';
 import { useApp } from '../../context/AppContext';
+import { useCities } from '../../../../hooks/useReferenceData';
 
 // Nav links to display in the new top bar (desktop only)
 const navLinks = [
@@ -27,10 +28,23 @@ const TopBar = () => {
   const location = useLocation();
   const { unreadCount, selectedCity, setSelectedCity, currentLocation, setCurrentLocation, fetchLocation, isLocating } = useApp();
   const [showLocationSheet, setShowLocationSheet] = useState(false);
+  const { data: allCities = [] } = useCities();
+
+  // Switch City lists only the cities the admin has set up in City & Zone
+  // management. Merchant-only entries (ids "merchant-city-…") are left out.
+  const cities = useMemo(
+    () => allCities.filter((c) => !String(c._id).startsWith('merchant-city-')),
+    [allCities]
+  );
+
+  useEffect(() => {
+    if (!selectedCity && cities.length) setSelectedCity(cities[0].name);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [cities]);
 
   // Determine back navigation context if deeply nested (though mainly handled gracefully by browser)
   const isNested = location.pathname.startsWith('/offer/') || location.pathname.startsWith('/store/');
-  const activeLocation = currentLocation || selectedCity || 'Indore, Madhya Pradesh';
+  const activeLocation = currentLocation || selectedCity || 'Select city';
 
   return (
     <>
@@ -55,7 +69,7 @@ const TopBar = () => {
           className="lg:hidden flex items-center gap-2 cursor-pointer group min-w-0 flex-1" 
           onClick={() => setShowLocationSheet(true)}
         >
-          <img src="/offerly-logo-ring.png" alt="Offerly" className="w-8 h-8 sm:w-9 sm:h-9 object-contain drop-shadow-sm flex-shrink-0" />
+          <img src="/offerly-logo-ring-256.webp" alt="Offerly" className="w-8 h-8 sm:w-9 sm:h-9 object-contain drop-shadow-sm flex-shrink-0" />
           <div className="flex flex-col min-w-0 flex-1">
             <span className="font-bold text-sm sm:text-base text-gray-900 leading-tight">Offerly</span>
             <div className="flex items-center gap-1 mt-0.5 min-w-0">
@@ -74,7 +88,7 @@ const TopBar = () => {
 
       <div className="hidden lg:flex items-center gap-8 flex-1">
         <div className="flex items-center gap-3 cursor-pointer group" onClick={() => navigate('/home')}>
-          <img src="/offerly-logo-ring.png" alt="Offerly" className="w-10 h-10 object-contain drop-shadow-sm" />
+          <img src="/offerly-logo-ring-256.webp" alt="Offerly" className="w-10 h-10 object-contain drop-shadow-sm" />
           <span className="font-bold text-xl text-gray-900 tracking-tight">
             Offerly
           </span>
@@ -197,13 +211,13 @@ const TopBar = () => {
         <div>
           <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2.5">Switch City</p>
           <div className="grid grid-cols-2 gap-2">
-            {['Indore', 'Bhopal', 'Mumbai', 'Delhi', 'Pune', 'Ujjain'].map((c) => (
+            {cities.map(({ _id, name: c }) => (
               <button
-                key={c}
+                key={_id}
                 onClick={() => {
                   setSelectedCity(c);
-                  setCurrentLocation(`${c}, Madhya Pradesh`);
-                  localStorage.setItem('offerly_full_location', `${c}, Madhya Pradesh`);
+                  setCurrentLocation(c);
+                  localStorage.setItem('offerly_full_location', c);
                   setShowLocationSheet(false);
                 }}
                 className={`py-2.5 px-3 rounded-xl border text-xs font-semibold text-left transition-all ${
@@ -216,6 +230,9 @@ const TopBar = () => {
               </button>
             ))}
           </div>
+          {cities.length === 0 && (
+            <p className="text-xs text-gray-400">No cities available yet.</p>
+          )}
         </div>
       </div>
     </BottomSheet>

@@ -119,7 +119,7 @@ const MerchantSignup = () => {
               <ArrowBackRoundedIcon sx={{ fontSize: 20 }} />
             </motion.button>
             <div className="flex items-center gap-2">
-              <img src="/offerly-logo-ring.png" alt="Offerly" className="w-8 h-8 object-contain" />
+              <img src="/offerly-logo-ring-256.webp" alt="Offerly" className="w-8 h-8 object-contain" />
               <span className="text-gray-900 font-bold text-sm tracking-tight uppercase">Offerly<span className="text-[#5EB929] italic">Biz</span></span>
             </div>
           </div>
