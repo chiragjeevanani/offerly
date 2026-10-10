@@ -237,14 +237,25 @@ const MerchantBottomNav = ({ unreadCount, merchant, onOpenMenu, isMenuOpen }) =>
   const location = useLocation();
   const navigate = useNavigate();
 
-  // Highlight the tapped tab immediately rather than after the next page has loaded.
-  // Tied to the page the tap happened on, so it clears itself once the route changes.
-  const [tap, setTap] = useState(null);
-  const currentPath = tap && tap.from === location.pathname ? tap.to : location.pathname;
+  // The highlight follows the LAST tab tapped, not the last page to finish loading,
+  // so quick taps don't leave it trailing behind. Released once the route reaches the
+  // tapped tab, with a timeout in case navigation never lands.
+  const [tappedPath, setTappedPath] = useState(null);
+  const currentPath = tappedPath ?? location.pathname;
+
+  useEffect(() => {
+    if (tappedPath && location.pathname === tappedPath) setTappedPath(null);
+  }, [location.pathname, tappedPath]);
+
+  useEffect(() => {
+    if (!tappedPath) return undefined;
+    const timer = setTimeout(() => setTappedPath(null), 3000);
+    return () => clearTimeout(timer);
+  }, [tappedPath]);
 
   const goTo = (path) => {
-    if (path === location.pathname) return;
-    setTap({ from: location.pathname, to: path });
+    if (path === currentPath) return;
+    setTappedPath(path);
     navigate(path);
   };
   const isServiceStore = merchant?.storeType === 'service_based';

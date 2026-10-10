@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import HomeRoundedIcon from '@mui/icons-material/HomeRounded';
@@ -22,11 +22,22 @@ const BottomNav = () => {
   const location = useLocation();
   const isKeyboardOpen = useKeyboardVisible();
 
-  // The tapped tab lights up immediately. Without this the highlight only moved
-  // once the next page had finished loading, so a tap looked ignored. Tied to the
-  // page the tap happened on, so it clears itself as soon as the route changes.
-  const [tap, setTap] = useState(null);
-  const currentPath = tap && tap.from === location.pathname ? tap.to : location.pathname;
+  // The highlight follows the LAST tab tapped, not the last page to finish loading.
+  // Otherwise quick taps (Home -> Explore -> Map) make the pill land on whichever
+  // page happens to commit first and trail behind the finger. It's released once
+  // the route reaches the tapped tab, with a timeout in case navigation never lands.
+  const [tappedPath, setTappedPath] = useState(null);
+  const currentPath = tappedPath ?? location.pathname;
+
+  useEffect(() => {
+    if (tappedPath && location.pathname === tappedPath) setTappedPath(null);
+  }, [location.pathname, tappedPath]);
+
+  useEffect(() => {
+    if (!tappedPath) return undefined;
+    const timer = setTimeout(() => setTappedPath(null), 3000);
+    return () => clearTimeout(timer);
+  }, [tappedPath]);
 
   if (isKeyboardOpen) return null;
 
@@ -49,8 +60,8 @@ const BottomNav = () => {
               // ~100 ms before the click event fires.
               onPointerDown={() => preloadCustomerPath(tab.path)}
               onClick={() => {
-                if (tab.path === location.pathname) return;
-                setTap({ from: location.pathname, to: tab.path });
+                if (tab.path === currentPath) return;
+                setTappedPath(tab.path);
                 navigate(tab.path);
               }}
               className="relative flex flex-col items-center justify-center flex-1 py-1 px-1 rounded-xl transition-all duration-150 select-none group"
