@@ -158,6 +158,9 @@ const AddProductModal = ({ isOpen, onClose, merchant, editingProduct, onSave }) 
         categoryType: isProductBased ? 'product_based' : 'service_based',
         isVeg: (behaviour.showVeg && isProductBased) ? (formData.isVeg ?? false) : null,
         price: parseFloat(formData.price),
+        // Duration is a service field. The form pre-fills it for every item, and a
+        // stray "30 mins" on a dish used to make the store look service-based.
+        duration: isProductBased ? '' : formData.duration,
       };
       // Serialized products carry read-only inventory fields; never echo them back.
       delete payload.variants;

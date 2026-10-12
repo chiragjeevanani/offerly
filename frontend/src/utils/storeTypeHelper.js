@@ -30,27 +30,35 @@ export const isFoodCategory = (category) => {
   return FOOD_KEYWORDS.some(k => name.includes(k));
 };
 
+// An item is a service if it says so. A duration only counts for old items that
+// have no categoryType - the product form used to save "30 mins" on every item.
+const isServiceItem = (p) => {
+  if (p.categoryType) return p.categoryType === 'service_based';
+  return !!p.duration;
+};
+
 /**
  * Returns true if the store offering is service-based, false if product-based.
- * Intelligently checks:
- * 1. Explicit merchant.storeType === 'service_based'
- * 2. Category name (e.g. Saloon, Salon, Spa, Gym, Clinic)
- * 3. Majority of catalog items having categoryType === 'service_based' or duration
+ * 1. The merchant's own choice (merchant.storeType) always wins.
+ * 2. Only stores with no storeType fall back to guessing: category name
+ *    (Salon, Spa, Gym, Clinic...), then whether most catalog items are services.
  */
 export const checkIsServiceStore = (merchant, products = []) => {
-  // 1. Explicit merchant storeType
+  // 1. Explicit merchant storeType - set by the merchant at registration / in Profile
   if (merchant?.storeType === 'service_based' || merchant?.storeType === 'service') {
     return true;
+  }
+  if (merchant?.storeType === 'product_based' || merchant?.storeType === 'product') {
+    return false;
   }
   // 2. Category is an established service category (e.g. Saloon, Salon, Spa, Gym)
   if (isServiceCategory(merchant?.category)) {
     return true;
   }
-  // 3. Products list has service items or duration or service category names
+  // 3. Products list has service items or service category names
   if (products && products.length > 0) {
-    const serviceCount = products.filter(p => 
-      p.categoryType === 'service_based' || 
-      p.duration || 
+    const serviceCount = products.filter(p =>
+      isServiceItem(p) ||
       (p.categoryName && isServiceCategory(p.categoryName)) ||
       (p.category && isServiceCategory(p.category))
     ).length;
@@ -76,7 +84,7 @@ export const getCatalogLabel = (merchant, products = []) => {
 export const shouldShowVegIndicator = (merchant, product) => {
   if (!product) return false;
   // If the product itself is service-based, NEVER show veg/nonveg
-  if (product.categoryType === 'service_based' || product.duration) {
+  if (isServiceItem(product)) {
     return false;
   }
   // If the store is service-based, NEVER show veg/nonveg

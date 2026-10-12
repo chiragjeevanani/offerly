@@ -210,7 +210,12 @@ const serializeProductBase = (product) => ({
   discount: product?.discount || 0,
   offerId: objectIdToString(product?.offerId),
   categoryType: product?.categoryType || (product?.duration ? 'service_based' : 'product_based'),
-  isVeg: (product?.categoryType === 'service_based' || product?.duration) ? null : (product?.isVeg ?? null),
+  // A duration only implies "service" for old items with no categoryType - product
+  // items saved with the form's default "30 mins" must keep their veg flag.
+  isVeg:
+    product?.categoryType === 'service_based' || (!product?.categoryType && product?.duration)
+      ? null
+      : (product?.isVeg ?? null),
   duration: product?.duration ?? null,
   images: product?.images || [],
   image: product?.image || (product?.images && product?.images[0]) || '',
