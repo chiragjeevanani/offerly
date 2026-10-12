@@ -97,7 +97,7 @@ const EMPTY_FEED = {
 const Home = () => {
   const navigate = useNavigate();
   const { enabled: rewardsEnabled } = useRewardsEnabled();
-  const { user, selectedCity, setSelectedCity, setSelectedCategory, userLocation } = useApp();
+  const { user, selectedCity, setSelectedCity, setSelectedCategory, userLocation, outsideServiceArea } = useApp();
   const useUnifiedFeed = import.meta.env.VITE_USE_UNIFIED_FEED !== 'false';
   const { data: categories = [] } = useCategories();
   const { data: availableCities = [] } = useCities();
@@ -130,7 +130,7 @@ const Home = () => {
   // the request itself still sends the exact position. Switching city or location
   // keeps the previous feed on screen until the new one lands (no skeleton flash),
   // and coming back to Home inside the stale window renders instantly from cache.
-  const { data: feed, isError: feedFailed } = useQuery({
+  const { data: feed, isError: feedFailed, refetch: refetchFeed, isFetching: feedFetching } = useQuery({
     queryKey: [
       'homeFeed',
       useUnifiedFeed,
@@ -217,6 +217,15 @@ const Home = () => {
   // Skeletons only while there is genuinely nothing to show yet (and not once a
   // request has definitively failed, which would leave them pulsing forever).
   const isLoading = !cityRequired && feed === undefined && !feedFailed;
+  // Loaded (or failed) with nothing at all to show - say so instead of a blank page.
+  const isFeedEmpty =
+    !isLoading &&
+    !cityRequired &&
+    featuredBanners.length === 0 &&
+    trendingOffers.length === 0 &&
+    nearbyOffers.length === 0 &&
+    mostPopulatedStores.length === 0 &&
+    recommendedOffers.length === 0;
 
   // Banners can shrink after a refetch; never index past the end.
   const activeSlide = currentSlide < featuredBanners.length ? currentSlide : 0;
@@ -291,6 +300,25 @@ const Home = () => {
               className="mt-3 text-xs font-semibold bg-amber-600 text-white px-3.5 py-2 rounded-xl"
             >
               Select City
+            </button>
+          </motion.section>
+        )}
+
+        {!cityRequired && outsideServiceArea && (
+          <motion.section
+            {...enter(12)}
+            className="flex items-start gap-3 bg-primary/5 border border-primary/20 rounded-2xl p-3.5"
+          >
+            <LocationOnRoundedIcon sx={{ fontSize: 20 }} className="text-primary shrink-0 mt-0.5" />
+            <div className="flex-1">
+              <p className="text-xs font-semibold text-gray-900">Offerly isn't in your area yet</p>
+              <p className="text-[11px] text-gray-600 mt-0.5">Showing offers in {displayCity} for now.</p>
+            </div>
+            <button
+              onClick={() => setCitySheetOpen(true)}
+              className="text-[11px] font-semibold text-primary whitespace-nowrap"
+            >
+              Change city
             </button>
           </motion.section>
         )}
@@ -519,6 +547,40 @@ const Home = () => {
         )}
 
           </>
+        )}
+
+        {/* Nothing to show - explain instead of leaving the page blank */}
+        {isFeedEmpty && (
+          <motion.section {...enter(12)} className="bg-white border border-gray-100 rounded-2xl p-6 text-center shadow-sm">
+            <div className="w-12 h-12 mx-auto rounded-2xl bg-primary/10 text-primary flex items-center justify-center">
+              <StorefrontRoundedIcon sx={{ fontSize: 24 }} />
+            </div>
+            <h3 className="text-sm font-semibold text-gray-900 mt-3">
+              {feedFailed ? "Couldn't load offers" : `No offers in ${displayCity} yet`}
+            </h3>
+            <p className="text-xs text-gray-500 mt-1">
+              {feedFailed
+                ? 'Check your internet connection and try again.'
+                : 'Try another city - new stores are joining soon.'}
+            </p>
+            <div className="mt-4 flex items-center justify-center gap-2">
+              {feedFailed && (
+                <button
+                  onClick={() => refetchFeed()}
+                  disabled={feedFetching}
+                  className="text-xs font-semibold bg-primary text-white px-4 py-2 rounded-xl disabled:opacity-60"
+                >
+                  {feedFetching ? 'Retrying...' : 'Retry'}
+                </button>
+              )}
+              <button
+                onClick={() => setCitySheetOpen(true)}
+                className="text-xs font-semibold border border-gray-200 text-gray-700 px-4 py-2 rounded-xl"
+              >
+                Change city
+              </button>
+            </div>
+          </motion.section>
         )}
 
         {/* Loading Skeletons */}
