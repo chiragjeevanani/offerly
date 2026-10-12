@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import EmojiEventsRoundedIcon from '@mui/icons-material/EmojiEventsRounded';
 import CardGiftcardRoundedIcon from '@mui/icons-material/CardGiftcardRounded';
@@ -7,40 +7,36 @@ import ConfirmationNumberRoundedIcon from '@mui/icons-material/ConfirmationNumbe
 import AddRoundedIcon from '@mui/icons-material/AddRounded';
 import EditRoundedIcon from '@mui/icons-material/EditRounded';
 import DeleteRoundedIcon from '@mui/icons-material/DeleteRounded';
-import CheckCircleRoundedIcon from '@mui/icons-material/CheckCircleRounded';
-import CancelRoundedIcon from '@mui/icons-material/CancelRounded';
 import RefreshRoundedIcon from '@mui/icons-material/RefreshRounded';
-import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 import toast from 'react-hot-toast';
 import { rewardsAPI } from '../../../api/rewards.api';
+import TuneRoundedIcon from '@mui/icons-material/TuneRounded';
 import SlideOver from '../components/SlideOver';
+import RewardsRulesPanel from '../components/RewardsRulesPanel';
+import { REWARD_METRICS, formatMetric } from '../../../utils/rewardMetric';
+
+const BADGE_OPTIONS = [
+  { value: 'medal', label: '🏅 Medal' },
+  { value: 'trophy', label: '🏆 Trophy' },
+  { value: 'star', label: '⭐ Star' },
+  { value: 'crown', label: '👑 Crown' },
+  { value: 'gift', label: '🎁 Gift' },
+];
 
 const RewardsManagement = () => {
   const queryClient = useQueryClient();
-  const [activeTab, setActiveTab] = useState('milestones'); // 'milestones' | 'rewards' | 'cards'
+  const [activeTab, setActiveTab] = useState('milestones'); // 'milestones' | 'rules' | 'cards'
 
   // Modal / SlideOver states
   const [isMilestoneSlideOpen, setIsMilestoneSlideOpen] = useState(false);
   const [editingMilestone, setEditingMilestone] = useState(null);
   const [milestoneForm, setMilestoneForm] = useState({
     level: '',
+    threshold: '',
     name: '',
     description: '',
     badgeIcon: 'medal',
-    rewardPool: [],
-    isActive: true,
-  });
-
-  const [isRewardSlideOpen, setIsRewardSlideOpen] = useState(false);
-  const [editingReward, setEditingReward] = useState(null);
-  const [rewardForm, setRewardForm] = useState({
-    title: '',
-    description: '',
-    discountType: 'percentage',
-    discountValue: 10,
-    couponCode: '',
-    expiresInDays: 30,
-    isGlobal: true,
+    rewardCredits: 50,
     isActive: true,
   });
 
@@ -50,14 +46,6 @@ const RewardsManagement = () => {
     queryFn: async () => {
       const res = await rewardsAPI.getAdminMilestones();
       return res.milestones || [];
-    },
-  });
-
-  const { data: rewards = [], isLoading: loadingRewards } = useQuery({
-    queryKey: ['adminRewards'],
-    queryFn: async () => {
-      const res = await rewardsAPI.getAdminRewards();
-      return res.rewards || [];
     },
   });
 
@@ -74,6 +62,14 @@ const RewardsManagement = () => {
     queryFn: () => rewardsAPI.getSettings(),
   });
   const rewardsEnabled = rewardsSettings?.enabled === true;
+
+  // Full rules - shared with RewardsRulesPanel; here only for the metric unit
+  const { data: adminSettings } = useQuery({
+    queryKey: ['adminRewardsSettings'],
+    queryFn: async () => (await rewardsAPI.getAdminSettings()).settings,
+  });
+  const metric = adminSettings?.metric || 'claims';
+  const metricUnit = REWARD_METRICS.find((m) => m.value === metric)?.unit || 'claims';
 
   const toggleRewardsMutation = useMutation({
     mutationFn: (enabled) => rewardsAPI.updateAdminSettings({ enabled }),
@@ -112,36 +108,6 @@ const RewardsManagement = () => {
     onError: (err) => toast.error(err.message || 'Failed to delete milestone'),
   });
 
-  // Reward Mutations
-  const saveRewardMutation = useMutation({
-    mutationFn: async (payload) => {
-      if (editingReward) {
-        return rewardsAPI.updateAdminReward(editingReward._id, payload);
-      }
-      return rewardsAPI.createAdminReward(payload);
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries(['adminRewards']);
-      queryClient.invalidateQueries(['adminMilestones']);
-      toast.success(editingReward ? 'Reward updated!' : 'Reward added to pool!');
-      setIsRewardSlideOpen(false);
-      setEditingReward(null);
-    },
-    onError: (err) => {
-      toast.error(err.message || 'Failed to save reward');
-    },
-  });
-
-  const deleteRewardMutation = useMutation({
-    mutationFn: (id) => rewardsAPI.deleteAdminReward(id),
-    onSuccess: () => {
-      queryClient.invalidateQueries(['adminRewards']);
-      queryClient.invalidateQueries(['adminMilestones']);
-      toast.success('Reward deleted');
-    },
-    onError: (err) => toast.error(err.message || 'Failed to delete reward'),
-  });
-
   // Card Mutations
   const deleteCardMutation = useMutation({
     mutationFn: (id) => rewardsAPI.deleteAdminCard(id),
@@ -158,20 +124,22 @@ const RewardsManagement = () => {
       setEditingMilestone(milestone);
       setMilestoneForm({
         level: milestone.level,
+        threshold: milestone.target ?? milestone.threshold ?? milestone.level,
         name: milestone.name,
         description: milestone.description || '',
         badgeIcon: milestone.badgeIcon || 'medal',
-        rewardPool: milestone.rewardPool?.map((r) => r._id || r) || [],
+        rewardCredits: milestone.rewardCredits || 0,
         isActive: milestone.isActive !== false,
       });
     } else {
       setEditingMilestone(null);
       setMilestoneForm({
-        level: milestones.length > 0 ? Math.max(...milestones.map((m) => m.level)) + 2 : 3,
+        level: milestones.length > 0 ? Math.max(...milestones.map((m) => m.level)) + 1 : 1,
+        threshold: '',
         name: '',
         description: '',
         badgeIcon: 'medal',
-        rewardPool: [],
+        rewardCredits: 50,
         isActive: true,
       });
     }
@@ -180,50 +148,11 @@ const RewardsManagement = () => {
 
   const handleSaveMilestone = (e) => {
     e.preventDefault();
-    if (!milestoneForm.level || !milestoneForm.name) {
-      toast.error('Level and name are required');
+    if (!milestoneForm.level || !milestoneForm.threshold || !milestoneForm.name) {
+      toast.error('Level, target and name are required');
       return;
     }
     saveMilestoneMutation.mutate(milestoneForm);
-  };
-
-  // Handlers for Rewards
-  const handleOpenRewardModal = (reward = null) => {
-    if (reward) {
-      setEditingReward(reward);
-      setRewardForm({
-        title: reward.title,
-        description: reward.description || '',
-        discountType: reward.discountType || 'percentage',
-        discountValue: reward.discountValue || 10,
-        couponCode: reward.couponCode || '',
-        expiresInDays: reward.expiresInDays || 30,
-        isGlobal: reward.isGlobal !== false,
-        isActive: reward.isActive !== false,
-      });
-    } else {
-      setEditingReward(null);
-      setRewardForm({
-        title: '',
-        description: '',
-        discountType: 'percentage',
-        discountValue: 10,
-        couponCode: '',
-        expiresInDays: 30,
-        isGlobal: true,
-        isActive: true,
-      });
-    }
-    setIsRewardSlideOpen(true);
-  };
-
-  const handleSaveReward = (e) => {
-    e.preventDefault();
-    if (!rewardForm.title) {
-      toast.error('Reward title is required');
-      return;
-    }
-    saveRewardMutation.mutate(rewardForm);
   };
 
   return (
@@ -236,7 +165,7 @@ const RewardsManagement = () => {
             Claim Milestones & Rewards Hub
           </h1>
           <p className="text-sm font-normal text-gray-500 mt-1">
-            Configure order claim level thresholds, random scratch card reward pools, and view member claims.
+            Set how many claims each level needs and how many wallet credits customers win at it.
           </p>
         </div>
 
@@ -245,7 +174,6 @@ const RewardsManagement = () => {
           <button
             onClick={() => {
               queryClient.invalidateQueries(['adminMilestones']);
-              queryClient.invalidateQueries(['adminRewards']);
               queryClient.invalidateQueries(['adminCards']);
               toast.success('Synced data');
             }}
@@ -265,15 +193,6 @@ const RewardsManagement = () => {
             </button>
           )}
 
-          {activeTab === 'rewards' && (
-            <button
-              onClick={() => handleOpenRewardModal()}
-              className="flex items-center gap-2 px-4 py-2.5 bg-primary text-white text-sm font-semibold rounded-xl shadow-md hover:bg-primary-dark transition-all"
-            >
-              <AddRoundedIcon sx={{ fontSize: 20 }} />
-              Add Reward to Pool
-            </button>
-          )}
         </div>
       </div>
 
@@ -316,14 +235,14 @@ const RewardsManagement = () => {
         </button>
 
         <button
-          onClick={() => setActiveTab('rewards')}
+          onClick={() => setActiveTab('rules')}
           className={`pb-3 text-sm font-semibold transition-all relative flex items-center gap-2 ${
-            activeTab === 'rewards' ? 'text-primary' : 'text-gray-400 hover:text-gray-600'
+            activeTab === 'rules' ? 'text-primary' : 'text-gray-400 hover:text-gray-600'
           }`}
         >
-          <CardGiftcardRoundedIcon sx={{ fontSize: 18 }} />
-          Reward Pool ({rewards.length})
-          {activeTab === 'rewards' && (
+          <TuneRoundedIcon sx={{ fontSize: 18 }} />
+          Rules & Settings
+          {activeTab === 'rules' && (
             <motion.div layoutId="admin-tab-indicator" className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary" />
           )}
         </button>
@@ -342,9 +261,18 @@ const RewardsManagement = () => {
         </button>
       </div>
 
+      {/* Tab 2: Rules & Settings */}
+      {activeTab === 'rules' && <RewardsRulesPanel levelCount={milestones.length} />}
+
       {/* Tab 1: Milestones */}
       {activeTab === 'milestones' && (
         <div className="space-y-4">
+          <p className="text-xs text-gray-500 bg-white border border-gray-100 rounded-xl px-4 py-2.5">
+            Customers level up by <span className="font-semibold text-gray-800">{metricUnit}</span>.{' '}
+            <button type="button" onClick={() => setActiveTab('rules')} className="font-semibold text-primary hover:underline">
+              Change this and other rules
+            </button>
+          </p>
           {loadingMilestones ? (
             <div className="p-12 text-center text-gray-400">Loading milestones...</div>
           ) : milestones.length === 0 ? (
@@ -354,7 +282,8 @@ const RewardsManagement = () => {
               </div>
               <h3 className="text-base font-semibold text-gray-800">No Milestones Configured Yet</h3>
               <p className="text-xs text-gray-400 max-w-md mx-auto">
-                Set milestones (e.g. Level 3 = 3 claimed offers) to automatically grant scratch cards to customers!
+                Set levels (e.g. Level 1 = {formatMetric(metric, metric === 'spent' || metric === 'saved' ? 1000 : 3)}) and
+                what customers win at each one.
               </p>
               <button
                 onClick={() => handleOpenMilestoneModal()}
@@ -378,7 +307,7 @@ const RewardsManagement = () => {
                         </div>
                         <div>
                           <span className="text-[10px] font-semibold tracking-wider text-primary uppercase">
-                            Level {m.level} ({m.level} Claims)
+                            Level {m.level} · {formatMetric(metric, m.target ?? m.level)}
                           </span>
                           <h3 className="text-base font-bold text-gray-900 leading-snug">{m.name}</h3>
                         </div>
@@ -393,22 +322,19 @@ const RewardsManagement = () => {
                     </div>
 
                     <p className="text-xs text-gray-500 line-clamp-2">
-                      {m.description || 'Awarded automatically when a member completes this many offer claims.'}
+                      {m.description || `Reached automatically at ${formatMetric(metric, m.target ?? m.level)}.`}
                     </p>
 
                     <div className="pt-2 border-t border-gray-100">
-                      <p className="text-[11px] font-semibold text-gray-400 mb-1">Assigned Rewards Pool:</p>
-                      {m.rewardPool && m.rewardPool.length > 0 ? (
-                        <div className="flex flex-wrap gap-1.5">
-                          {m.rewardPool.map((r, i) => (
-                            <span key={i} className="px-2 py-0.5 bg-gray-50 border border-gray-200 text-gray-700 text-[11px] font-medium rounded-md">
-                              {r.title || 'Reward'}
-                            </span>
-                          ))}
-                        </div>
+                      <p className="text-[11px] font-semibold text-gray-400 mb-1">Customer gets:</p>
+                      {m.rewardCredits > 0 ? (
+                        <span className="inline-flex items-center gap-1 px-2.5 py-1 bg-primary/10 text-primary text-xs font-bold rounded-lg">
+                          <CardGiftcardRoundedIcon sx={{ fontSize: 14 }} />
+                          ₹{m.rewardCredits} wallet credits
+                        </span>
                       ) : (
                         <span className="text-xs text-amber-600 font-medium bg-amber-50 px-2 py-0.5 rounded-md inline-block">
-                          Using Global Rewards Pool
+                          No reward set - badge only, no scratch card
                         </span>
                       )}
                     </div>
@@ -426,100 +352,6 @@ const RewardsManagement = () => {
                       onClick={() => {
                         if (confirm(`Delete milestone Level ${m.level}?`)) {
                           deleteMilestoneMutation.mutate(m._id);
-                        }
-                      }}
-                      className="p-2 text-gray-400 hover:text-rose-600 hover:bg-rose-50 rounded-xl transition-all"
-                      title="Delete"
-                    >
-                      <DeleteRoundedIcon sx={{ fontSize: 18 }} />
-                    </button>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* Tab 2: Reward Pool */}
-      {activeTab === 'rewards' && (
-        <div className="space-y-4">
-          {loadingRewards ? (
-            <div className="p-12 text-center text-gray-400">Loading rewards...</div>
-          ) : rewards.length === 0 ? (
-            <div className="bg-white rounded-2xl p-12 text-center border border-gray-100 shadow-sm space-y-3">
-              <div className="w-16 h-16 bg-primary/10 text-primary rounded-2xl flex items-center justify-center mx-auto">
-                <CardGiftcardRoundedIcon sx={{ fontSize: 32 }} />
-              </div>
-              <h3 className="text-base font-semibold text-gray-800">No Rewards in the Pool</h3>
-              <p className="text-xs text-gray-400 max-w-md mx-auto">
-                Add rewards like "10% off at nearby store", "Free Coffee", or "₹50 voucher" for customers to win!
-              </p>
-              <button
-                onClick={() => handleOpenRewardModal()}
-                className="mt-2 px-4 py-2 bg-primary text-white text-xs font-semibold rounded-xl"
-              >
-                Add First Reward
-              </button>
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {rewards.map((r) => (
-                <div
-                  key={r._id}
-                  className="bg-white rounded-2xl p-5 border border-gray-100 shadow-sm hover:shadow-md transition-all flex flex-col justify-between"
-                >
-                  <div className="space-y-3">
-                    <div className="flex items-start justify-between">
-                      <div>
-                        <span className="px-2.5 py-0.5 rounded-full text-[10px] font-semibold bg-primary/10 text-primary uppercase">
-                          {r.discountType === 'percentage'
-                            ? `${r.discountValue}% OFF`
-                            : r.discountType === 'flat'
-                            ? `₹${r.discountValue} OFF`
-                            : r.discountType}
-                        </span>
-                        <h3 className="text-base font-bold text-gray-900 mt-1">{r.title}</h3>
-                      </div>
-                      <span
-                        className={`px-2 py-0.5 rounded-full text-[10px] font-semibold ${
-                          r.isActive ? 'bg-emerald-50 text-emerald-600' : 'bg-gray-100 text-gray-400'
-                        }`}
-                      >
-                        {r.isActive ? 'Active' : 'Off'}
-                      </span>
-                    </div>
-
-                    <p className="text-xs text-gray-500 line-clamp-2">{r.description || 'No description provided.'}</p>
-
-                    <div className="pt-2 border-t border-gray-100 space-y-1 text-xs text-gray-600">
-                      <div className="flex justify-between">
-                        <span className="text-gray-400 font-medium">Coupon Code:</span>
-                        <span className="font-semibold text-gray-800 font-mono">{r.couponCode || '(Auto-generated)'}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-gray-400 font-medium">Validity:</span>
-                        <span>{r.expiresInDays} Days after reveal</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-gray-400 font-medium">Pool Scope:</span>
-                        <span>{r.isGlobal ? 'Global (All Milestones)' : 'Milestone-specific'}</span>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="flex items-center justify-end gap-2 pt-4 mt-4 border-t border-gray-100">
-                    <button
-                      onClick={() => handleOpenRewardModal(r)}
-                      className="p-2 text-gray-500 hover:text-primary hover:bg-primary/10 rounded-xl transition-all"
-                      title="Edit"
-                    >
-                      <EditRoundedIcon sx={{ fontSize: 18 }} />
-                    </button>
-                    <button
-                      onClick={() => {
-                        if (confirm(`Delete reward "${r.title}"?`)) {
-                          deleteRewardMutation.mutate(r._id);
                         }
                       }}
                       className="p-2 text-gray-400 hover:text-rose-600 hover:bg-rose-50 rounded-xl transition-all"
@@ -553,8 +385,8 @@ const RewardsManagement = () => {
                   <tr>
                     <th className="px-6 py-3.5">Customer</th>
                     <th className="px-6 py-3.5">Milestone</th>
-                    <th className="px-6 py-3.5">Reward Title</th>
-                    <th className="px-6 py-3.5">Coupon Code</th>
+                    <th className="px-6 py-3.5">Reward</th>
+                    <th className="px-6 py-3.5">Wallet Credits</th>
                     <th className="px-6 py-3.5">Status</th>
                     <th className="px-6 py-3.5">Issued Date</th>
                     <th className="px-6 py-3.5 text-right">Actions</th>
@@ -569,14 +401,29 @@ const RewardsManagement = () => {
                       </td>
                       <td className="px-6 py-4">
                         <span className="px-2.5 py-1 bg-primary/10 text-primary font-semibold text-xs rounded-full">
-                          Level {card.milestoneLevel}
+                          {card.kind === 'repeat' ? `Bonus #${card.repeatIndex}` : `Level ${card.milestoneLevel}`}
                         </span>
                       </td>
                       <td className="px-6 py-4 font-medium text-gray-800">
                         {card.rewardSnapshot?.title || 'Reward'}
                       </td>
-                      <td className="px-6 py-4 font-mono text-xs font-semibold text-gray-700">
-                        {card.rewardSnapshot?.couponCode || 'N/A'}
+                      <td className="px-6 py-4 text-xs font-semibold text-gray-700">
+                        {card.creditsAwarded > 0 ? (
+                          <>
+                            ₹{card.creditsAwarded}
+                            <span className="block text-[10px] font-medium text-gray-400">
+                              {card.status === 'unscratched'
+                                ? 'Pays out on scratch'
+                                : card.status === 'expired'
+                                ? 'Card expired - not paid'
+                                : card.creditsExpired
+                                ? 'Unused credits expired'
+                                : 'Added to wallet'}
+                            </span>
+                          </>
+                        ) : (
+                          <span className="text-gray-400">Legacy coupon</span>
+                        )}
                       </td>
                       <td className="px-6 py-4">
                         <span
@@ -624,21 +471,36 @@ const RewardsManagement = () => {
         title={editingMilestone ? `Edit Milestone Level ${editingMilestone.level}` : 'Create New Milestone Level'}
       >
         <form onSubmit={handleSaveMilestone} className="space-y-5 p-6">
-          <div>
-            <label className="block text-xs font-semibold text-gray-700 mb-1.5">
-              Claim Level Threshold (Number of claimed offers) *
-            </label>
-            <input
-              type="number"
-              min="1"
-              required
-              value={milestoneForm.level}
-              onChange={(e) => setMilestoneForm({ ...milestoneForm, level: e.target.value })}
-              placeholder="e.g. 3, 5, 10"
-              className="w-full px-3.5 py-2.5 border border-gray-200 rounded-xl text-sm font-medium focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none"
-            />
-            <p className="text-[11px] text-gray-400 mt-1">
-              Customer gets a scratch card upon reaching this exact count of completed claims.
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-xs font-semibold text-gray-700 mb-1.5">Level Number *</label>
+              <input
+                type="number"
+                min="1"
+                required
+                value={milestoneForm.level}
+                onChange={(e) => setMilestoneForm({ ...milestoneForm, level: e.target.value })}
+                placeholder="e.g. 1, 2, 3"
+                className="w-full px-3.5 py-2.5 border border-gray-200 rounded-xl text-sm font-medium focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-semibold text-gray-700 mb-1.5">Target ({metricUnit}) *</label>
+              <input
+                type="number"
+                min="1"
+                required
+                value={milestoneForm.threshold}
+                onChange={(e) => setMilestoneForm({ ...milestoneForm, threshold: e.target.value })}
+                placeholder={metric === 'spent' || metric === 'saved' ? 'e.g. 2000' : 'e.g. 5'}
+                className="w-full px-3.5 py-2.5 border border-gray-200 rounded-xl text-sm font-medium focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none"
+              />
+            </div>
+            <p className="col-span-2 text-[11px] text-gray-400 -mt-2">
+              {milestoneForm.threshold
+                ? `Customers reach Level ${milestoneForm.level || '?'} at ${formatMetric(metric, milestoneForm.threshold)}.`
+                : 'Higher levels need a higher target.'}{' '}
+              The unit is set in Rules & Settings.
             </p>
           </div>
 
@@ -667,36 +529,43 @@ const RewardsManagement = () => {
 
           <div>
             <label className="block text-xs font-semibold text-gray-700 mb-1.5">
-              Assign Specific Rewards from Pool (Leave empty to use global pool)
+              Reward: Wallet Credits (₹)
             </label>
-            <div className="space-y-2 max-h-48 overflow-y-auto border border-gray-100 rounded-xl p-3 bg-gray-50">
-              {rewards.length === 0 ? (
-                <p className="text-xs text-gray-400">No rewards created yet.</p>
-              ) : (
-                rewards.map((r) => (
-                  <label key={r._id} className="flex items-center gap-2.5 cursor-pointer text-xs font-medium text-gray-700">
-                    <input
-                      type="checkbox"
-                      checked={milestoneForm.rewardPool.includes(r._id)}
-                      onChange={(e) => {
-                        if (e.target.checked) {
-                          setMilestoneForm({
-                            ...milestoneForm,
-                            rewardPool: [...milestoneForm.rewardPool, r._id],
-                          });
-                        } else {
-                          setMilestoneForm({
-                            ...milestoneForm,
-                            rewardPool: milestoneForm.rewardPool.filter((id) => id !== r._id),
-                          });
-                        }
-                      }}
-                      className="rounded text-primary focus:ring-primary"
-                    />
-                    <span>{r.title}</span>
-                  </label>
-                ))
-              )}
+            <div className="relative">
+              <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-sm font-semibold text-gray-400">₹</span>
+              <input
+                type="number"
+                min="0"
+                step="1"
+                value={milestoneForm.rewardCredits}
+                onChange={(e) => setMilestoneForm({ ...milestoneForm, rewardCredits: e.target.value })}
+                placeholder="e.g. 50"
+                className="w-full pl-8 pr-3.5 py-2.5 border border-gray-200 rounded-xl text-sm font-medium focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none"
+              />
+            </div>
+            <p className="text-[11px] text-gray-400 mt-1">
+              Customer gets a scratch card at this level. Scratching it adds these credits to their wallet,
+              which they can use on their next claim (1 credit = ₹1). Set 0 for a badge-only level with no card.
+            </p>
+          </div>
+
+          <div>
+            <label className="block text-xs font-semibold text-gray-700 mb-1.5">Badge</label>
+            <div className="flex flex-wrap gap-2">
+              {BADGE_OPTIONS.map((b) => (
+                <button
+                  key={b.value}
+                  type="button"
+                  onClick={() => setMilestoneForm({ ...milestoneForm, badgeIcon: b.value })}
+                  className={`px-3 py-1.5 rounded-xl border text-xs font-semibold transition-all ${
+                    milestoneForm.badgeIcon === b.value
+                      ? 'border-primary bg-primary/10 text-primary'
+                      : 'border-gray-200 text-gray-600 hover:border-gray-300'
+                  }`}
+                >
+                  {b.label}
+                </button>
+              ))}
             </div>
           </div>
 
@@ -732,128 +601,6 @@ const RewardsManagement = () => {
         </form>
       </SlideOver>
 
-      {/* SlideOver: Reward Form */}
-      <SlideOver
-        isOpen={isRewardSlideOpen}
-        onClose={() => setIsRewardSlideOpen(false)}
-        title={editingReward ? `Edit Reward "${editingReward.title}"` : 'Add Reward to Pool'}
-      >
-        <form onSubmit={handleSaveReward} className="space-y-5 p-6">
-          <div>
-            <label className="block text-xs font-semibold text-gray-700 mb-1.5">Reward Title *</label>
-            <input
-              type="text"
-              required
-              value={rewardForm.title}
-              onChange={(e) => setRewardForm({ ...rewardForm, title: e.target.value })}
-              placeholder="e.g. 10% Off in Nearby Store"
-              className="w-full px-3.5 py-2.5 border border-gray-200 rounded-xl text-sm font-medium focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none"
-            />
-          </div>
-
-          <div>
-            <label className="block text-xs font-semibold text-gray-700 mb-1.5">Description</label>
-            <textarea
-              rows="2"
-              value={rewardForm.description}
-              onChange={(e) => setRewardForm({ ...rewardForm, description: e.target.value })}
-              placeholder="e.g. Valid at any partner restaurant or store"
-              className="w-full px-3.5 py-2.5 border border-gray-200 rounded-xl text-sm font-medium focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none"
-            />
-          </div>
-
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-xs font-semibold text-gray-700 mb-1.5">Discount Type</label>
-              <select
-                value={rewardForm.discountType}
-                onChange={(e) => setRewardForm({ ...rewardForm, discountType: e.target.value })}
-                className="w-full px-3.5 py-2.5 border border-gray-200 rounded-xl text-sm font-medium focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none bg-white"
-              >
-                <option value="percentage">Percentage (%)</option>
-                <option value="flat">Flat Amount (₹)</option>
-                <option value="freebie">Freebie Item</option>
-                <option value="custom">Custom Deal</option>
-              </select>
-            </div>
-
-            <div>
-              <label className="block text-xs font-semibold text-gray-700 mb-1.5">Discount Value</label>
-              <input
-                type="number"
-                min="0"
-                value={rewardForm.discountValue}
-                onChange={(e) => setRewardForm({ ...rewardForm, discountValue: e.target.value })}
-                placeholder="e.g. 10 or 50"
-                className="w-full px-3.5 py-2.5 border border-gray-200 rounded-xl text-sm font-medium focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none"
-              />
-            </div>
-          </div>
-
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-xs font-semibold text-gray-700 mb-1.5">Coupon Code (Optional)</label>
-              <input
-                type="text"
-                value={rewardForm.couponCode}
-                onChange={(e) => setRewardForm({ ...rewardForm, couponCode: e.target.value.toUpperCase() })}
-                placeholder="e.g. OFFERLY10"
-                className="w-full px-3.5 py-2.5 border border-gray-200 rounded-xl text-sm font-medium font-mono focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none"
-              />
-            </div>
-
-            <div>
-              <label className="block text-xs font-semibold text-gray-700 mb-1.5">Expires in (Days)</label>
-              <input
-                type="number"
-                min="1"
-                value={rewardForm.expiresInDays}
-                onChange={(e) => setRewardForm({ ...rewardForm, expiresInDays: e.target.value })}
-                className="w-full px-3.5 py-2.5 border border-gray-200 rounded-xl text-sm font-medium focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none"
-              />
-            </div>
-          </div>
-
-          <div className="flex flex-col gap-2 pt-2">
-            <label className="flex items-center gap-2 text-xs font-semibold text-gray-700 cursor-pointer">
-              <input
-                type="checkbox"
-                checked={rewardForm.isGlobal}
-                onChange={(e) => setRewardForm({ ...rewardForm, isGlobal: e.target.checked })}
-                className="rounded text-primary focus:ring-primary"
-              />
-              <span>Global Reward (Can be won at any milestone level)</span>
-            </label>
-
-            <label className="flex items-center gap-2 text-xs font-semibold text-gray-700 cursor-pointer">
-              <input
-                type="checkbox"
-                checked={rewardForm.isActive}
-                onChange={(e) => setRewardForm({ ...rewardForm, isActive: e.target.checked })}
-                className="rounded text-primary focus:ring-primary"
-              />
-              <span>Active in pool</span>
-            </label>
-          </div>
-
-          <div className="flex items-center justify-end gap-3 pt-4 border-t border-gray-100">
-            <button
-              type="button"
-              onClick={() => setIsRewardSlideOpen(false)}
-              className="px-4 py-2.5 text-xs font-semibold text-gray-600 hover:bg-gray-100 rounded-xl"
-            >
-              Cancel
-            </button>
-            <button
-              type="submit"
-              disabled={saveRewardMutation.isPending}
-              className="px-5 py-2.5 bg-primary text-white text-xs font-semibold rounded-xl shadow-md hover:bg-primary-dark transition-all disabled:opacity-50"
-            >
-              {saveRewardMutation.isPending ? 'Saving...' : editingReward ? 'Update Reward' : 'Add to Pool'}
-            </button>
-          </div>
-        </form>
-      </SlideOver>
     </div>
   );
 };

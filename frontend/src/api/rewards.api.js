@@ -24,6 +24,10 @@ export const rewardsAPI = {
   // ==========================================
   // ADMIN ENDPOINTS
   // ==========================================
+  getAdminSettings: async () => {
+    return axiosInstance.get('/rewards/admin/settings');
+  },
+
   updateAdminSettings: async (data) => {
     return axiosInstance.put('/rewards/admin/settings', data);
   },

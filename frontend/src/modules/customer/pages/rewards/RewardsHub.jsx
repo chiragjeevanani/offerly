@@ -13,9 +13,36 @@ import toast from 'react-hot-toast';
 import { rewardsAPI } from '../../../../api/rewards.api';
 import PageTransition from '../../components/ui/PageTransition';
 import ScratchCardModal from '../../components/rewards/ScratchCardModal';
+import { useApp } from '../../context/AppContext';
+import { formatMetric, formatRemaining } from '../../../../utils/rewardMetric';
+
+const shortDate = (d) => new Date(d).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' });
+
+// "this month", "in the last 90 days" - what span the progress number covers
+const windowPhrase = (w) => {
+  if (!w || w.mode === 'lifetime') return '';
+  if (w.mode === 'monthly') return 'this month';
+  if (w.mode === 'yearly') return 'this year';
+  return `in the last ${w.rollingDays} days`;
+};
+
+const METRIC_HOW = {
+  claims: 'Every offer you redeem in a store counts towards your next level.',
+  spent: 'Every rupee you spend on redeemed offers counts towards your next level.',
+  saved: 'Every rupee you save on redeemed offers counts towards your next level.',
+  stores: 'Every new store you redeem an offer at counts towards your next level.',
+};
+
+const rewardLabel = (reward) => {
+  if (reward.discountType === 'credits') return `₹${reward.discountValue} wallet credits`;
+  if (reward.discountType === 'percentage') return `${reward.discountValue}% OFF`;
+  if (reward.discountType === 'flat') return `₹${reward.discountValue} OFF`;
+  return reward.discountType;
+};
 
 const RewardsHub = () => {
   const queryClient = useQueryClient();
+  const { refreshUser } = useApp();
   const [selectedCard, setSelectedCard] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
@@ -45,6 +72,8 @@ const RewardsHub = () => {
       if (data?.card) {
         setSelectedCard(data.card);
       }
+      // Credits just landed in the wallet - pull the new balance for the cart
+      if (data?.card?.creditsAwarded > 0) refreshUser?.();
     },
     onError: (err) => {
       toast.error(err.message || 'Failed to scratch card');
@@ -52,6 +81,10 @@ const RewardsHub = () => {
   });
 
   const handleOpenCard = (card) => {
+    if (card.status === 'expired') {
+      toast.error('This card expired before it was scratched');
+      return;
+    }
     setSelectedCard(card);
     setIsModalOpen(true);
   };
@@ -60,11 +93,17 @@ const RewardsHub = () => {
     scratchMutation.mutate(cardId);
   };
 
-  const totalClaimed = progressData?.totalClaimedOffers || 0;
+  const metric = progressData?.metric || 'claims';
+  const progressValue = progressData?.progressValue || 0;
+  const currentMilestone = progressData?.currentMilestone;
   const nextMilestone = progressData?.nextMilestone;
   const progressPercent = progressData?.progressPercent || 0;
-  const claimsNeeded = progressData?.claimsNeededForNext || 0;
+  const remaining = progressData?.remainingForNext || 0;
   const roadmap = progressData?.roadmap || [];
+  const repeat = progressData?.repeat;
+  const progressWindow = progressData?.window;
+  const rules = progressData?.rules || {};
+  const period = windowPhrase(progressWindow);
   const cards = cardsData || [];
 
   return (
@@ -85,7 +124,7 @@ const RewardsHub = () => {
               <div className="flex items-center gap-2">
                 <span className="px-3 py-1 rounded-full text-xs font-bold bg-white/20 backdrop-blur-md border border-white/20 text-white flex items-center gap-1.5">
                   <SparklesIcon sx={{ fontSize: 14 }} />
-                  Level {totalClaimed} Member
+                  {currentMilestone ? `Level ${currentMilestone.level} · ${currentMilestone.name}` : 'New Member'}
                 </span>
               </div>
               <div className="w-10 h-10 rounded-2xl bg-white/20 backdrop-blur-md flex items-center justify-center border border-white/20">
@@ -94,9 +133,11 @@ const RewardsHub = () => {
             </div>
 
             <div>
-              <p className="text-xs font-medium text-white/80 uppercase tracking-wider">Completed Claims</p>
+              <p className="text-xs font-medium text-white/80 uppercase tracking-wider">
+                Your progress{period ? ` ${period}` : ''}
+              </p>
               <h2 className="text-3xl md:text-4xl font-extrabold text-white tracking-tight mt-0.5">
-                {totalClaimed} <span className="text-lg font-medium text-white/80">Offers Claimed</span>
+                {formatMetric(metric, progressValue)}
               </h2>
             </div>
 
@@ -105,10 +146,18 @@ const RewardsHub = () => {
               <div className="flex items-center justify-between text-xs font-medium">
                 <span>
                   {nextMilestone
-                    ? `Next Target: Level ${nextMilestone.level} (${nextMilestone.name})`
+                    ? `Next: Level ${nextMilestone.level} (${nextMilestone.name})`
+                    : repeat
+                    ? `Next bonus at ${formatMetric(metric, repeat.nextAt)}`
                     : '🎉 All Milestones Achieved!'}
                 </span>
-                <span>{nextMilestone ? `${claimsNeeded} more claims needed` : '100%'}</span>
+                <span>
+                  {nextMilestone
+                    ? `${formatRemaining(metric, remaining)} to go`
+                    : repeat
+                    ? `${formatRemaining(metric, repeat.nextAt - progressValue)} to go`
+                    : '100%'}
+                </span>
               </div>
               <div className="w-full bg-black/20 h-2.5 rounded-full overflow-hidden p-0.5 border border-white/10">
                 <motion.div
@@ -118,6 +167,18 @@ const RewardsHub = () => {
                   className="bg-white h-full rounded-full shadow-sm"
                 />
               </div>
+              {(progressWindow?.resetsAt || rules.minBillValue > 0 || rules.maxClaimsPerStorePerDay > 0) && (
+                <p className="text-[11px] text-white/75">
+                  {[
+                    progressWindow?.resetsAt && `Progress resets on ${shortDate(progressWindow.resetsAt)}`,
+                    rules.minBillValue > 0 && `Claims of ₹${rules.minBillValue}+ count`,
+                    rules.maxClaimsPerStorePerDay > 0 &&
+                      `up to ${rules.maxClaimsPerStorePerDay} per store per day`,
+                  ]
+                    .filter(Boolean)
+                    .join(' · ')}
+                </p>
+              )}
             </div>
           </div>
         </motion.div>
@@ -145,13 +206,14 @@ const RewardsHub = () => {
               </div>
               <h4 className="text-sm font-bold text-gray-800">No Scratch Cards Yet</h4>
               <p className="text-xs text-gray-500 max-w-xs mx-auto">
-                Claim {claimsNeeded > 0 ? `${claimsNeeded} more offers` : 'offers'} at nearby partner stores to earn your first reward scratch card!
+                {remaining > 0 ? `${formatRemaining(metric, remaining)} at partner stores` : 'Redeem offers at partner stores'} to earn your first reward card!
               </p>
             </div>
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3.5">
               {cards.map((card) => {
                 const isUnscratched = card.status === 'unscratched';
+                const isExpired = card.status === 'expired';
                 const reward = card.rewardSnapshot || {};
 
                 return (
@@ -163,6 +225,8 @@ const RewardsHub = () => {
                     className={`relative rounded-2xl p-4 cursor-pointer shadow-sm transition-all border ${
                       isUnscratched
                         ? 'bg-gradient-to-br from-amber-400 via-primary to-[#2E6312] text-white border-primary shadow-md'
+                        : isExpired
+                        ? 'bg-gray-50 text-gray-400 border-gray-100 opacity-70'
                         : 'bg-white text-gray-800 border-gray-100 hover:shadow-md'
                     }`}
                   >
@@ -174,14 +238,14 @@ const RewardsHub = () => {
                             : 'bg-primary/10 text-primary'
                         }`}
                       >
-                        Level {card.milestoneLevel} Card
+                        {card.kind === 'repeat' ? 'Bonus Card' : `Level ${card.milestoneLevel} Card`}
                       </span>
                       <span
                         className={`text-[10px] font-semibold ${
                           isUnscratched ? 'text-white/90' : 'text-gray-400'
                         }`}
                       >
-                        {isUnscratched ? '✨ Tap to Scratch' : 'Revealed'}
+                        {isUnscratched ? '✨ Tap to Scratch' : isExpired ? 'Expired' : 'Revealed'}
                       </span>
                     </div>
 
@@ -189,24 +253,37 @@ const RewardsHub = () => {
                       {isUnscratched ? (
                         <>
                           <h4 className="text-base font-extrabold text-white">Surprise Reward</h4>
-                          <p className="text-xs text-white/80">Tap & scratch to reveal coupon code!</p>
+                          <p className="text-xs text-white/80">
+                            {card.expiresAt
+                              ? `Scratch by ${shortDate(card.expiresAt)} to claim it!`
+                              : 'Tap & scratch to reveal your reward!'}
+                          </p>
+                        </>
+                      ) : isExpired ? (
+                        <>
+                          <h4 className="text-sm font-bold text-gray-500">Card expired</h4>
+                          <p className="text-[11px]">It wasn't scratched in time.</p>
                         </>
                       ) : (
                         <>
                           <div className="flex items-center gap-1.5 text-xs font-bold text-primary">
                             <LocalOfferRoundedIcon sx={{ fontSize: 14 }} />
-                            <span>
-                              {reward.discountType === 'percentage'
-                                ? `${reward.discountValue}% OFF`
-                                : reward.discountType === 'flat'
-                                ? `₹${reward.discountValue} OFF`
-                                : reward.discountType}
-                            </span>
+                            <span>{rewardLabel(reward)}</span>
                           </div>
                           <h4 className="text-sm font-bold text-gray-900 line-clamp-1">{reward.title}</h4>
-                          <p className="text-[11px] font-mono font-semibold text-gray-600 bg-gray-50 px-2 py-0.5 rounded-md inline-block border border-gray-100">
-                            Code: {reward.couponCode || 'CLAIMED'}
-                          </p>
+                          {reward.discountType === 'credits' ? (
+                            <p className="text-[11px] font-semibold text-gray-600">
+                              {card.creditsExpired
+                                ? 'Unused credits expired'
+                                : card.creditsExpireAt
+                                ? `In wallet · use by ${shortDate(card.creditsExpireAt)}`
+                                : 'Added to wallet · use on your next claim'}
+                            </p>
+                          ) : (
+                            <p className="text-[11px] font-mono font-semibold text-gray-600 bg-gray-50 px-2 py-0.5 rounded-md inline-block border border-gray-100">
+                              Code: {reward.couponCode || 'CLAIMED'}
+                            </p>
+                          )}
                         </>
                       )}
                     </div>
@@ -241,7 +318,7 @@ const RewardsHub = () => {
             ) : (
               <div className="relative pl-6 space-y-6 before:absolute before:left-2.5 before:top-3 before:bottom-3 before:w-0.5 before:bg-gray-100">
                 {roadmap.map((m) => {
-                  const isUnlocked = totalClaimed >= m.level;
+                  const isUnlocked = m.isUnlocked;
 
                   return (
                     <div key={m._id} className="relative flex items-start gap-4">
@@ -267,25 +344,40 @@ const RewardsHub = () => {
                               isUnlocked ? 'text-primary' : 'text-gray-400'
                             }`}
                           >
-                            Level {m.level} ({m.level} Claims)
+                            Level {m.level} · {formatMetric(metric, m.target)}
                           </span>
                           <span
                             className={`px-2 py-0.5 rounded-full text-[10px] font-semibold ${
                               isUnlocked ? 'bg-primary/10 text-primary' : 'bg-gray-100 text-gray-400'
                             }`}
                           >
-                            {isUnlocked ? 'Unlocked 🎉' : `${m.level - totalClaimed} claims to unlock`}
+                            {isUnlocked ? 'Unlocked 🎉' : `${formatRemaining(metric, m.target - progressValue)} to unlock`}
                           </span>
                         </div>
 
                         <h4 className="text-sm font-bold text-gray-900 mt-0.5">{m.name}</h4>
+                        {m.rewardCredits > 0 && (
+                          <span className="inline-flex items-center gap-1 mt-1 px-2 py-0.5 rounded-md bg-amber-50 text-amber-700 text-[11px] font-bold">
+                            <CardGiftcardRoundedIcon sx={{ fontSize: 13 }} />
+                            Win ₹{m.rewardCredits} wallet credits
+                          </span>
+                        )}
                         <p className="text-xs text-gray-500 mt-0.5">
-                          {m.description || `Claim ${m.level} offers on Offerly to unlock this milestone's scratch card reward.`}
+                          {m.description || `Reach ${formatMetric(metric, m.target)}${period ? ` ${period}` : ''} to unlock this level.`}
                         </p>
                       </div>
                     </div>
                   );
                 })}
+              </div>
+            )}
+            {repeat && (
+              <div className="flex items-center gap-2 rounded-2xl bg-amber-50 border border-amber-100 px-3.5 py-2.5 text-xs text-amber-800">
+                <CardGiftcardRoundedIcon sx={{ fontSize: 16 }} />
+                <span>
+                  After the top level, win <span className="font-bold">₹{repeat.credits}</span> more for every{' '}
+                  {formatMetric(metric, repeat.every)}.
+                </span>
               </div>
             )}
           </div>
@@ -304,11 +396,15 @@ const RewardsHub = () => {
             </div>
             <div className="bg-white/80 backdrop-blur-sm p-3.5 rounded-2xl border border-gray-100 space-y-1">
               <span className="font-bold text-primary text-sm">2. Level Up</span>
-              <p>Every verified store redemption automatically raises your member level.</p>
+              <p>{METRIC_HOW[metric] || METRIC_HOW.claims}</p>
             </div>
             <div className="bg-white/80 backdrop-blur-sm p-3.5 rounded-2xl border border-gray-100 space-y-1">
-              <span className="font-bold text-primary text-sm">3. Scratch & Win</span>
-              <p>Hit milestone targets (e.g. 3 claims) to earn surprise scratch cards!</p>
+              <span className="font-bold text-primary text-sm">3. {rules.revealMode === 'instant' ? 'Get Credits' : 'Scratch & Win'}</span>
+              <p>
+                {rules.revealMode === 'instant'
+                  ? 'Reach a level and credits go straight into your wallet. Use them on your next claim.'
+                  : 'Reach a level to get a scratch card. Scratch it to add credits to your wallet, then use them on your next claim.'}
+              </p>
             </div>
           </div>
         </section>

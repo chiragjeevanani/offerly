@@ -8,17 +8,25 @@ import CheckRoundedIcon from '@mui/icons-material/CheckRounded';
 import CardGiftcardRoundedIcon from '@mui/icons-material/CardGiftcardRounded';
 import EmojiEventsRoundedIcon from '@mui/icons-material/EmojiEventsRounded';
 import SparklesIcon from '@mui/icons-material/AutoAwesomeRounded';
+import AccountBalanceWalletRoundedIcon from '@mui/icons-material/AccountBalanceWalletRounded';
 import toast from 'react-hot-toast';
+
+// One finger swipe across the card clears roughly a quarter of it, which is
+// enough to reveal - customers shouldn't have to rub the whole card away.
+const SCRATCH_BRUSH = 64;
+const REVEAL_AT_PERCENT = 25;
 
 const ScratchCardModal = ({ isOpen, card, onClose, onScratched }) => {
   const canvasRef = useRef(null);
   const isDrawing = useRef(false);
-  const lastPos = useRef({ x: 0, y: 0 });
+  const lastPos = useRef(null);
+  const progressQueued = useRef(false);
   const [isRevealed, setIsRevealed] = useState(card?.status === 'scratched');
   const [copied, setCopied] = useState(false);
   const [scratchProgress, setScratchProgress] = useState(card?.status === 'scratched' ? 100 : 0);
 
   const reward = card?.rewardSnapshot || {};
+  const isCredits = reward.discountType === 'credits';
 
   useEffect(() => {
     if (!isOpen || !card) return;
@@ -87,24 +95,30 @@ const ScratchCardModal = ({ isOpen, card, onClose, onScratched }) => {
     const y = clientY - rect.top;
 
     ctx.globalCompositeOperation = 'destination-out';
-    ctx.lineWidth = 36;
+    ctx.lineWidth = SCRATCH_BRUSH;
     ctx.lineCap = 'round';
     ctx.lineJoin = 'round';
 
     ctx.beginPath();
-    if (isDrawing.current && lastPos.current.x) {
+    if (isDrawing.current && lastPos.current) {
       ctx.moveTo(lastPos.current.x, lastPos.current.y);
       ctx.lineTo(x, y);
       ctx.stroke();
     } else {
-      ctx.arc(x, y, 18, 0, Math.PI * 2);
+      ctx.arc(x, y, SCRATCH_BRUSH / 2, 0, Math.PI * 2);
       ctx.fill();
     }
 
     lastPos.current = { x, y };
 
-    // Calculate percentage scratched
-    calculateProgress();
+    // Reading the canvas back is expensive - do it at most once per frame
+    if (!progressQueued.current) {
+      progressQueued.current = true;
+      requestAnimationFrame(() => {
+        progressQueued.current = false;
+        calculateProgress();
+      });
+    }
   };
 
   const calculateProgress = () => {
@@ -125,10 +139,10 @@ const ScratchCardModal = ({ isOpen, card, onClose, onScratched }) => {
 
     const totalSampled = pixels.length / 16;
     const percent = Math.round((transparentPixels / totalSampled) * 100);
-    setScratchProgress(percent);
+    // Progress bar fills relative to the reveal point, not the whole card
+    setScratchProgress(Math.min(100, Math.round((percent / REVEAL_AT_PERCENT) * 100)));
 
-    // Auto reveal when 45% scratched
-    if (percent > 45 && !isRevealed) {
+    if (percent >= REVEAL_AT_PERCENT && !isRevealed) {
       triggerFullReveal();
     }
   };
@@ -156,7 +170,7 @@ const ScratchCardModal = ({ isOpen, card, onClose, onScratched }) => {
 
   const handleMouseDown = (e) => {
     isDrawing.current = true;
-    lastPos.current = { x: 0, y: 0 };
+    lastPos.current = null;
     scratch(e.clientX, e.clientY);
   };
 
@@ -167,12 +181,12 @@ const ScratchCardModal = ({ isOpen, card, onClose, onScratched }) => {
 
   const handleMouseUp = () => {
     isDrawing.current = false;
-    lastPos.current = { x: 0, y: 0 };
+    lastPos.current = null;
   };
 
   const handleTouchStart = (e) => {
     isDrawing.current = true;
-    lastPos.current = { x: 0, y: 0 };
+    lastPos.current = null;
     const touch = e.touches[0];
     scratch(touch.clientX, touch.clientY);
   };
@@ -250,7 +264,9 @@ const ScratchCardModal = ({ isOpen, card, onClose, onScratched }) => {
               </motion.div>
 
               <span className="px-3 py-0.5 rounded-full text-xs font-bold bg-primary text-white shadow-sm">
-                {reward.discountType === 'percentage'
+                {isCredits
+                  ? `₹${reward.discountValue} CREDITS`
+                  : reward.discountType === 'percentage'
                   ? `${reward.discountValue}% OFF`
                   : reward.discountType === 'flat'
                   ? `₹${reward.discountValue} OFF`
@@ -283,6 +299,15 @@ const ScratchCardModal = ({ isOpen, card, onClose, onScratched }) => {
           <div className="mt-5 space-y-3">
             {isRevealed ? (
               <div className="space-y-3">
+                {isCredits ? (
+                <div className="flex items-center gap-3 bg-primary/5 border border-primary/20 rounded-2xl p-3">
+                  <AccountBalanceWalletRoundedIcon sx={{ fontSize: 22 }} className="text-primary shrink-0" />
+                  <p className="text-xs text-gray-700">
+                    <span className="font-bold text-gray-900">₹{reward.discountValue} added to your wallet.</span>{' '}
+                    Use them in your cart on your next claim.
+                  </p>
+                </div>
+                ) : (
                 <div className="flex items-center justify-between bg-gray-50 border border-gray-200 rounded-2xl p-3">
                   <div>
                     <p className="text-[10px] font-medium text-gray-400">Coupon Code</p>
@@ -307,6 +332,7 @@ const ScratchCardModal = ({ isOpen, card, onClose, onScratched }) => {
                     )}
                   </button>
                 </div>
+                )}
 
                 <button
                   onClick={onClose}

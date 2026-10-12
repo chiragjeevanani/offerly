@@ -5,6 +5,7 @@ import { hasBusinessHours, isWithinBusinessHours } from '../utils/businessHours.
 import { invalidateFeedCache } from '../utils/feedCache.js';
 import { releaseUnrefundedReferralPoints } from '../modules/user/services/referralService.js';
 import { releaseUnreleasedStockHolds } from '../modules/merchant/services/stockService.js';
+import { expireRewardCredits, expireUnscratchedCards } from '../modules/rewards/services/rewardCreditService.js';
 
 /**
  * Keeps each merchant's open/closed toggle in step with their business hours.
@@ -63,6 +64,12 @@ export const initCronJobs = () => {
       if (refunded > 0) {
         console.log(`[Cron] Returned referral points for ${refunded} expired/cancelled pass(es).`);
       }
+
+      // Milestone rewards: unscratched cards and unspent credits past their expiry
+      const expiredCards = await expireUnscratchedCards(now);
+      if (expiredCards > 0) console.log(`[Cron] Expired ${expiredCards} unscratched reward card(s).`);
+      const expiredGrants = await expireRewardCredits(now);
+      if (expiredGrants > 0) console.log(`[Cron] Took back unspent credits from ${expiredGrants} expired reward(s).`);
     } catch (err) {
       console.error('[Cron Error] Failed to expire redemptions:', err);
     }

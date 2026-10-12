@@ -17,6 +17,7 @@ import {
   triggerMilestoneCheckAdmin,
   getRewardsSettingsConfig,
   updateRewardsSettingsConfig,
+  getAdminRewardsSettings,
 } from '../controllers/rewardController.js';
 
 const router = express.Router();
@@ -34,6 +35,7 @@ router.post('/scratch/:cardId', protect, scratchCard);
 // ==========================================
 // Admin Routes
 // ==========================================
+router.get('/admin/settings', protect, authorize('admin'), getAdminRewardsSettings);
 router.put('/admin/settings', protect, authorize('admin'), updateRewardsSettingsConfig);
 
 router.get('/admin/milestones', protect, authorize('admin'), getAdminMilestones);

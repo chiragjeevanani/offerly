@@ -2,6 +2,7 @@ import User from '../models/User.js';
 import ReferralHistory from '../models/ReferralHistory.js';
 import Redemption from '../../booking/models/Redemption.js';
 import { notifyUser } from './notificationService.js';
+import { consumeRewardCredits, restoreRewardCredits } from '../../rewards/services/rewardCreditService.js';
 
 // Takes up to `wanted` referral points off the customer's balance for a new
 // pass, capped at what they hold. The conditional update keeps two claims at
@@ -15,11 +16,17 @@ export const reserveReferralPoints = async (userId, wanted) => {
     { _id: userId, credits: { $gte: points } },
     { $inc: { credits: -points } },
   );
-  return updated ? points : 0;
+  if (!updated) return 0;
+  // Milestone credits that can expire are spent first
+  await consumeRewardCredits(userId, points);
+  return points;
 };
 
 export const refundReferralPoints = async (userId, points) => {
-  if (points > 0) await User.findByIdAndUpdate(userId, { $inc: { credits: points } });
+  if (points > 0) {
+    await User.findByIdAndUpdate(userId, { $inc: { credits: points } });
+    await restoreRewardCredits(userId, points);
+  }
 };
 
 // Gives back the points spent on a pass that expired or was cancelled.

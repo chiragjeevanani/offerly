@@ -41,6 +41,36 @@ const scratchCardSchema = new mongoose.Schema(
       default: 'unscratched',
       index: true,
     },
+    // 'milestone' = a configured level; 'repeat' = the Nth bonus card past the
+    // top level (repeatIndex). Older cards have no kind and are milestones.
+    kind: {
+      type: String,
+      enum: ['milestone', 'repeat'],
+      default: 'milestone',
+    },
+    repeatIndex: {
+      type: Number,
+      default: null,
+    },
+    // Wallet credits paid out on scratch (rewardSnapshot.discountType 'credits')
+    creditsAwarded: {
+      type: Number,
+      default: 0,
+    },
+    // Expiry bookkeeping for the credits once paid out. Only tracked when the
+    // credits can expire (creditsExpireAt set); see services/rewardCreditService.js.
+    creditsRemaining: {
+      type: Number,
+      default: 0,
+    },
+    creditsExpireAt: {
+      type: Date,
+      default: null,
+    },
+    creditsExpired: {
+      type: Boolean,
+      default: false,
+    },
     scratchedAt: {
       type: Date,
       default: null,
@@ -57,5 +87,7 @@ const scratchCardSchema = new mongoose.Schema(
 
 scratchCardSchema.index({ userId: 1, milestoneLevel: 1 });
 scratchCardSchema.index({ userId: 1, status: 1, createdAt: -1 });
+// Expiring credit grants, spent soonest-expiring first
+scratchCardSchema.index({ userId: 1, creditsExpireAt: 1 }, { partialFilterExpression: { creditsRemaining: { $gt: 0 } } });
 
 export default mongoose.models.ScratchCard || mongoose.model('ScratchCard', scratchCardSchema);
