@@ -16,6 +16,7 @@ import toast from 'react-hot-toast';
 const BusinessDetailsStep = ({ data, onSubmit, onBack, loading }) => {
   const logoInputRef = useRef(null);
   const photosInputRef = useRef(null);
+  const coverInputRef = useRef(null);
   const [categories, setCategories] = useState([]);
   
   const [formData, setFormData] = useState({
@@ -26,10 +27,14 @@ const BusinessDetailsStep = ({ data, onSubmit, onBack, loading }) => {
     businessEmail: data.businessEmail || '',
     businessPhone: data.businessPhone || '',
     logo: data.logo || '',
+    coverImage: data.coverImage || '',
     photos: data.photos || []
   });
 
   const [errors, setErrors] = useState({});
+  // Uploads still in flight - Continue waits for them
+  const [uploading, setUploading] = useState(0);
+  const [uploadingCover, setUploadingCover] = useState(false);
 
   const countWords = (text) => text.trim().split(/\s+/).filter(w => w.length > 0).length;
   const descriptionWords = countWords(formData.description);
@@ -92,12 +97,39 @@ const BusinessDetailsStep = ({ data, onSubmit, onBack, loading }) => {
     setErrors(prev => ({ ...prev, logo: '' }));
     reader.readAsDataURL(file);
 
+    setUploading((n) => n + 1);
     try {
       const { uploadAPI } = await import('../../../../api/upload.api');
       const response = await uploadAPI.uploadImage(file);
       setFormData(prev => ({ ...prev, logo: response?.url || response }));
-    } catch (error) {
+    } catch {
+      // Don't leave the local preview in place - it would be saved as the logo
+      setFormData(prev => ({ ...prev, logo: '' }));
       toast.error('Logo upload failed');
+    } finally {
+      setUploading((n) => n - 1);
+    }
+  };
+
+  // Optional. Uploaded before it's shown, so only a real URL is ever saved.
+  const handleCoverUpload = async (e) => {
+    const file = e.target.files?.[0];
+    e.target.value = '';
+    if (!file || !file.type.startsWith('image/')) return;
+    if (file.size > 10 * 1024 * 1024) { toast.error('Max 10MB allowed'); return; }
+
+    setUploadingCover(true);
+    setUploading((n) => n + 1);
+    try {
+      const { uploadAPI } = await import('../../../../api/upload.api');
+      const response = await uploadAPI.uploadImage(file);
+      if (!response?.url) throw new Error('Upload failed');
+      setFormData(prev => ({ ...prev, coverImage: response.url }));
+    } catch {
+      toast.error('Cover photo upload failed');
+    } finally {
+      setUploadingCover(false);
+      setUploading((n) => n - 1);
     }
   };
 
@@ -105,6 +137,7 @@ const BusinessDetailsStep = ({ data, onSubmit, onBack, loading }) => {
     const files = Array.from(e.target.files || []);
     if (formData.photos.length + files.length > 4) { toast.error('Max 4 photos'); return; }
 
+    setUploading((n) => n + 1);
     try {
       const { uploadAPI } = await import('../../../../api/upload.api');
       const uploadedUrls = [];
@@ -116,6 +149,8 @@ const BusinessDetailsStep = ({ data, onSubmit, onBack, loading }) => {
       setFormData(prev => ({ ...prev, photos: [...prev.photos, ...uploadedUrls] }));
     } catch (error) {
       toast.error('Some uploads failed');
+    } finally {
+      setUploading((n) => n - 1);
     }
   };
 
@@ -140,6 +175,10 @@ const BusinessDetailsStep = ({ data, onSubmit, onBack, loading }) => {
 
   const handleSubmit = (e) => {
     e.preventDefault();
+    if (uploading > 0) {
+      toast.error('Please wait for your photos to finish uploading');
+      return;
+    }
     const newErrors = validate();
     const firstField = Object.keys(newErrors)[0];
     if (!firstField) {
@@ -323,6 +362,39 @@ const BusinessDetailsStep = ({ data, onSubmit, onBack, loading }) => {
               </div>
             </div>
 
+            {/* Cover Photo (optional) - banner at the top of the store page */}
+            <div className="space-y-2.5">
+              <label className="text-[10px] font-bold text-gray-400 px-1 uppercase tracking-tight">Store Cover Photo (Optional)</label>
+              <div className="relative w-full aspect-[16/7] rounded-2xl overflow-hidden bg-background border-2 border-dashed border-gray-100">
+                {formData.coverImage ? (
+                  <img src={formData.coverImage} className="w-full h-full object-cover" alt="" />
+                ) : (
+                  <button
+                    type="button"
+                    disabled={uploadingCover}
+                    onClick={() => coverInputRef.current?.click()}
+                    className="w-full h-full flex flex-col items-center justify-center gap-1.5 hover:bg-[#5EB929]/5 transition-all"
+                  >
+                    <CameraAltRoundedIcon sx={{ fontSize: 24 }} className="text-gray-300" />
+                    <span className="text-[10px] font-bold text-gray-400">Add a wide photo of your shop</span>
+                  </button>
+                )}
+                {uploadingCover && (
+                  <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
+                    <div className="w-6 h-6 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                  </div>
+                )}
+                {formData.coverImage && !uploadingCover && (
+                  <div className="absolute bottom-2 right-2 flex gap-2">
+                    <button type="button" onClick={() => setFormData(prev => ({ ...prev, coverImage: '' }))} className="px-3 py-1.5 rounded-lg bg-white/90 text-[10px] font-bold text-red-500 shadow-sm">Remove</button>
+                    <button type="button" onClick={() => coverInputRef.current?.click()} className="px-3 py-1.5 rounded-lg bg-[#5EB929] text-[10px] font-bold text-white shadow-sm">Change</button>
+                  </div>
+                )}
+              </div>
+              <p className="text-[9px] font-bold text-gray-400 px-1">Shown at the top of your store page. Skip it and we'll use a default photo. You can change it later from your Profile.</p>
+              <input ref={coverInputRef} type="file" accept="image/*" className="hidden" onChange={handleCoverUpload} />
+            </div>
+
             {/* Gallery Photos */}
             <div className="space-y-2.5">
               <label className="text-[10px] font-bold text-gray-400 px-1 uppercase tracking-tight">Store Gallery (Max 4)</label>
@@ -362,7 +434,7 @@ const BusinessDetailsStep = ({ data, onSubmit, onBack, loading }) => {
                  <ArrowBackRoundedIcon sx={{ fontSize: 16 }} /> Back
                </motion.button>
                <motion.button 
-                 type="submit" whileTap={{ scale: 0.98 }} disabled={loading}
+                 type="submit" whileTap={{ scale: 0.98 }} disabled={loading || uploading > 0}
                  className="flex-[2] h-14 bg-[#5EB929] text-white rounded-2xl font-bold text-[12px] shadow-lg shadow-[#5EB929]/20 flex items-center justify-center gap-2"
                >
                  {loading ? <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : <>Continue <ArrowForwardRoundedIcon sx={{ fontSize: 16 }} /></>}

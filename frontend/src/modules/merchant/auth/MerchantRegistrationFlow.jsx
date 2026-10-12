@@ -24,6 +24,7 @@ const MerchantRegistrationFlow = () => {
     businessEmail: '',
     businessPhone: '',
     logo: '',
+    coverImage: '',
     photos: []
   });
 

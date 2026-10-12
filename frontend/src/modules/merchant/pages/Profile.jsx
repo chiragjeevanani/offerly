@@ -24,6 +24,7 @@ import SpaRoundedIcon from '@mui/icons-material/SpaRounded';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 import SaveRoundedIcon from '@mui/icons-material/SaveRounded';
 import StorefrontRoundedIcon from '@mui/icons-material/StorefrontRounded';
+import PhotoCameraRoundedIcon from '@mui/icons-material/PhotoCameraRounded';
 import { useEffect, useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { merchantAPI } from '../../../api/merchant.api';
@@ -97,7 +98,11 @@ const Profile = ({ merchant, onMerchantUpdate }) => {
     phone: merchant?.phone || '',
     email: merchant?.email || '',
     address: merchant?.address || '',
+    coverImage: merchant?.coverImage || '',
+    logo: merchant?.logo || '',
   });
+  const [uploadingCover, setUploadingCover] = useState(false);
+  const [uploadingLogo, setUploadingLogo] = useState(false);
 
   useEffect(() => {
     if (merchant) {
@@ -110,9 +115,36 @@ const Profile = ({ merchant, onMerchantUpdate }) => {
         phone: merchant.phone || '',
         email: merchant.email || '',
         address: merchant.address || '',
+        coverImage: merchant.coverImage || '',
+        logo: merchant.logo || '',
       });
     }
   }, [merchant]);
+
+  // Uploaded straight away so the preview is the real (resized) image; it only
+  // goes live on the store page when the merchant hits Save Profile.
+  const uploadImageField = (field, setBusy, failMessage) => async (e) => {
+    const file = e.target.files?.[0];
+    e.target.value = ''; // let the same file be picked again after a remove
+    if (!file) return;
+    if (!file.type.startsWith('image/')) return toast.error('Please choose an image file');
+    if (file.size > 10 * 1024 * 1024) return toast.error('Image must be under 10MB');
+
+    setBusy(true);
+    try {
+      const { uploadAPI } = await import('../../../api/upload.api');
+      const response = await uploadAPI.uploadImage(file);
+      const url = response?.url;
+      if (!url) throw new Error('Upload failed');
+      setProfileFormData((p) => ({ ...p, [field]: url }));
+    } catch (error) {
+      toast.error(error?.message || failMessage);
+    } finally {
+      setBusy(false);
+    }
+  };
+  const handleCoverSelect = uploadImageField('coverImage', setUploadingCover, 'Cover photo upload failed');
+  const handleLogoSelect = uploadImageField('logo', setUploadingLogo, 'Logo upload failed');
 
   // Same query (and cache entry) as the Dashboard, so opening Profile right after
   // it doesn't re-run the dashboard's seven aggregations. It only refetches if the
@@ -439,6 +471,85 @@ const Profile = ({ merchant, onMerchantUpdate }) => {
 
               {/* Modal Form */}
               <form onSubmit={handleSaveStoreProfile} className="p-6 space-y-4 overflow-y-auto flex-1">
+                {/* Logo - required, so it can be replaced but not removed */}
+                <div className="space-y-2">
+                  <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Store Logo</label>
+                  <div className="flex items-center gap-4">
+                    <div className="relative w-20 h-20 rounded-2xl overflow-hidden bg-gray-50 border border-gray-200 flex items-center justify-center shrink-0">
+                      {profileFormData.logo ? (
+                        <img src={profileFormData.logo} alt="" className="w-full h-full object-cover" />
+                      ) : (
+                        <StorefrontRoundedIcon sx={{ fontSize: 30 }} className="text-gray-300" />
+                      )}
+                      {uploadingLogo && (
+                        <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
+                          <span className="w-6 h-6 rounded-full border-2 border-white/30 border-t-white animate-spin" />
+                        </div>
+                      )}
+                    </div>
+                    <div className="space-y-1.5">
+                      <label
+                        className={`inline-flex px-3 py-1.5 rounded-lg bg-[#5EB929] text-[11px] font-bold text-white shadow-sm items-center gap-1 ${
+                          uploadingLogo ? 'opacity-50 pointer-events-none' : 'cursor-pointer hover:bg-[#52a623]'
+                        }`}
+                      >
+                        <PhotoCameraRoundedIcon sx={{ fontSize: 14 }} />
+                        {profileFormData.logo ? 'Change Logo' : 'Upload Logo'}
+                        <input type="file" accept="image/*" className="hidden" onChange={handleLogoSelect} />
+                      </label>
+                      <p className="text-[10px] text-gray-400">A square image works best.</p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Cover photo - the banner customers see at the top of the store page */}
+                <div className="space-y-2">
+                  <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Store Cover Photo</label>
+                  <div className="relative w-full aspect-[16/7] rounded-2xl overflow-hidden bg-gray-900 border border-gray-200">
+                    <img
+                      src={profileFormData.coverImage || '/placeholders/store-cover.webp'}
+                      alt=""
+                      className={`w-full h-full object-cover ${profileFormData.coverImage ? '' : 'opacity-60'}`}
+                      onError={(e) => {
+                        e.currentTarget.src = '/placeholders/store-cover.webp';
+                      }}
+                    />
+                    {!profileFormData.coverImage && !uploadingCover && (
+                      <span className="absolute top-2.5 left-2.5 px-2 py-0.5 rounded-md bg-black/50 text-white text-[10px] font-bold">
+                        Default photo
+                      </span>
+                    )}
+                    {uploadingCover && (
+                      <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
+                        <span className="w-7 h-7 rounded-full border-2 border-white/30 border-t-white animate-spin" />
+                      </div>
+                    )}
+                    <div className="absolute bottom-2.5 right-2.5 flex gap-2">
+                      {profileFormData.coverImage && !uploadingCover && (
+                        <button
+                          type="button"
+                          onClick={() => setProfileFormData((p) => ({ ...p, coverImage: '' }))}
+                          className="px-3 py-1.5 rounded-lg bg-white/90 text-[11px] font-bold text-rose-600 shadow-sm hover:bg-white"
+                        >
+                          Remove
+                        </button>
+                      )}
+                      <label
+                        className={`px-3 py-1.5 rounded-lg bg-[#5EB929] text-[11px] font-bold text-white shadow-sm flex items-center gap-1 ${
+                          uploadingCover ? 'opacity-50 pointer-events-none' : 'cursor-pointer hover:bg-[#52a623]'
+                        }`}
+                      >
+                        <PhotoCameraRoundedIcon sx={{ fontSize: 14 }} />
+                        {profileFormData.coverImage ? 'Change' : 'Upload'}
+                        <input type="file" accept="image/*" className="hidden" onChange={handleCoverSelect} />
+                      </label>
+                    </div>
+                  </div>
+                  <p className="text-[10px] text-gray-400">
+                    Shown at the top of your store page. Use a wide landscape photo of your shop (e.g. 1600 × 700).
+                  </p>
+                </div>
+
                 {/* Store Type Selection */}
                 <div className="space-y-2">
                   <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Business Type</label>
@@ -543,7 +654,7 @@ const Profile = ({ merchant, onMerchantUpdate }) => {
                   </button>
                   <button
                     type="submit"
-                    disabled={savingProfile}
+                    disabled={savingProfile || uploadingCover || uploadingLogo}
                     className="px-5 py-2.5 rounded-xl bg-[#5EB929] hover:bg-[#52a623] text-white text-xs font-bold flex items-center gap-1.5 shadow-md shadow-[#5EB929]/20 transition-all disabled:opacity-50"
                   >
                     <SaveRoundedIcon sx={{ fontSize: 16 }} />

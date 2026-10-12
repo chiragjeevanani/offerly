@@ -420,7 +420,7 @@ export const updateBusinessDetails = async (req, res) => {
       return res.status(404).json({ success: false, message: 'Merchant not found' });
     }
 
-    const { storeName, category, storeType, description, businessEmail, businessPhone, logo, photos } = req.body;
+    const { storeName, category, storeType, description, businessEmail, businessPhone, logo, photos, coverImage } = req.body;
 
     // Validate required fields
     if (!storeName || !category || !description || !businessEmail || !businessPhone || !logo) {
@@ -456,7 +456,11 @@ export const updateBusinessDetails = async (req, res) => {
     merchant.businessEmail = businessEmail.trim().toLowerCase();
     merchant.businessPhone = businessPhone.trim();
     merchant.logo = logo.trim();
-    
+    // Optional banner for the store page; left empty, customers see the default
+    if (typeof coverImage === 'string') {
+      merchant.coverImage = coverImage.trim();
+    }
+
     if (photos && Array.isArray(photos)) {
       merchant.photos = photos;
     }
