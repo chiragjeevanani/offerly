@@ -15,7 +15,7 @@ const planSchema = new mongoose.Schema(
     duration: {
       type: String,
       required: true,
-      enum: ['Lifetime', 'Monthly', 'Yearly'],
+      enum: ['Lifetime', 'Weekly', 'Monthly', 'Yearly'],
     },
     maxProducts: {
       type: Number,

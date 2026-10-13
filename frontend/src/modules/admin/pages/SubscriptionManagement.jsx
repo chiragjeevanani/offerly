@@ -737,6 +737,7 @@ const SubscriptionManagement = () => {
                     onChange={(e) => setFormData({...formData, duration: e.target.value})}
                     className="w-full bg-white border border-gray-200 rounded-xl py-3 px-4 text-sm font-medium focus:ring-2 focus:ring-primary/10 focus:border-primary outline-none transition-all appearance-none"
                   >
+                    <option value="Weekly">Weekly</option>
                     <option value="Monthly">Monthly</option>
                     <option value="Yearly">Yearly</option>
                     <option value="Lifetime">Lifetime</option>

@@ -889,7 +889,9 @@ export const updateAdRequestStatus = async (req, res) => {
       const expiry = new Date();
       const plan = ad.planId;
 
-      if (plan.duration === 'Monthly') {
+      if (plan.duration === 'Weekly') {
+        expiry.setDate(expiry.getDate() + 7);
+      } else if (plan.duration === 'Monthly') {
         expiry.setMonth(expiry.getMonth() + 1);
       } else if (plan.duration === 'Yearly') {
         expiry.setFullYear(expiry.getFullYear() + 1);

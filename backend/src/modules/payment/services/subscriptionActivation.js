@@ -13,7 +13,9 @@ import { invalidateFeedCache } from "../../../utils/feedCache.js";
 
 const merchantEndDate = (plan, from = new Date()) => {
   const endDate = new Date(from);
-  if (plan.duration === "Monthly") {
+  if (plan.duration === "Weekly") {
+    endDate.setDate(endDate.getDate() + 7);
+  } else if (plan.duration === "Monthly") {
     endDate.setMonth(endDate.getMonth() + 1);
   } else if (plan.duration === "Yearly") {
     endDate.setFullYear(endDate.getFullYear() + 1);

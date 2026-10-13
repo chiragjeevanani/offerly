@@ -278,6 +278,8 @@ export const registerStore = async (req, res) => {
   const trialDays = Number(plan.trialDays || 0);
   if (trialDays > 0) {
     endDate.setDate(startDate.getDate() + trialDays);
+  } else if (plan.duration === 'Weekly') {
+    endDate.setDate(startDate.getDate() + 7);
   } else if (plan.duration === 'Monthly') {
     endDate.setMonth(startDate.getMonth() + 1);
   } else if (plan.duration === 'Yearly') {
@@ -1234,6 +1236,8 @@ export const purchaseSubscription = async (req, res) => {
 
     if (isTrial) {
       endDate.setDate(endDate.getDate() + plan.trialDays);
+    } else if (plan.duration === 'Weekly') {
+      endDate.setDate(endDate.getDate() + 7);
     } else if (plan.duration === 'Monthly') {
       endDate.setMonth(endDate.getMonth() + 1);
     } else if (plan.duration === 'Yearly') {

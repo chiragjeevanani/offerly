@@ -45,6 +45,10 @@ const buildEndDate = (duration) => {
     return new Date(now.getFullYear() + 1, now.getMonth(), now.getDate());
   }
 
+  if (duration === "Weekly") {
+    return new Date(now.getFullYear(), now.getMonth(), now.getDate() + 7);
+  }
+
   return new Date(now.getFullYear(), now.getMonth() + 1, now.getDate());
 };
 

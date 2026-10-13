@@ -30,7 +30,9 @@ export const getCustomerSubscriptionStatus = async (userId) => {
 export const computeSubscriptionEndDate = (duration, from = new Date()) => {
   const endDate = new Date(from);
 
-  if (duration === "Yearly") {
+  if (duration === "Weekly") {
+    endDate.setDate(endDate.getDate() + 7);
+  } else if (duration === "Yearly") {
     endDate.setFullYear(endDate.getFullYear() + 1);
   } else if (duration === "Lifetime") {
     endDate.setFullYear(endDate.getFullYear() + 100);

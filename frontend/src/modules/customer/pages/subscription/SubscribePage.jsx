@@ -167,7 +167,7 @@ const SubscribePage = () => {
                       <span className="text-3xl font-bold text-gray-900">{plan.price}</span>
                       {plan.price > 0 && (
                         <span className="text-[10px] font-bold text-gray-400 uppercase ml-1">
-                          / {plan.duration === 'Yearly' ? 'yr' : 'mo'}
+                          / {plan.duration === 'Yearly' ? 'yr' : plan.duration === 'Weekly' ? 'wk' : 'mo'}
                         </span>
                       )}
                     </div>
