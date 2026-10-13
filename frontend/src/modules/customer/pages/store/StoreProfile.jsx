@@ -300,6 +300,10 @@ const StoreProfilePage = () => {
 
   if (!merchant) return null;
 
+  // Cover first, then the store photos. Skip blanks and repeats - an empty
+  // coverImage used to render as a grey tile.
+  const storePhotos = [...new Set([merchant.coverImage, ...(merchant.photos || [])].filter(Boolean))];
+
   return (
     <PageTransition>
       <div className="pb-32">
@@ -569,8 +573,11 @@ const StoreProfilePage = () => {
           )}
 
           {activeTab === 'photos' && (
+            storePhotos.length === 0 ? (
+              <p className="text-center text-text-secondary text-sm py-8">No photos yet</p>
+            ) : (
             <div className="grid grid-cols-2 gap-3">
-              {[merchant.coverImage, ...merchant.photos].map((photo, idx) => (
+              {storePhotos.map((photo, idx) => (
                 <motion.div
                   key={idx}
                   initial={{ opacity: 0, scale: 0.95 }}
@@ -582,6 +589,7 @@ const StoreProfilePage = () => {
                 </motion.div>
               ))}
             </div>
+            )
           )}
 
           {activeTab === 'reviews' && (
