@@ -41,7 +41,8 @@ const Referral = () => {
       await navigator.share({
         title: 'Join Offerly!',
         text: `Use my referral code ${user?.referralCode} on Offerly and get exclusive local deals!`,
-        url: 'https://app.offerly.com',
+        // Opens the Play Store on Android, the website elsewhere - see index.html
+        url: `https://getofferly.in/invite/${user?.referralCode || ''}`,
       });
     } catch {
       handleCopy();

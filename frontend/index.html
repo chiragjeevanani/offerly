@@ -2,6 +2,25 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
+    <!-- Referral share link: getofferly.in/invite/CODE. Android goes to the Play
+         Store (code passed as the install referrer); iPhone and desktop stay on
+         the website with the code pre-filled at signup. Runs before the app
+         bundle loads so the redirect is instant. -->
+    <script>
+      (function () {
+        var m = location.pathname.match(/^\/invite\/([A-Za-z0-9]{1,20})\/?$/);
+        if (!m) return;
+        var code = m[1].toUpperCase();
+        var inApp = window.Capacitor || window.ReactNativeWebView || window.flutter_inappwebview;
+        if (/android/i.test(navigator.userAgent) && !inApp) {
+          location.replace('https://play.google.com/store/apps/details?id=com.offerly.user&referrer=' +
+            encodeURIComponent('utm_source=referral&utm_medium=invite&utm_content=' + code));
+          return;
+        }
+        try { localStorage.setItem('offerly_signup_referral', code); } catch (e) {}
+        location.replace('/login?ref=' + code);
+      })();
+    </script>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <!-- Non-blocking: a plain stylesheet link stops first paint until Google answers.
