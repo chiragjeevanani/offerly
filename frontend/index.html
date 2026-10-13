@@ -2,19 +2,30 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <!-- Referral share link: getofferly.in/invite/CODE. Android goes to the Play
-         Store (code passed as the install referrer); iPhone and desktop stay on
-         the website with the code pre-filled at signup. Runs before the app
-         bundle loads so the redirect is instant. -->
+    <!-- Short links that send Android phones to the Play Store and everyone
+         else to the website. Run before the app bundle loads, so they're instant.
+           getofferly.in/invite/CODE - referral share link; the code goes to the
+             Play Store as the install referrer, or is pre-filled at signup.
+           getofferly.in/app - promotion link (printed QR codes), no code.
+         Targets can be changed here at any time without reprinting the QR. -->
     <script>
       (function () {
-        var m = location.pathname.match(/^\/invite\/([A-Za-z0-9]{1,20})\/?$/);
-        if (!m) return;
-        var code = m[1].toUpperCase();
+        var path = location.pathname;
+        var invite = path.match(/^\/invite\/([A-Za-z0-9]{1,20})\/?$/);
+        var promo = /^\/app\/?$/i.test(path);
+        if (!invite && !promo) return;
+        var code = invite ? invite[1].toUpperCase() : '';
         var inApp = window.Capacitor || window.ReactNativeWebView || window.flutter_inappwebview;
         if (/android/i.test(navigator.userAgent) && !inApp) {
+          var referrer = code
+            ? 'utm_source=referral&utm_medium=invite&utm_content=' + code
+            : 'utm_source=qr&utm_medium=print&utm_campaign=promo';
           location.replace('https://play.google.com/store/apps/details?id=com.offerly.user&referrer=' +
-            encodeURIComponent('utm_source=referral&utm_medium=invite&utm_content=' + code));
+            encodeURIComponent(referrer));
+          return;
+        }
+        if (!code) {
+          location.replace('/');
           return;
         }
         try { localStorage.setItem('offerly_signup_referral', code); } catch (e) {}
