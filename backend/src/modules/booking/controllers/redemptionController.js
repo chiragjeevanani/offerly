@@ -16,6 +16,7 @@ import {
   releaseReferralPoints,
 } from '../../user/services/referralService.js';
 import { getIncentiveSettings, evaluateCustomerBonus, bonusAmountFor, allowedCreditSpend } from '../../user/services/incentiveService.js';
+import { creditSettlementForRedemption } from '../../payment/services/settlementService.js';
 import { getCustomerSubscriptionStatus } from '../../../utils/customerSubscription.js';
 import DiscountWalletTransaction from '../../payment/models/DiscountWalletTransaction.js';
 import { resolveLine, stockError } from '../../merchant/services/inventoryService.js';
@@ -436,6 +437,15 @@ export const verifyQR = async (req, res) => {
     updateTasks.push(consumeStockForRedemption(redemption));
 
     await Promise.all(updateTasks);
+
+    // The store collected less than the bill by the points + bonus on this
+    // pass; Offerly owes it that amount (settlement wallet). Never allowed to
+    // fail the scan - the flag on the pass lets it be retried.
+    try {
+      await creditSettlementForRedemption(redemption);
+    } catch (settleErr) {
+      console.error('Settlement credit error (non-blocking):', settleErr);
+    }
 
     const merchant = await Merchant.findById(redemption.merchantId).select("city").lean();
     invalidateFeedCache({ city: merchant?.city || "" });

@@ -163,6 +163,19 @@ export const merchantAPI = {
     }
   },
 
+  // Settlement wallet: what Offerly owes the store for points and bonuses
+  getSettlement: async () => {
+    return axiosInstance.get('/merchants/me/settlement');
+  },
+
+  saveBankDetails: async (data) => {
+    return axiosInstance.put('/merchants/me/settlement/bank-details', data);
+  },
+
+  requestPayout: async () => {
+    return axiosInstance.post('/merchants/me/settlement/payouts');
+  },
+
   // Update store profile fields (name, address, isOpen toggle, etc.)
   updateStore: async (data) => {
     return axiosInstance.put('/merchants/me', data);

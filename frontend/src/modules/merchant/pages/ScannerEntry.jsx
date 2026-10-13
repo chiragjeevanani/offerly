@@ -152,6 +152,19 @@ const BookingVerificationModal = ({ booking, onFulfill, onClose, onCancelBooking
                  <span className="text-sm font-bold text-amber-800">-₹{Math.round(booking.totals.referralDiscount).toLocaleString()}</span>
                </div>
              )}
+             {booking.totals?.walletDiscount > 0 && (
+               <div className="mt-2 p-2.5 rounded-lg bg-amber-50 border border-amber-200 flex justify-between items-center">
+                 <span className="text-[11px] font-bold text-amber-800 uppercase">{booking.totals.bonusLabel || 'Offerly bonus'}</span>
+                 <span className="text-sm font-bold text-amber-800">-₹{Math.round(booking.totals.walletDiscount).toLocaleString()}</span>
+               </div>
+             )}
+             {/* Points + bonus are Offerly's discounts: the store is paid back through its Offerly Wallet */}
+             {((booking.totals?.referralDiscount || 0) + (booking.totals?.walletDiscount || 0)) > 0 && (
+               <div className="mt-2 p-2.5 rounded-lg bg-[#5EB929]/10 border border-[#5EB929]/25 flex justify-between items-center gap-3">
+                 <span className="text-[11px] font-bold text-[#3F7F17]">Offerly pays you back (added to your Offerly Wallet once completed)</span>
+                 <span className="text-sm font-bold text-[#3F7F17] shrink-0">+₹{Math.round((booking.totals.referralDiscount || 0) + (booking.totals.walletDiscount || 0)).toLocaleString()}</span>
+               </div>
+             )}
 
              <div className="mt-3 pt-3 border-t border-gray-200 flex justify-between items-center">
                 <span className="text-xs font-bold text-gray-900 uppercase">Total to Collect</span>

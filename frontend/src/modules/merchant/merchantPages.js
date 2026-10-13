@@ -14,6 +14,7 @@ export const merchantPageLoaders = {
   insights: () => import('./pages/Insights'),
   notifications: () => import('./pages/Notifications'),
   profile: () => import('./pages/Profile'),
+  wallet: () => import('./pages/Wallet'),
 };
 
 const loaderForPath = {
@@ -28,6 +29,7 @@ const loaderForPath = {
   '/merchant/insights': merchantPageLoaders.insights,
   '/merchant/notifications': merchantPageLoaders.notifications,
   '/merchant/profile': merchantPageLoaders.profile,
+  '/merchant/wallet': merchantPageLoaders.wallet,
 };
 
 const quietly = (loader) => {

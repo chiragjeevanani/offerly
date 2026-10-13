@@ -100,7 +100,6 @@ export const serializeMerchant = (merchant) => ({
   documents: merchant?.documents || [],
   onboardingStep: merchant?.onboardingStep ?? 0,
   businessHours: merchant?.businessHours || null,
-  bankDetails: merchant?.bankDetails || null,
   businessEmail: merchant?.businessEmail || '',
   businessPhone: merchant?.businessPhone || '',
   state: merchant?.state || '',

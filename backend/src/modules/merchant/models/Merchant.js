@@ -290,6 +290,16 @@ const merchantSchema = new mongoose.Schema(
       type: String,
       default: '',
     },
+    // What Offerly owes this store for discounts Offerly gave its customers
+    // (points spent, Distribution Fund bonuses): the store collected that much
+    // less at the counter. `balance` can be requested as a payout; `pending`
+    // is sitting in an open payout request. See settlementService.
+    settlementWallet: {
+      balance: { type: Number, default: 0 },
+      pending: { type: Number, default: 0 },
+      totalEarned: { type: Number, default: 0 },
+      totalPaid: { type: Number, default: 0 },
+    },
     bankDetails: {
       accountHolderName: { type: String, default: '' },
       accountNumber: { type: String, default: '' },

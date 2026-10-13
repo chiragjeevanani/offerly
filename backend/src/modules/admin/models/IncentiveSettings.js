@@ -40,6 +40,10 @@ const incentiveSettingsSchema = new mongoose.Schema(
       minOrderValue: { type: Number, default: 0, min: 0 },
       maxPerOrder: { type: Number, default: 0, min: 0 }, // 0 = no limit
     },
+    // Smallest amount a store can ask Offerly to pay out (0 = any amount)
+    payout: {
+      minAmount: { type: Number, default: 100, min: 0 },
+    },
     bonuses: {
       newUser: { ...bonusFields },
       returning: {

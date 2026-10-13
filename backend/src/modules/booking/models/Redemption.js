@@ -151,6 +151,12 @@ const redemptionSchema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
+    // Set once the store has been credited (settlement wallet) for the points
+    // and bonus on this pass, so it can never be credited twice.
+    settlementCredited: {
+      type: Boolean,
+      default: false,
+    },
     // Stock set aside for this pass. 'held' while pending; 'released' once an
     // expired/cancelled pass gives it back; 'consumed' when completed. Passes
     // created before reservations existed stay 'none' and are deducted the

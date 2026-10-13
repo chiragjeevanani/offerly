@@ -24,6 +24,7 @@ import InsightsRoundedIcon from '@mui/icons-material/InsightsRounded';
 import CategoryRoundedIcon from '@mui/icons-material/CategoryRounded';
 import SpaRoundedIcon from '@mui/icons-material/SpaRounded';
 import AppsRoundedIcon from '@mui/icons-material/AppsRounded';
+import AccountBalanceWalletRoundedIcon from '@mui/icons-material/AccountBalanceWalletRounded';
 
 import { useApp } from '../customer/context/AppContext';
 import { merchantAPI } from '../../api/merchant.api';
@@ -58,6 +59,7 @@ const Support = lazy(() => import('./pages/static/Support'));
 // Notifications & Profile
 const Notifications = lazy(pages.notifications);
 const Profile = lazy(pages.profile);
+const Wallet = lazy(pages.wallet);
 
 import SubscriptionRenewal from './components/SubscriptionRenewal';
 
@@ -95,6 +97,7 @@ const MerchantSidebar = ({ merchant, isMobileMenuOpen, setIsMobileMenuOpen }) =>
   ];
 
   const accountNavItems = [
+    { name: 'Offerly Wallet', path: '/merchant/wallet', icon: AccountBalanceWalletRoundedIcon },
     { name: 'My Plan', path: '/merchant/subscription', icon: WorkspacePremiumRoundedIcon },
     { name: 'Notifications', path: '/merchant/notifications', icon: NotificationsRoundedIcon },
     { name: 'Profile', path: '/merchant/profile', icon: PersonRoundedIcon },
@@ -590,6 +593,7 @@ const MerchantApp = () => {
                 <Route path="/insights" element={<Insights merchant={merchant} />} />
                 <Route path="/advertise" element={<Advertise merchant={merchant} />} />
                 <Route path="/subscription" element={<SubscriptionRenewal merchant={merchant} />} />
+                <Route path="/wallet" element={<Wallet />} />
                 <Route path="/notifications" element={<Notifications />} />
                 <Route path="/profile" element={<Profile merchant={merchant} onMerchantUpdate={fetchMerchant} />} />
                 <Route path="/about" element={<About />} />

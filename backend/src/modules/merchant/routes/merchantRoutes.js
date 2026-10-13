@@ -34,6 +34,7 @@ import {
   getMonthlyAnalytics,
 } from "../controllers/analyticsController.js";
 import { deleteMerchant } from "../../admin/controllers/adminController.js";
+import { getMySettlement, updateMyBankDetails, createMyPayoutRequest } from "../../payment/controllers/settlementController.js";
 
 const router = express.Router();
 
@@ -51,6 +52,10 @@ const pushTestLimiter = rateLimit({
 router.get("/", optionalAuth, getMerchants);
 router.get("/me", protect, authorize("merchant", "admin"), getMyStore);
 router.get("/me/store-config", protect, authorize("merchant"), getStoreConfig);
+// Settlement wallet: what Offerly owes the store for points and bonuses
+router.get("/me/settlement", protect, authorize("merchant"), getMySettlement);
+router.put("/me/settlement/bank-details", protect, authorize("merchant"), updateMyBankDetails);
+router.post("/me/settlement/payouts", protect, authorize("merchant"), createMyPayoutRequest);
 router.patch("/me/onboarding", protect, authorize("merchant"), updateOnboarding);
 
 // 4-Step Registration Routes

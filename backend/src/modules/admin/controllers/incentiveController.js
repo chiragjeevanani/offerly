@@ -24,7 +24,9 @@ const buildUpdate = (body) => {
     set[path] = value;
   };
 
-  const { referral, credits, bonuses } = body || {};
+  const { referral, credits, bonuses, payout } = body || {};
+
+  if (payout && 'minAmount' in payout) num('payout.minAmount', payout.minAmount);
 
   if (referral) {
     if ('enabled' in referral) bool('referral.enabled', referral.enabled);

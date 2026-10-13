@@ -40,7 +40,7 @@ const menuSections = [
     items: [
       { label: 'Store Core Profile', icon: BusinessRoundedIcon, action: 'edit-store' },
       { label: 'Business Hours', icon: AccessTimeRoundedIcon, action: 'edit-hours' },
-      { label: 'Settlement Account', icon: AccountBalanceRoundedIcon, path: '/merchant/profile/bank' },
+      { label: 'Offerly Wallet & Payouts', icon: AccountBalanceRoundedIcon, path: '/merchant/wallet' },
     ],
   },
   {

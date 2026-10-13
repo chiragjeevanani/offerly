@@ -113,6 +113,19 @@ export const adminAPI = {
     return axiosInstance.put('/admin/wallet-settings', data);
   },
 
+  // Store payouts for Offerly-funded discounts
+  getPayouts: async (status = 'pending') => {
+    return axiosInstance.get('/admin/payouts', { params: { status } });
+  },
+
+  payPayout: async (id, data) => {
+    return axiosInstance.put(`/admin/payouts/${id}/pay`, data);
+  },
+
+  rejectPayout: async (id, data) => {
+    return axiosInstance.put(`/admin/payouts/${id}/reject`, data);
+  },
+
   // Refer & Earn + Customer Distribution Fund
   getIncentiveSettings: async () => {
     return axiosInstance.get('/admin/incentive-settings');

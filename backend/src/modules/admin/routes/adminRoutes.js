@@ -1,4 +1,5 @@
 import express from 'express';
+import { getPayoutRequests, payPayoutRequest, rejectPayoutRequest } from '../../payment/controllers/settlementController.js';
 import { getIncentiveSettingsConfig, updateIncentiveSettingsConfig, getIncentiveSummary } from '../controllers/incentiveController.js';
 import {
   getAllUsers,
@@ -60,6 +61,10 @@ router.put('/wallet-settings', authorize('admin'), updateWalletSettingsConfig);
 router.get('/incentive-settings', authorize('admin'), getIncentiveSettingsConfig);
 router.put('/incentive-settings', authorize('admin'), updateIncentiveSettingsConfig);
 router.get('/incentive-summary', authorize('admin'), getIncentiveSummary);
+// Store payouts for Offerly-funded discounts
+router.get('/payouts', authorize('admin'), getPayoutRequests);
+router.put('/payouts/:id/pay', authorize('admin'), payPayoutRequest);
+router.put('/payouts/:id/reject', authorize('admin'), rejectPayoutRequest);
 router.get('/customer-subscription-settings', authorize('admin'), getCustomerSubscriptionSettingsConfig);
 router.put('/customer-subscription-settings', authorize('admin'), updateCustomerSubscriptionSettingsConfig);
 router.put('/support-contacts', authorize('admin'), updateSupportContacts);
