@@ -15,7 +15,7 @@ const UnifiedOfferBuilder = ({ isOpen, onClose, merchant, onSuccess }) => {
 
   const [coreData, setCoreData] = useState({
     name: '', originalPrice: '', description: '', image: null, imagePreview: null,
-    category: merchant?.category || '', isVeg: false
+    category: merchant?.category || '', isVeg: null
   });
 
   const [campaignData, setCampaignData] = useState({

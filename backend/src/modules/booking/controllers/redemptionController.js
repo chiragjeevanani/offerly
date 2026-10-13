@@ -67,6 +67,7 @@ const buildItemSnapshots = async (merchantId, items, needsStockCheck = () => fal
         image: product.images?.[0] || '',
         variantLabel: line.label,
         isVeg: product.isVeg,
+        foodType: product.foodType || (product.isVeg === true ? 'veg' : product.isVeg === false ? 'non_veg' : null),
         duration: product.duration,
       },
       qty,

@@ -31,7 +31,7 @@ const populateCart = (query) =>
     .populate('merchantId', 'storeName logo address locality phone discountWallet')
     .populate({
       path: 'items.product',
-      select: 'name categoryId price offerPrice images isVeg variantOptions trackInventory stock reserved',
+      select: 'name categoryId price offerPrice images isVeg foodType variantOptions trackInventory stock reserved',
       populate: { path: 'categoryId', select: 'name discountPercent' },
     })
     .populate('items.variant', 'attributes name price offerPrice stock reserved isActive');

@@ -25,6 +25,7 @@ import { useCities, useCategories } from '../../../../hooks/useReferenceData';
 import OfferCard from '../../components/ui/OfferCard';
 import AllStoresClosedView from '../../components/home/AllStoresClosedView';
 import CategoryTile from '../../../../components/CategoryTile';
+import WelcomeGuide, { hasSeenGuide } from '../../components/WelcomeGuide';
 
 // Helper to check if a merchant is currently open based on isOpen flag and businessHours
 export const isMerchantOpen = (merchant) => {
@@ -95,6 +96,8 @@ const EMPTY_FEED = {
 };
 
 const Home = () => {
+  // First-time walkthrough, shown once (Profile -> How Offerly works reopens it)
+  const [showGuide, setShowGuide] = useState(() => !hasSeenGuide());
   const navigate = useNavigate();
   const { enabled: rewardsEnabled } = useRewardsEnabled();
   const { user, selectedCity, setSelectedCity, setSelectedCategory, userLocation, outsideServiceArea } = useApp();
@@ -268,6 +271,7 @@ const Home = () => {
 
   return (
     <PageTransition>
+      {showGuide && <WelcomeGuide onClose={() => setShowGuide(false)} />}
       <div className="px-4 md:px-6 py-3 space-y-5 pb-8 bg-background min-h-screen">
 
         {/* 1. Clean Search Bar */}

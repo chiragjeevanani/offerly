@@ -9,6 +9,7 @@ import toast from 'react-hot-toast';
 import { productCategoryAPI } from '../../../api/productCategory.api';
 import { isServiceCategory, isFoodCategory, requiresProductImage } from '../../../utils/storeTypeHelper';
 import InventoryEditor from './InventoryEditor';
+import FoodTypeMark, { FOOD_TYPES } from '../../../components/ui/FoodTypeMark';
 import { rebuildVariants } from '../utils/inventory';
 
 const CATEGORY_BEHAVIOURS = {
@@ -55,7 +56,7 @@ const AddProductModal = ({ isOpen, onClose, merchant, editingProduct, onSave }) 
   const [formData, setFormData] = useState({
     name: '', description: '', price: '',
     categoryType: getInitialType(),
-    categoryId: '', isVeg: behaviour.showVeg ? false : null, stock: '', sku: '',
+    categoryId: '', foodType: null, stock: '', sku: '',
     duration: '30 mins', inclusions: [''], maxBookings: '',
     validityDays: '30', images: [], imagePreview: null,
   });
@@ -111,7 +112,7 @@ const AddProductModal = ({ isOpen, onClose, merchant, editingProduct, onSave }) 
       setFormData({
         name: '', description: '', price: '', categoryId: '',
         categoryType: initialType,
-        isVeg: behaviour.showVeg ? false : null, stock: '', sku: '', duration: '30 mins', inclusions: [''],
+        foodType: null, stock: '', sku: '', duration: '30 mins', inclusions: [''],
         maxBookings: '', validityDays: '30', images: [], imagePreview: null,
       });
     }
@@ -146,6 +147,8 @@ const AddProductModal = ({ isOpen, onClose, merchant, editingProduct, onSave }) 
     e.preventDefault();
     if (!formData.name.trim() || !formData.price || !formData.categoryId) return toast.error('Fill required fields');
     if (imageRequired && !formData.images?.some(Boolean)) return toast.error('Please add a product image');
+    // No default: a pre-ticked choice is how dishes ended up wrongly marked
+    if (behaviour.showVeg && isProductBased && !formData.foodType) return toast.error('Choose Veg, Non-Veg or Egg');
     if (isProductBased && inventory.variantOptions.length) {
       const incomplete = inventory.variantOptions.find((o) => !o.name.trim() || o.values.length === 0);
       if (incomplete) return toast.error(incomplete.name.trim() ? `Add at least one value for ${incomplete.name}` : 'Give every option a name (e.g. Size)');
@@ -156,13 +159,15 @@ const AddProductModal = ({ isOpen, onClose, merchant, editingProduct, onSave }) 
         ...formData,
         merchantId: merchant._id,
         categoryType: isProductBased ? 'product_based' : 'service_based',
-        isVeg: (behaviour.showVeg && isProductBased) ? (formData.isVeg ?? false) : null,
+        // isVeg is derived from foodType on the server
+        foodType: (behaviour.showVeg && isProductBased) ? formData.foodType : null,
         price: parseFloat(formData.price),
         // Duration is a service field. The form pre-fills it for every item, and a
         // stray "30 mins" on a dish used to make the store look service-based.
         duration: isProductBased ? '' : formData.duration,
       };
       // Serialized products carry read-only inventory fields; never echo them back.
+      delete payload.isVeg;
       delete payload.variants;
       delete payload.variantOptions;
       delete payload.totalStock;
@@ -301,12 +306,26 @@ const AddProductModal = ({ isOpen, onClose, merchant, editingProduct, onSave }) 
                  {isProductBased ? (
                     <>
                       {behaviour.showVeg && (
-                        <div className="flex items-center gap-3 p-3 bg-white rounded-xl border border-gray-100 shadow-sm">
-                           <input type="checkbox" id="isVeg" checked={formData.isVeg} onChange={(e) => handleChange('isVeg', e.target.checked)} className="w-4 h-4 rounded text-[#5EB929] accent-[#5EB929]" />
-                           <label htmlFor="isVeg" className="text-[11px] font-bold text-gray-600 uppercase flex items-center gap-2">
-                              <div className="w-3 h-3 border border-green-600 flex items-center justify-center rounded-sm"><div className="w-1.5 h-1.5 bg-green-600 rounded-full" /></div>
-                              Vegetarian Item
-                           </label>
+                        <div className="sm:col-span-2 space-y-1.5">
+                          <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Food type *</label>
+                          <div className="grid grid-cols-3 gap-2">
+                            {FOOD_TYPES.map((t) => {
+                              const active = formData.foodType === t.value;
+                              return (
+                                <button
+                                  key={t.value}
+                                  type="button"
+                                  onClick={() => handleChange('foodType', t.value)}
+                                  className={`flex items-center justify-center gap-2 py-2.5 rounded-xl border text-[11px] font-bold uppercase transition-all ${
+                                    active ? 'border-[#5EB929] bg-[#5EB929]/5 text-gray-900' : 'border-gray-200 bg-white text-gray-500'
+                                  }`}
+                                >
+                                  <FoodTypeMark type={t.value} size={12} />
+                                  {t.label}
+                                </button>
+                              );
+                            })}
+                          </div>
                         </div>
                       )}
                       <div className="sm:col-span-2">

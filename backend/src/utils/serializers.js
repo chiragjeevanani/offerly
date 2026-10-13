@@ -218,6 +218,11 @@ const serializeProductBase = (product) => ({
     product?.categoryType === 'service_based' || (!product?.categoryType && product?.duration)
       ? null
       : (product?.isVeg ?? null),
+  // Older items only have isVeg; read it as veg / non_veg.
+  foodType:
+    product?.categoryType === 'service_based' || (!product?.categoryType && product?.duration)
+      ? null
+      : product?.foodType || (product?.isVeg === true ? 'veg' : product?.isVeg === false ? 'non_veg' : null),
   duration: product?.duration ?? null,
   images: product?.images || [],
   image: product?.image || (product?.images && product?.images[0]) || '',

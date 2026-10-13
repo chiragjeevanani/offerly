@@ -11,6 +11,7 @@ const itemSnapshotSchema = new mongoose.Schema(
     // "M / Red" - also folded into `name` so every existing view shows it.
     variantLabel: String,
     isVeg: mongoose.Schema.Types.Mixed,
+    foodType: String,
     duration: mongoose.Schema.Types.Mixed,
   },
   { _id: false }

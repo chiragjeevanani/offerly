@@ -33,6 +33,8 @@ const MyRedemptions = lazy(pages.redemptions);
 const QrScreen = lazy(pages.qr);
 const LeaveReview = lazy(pages.leaveReview);
 const StoreProfile = lazy(pages.store);
+const ProductDetail = lazy(pages.productDetail);
+const HowItWorks = lazy(pages.guide);
 const Profile = lazy(pages.profile);
 const Referral = lazy(pages.referral);
 const Notifications = lazy(pages.notifications);
@@ -163,9 +165,11 @@ const AppRoutes = () => {
                 <Route path="redeem/:id" element={<ProtectedRoute><QrScreen /></ProtectedRoute>} />
                 <Route path="review/:id" element={<ProtectedRoute><LeaveReview /></ProtectedRoute>} />
                 <Route path="store/:id" element={<ProtectedRoute><StoreProfile /></ProtectedRoute>} />
+                <Route path="store/:id/product/:productId" element={<ProtectedRoute><ProductDetail /></ProtectedRoute>} />
                 <Route path="profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
                 <Route path="rewards" element={<ProtectedRoute><RewardsRoute><RewardsHub /></RewardsRoute></ProtectedRoute>} />
                 <Route path="referral" element={<ProtectedRoute><Referral /></ProtectedRoute>} />
+                <Route path="guide" element={<HowItWorks />} />
                 <Route path="notifications" element={<ProtectedRoute><Notifications /></ProtectedRoute>} />
                 <Route path="search" element={<ProtectedRoute><SearchResults /></ProtectedRoute>} />
 

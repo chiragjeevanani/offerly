@@ -48,6 +48,13 @@ const productSchema = new mongoose.Schema(
       type: Boolean,
       default: null,
     },
+    // veg | non_veg | egg for food items (null = not food / not set). isVeg is
+    // kept in step for older screens: true only for veg.
+    foodType: {
+      type: String,
+      enum: ['veg', 'non_veg', 'egg', null],
+      default: null,
+    },
     stock: {
       type: Number,
       default: 0,
@@ -122,6 +129,15 @@ const productSchema = new mongoose.Schema(
 );
 
 // Index for faster queries
+// Keep foodType and isVeg in step whichever one a client sent
+productSchema.pre('validate', function syncFoodType() {
+  if (this.isModified('foodType')) {
+    this.isVeg = this.foodType ? this.foodType === 'veg' : null;
+  } else if (this.isModified('isVeg')) {
+    this.foodType = this.isVeg === true ? 'veg' : this.isVeg === false ? 'non_veg' : null;
+  }
+});
+
 productSchema.index({ merchantId: 1, isActive: 1 });
 productSchema.index({ merchantId: 1, categoryType: 1 });
 

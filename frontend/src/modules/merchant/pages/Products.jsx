@@ -20,6 +20,7 @@ import UnifiedOfferBuilder from '../components/UnifiedOfferBuilder';
 import { productAPI } from '../../../api/product.api';
 import StockHistorySheet from '../components/StockHistorySheet';
 import { shouldShowVegIndicator } from '../../../utils/storeTypeHelper';
+import FoodTypeMark, { getFoodType } from '../../../components/ui/FoodTypeMark';
 
 /* ─── Custom Hook for Debouncing ──────────────── */
 function useDebounce(value, delay) {
@@ -276,9 +277,7 @@ const Products = ({ merchant }) => {
                        {/* Veg/Non-Veg Tag (Food Only) */}
                        {shouldShowVegIndicator(merchant, product) && (
                           <div className="absolute top-2 left-2 p-1 bg-white/90 backdrop-blur-md rounded-lg shadow-sm border border-white/20">
-                             <div className={`w-2 h-2 border flex items-center justify-center rounded-sm ${product.isVeg ? 'border-green-600' : 'border-red-600'}`}>
-                               <div className={`w-1 h-1 rounded-full ${product.isVeg ? 'bg-green-600' : 'bg-red-600'}`} />
-                             </div>
+                             <FoodTypeMark type={getFoodType(product)} size={10} />
                           </div>
                        )}
 

@@ -26,9 +26,10 @@ import { reviewAPI } from '../../../../api/review.api';
 import { cartAPI } from '../../../../api/cart.api';
 import PageTransition from '../../components/ui/PageTransition';
 import ProductThumb from '../../components/ui/ProductThumb';
-import VariantPickerSheet from '../../components/ui/VariantPickerSheet';
+import FoodTypeMark, { getFoodType } from '../../../../components/ui/FoodTypeMark';
+import { storeCache } from './storeCache';
+import { useStoreCart, StoreCartDialogs, CartPill, EMPTY_CART } from '../../hooks/useStoreCart';
 import { checkIsServiceStore, shouldShowVegIndicator } from '../../../../utils/storeTypeHelper';
-import ConfirmDialog from '../../../../components/ui/ConfirmDialog';
 import { useOfferImpression } from '../../../../hooks/useOfferImpression';
 
 // Offer chips in the store header. Split out so each one can carry its own
@@ -46,11 +47,6 @@ const StoreOfferTag = ({ offer }) => {
   );
 };
 
-// Last-loaded data per store, kept for the life of the tab. Coming Back from
-// the cart re-ran five API calls behind a spinner, which on slow networks read
-// as a blank white screen; now the cached copy paints instantly and refreshes
-// in the background.
-const storeCache = new Map();
 
 const StoreProfilePage = () => {
   const { id } = useParams();
@@ -60,15 +56,12 @@ const StoreProfilePage = () => {
   const [products, setProducts] = useState(cached?.products || []);
   const [offers, setOffers] = useState(cached?.offers || []);
   const [reviews, setReviews] = useState(cached?.reviews || []);
-  const [cart, setCart] = useState(cached?.cart || { merchantId: null, items: [] });
   const [activeTab, setActiveTab] = useState('menu');
   const [loading, setLoading] = useState(!cached);
   const [showHours, setShowHours] = useState(false);
-  const [pendingCartAction, setPendingCartAction] = useState(null);
-  // Products with sizes/colours go through the picker sheet instead of +/-.
-  const [variantProduct, setVariantProduct] = useState(null);
-  const [variantBusy, setVariantBusy] = useState(false);
   const location = useLocation();
+  const storeCart = useStoreCart(merchant, cached?.cart || EMPTY_CART);
+  const { cart, setCart, handleUpdateQty, getQty, setVariantProduct } = storeCart;
 
   const getStatus = () => {
     if (!merchant || !merchant.businessHours) return { isOpen: false, label: 'Hours Not Set' };
@@ -146,7 +139,7 @@ const StoreProfilePage = () => {
           const nextCart = backendCart && backendCart.merchantId &&
               (backendCart.merchantId._id || backendCart.merchantId) === id
             ? { merchantId: backendCart.merchantId._id || backendCart.merchantId, items: backendCart.items || [] }
-            : { merchantId: null, items: [] };
+            : EMPTY_CART;
           setCart(nextCart);
 
           storeCache.set(id, {
@@ -177,67 +170,6 @@ const StoreProfilePage = () => {
     if (hit) hit.cart = cart;
   }, [cart, id]);
 
-  const applyCartUpdate = async (product, newQty, variantId = null) => {
-    const merchantId = merchant._id || merchant.id;
-    try {
-      const productId = product._id || product.id;
-      const response = await cartAPI.updateCart(merchantId, productId, newQty, variantId);
-
-      if (response && response.data) {
-        const fullCart = {
-          ...response.data,
-          merchantId: merchant
-        };
-        setCart({
-          merchantId: response.data.merchantId._id || response.data.merchantId,
-          items: response.data.items || []
-        });
-        try {
-          sessionStorage.setItem('offerly_cached_cart', JSON.stringify(fullCart));
-        } catch {}
-      } else {
-        setCart({ merchantId: null, items: [] });
-        try {
-          sessionStorage.removeItem('offerly_cached_cart');
-        } catch {}
-      }
-      return true;
-    } catch (error) {
-      console.error('Failed to update cart:', error);
-      toast.error(error?.error || 'Failed to update cart');
-      return false;
-    }
-  };
-
-  const handleUpdateQty = (product, newQty, variantId = null) => {
-    const merchantId = merchant._id || merchant.id;
-    const cartMerchantId = cart.merchantId;
-
-    // Adding from a different merchant than the one already in the cart
-    // requires confirming the old cart gets cleared first.
-    if (cartMerchantId && cartMerchantId !== merchantId && newQty > 0) {
-      setPendingCartAction({ product, newQty, variantId });
-      return true;
-    }
-
-    return applyCartUpdate(product, newQty, variantId);
-  };
-
-  const getVariantQty = (productId, variantId) => {
-    if (cart.merchantId !== (merchant?._id || merchant?.id)) return 0;
-    const item = cart.items.find(
-      (i) => (i.product._id || i.product) === productId && String(i.variant?._id || i.variant || '') === String(variantId)
-    );
-    return item ? item.qty : 0;
-  };
-
-  const confirmVariant = async (variant, qty) => {
-    setVariantBusy(true);
-    const ok = await handleUpdateQty(variantProduct, qty, variant._id);
-    setVariantBusy(false);
-    if (ok !== false) setVariantProduct(null);
-  };
-
   // Arriving from an offer whose product needs a size/colour picked first.
   useEffect(() => {
     const wanted = location.state?.chooseVariantFor;
@@ -246,31 +178,6 @@ const StoreProfilePage = () => {
     if (product?.hasVariants) setVariantProduct(product);
     navigate(location.pathname, { replace: true, state: {} });
   }, [location.state, products]);
-
-  const confirmMerchantSwitch = () => {
-    if (pendingCartAction) {
-      applyCartUpdate(pendingCartAction.product, pendingCartAction.newQty, pendingCartAction.variantId);
-    }
-    setPendingCartAction(null);
-  };
-
-  const getQty = (productId) => {
-    const merchantId = merchant?._id || merchant?.id;
-    if (cart.merchantId !== merchantId) return 0;
-    // Sum across lines: a product with variants can be in the cart several times.
-    return cart.items
-      .filter(i => (i.product._id || i.product) === productId)
-      .reduce((sum, i) => sum + i.qty, 0);
-  };
-
-  const merchantId = merchant?._id || merchant?.id;
-  const cartTotalItems = cart.merchantId === merchantId 
-    ? cart.items.reduce((sum, item) => sum + item.qty, 0) 
-    : 0;
-    
-  const cartTotalPrice = cart.merchantId === merchantId
-    ? cart.items.reduce((sum, item) => sum + ((item.product.price || item.product.offerPrice || 0) * item.qty), 0)
-    : 0;
 
   const productsByCategory = useMemo(() => {
     const groups = new Map();
@@ -517,14 +424,22 @@ const StoreProfilePage = () => {
                             transition={{ delay: idx * 0.05 }}
                             className="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 flex gap-4"
                           >
+                            {/* Product stores: tapping the item opens its full page */}
+                            <div
+                              className={`flex-1 min-w-0 flex gap-4 ${isServiceBased ? '' : 'cursor-pointer'}`}
+                              {...(isServiceBased ? {} : {
+                                role: 'link',
+                                tabIndex: 0,
+                                onClick: () => navigate(`/store/${id}/product/${productId}`),
+                                onKeyDown: (e) => { if (e.key === 'Enter') navigate(`/store/${id}/product/${productId}`); },
+                              })}
+                            >
                             {(product.images?.[0] || product.image) && (
                               <ProductThumb src={product.images?.[0] || product.image} alt={product.name} className="w-20 h-20" />
                             )}
                             <div className="flex-1 min-w-0">
                               {shouldShowVegIndicator(merchant, product) && (
-                                <div className={`w-3 h-3 border grid place-items-center mb-1 ${product.isVeg ? 'border-green-600' : 'border-red-600'}`}>
-                                  <div className={`w-1.5 h-1.5 rounded-full ${product.isVeg ? 'bg-green-600' : 'bg-red-600'}`} />
-                                </div>
+                                <FoodTypeMark type={getFoodType(product)} size={12} className="mb-1" />
                               )}
                               <h3 className="font-bold text-gray-800 text-base">{product.name}</h3>
                               <div className="flex items-center gap-2 mt-2">
@@ -538,6 +453,10 @@ const StoreProfilePage = () => {
                               {product.trackInventory && !soldOut && (product.totalAvailable ?? product.totalStock) <= 5 && (
                                 <p className="text-[11px] font-bold text-amber-600 mt-1">Only {product.totalAvailable ?? product.totalStock} left</p>
                               )}
+                              {!isServiceBased && (
+                                <p className="text-[11px] font-semibold text-primary mt-1">View details</p>
+                              )}
+                            </div>
                             </div>
 
                             {/* Quantity Controller */}
@@ -652,127 +571,8 @@ const StoreProfilePage = () => {
         </div>
       </div>
 
-      {/* Floating Cart Summary Pill */}
-      <AnimatePresence>
-        {cartTotalItems > 0 && (
-          <div className="fixed bottom-[5.5rem] sm:bottom-24 lg:bottom-7 left-0 right-0 z-40 pointer-events-none flex justify-center px-4">
-            <motion.div
-              initial={{ y: 50, opacity: 0, scale: 0.9 }}
-              animate={{ y: 0, opacity: 1, scale: 1 }}
-              exit={{ y: 50, opacity: 0, scale: 0.9 }}
-              transition={{ type: 'spring', stiffness: 450, damping: 26 }}
-              className="pointer-events-auto"
-            >
-              <div
-                role="button"
-                tabIndex={0}
-                onClick={() => {
-                  const fullCart = {
-                    ...cart,
-                    merchantId: merchant,
-                  };
-                  try {
-                    sessionStorage.setItem('offerly_cached_cart', JSON.stringify(fullCart));
-                  } catch {}
-                  navigate('/cart', {
-                    state: {
-                      initialCart: fullCart,
-                      initialMerchant: merchant,
-                      autoCelebrate: true,
-                    },
-                  });
-                }}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter' || e.key === ' ') {
-                    e.preventDefault();
-                    navigate('/cart', {
-                      state: {
-                        initialCart: { ...cart, merchantId: merchant },
-                        initialMerchant: merchant,
-                        autoCelebrate: true,
-                      },
-                    });
-                  }
-                }}
-                className="group cursor-pointer bg-gray-900/95 hover:bg-gray-900 active:scale-[0.97] transition-all duration-200 backdrop-blur-xl rounded-full shadow-[0_12px_32px_rgba(0,0,0,0.45),0_0_24px_rgba(94,185,41,0.22)] border border-white/15 ring-1 ring-primary/25 pl-3.5 pr-2 py-1.5 flex items-center gap-3 select-none"
-              >
-                {/* Mini Cart Icon with Item Count Badge & Lively Bounce */}
-                <motion.div
-                  key={cartTotalItems}
-                  initial={{ scale: 0.85, rotate: -10 }}
-                  animate={{ scale: 1, rotate: 0 }}
-                  transition={{ type: 'spring', stiffness: 500, damping: 15 }}
-                  className="relative flex items-center justify-center w-8 h-8 rounded-full bg-primary/20 text-primary border border-primary/30 shrink-0"
-                >
-                  <ShoppingCartRoundedIcon sx={{ fontSize: 16 }} />
-                  <motion.span
-                    key={`badge-${cartTotalItems}`}
-                    initial={{ scale: 0 }}
-                    animate={{ scale: 1 }}
-                    transition={{ type: 'spring', stiffness: 600, damping: 12 }}
-                    className="absolute -top-1 -right-1 bg-primary text-white text-[10px] font-extrabold w-4 h-4 rounded-full flex items-center justify-center ring-2 ring-gray-900 shadow-sm"
-                  >
-                    {cartTotalItems}
-                  </motion.span>
-                </motion.div>
-
-                {/* Price & Cart Info */}
-                <div className="flex flex-col min-w-0 pr-0.5">
-                  <div className="flex items-center gap-1.5 leading-none">
-                    <span className="text-sm font-bold text-white tracking-tight">
-                      ₹{cartTotalPrice.toLocaleString()}
-                    </span>
-                    <span className="text-[11px] text-gray-400 font-medium">
-                      • {cartTotalItems} {cartTotalItems > 1 ? 'items' : 'item'}
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-1.5 mt-1">
-                    <span className="relative flex h-1.5 w-1.5">
-                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                      <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-emerald-400"></span>
-                    </span>
-                    <span className="text-[10px] text-emerald-400 font-semibold leading-none">
-                      Discounts in cart
-                    </span>
-                  </div>
-                </div>
-
-                {/* View Cart Pill Button with Animated Arrow */}
-                <div className="bg-white group-hover:bg-primary group-hover:text-white text-gray-900 font-bold text-xs px-3.5 py-1.5 rounded-full flex items-center gap-1 shadow-sm transition-colors duration-200 shrink-0">
-                  <span>View Cart</span>
-                  <motion.span
-                    animate={{ x: [0, 3, 0] }}
-                    transition={{ repeat: Infinity, duration: 1.8, ease: 'easeInOut' }}
-                    className="flex items-center"
-                  >
-                    <ArrowForwardRoundedIcon sx={{ fontSize: 13 }} />
-                  </motion.span>
-                </div>
-              </div>
-            </motion.div>
-          </div>
-        )}
-      </AnimatePresence>
-
-      {variantProduct && (
-        <VariantPickerSheet
-          product={variantProduct}
-          qtyInCart={(variantId) => getVariantQty(variantProduct._id || variantProduct.id, variantId)}
-          onConfirm={confirmVariant}
-          onClose={() => setVariantProduct(null)}
-          busy={variantBusy}
-        />
-      )}
-
-      <ConfirmDialog
-        isOpen={!!pendingCartAction}
-        title="Start a new cart?"
-        message="You have items from another store in your cart. Adding this item will clear them."
-        confirmText="Clear & Add"
-        confirmColor="primary"
-        onConfirm={confirmMerchantSwitch}
-        onCancel={() => setPendingCartAction(null)}
-      />
+      <CartPill storeCart={storeCart} merchant={merchant} />
+      <StoreCartDialogs storeCart={storeCart} />
     </PageTransition>
   );
 };

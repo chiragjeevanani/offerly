@@ -47,6 +47,7 @@ const menuSections = [
   {
     title: 'Help & Legal',
     items: [
+      { label: 'How Offerly works', icon: HelpOutlineRoundedIcon, path: '/guide' },
       { label: 'Support Center', icon: HelpOutlineRoundedIcon, path: '/support' },
       { label: 'Contact Us', icon: PersonRoundedIcon, path: '/contact' },
       { label: 'About Offerly', icon: CardGiftcardRoundedIcon, path: '/about' },

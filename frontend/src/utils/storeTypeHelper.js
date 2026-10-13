@@ -98,8 +98,8 @@ export const shouldShowVegIndicator = (merchant, product) => {
   if (!isFood) {
     return false;
   }
-  // Must be explicitly boolean (true or false, never null/undefined)
-  return product.isVeg === true || product.isVeg === false;
+  // Only when the item has a food type (veg / non_veg / egg, or the older isVeg flag)
+  return Boolean(product.foodType) || product.isVeg === true || product.isVeg === false;
 };
 
 /**
