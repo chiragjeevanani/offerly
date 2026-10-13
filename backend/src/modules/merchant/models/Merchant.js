@@ -119,6 +119,16 @@ const merchantSchema = new mongoose.Schema(
       lowercase: true,
       default: '',
     },
+    // More contact numbers/emails shown on the store page. `phone` stays the
+    // login number and `email` the main email; these are in addition to them.
+    extraPhones: {
+      type: [String],
+      default: [],
+    },
+    extraEmails: {
+      type: [String],
+      default: [],
+    },
     password: {
       type: String,
       default: null,

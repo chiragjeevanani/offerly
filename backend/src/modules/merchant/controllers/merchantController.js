@@ -22,6 +22,7 @@ import {
   addDays,
 } from "../../../utils/analytics.js";
 import { resolveStoreType } from "../../../utils/storeTypeHelper.js";
+import { normalizePhone } from "../../../utils/phone.js";
 import { getAllActiveMerchantIds, hasActiveMerchantSubscription } from "../../../utils/merchantSubscription.js";
 import { isWithinBusinessHours, validateBusinessHours } from "../../../utils/businessHours.js";
 
@@ -684,6 +685,45 @@ export const updateLocationHours = async (req, res) => {
   }
 };
 
+const MAX_EXTRA_CONTACTS = 5;
+const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+// Validates and stores the extra phone numbers / emails. Blanks are dropped,
+// repeats (and copies of the main phone/email) removed. Returns an error message.
+const applyExtraContacts = (merchant, body) => {
+  if ("extraPhones" in body) {
+    if (!Array.isArray(body.extraPhones)) return "extraPhones must be a list";
+    const main = normalizePhone(merchant.phone || "");
+    const phones = [];
+    for (const raw of body.extraPhones) {
+      const value = String(raw ?? "").trim();
+      if (!value) continue;
+      const digits = value.replace(/\D/g, "");
+      const local = normalizePhone(value);
+      if (local.length !== 10 || digits.length > 12) return `"${value}" is not a valid 10-digit phone number`;
+      if (local !== main && !phones.includes(local)) phones.push(local);
+    }
+    if (phones.length > MAX_EXTRA_CONTACTS) return `You can add up to ${MAX_EXTRA_CONTACTS} extra phone numbers`;
+    merchant.extraPhones = phones;
+  }
+
+  if ("extraEmails" in body) {
+    if (!Array.isArray(body.extraEmails)) return "extraEmails must be a list";
+    const main = String(body.email ?? merchant.email ?? "").trim().toLowerCase();
+    const emails = [];
+    for (const raw of body.extraEmails) {
+      const value = String(raw ?? "").trim().toLowerCase();
+      if (!value) continue;
+      if (value.length > 254 || !EMAIL_PATTERN.test(value)) return `"${value}" is not a valid email`;
+      if (value !== main && !emails.includes(value)) emails.push(value);
+    }
+    if (emails.length > MAX_EXTRA_CONTACTS) return `You can add up to ${MAX_EXTRA_CONTACTS} extra emails`;
+    merchant.extraEmails = emails;
+  }
+
+  return null;
+};
+
 export const updateMyStore = async (req, res) => {
   const merchant = await getMerchantForOwner(req.user._id);
 
@@ -698,7 +738,8 @@ export const updateMyStore = async (req, res) => {
     // "city" is deliberately not editable here - only admins can change it.
     "locality",
     "address",
-    "phone",
+    // "phone" is the login number (OTP) - changing it here would lock the
+    // merchant out, so it is not editable. Extra numbers go in extraPhones.
     "email",
     "description",
     "coordinates",
@@ -717,6 +758,13 @@ export const updateMyStore = async (req, res) => {
       } else {
         merchant[field] = req.body[field];
       }
+    }
+  }
+
+  if ("extraPhones" in req.body || "extraEmails" in req.body) {
+    const contactError = applyExtraContacts(merchant, req.body);
+    if (contactError) {
+      return res.status(400).json({ message: contactError });
     }
   }
 

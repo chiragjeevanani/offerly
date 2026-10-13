@@ -25,6 +25,7 @@ import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 import SaveRoundedIcon from '@mui/icons-material/SaveRounded';
 import StorefrontRoundedIcon from '@mui/icons-material/StorefrontRounded';
 import PhotoCameraRoundedIcon from '@mui/icons-material/PhotoCameraRounded';
+import AddRoundedIcon from '@mui/icons-material/AddRounded';
 import { useEffect, useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { merchantAPI } from '../../../api/merchant.api';
@@ -59,6 +60,45 @@ const menuSections = [
     ],
   },
 ];
+
+const MAX_EXTRA_CONTACTS = 5;
+const inputClass = 'w-full px-3.5 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-xs font-bold text-gray-900 outline-none focus:bg-white focus:border-[#5EB929]';
+
+// Editable list of extra phone numbers or emails, shown under the main one.
+const ExtraContactList = ({ values, onChange, type, placeholder, addLabel }) => (
+  <div className="space-y-2">
+    {values.map((value, idx) => (
+      <div key={idx} className="flex items-center gap-2">
+        <input
+          type={type}
+          inputMode={type === 'tel' ? 'numeric' : undefined}
+          value={value}
+          placeholder={placeholder}
+          onChange={(e) => onChange(values.map((v, i) => (i === idx ? e.target.value : v)))}
+          className={inputClass}
+        />
+        <button
+          type="button"
+          onClick={() => onChange(values.filter((_, i) => i !== idx))}
+          className="shrink-0 w-9 h-9 rounded-xl bg-red-50 text-red-500 flex items-center justify-center"
+          title="Remove"
+        >
+          <CloseRoundedIcon sx={{ fontSize: 16 }} />
+        </button>
+      </div>
+    ))}
+    {values.length < MAX_EXTRA_CONTACTS && (
+      <button
+        type="button"
+        onClick={() => onChange([...values, ''])}
+        className="flex items-center gap-1 text-[11px] font-bold text-[#5EB929]"
+      >
+        <AddRoundedIcon sx={{ fontSize: 16 }} />
+        {addLabel}
+      </button>
+    )}
+  </div>
+);
 
 const Profile = ({ merchant, onMerchantUpdate }) => {
   const navigate = useNavigate();
@@ -100,6 +140,8 @@ const Profile = ({ merchant, onMerchantUpdate }) => {
     address: merchant?.address || '',
     coverImage: merchant?.coverImage || '',
     logo: merchant?.logo || '',
+    extraPhones: merchant?.extraPhones || [],
+    extraEmails: merchant?.extraEmails || [],
   });
   const [uploadingCover, setUploadingCover] = useState(false);
   const [uploadingLogo, setUploadingLogo] = useState(false);
@@ -117,6 +159,8 @@ const Profile = ({ merchant, onMerchantUpdate }) => {
         address: merchant.address || '',
         coverImage: merchant.coverImage || '',
         logo: merchant.logo || '',
+        extraPhones: merchant.extraPhones || [],
+        extraEmails: merchant.extraEmails || [],
       });
     }
   }, [merchant]);
@@ -188,7 +232,14 @@ const Profile = ({ merchant, onMerchantUpdate }) => {
     }
     setSavingProfile(true);
     try {
-      await merchantAPI.updateStore(profileFormData);
+      // phone is the login number and can't be changed here.
+      // eslint-disable-next-line no-unused-vars
+      const { phone, ...payload } = profileFormData;
+      await merchantAPI.updateStore({
+        ...payload,
+        extraPhones: payload.extraPhones.map((v) => v.trim()).filter(Boolean),
+        extraEmails: payload.extraEmails.map((v) => v.trim()).filter(Boolean),
+      });
       toast.success('Store profile updated successfully');
       setIsEditModalOpen(false);
       await onMerchantUpdate?.();
@@ -623,25 +674,37 @@ const Profile = ({ merchant, onMerchantUpdate }) => {
                   />
                 </div>
 
-                <div className="grid grid-cols-2 gap-3">
-                  <div className="space-y-1.5">
-                    <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Contact Phone</label>
-                    <input
-                      type="text"
-                      value={profileFormData.phone}
-                      onChange={(e) => setProfileFormData(p => ({ ...p, phone: e.target.value }))}
-                      className="w-full px-3.5 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-xs font-bold text-gray-900 outline-none focus:bg-white focus:border-[#5EB929]"
-                    />
+                <div className="space-y-1.5">
+                  <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Phone Numbers</label>
+                  <div className="flex items-center justify-between px-3.5 py-2.5 bg-gray-100 border border-gray-200 rounded-xl">
+                    <span className="text-xs font-bold text-gray-700">{profileFormData.phone}</span>
+                    <span className="text-[9px] font-bold text-gray-400 uppercase tracking-wider">Login number</span>
                   </div>
-                  <div className="space-y-1.5">
-                    <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Business Email</label>
-                    <input
-                      type="email"
-                      value={profileFormData.email}
-                      onChange={(e) => setProfileFormData(p => ({ ...p, email: e.target.value }))}
-                      className="w-full px-3.5 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-xs font-bold text-gray-900 outline-none focus:bg-white focus:border-[#5EB929]"
-                    />
-                  </div>
+                  <ExtraContactList
+                    values={profileFormData.extraPhones}
+                    onChange={(extraPhones) => setProfileFormData(p => ({ ...p, extraPhones }))}
+                    type="tel"
+                    placeholder="10-digit mobile number"
+                    addLabel="Add phone number"
+                  />
+                </div>
+
+                <div className="space-y-1.5">
+                  <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Emails</label>
+                  <input
+                    type="email"
+                    value={profileFormData.email}
+                    placeholder="Main business email"
+                    onChange={(e) => setProfileFormData(p => ({ ...p, email: e.target.value }))}
+                    className={inputClass}
+                  />
+                  <ExtraContactList
+                    values={profileFormData.extraEmails}
+                    onChange={(extraEmails) => setProfileFormData(p => ({ ...p, extraEmails }))}
+                    type="email"
+                    placeholder="another@email.com"
+                    addLabel="Add email"
+                  />
                 </div>
 
                 {/* Modal Footer */}

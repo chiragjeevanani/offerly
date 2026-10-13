@@ -5,6 +5,7 @@ import { toast } from 'react-hot-toast';
 import StarRoundedIcon from '@mui/icons-material/StarRounded';
 import LocationOnRoundedIcon from '@mui/icons-material/LocationOnRounded';
 import PhoneRoundedIcon from '@mui/icons-material/PhoneRounded';
+import EmailRoundedIcon from '@mui/icons-material/EmailRounded';
 import VerifiedRoundedIcon from '@mui/icons-material/VerifiedRounded';
 import ShoppingCartRoundedIcon from '@mui/icons-material/ShoppingCartRounded';
 import ArrowForwardRoundedIcon from '@mui/icons-material/ArrowForwardRounded';
@@ -302,6 +303,8 @@ const StoreProfilePage = () => {
 
   // Cover first, then the store photos. Skip blanks and repeats - an empty
   // coverImage used to render as a grey tile.
+  const storePhones = [...new Set([merchant.phone, ...(merchant.extraPhones || [])].filter(Boolean))];
+  const storeEmails = [...new Set([merchant.email, ...(merchant.extraEmails || [])].filter(Boolean))];
   const storePhotos = [...new Set([merchant.coverImage, ...(merchant.photos || [])].filter(Boolean))];
 
   return (
@@ -383,10 +386,26 @@ const StoreProfilePage = () => {
                 <LocationOnRoundedIcon sx={{ fontSize: 18 }} className="text-primary mt-0.5" />
                 <span className="leading-relaxed">{merchant.address}</span>
               </div>
-              <div className="flex items-center gap-3 text-sm text-text-secondary">
-                <PhoneRoundedIcon sx={{ fontSize: 18 }} className="text-primary" />
-                <span className="font-medium text-gray-700">{merchant.phone}</span>
-              </div>
+              {storePhones.length > 0 && (
+                <div className="flex items-start gap-3 text-sm text-text-secondary">
+                  <PhoneRoundedIcon sx={{ fontSize: 18 }} className="text-primary mt-0.5" />
+                  <div className="flex flex-wrap gap-x-3 gap-y-1 min-w-0">
+                    {storePhones.map((phone) => (
+                      <a key={phone} href={`tel:${phone}`} className="font-medium text-gray-700">{phone}</a>
+                    ))}
+                  </div>
+                </div>
+              )}
+              {storeEmails.length > 0 && (
+                <div className="flex items-start gap-3 text-sm text-text-secondary">
+                  <EmailRoundedIcon sx={{ fontSize: 18 }} className="text-primary mt-0.5" />
+                  <div className="flex flex-col gap-1 min-w-0">
+                    {storeEmails.map((email) => (
+                      <a key={email} href={`mailto:${email}`} className="font-medium text-gray-700 break-all">{email}</a>
+                    ))}
+                  </div>
+                </div>
+              )}
 
               {/* Business Hours */}
               <div className="pt-3 border-t border-gray-50">

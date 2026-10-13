@@ -72,6 +72,8 @@ export const serializeMerchant = (merchant) => ({
   address: merchant?.address || '',
   phone: merchant?.phone || '',
   email: merchant?.email || '',
+  extraPhones: merchant?.extraPhones || [],
+  extraEmails: merchant?.extraEmails || [],
   avgRating: merchant?.avgRating || 0,
   totalReviews: merchant?.totalReviews || 0,
   totalRedemptions: merchant?.totalRedemptions || 0,
