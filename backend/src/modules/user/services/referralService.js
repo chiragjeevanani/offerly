@@ -3,6 +3,7 @@ import ReferralHistory from '../models/ReferralHistory.js';
 import Redemption from '../../booking/models/Redemption.js';
 import { notifyUser } from './notificationService.js';
 import { consumeRewardCredits, restoreRewardCredits } from '../../rewards/services/rewardCreditService.js';
+import { getIncentiveSettings } from './incentiveService.js';
 
 // Takes up to `wanted` referral points off the customer's balance for a new
 // pass, capped at what they hold. The conditional update keeps two claims at
@@ -63,15 +64,15 @@ export const releaseUnrefundedReferralPoints = async () => {
   return passes.length;
 };
 
-export const REFERRAL_MIN_REDEMPTION_AMOUNT = 500;
-export const REFERRER_BONUS = 50;
-export const REFERRED_BONUS = 20;
-
 // A referral only counts once the referred customer completes a redemption
-// worth at least REFERRAL_MIN_REDEMPTION_AMOUNT. Credits are paid out once.
+// worth at least the admin's minimum (Refer & Earn settings). Paid out once.
 export const checkAndAwardReferral = async (redemption) => {
+  const { referral } = await getIncentiveSettings();
+  if (!referral.enabled) return;
+  const REFERRER_BONUS = referral.referrerBonus || 0;
+  const REFERRED_BONUS = referral.referredBonus || 0;
   const amount = redemption.totals?.final > 0 ? redemption.totals.final : redemption.totals?.original || 0;
-  if (amount < REFERRAL_MIN_REDEMPTION_AMOUNT) return;
+  if (amount < (referral.minOrderValue || 0)) return;
 
   const user = await User.findById(redemption.customerId).select('name referredBy');
   if (!user?.referredBy) return;

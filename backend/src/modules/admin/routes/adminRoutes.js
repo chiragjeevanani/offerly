@@ -1,4 +1,5 @@
 import express from 'express';
+import { getIncentiveSettingsConfig, updateIncentiveSettingsConfig, getIncentiveSummary } from '../controllers/incentiveController.js';
 import {
   getAllUsers,
   updateUserStatus,
@@ -55,6 +56,10 @@ router.post('/plans', authorize('admin'), savePlan);
 router.delete('/plans/:id', authorize('admin'), deletePlan);
 router.get('/wallet-settings', authorize('admin'), getWalletSettingsConfig);
 router.put('/wallet-settings', authorize('admin'), updateWalletSettingsConfig);
+// Refer & Earn + Customer Distribution Fund
+router.get('/incentive-settings', authorize('admin'), getIncentiveSettingsConfig);
+router.put('/incentive-settings', authorize('admin'), updateIncentiveSettingsConfig);
+router.get('/incentive-summary', authorize('admin'), getIncentiveSummary);
 router.get('/customer-subscription-settings', authorize('admin'), getCustomerSubscriptionSettingsConfig);
 router.put('/customer-subscription-settings', authorize('admin'), updateCustomerSubscriptionSettingsConfig);
 router.put('/support-contacts', authorize('admin'), updateSupportContacts);

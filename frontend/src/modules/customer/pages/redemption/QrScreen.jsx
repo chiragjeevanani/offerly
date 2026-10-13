@@ -48,8 +48,14 @@ const QrScreen = () => {
   // Preview of the referral points the customer ticked in the cart. The server
   // decides the real amount when the pass is created.
   const wantsReferralPoints = getUseReferralPoints();
-  const draftReferralDiscount = wantsReferralPoints && draftData
-    ? Math.min(Math.max(0, Math.floor(user?.credits || 0)), Math.round(draftData.totals.final))
+  // Same admin limits as the cart: a minimum order and a per-order cap.
+  const draftCreditRules = draftData?.creditRules || {};
+  const draftReferralDiscount = wantsReferralPoints && draftData && draftData.totals.subtotal >= (draftCreditRules.minOrderValue || 0)
+    ? Math.min(
+        Math.max(0, Math.floor(user?.credits || 0)),
+        Math.round(draftData.totals.final),
+        draftCreditRules.maxPerOrder > 0 ? draftCreditRules.maxPerOrder : Infinity
+      )
     : 0;
 
   useEffect(() => {
@@ -82,7 +88,10 @@ const QrScreen = () => {
               final: finalPayable,
               storeDiscount,
               offerlyExtraDiscount,
-            }
+              bonusLabel: backendCart.offerlyBonusLabel || '',
+              subtotal: totalOfferPrice,
+            },
+            creditRules: backendCart.creditRules || {},
           });
 
           const merchantRes = await merchantAPI.getById(mId);
@@ -458,7 +467,7 @@ const QrScreen = () => {
 
                   {booking.totals?.walletDiscount > 0 && (
                     <div className="flex justify-between items-center text-[10px] mb-1.5">
-                      <span className="font-bold text-[#5EB929]">Offerly Extra Discount</span>
+                      <span className="font-bold text-[#5EB929]">{booking.totals?.bonusLabel || 'Offerly Extra Discount'}</span>
                       <span className="font-bold text-[#5EB929]">-₹{Math.round(booking.totals.walletDiscount)}</span>
                     </div>
                   )}

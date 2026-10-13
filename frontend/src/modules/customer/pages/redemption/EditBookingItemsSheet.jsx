@@ -92,10 +92,26 @@ const EditBookingItemsSheet = ({ booking, merchantId, onClose, onSaved }) => {
   const addable = [...catalogByKey.values()].filter((p) => p.maxQty > 0 && !lines.some((l) => l.key === p.key));
 
   const itemsTotal = Math.round(resolvedLines.reduce((s, l) => s + l.offerPrice * l.qty, 0));
-  const walletDiscount = Math.min(booking.totals?.walletDiscount || 0, itemsTotal);
-  // Points already spent on this pass stay applied, capped at the new bill; the
-  // server returns any that no longer fit.
-  const referralDiscount = Math.min(booking.totals?.referralDiscount || 0, itemsTotal - walletDiscount);
+  // The bonus is re-worked under the rule it was granted with (never more than
+  // before) and drops off below that rule's minimum order. Mirrors the server.
+  const t = booking.totals || {};
+  const rule = t.bonusRule?.discountType ? t.bonusRule : null;
+  const ruleAmount = !rule
+    ? itemsTotal
+    : itemsTotal < (rule.minOrderValue || 0)
+      ? 0
+      : Math.round(Math.min(
+          rule.discountType === 'percent' ? (itemsTotal * (rule.value || 0)) / 100 : rule.value || 0,
+          rule.discountType === 'percent' && rule.maxDiscount > 0 ? rule.maxDiscount : Infinity,
+          itemsTotal
+        ));
+  const walletDiscount = Math.min(t.walletDiscount || 0, itemsTotal, ruleAmount);
+  // Points already spent on this pass stay applied, capped at the new bill and
+  // the per-order limit, and dropped below the credit minimum; the server
+  // returns any that no longer fit.
+  const referralDiscount = itemsTotal < (t.creditsMinOrder || 0)
+    ? 0
+    : Math.min(t.referralDiscount || 0, itemsTotal - walletDiscount, t.creditsMaxPerOrder > 0 ? t.creditsMaxPerOrder : Infinity);
   const payable = itemsTotal - walletDiscount - referralDiscount;
 
   const setQty = (key, qty) => {
@@ -253,7 +269,7 @@ const EditBookingItemsSheet = ({ booking, merchantId, onClose, onSaved }) => {
         <div className="px-5 pt-3 pb-5 border-t border-gray-100">
           {walletDiscount > 0 && (
             <div className="flex justify-between text-[11px] font-bold text-[#5EB929] mb-1">
-              <span>Offerly Extra Discount</span>
+              <span>{t.bonusLabel || 'Offerly Extra Discount'}</span>
               <span>-₹{walletDiscount}</span>
             </div>
           )}

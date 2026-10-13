@@ -15,6 +15,8 @@ import MerchantNotification from '../../merchant/models/MerchantNotification.js'
 import AdRequest from '../models/AdRequest.js';
 import { notifyMerchant } from '../../user/services/notificationService.js';
 import { computeSubscriptionCharge, getWalletSettings } from '../../../utils/subscriptionWallet.js';
+import { getIncentiveSettings } from '../../user/services/incentiveService.js';
+import IncentiveSettings from '../models/IncentiveSettings.js';
 import { getCustomerSubscriptionSettings } from '../../../utils/customerSubscription.js';
 import { startWelcomeTrialOnApproval } from '../../merchant/services/merchantTrialService.js';
 import { invalidateFeedCache } from '../../../utils/feedCache.js';
@@ -723,10 +725,17 @@ export const getWalletSettingsConfig = async (req, res) => {
 
 export const updateWalletSettingsConfig = async (req, res) => {
   try {
-    const { newUserDiscountAmount } = req.body;
+    // Kept for old admin screens; the amount now lives in the New User Bonus
+    // (Customer Distribution Fund), so write it there as a flat bonus.
+    const amount = Math.max(0, Math.round(Number(req.body?.newUserDiscountAmount || 0)));
     const settings = await getWalletSettings();
-    settings.newUserDiscountAmount = Math.max(0, Number(newUserDiscountAmount || 0));
+    settings.newUserDiscountAmount = amount;
     await settings.save();
+    const incentives = await getIncentiveSettings();
+    await IncentiveSettings.updateOne(
+      { _id: incentives._id },
+      { $set: { 'bonuses.newUser.enabled': amount > 0, 'bonuses.newUser.discountType': 'flat', 'bonuses.newUser.value': amount } }
+    );
     res.status(200).json({ success: true, data: settings });
   } catch (err) {
     res.status(500).json({ success: false, error: 'Failed to update wallet settings' });

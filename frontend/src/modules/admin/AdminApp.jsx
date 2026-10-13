@@ -23,6 +23,8 @@ import ArrowBackRoundedIcon from '@mui/icons-material/ArrowBackRounded';
 import FilterListRoundedIcon from '@mui/icons-material/FilterListRounded';
 import MoreVertRoundedIcon from '@mui/icons-material/MoreVertRounded';
 import EmojiEventsRoundedIcon from '@mui/icons-material/EmojiEventsRounded';
+import ShareRoundedIcon from '@mui/icons-material/ShareRounded';
+import AccountBalanceWalletRoundedIcon from '@mui/icons-material/AccountBalanceWalletRounded';
 import PersonRoundedIcon from '@mui/icons-material/PersonRounded';
 import SupportAgentRoundedIcon from '@mui/icons-material/SupportAgentRounded';
 
@@ -38,6 +40,7 @@ const Analytics = lazy(() => import('./pages/Analytics'));
 const SupportContacts = lazy(() => import('./pages/SupportContacts'));
 const CategoryManagement = lazy(() => import('./pages/CategoryManagement'));
 const RewardsManagement = lazy(() => import('./pages/RewardsManagement'));
+const IncentivesManagement = lazy(() => import('./pages/IncentivesManagement'));
 const Notifications = lazy(() => import('./pages/Notifications'));
 const SearchResults = lazy(() => import('./pages/SearchResults'));
 const AdminLogin = lazy(() => import('./pages/AdminLogin'));
@@ -63,6 +66,8 @@ const AdminSidebar = ({ isMobileMenuOpen, setIsMobileMenuOpen }) => {
     },
     { name: 'Customers', path: '/admin/users', icon: GroupRoundedIcon },
     { name: 'Milestones & Rewards', path: '/admin/rewards', icon: EmojiEventsRoundedIcon },
+    { name: 'Refer & Earn', path: '/admin/refer-earn', icon: ShareRoundedIcon },
+    { name: 'Distribution Fund', path: '/admin/distribution-fund', icon: AccountBalanceWalletRoundedIcon },
     { name: 'Categories', path: '/admin/categories', icon: CategoryRoundedIcon },
     { name: 'Subscriptions', path: '/admin/plans', icon: PaymentsRoundedIcon },
     { name: 'Cities & Zones', path: '/admin/cities', icon: MapRoundedIcon },
@@ -366,6 +371,8 @@ const AdminLayout = ({ children }) => {
       ['/admin/merchants', 'Merchant Approvals'],
       ['/admin/users', 'Users'],
       ['/admin/rewards', 'Milestones & Rewards'],
+      ['/admin/refer-earn', 'Refer & Earn'],
+      ['/admin/distribution-fund', 'Distribution Fund'],
       ['/admin/categories', 'Categories'],
       ['/admin/plans', 'Subscriptions'],
       ['/admin/cities', 'Cities & Zones'],
@@ -477,6 +484,8 @@ const AdminApp = () => {
           <Route path="/merchants" element={<MerchantManagement />} />
           <Route path="/users" element={<UserManagement />} />
           <Route path="/rewards" element={<RewardsManagement />} />
+          <Route path="/refer-earn" element={<IncentivesManagement section="referral" />} />
+          <Route path="/distribution-fund" element={<IncentivesManagement section="fund" />} />
           <Route path="/plans" element={<SubscriptionManagement />} />
           <Route path="/ads" element={<PromotionRequest />} />
           <Route path="/ledger" element={<BookingLedger />} />

@@ -116,6 +116,33 @@ const redemptionSchema = new mongoose.Schema(
         type: Number,
         default: 0,
       },
+      // Which Distribution Fund bonus `walletDiscount` is (newUser, returning,
+      // welcomeBack, loyal, specialDay) and the rule as it stood at claim time,
+      // so an item edit re-applies the same rule. Empty on older passes, whose
+      // walletDiscount is always the new-user discount.
+      bonusType: {
+        type: String,
+        default: '',
+      },
+      bonusLabel: {
+        type: String,
+        default: '',
+      },
+      bonusRule: {
+        discountType: String,
+        value: Number,
+        maxDiscount: Number,
+        minOrderValue: Number,
+      },
+      // Credit-spending rules at claim time (0 = none)
+      creditsMinOrder: {
+        type: Number,
+        default: 0,
+      },
+      creditsMaxPerOrder: {
+        type: Number,
+        default: 0,
+      },
     },
     // Set once the referral points above have been given back after the pass
     // expired or was cancelled, so they can never be refunded twice.

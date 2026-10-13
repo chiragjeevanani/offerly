@@ -15,7 +15,7 @@ import {
   refundReferralPoints,
   releaseReferralPoints,
 } from '../../user/services/referralService.js';
-import { getWalletSettings } from '../../../utils/subscriptionWallet.js';
+import { getIncentiveSettings, evaluateCustomerBonus, bonusAmountFor, allowedCreditSpend } from '../../user/services/incentiveService.js';
 import { getCustomerSubscriptionStatus } from '../../../utils/customerSubscription.js';
 import DiscountWalletTransaction from '../../payment/models/DiscountWalletTransaction.js';
 import { resolveLine, stockError } from '../../merchant/services/inventoryService.js';
@@ -164,17 +164,17 @@ export const createRedemption = async (req, res) => {
     const base = Math.round(items.reduce((s, it) => s + it.product.price * it.qty, 0));
     const subtotal = Math.round(items.reduce((s, it) => s + it.product.offerPrice * it.qty, 0));
 
-    // Extra discount for customers who've never completed a redemption anywhere
-    // on the platform, funded from the merchant's discount wallet. Computed
-    // server-side and capped by whatever the merchant's wallet actually holds.
-    let walletDiscount = 0;
-    const hasCompletedBefore = await RedemptionModel.exists({ customerId: req.user.id, status: 'completed' });
-    if (!hasCompletedBefore) {
-      const walletSettings = await getWalletSettings();
-      const configuredAmount = walletSettings?.newUserDiscountAmount || 0;
-      const availableBalance = merchantDoc.discountWallet?.balance || 0;
-      walletDiscount = Math.max(0, Math.round(Math.min(configuredAmount, availableBalance, subtotal)));
-    }
+    // Customer Distribution Fund bonus (new user, returning, welcome back,
+    // loyal, special day) - the biggest one that applies, paid from the
+    // merchant's discount wallet and capped by what it holds. See incentiveService.
+    const incentiveSettings = await getIncentiveSettings();
+    const bonus = await evaluateCustomerBonus({
+      customerId: req.user.id,
+      merchantDoc,
+      subtotal,
+      settings: incentiveSettings,
+    });
+    const walletDiscount = bonus?.amount || 0;
 
     // Friendly ID generation (e.g. B-54321)
     const letter = String.fromCharCode(65 + Math.floor(Math.random() * 26));
@@ -198,7 +198,7 @@ export const createRedemption = async (req, res) => {
     let referralDiscount = 0;
     try {
       referralDiscount = req.body.useReferralPoints
-        ? await reserveReferralPoints(req.user.id, subtotal - walletDiscount)
+        ? await reserveReferralPoints(req.user.id, allowedCreditSpend(incentiveSettings, subtotal, subtotal - walletDiscount))
         : 0;
     } catch (pointsErr) {
       await releaseLines(stockLines, { redemptionId, passId: internalId });
@@ -212,6 +212,11 @@ export const createRedemption = async (req, res) => {
       final: subtotal - walletDiscount - referralDiscount,
       walletDiscount,
       referralDiscount,
+      bonusType: bonus?.type || '',
+      bonusLabel: bonus?.label || '',
+      bonusRule: bonus?.rule,
+      creditsMinOrder: incentiveSettings.credits.minOrderValue || 0,
+      creditsMaxPerOrder: incentiveSettings.credits.maxPerOrder || 0,
     };
 
     // Generate QR Token
@@ -394,8 +399,12 @@ export const verifyQR = async (req, res) => {
     // claim time - only if this is still their first-ever completed redemption
     // (it may not be, if another pending redemption elsewhere completed first)
     // and bounded by whatever balance the wallet actually has right now.
+    // Other bonuses are always debited; the new-user one only if this really
+    // is the customer's first completed visit (passes before bonus types
+    // existed are all new-user discounts).
     if (redemption.totals?.walletDiscount > 0) {
-      const hasOtherCompleted = await RedemptionModel.exists({
+      const isNewUserBonus = !redemption.totals.bonusType || redemption.totals.bonusType === 'newUser';
+      const hasOtherCompleted = isNewUserBonus && await RedemptionModel.exists({
         customerId: redemption.customerId,
         status: 'completed',
         _id: { $ne: redemption._id },
@@ -415,7 +424,7 @@ export const verifyQR = async (req, res) => {
                 amount: debit,
                 balanceAfter: currentBalance - debit,
                 redemptionId: redemption._id,
-                note: 'New-customer discount granted at redemption',
+                note: `${redemption.totals.bonusLabel || 'New User Bonus'} granted at redemption`,
               })
             )
           );
@@ -560,12 +569,34 @@ const applyRedemptionItems = async (redemption, items, { checkStock = false } = 
 
   const base = Math.round(redemption.items.reduce((s, it) => s + it.product.price * it.qty, 0));
   const final = Math.round(redemption.items.reduce((s, it) => s + it.product.offerPrice * it.qty, 0));
-  const walletDiscount = Math.max(0, Math.min(redemption.totals?.walletDiscount || 0, final));
+  // The bonus is re-worked under the rule it was granted with: it drops off
+  // if the bill falls below that rule's minimum, and never grows past what
+  // was granted (the store's wallet was only checked for that much).
+  const prev = redemption.totals || {};
+  const previousBonus = prev.walletDiscount || 0;
+  const savedRule = prev.bonusRule?.discountType
+    ? {
+        discountType: prev.bonusRule.discountType,
+        value: prev.bonusRule.value,
+        maxDiscount: prev.bonusRule.maxDiscount,
+        minOrderValue: prev.bonusRule.minOrderValue,
+      }
+    : undefined;
+  const rule = savedRule ? { ...savedRule, enabled: true } : null;
+  const walletDiscount = rule
+    ? Math.min(previousBonus, bonusAmountFor(rule, final))
+    : Math.max(0, Math.min(previousBonus, final));
 
-  // Referral points stay applied, but never more than the new bill. Any points
-  // that no longer fit go straight back to the customer.
-  const previousReferral = redemption.totals?.referralDiscount || 0;
-  const referralDiscount = Math.max(0, Math.min(previousReferral, final - walletDiscount));
+  // Referral points stay applied, but never more than the new bill or the
+  // per-order cap, and not at all below the minimum order. Any points that no
+  // longer fit go straight back to the customer.
+  const previousReferral = prev.referralDiscount || 0;
+  const creditRoom = allowedCreditSpend(
+    { credits: { minOrderValue: prev.creditsMinOrder || 0, maxPerOrder: prev.creditsMaxPerOrder || 0 } },
+    final,
+    final - walletDiscount
+  );
+  const referralDiscount = Math.max(0, Math.min(previousReferral, creditRoom));
   await refundReferralPoints(redemption.customerId, previousReferral - referralDiscount);
 
   redemption.totals = {
@@ -575,6 +606,11 @@ const applyRedemptionItems = async (redemption, items, { checkStock = false } = 
     original: base,
     walletDiscount,
     referralDiscount,
+    bonusType: walletDiscount > 0 ? prev.bonusType || '' : '',
+    bonusLabel: walletDiscount > 0 ? prev.bonusLabel || '' : '',
+    bonusRule: walletDiscount > 0 ? savedRule : undefined,
+    creditsMinOrder: prev.creditsMinOrder || 0,
+    creditsMaxPerOrder: prev.creditsMaxPerOrder || 0,
   };
 
   return null;

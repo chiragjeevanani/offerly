@@ -89,7 +89,14 @@ const CartView = () => {
     setUseReferralPoints(!useReferralPoints);
     setUseReferralPointsState(!useReferralPoints);
   };
-  const referralDiscount = useReferralPoints ? Math.min(availablePoints, payableBeforePoints) : 0;
+  // Admin rules for spending credits: none below the minimum order, and at
+  // most maxPerOrder on one order (0 = no limit). The server applies the same.
+  const creditRules = cart?.creditRules || {};
+  const belowCreditMinimum = totalOfferPrice < (creditRules.minOrderValue || 0);
+  const usablePoints = belowCreditMinimum
+    ? 0
+    : Math.min(availablePoints, payableBeforePoints, creditRules.maxPerOrder > 0 ? creditRules.maxPerOrder : Infinity);
+  const referralDiscount = useReferralPoints ? usablePoints : 0;
   const finalPayable = payableBeforePoints - referralDiscount;
   const discountPercent = totalBasePrice > 0 ? Math.round((totalDiscount / totalBasePrice) * 100) : 0;
 
@@ -552,7 +559,7 @@ const CartView = () => {
                {offerlyExtraDiscount > 0 && (
                  <div className="flex justify-between items-center">
                    <div className="flex items-center gap-1.5">
-                      <span className="text-[12px] font-bold text-gray-500 uppercase tracking-tight">Offerly Extra Discount</span>
+                      <span className="text-[12px] font-bold text-gray-500 uppercase tracking-tight">{cart?.offerlyBonusLabel || 'Offerly Extra Discount'}</span>
                       <div className="px-1.5 py-0.5 bg-[#5EB929]/10 text-[#4E9F1F] rounded text-[8px] font-bold uppercase tracking-wider">Offerly</div>
                    </div>
                    <span className="text-[13px] font-bold text-[#5EB929]">
@@ -568,7 +575,13 @@ const CartView = () => {
                )}
              </div>
 
-             {availablePoints > 0 && payableBeforePoints > 0 && (
+             {availablePoints > 0 && payableBeforePoints > 0 && belowCreditMinimum && (
+               <p className="mb-4 text-[11px] font-semibold text-gray-500">
+                 Add ₹{Math.round(creditRules.minOrderValue - totalOfferPrice)} more to use your {availablePoints} referral points.
+               </p>
+             )}
+
+             {usablePoints > 0 && (
                <label className="mb-4 flex items-center gap-2.5 cursor-pointer select-none">
                  <input
                    type="checkbox"
@@ -589,7 +602,7 @@ const CartView = () => {
                    )}
                  </span>
                  <span className="text-[12px] font-semibold text-gray-700">
-                   Use {Math.min(availablePoints, payableBeforePoints)} referral points
+                   Use {usablePoints} referral points
                    <span className="text-gray-400 font-medium"> ({availablePoints} available)</span>
                  </span>
                </label>

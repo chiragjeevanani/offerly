@@ -44,6 +44,11 @@ export const userAPI = {
   },
 
   // Referral
+  // Admin-set Refer & Earn amounts and credit-spending rules
+  getIncentiveRules: async () => {
+    return axiosInstance.get('/users/incentive-rules');
+  },
+
   getReferralHistory: async () => {
     return axiosInstance.get('/users/referrals/history');
   },

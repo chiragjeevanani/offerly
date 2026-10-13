@@ -113,6 +113,19 @@ export const adminAPI = {
     return axiosInstance.put('/admin/wallet-settings', data);
   },
 
+  // Refer & Earn + Customer Distribution Fund
+  getIncentiveSettings: async () => {
+    return axiosInstance.get('/admin/incentive-settings');
+  },
+
+  updateIncentiveSettings: async (data) => {
+    return axiosInstance.put('/admin/incentive-settings', data);
+  },
+
+  getIncentiveSummary: async () => {
+    return axiosInstance.get('/admin/incentive-summary');
+  },
+
   getCustomerSubscriptionSettings: async () => {
     return axiosInstance.get('/admin/customer-subscription-settings');
   },

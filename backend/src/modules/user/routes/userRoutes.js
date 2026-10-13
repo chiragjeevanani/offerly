@@ -27,6 +27,8 @@ import {
   verifyCustomerSubscription,
 } from "../controllers/subscriptionController.js";
 
+import { getPublicIncentiveRules } from "../../admin/controllers/incentiveController.js";
+
 const router = express.Router();
 
 // The test endpoint only ever pushes to the caller's own devices, but it's
@@ -52,6 +54,7 @@ router.put("/notifications/read-all", protect, markAllNotificationsRead);
 router.get("/saved-offers", protect, getSavedOffers);
 router.post("/saved-offers/:offerId/toggle", protect, toggleSavedOffer);
 router.get("/referrals", protect, getReferralHistory);
+router.get("/incentive-rules", protect, getPublicIncentiveRules);
 router.get("/referrals/history", protect, getReferralHistory);
 router.post("/credits/redeem", protect, redeemCredits);
 // Firebase Cloud Messaging device tokens. Customer-only: the merchant and

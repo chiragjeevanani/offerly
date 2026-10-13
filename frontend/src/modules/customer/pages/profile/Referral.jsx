@@ -31,6 +31,18 @@ const Referral = () => {
     fetchHistory();
   }, [isLoggedIn]);
 
+  // Reward amounts are set by the admin (Refer & Earn); these defaults only
+  // show until they load.
+  const [rules, setRules] = useState({ enabled: true, referrerBonus: 50, referredBonus: 20, minOrderValue: 500 });
+  useEffect(() => {
+    if (!isLoggedIn) return;
+    userAPI
+      .getIncentiveRules()
+      .then((res) => res?.data?.referral && setRules(res.data.referral))
+      .catch(() => {});
+  }, [isLoggedIn]);
+  const minOrderText = rules.minOrderValue > 0 ? ` worth ₹${rules.minOrderValue}+` : '';
+
   const handleCopy = () => {
     navigator.clipboard.writeText(user?.referralCode || '');
     toast.success('Referral code copied! 🎉');
@@ -73,7 +85,9 @@ const Referral = () => {
           
           <h2 className="text-white font-bold text-xl uppercase tracking-tight">Invite & Earn</h2>
           <p className="text-white/70 text-[9px] font-bold uppercase tracking-widest mt-1.5 leading-relaxed px-4">
-            Earn ₹50 credits when your friend redeems an offer worth ₹500+
+            {rules.enabled
+              ? `Earn ₹${rules.referrerBonus} credits when your friend redeems an offer${minOrderText}`
+              : 'Referral rewards are paused right now'}
           </p>
 
           {/* Referral Code Terminal - Slim */}
@@ -133,7 +147,7 @@ const Referral = () => {
              {[
                { step: '01', label: 'Share your referral code' },
                { step: '02', label: 'Your friend uses the code while signing up' },
-               { step: '03', label: 'When your friend redeems 1 offer worth ₹500 or more, you get 50 referral points credited to your account (your friend gets 20)' },
+               { step: '03', label: `When your friend redeems 1 offer${rules.minOrderValue > 0 ? ` worth ₹${rules.minOrderValue} or more` : ''}, you get ${rules.referrerBonus} referral points credited to your account (your friend gets ${rules.referredBonus})` },
              ].map((item) => (
                <div key={item.step} className="flex items-center gap-4 bg-white rounded-2xl p-3 border border-gray-50">
                  <div className="w-8 h-8 bg-[#5EB929]/5 rounded-xl flex items-center justify-center flex-shrink-0">

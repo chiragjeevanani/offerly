@@ -1,4 +1,5 @@
-import { useState, useRef } from 'react';
+import { useState } from 'react';
+import { Link } from 'react-router-dom';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
@@ -71,26 +72,6 @@ const SubscriptionManagement = () => {
       return res.data || res.cities || [];
     }
   });
-
-  const { data: walletSettings, refetch: refetchWalletSettings } = useQuery({
-    queryKey: ['walletSettings'],
-    queryFn: async () => {
-      const res = await adminAPI.getWalletSettings();
-      return res.data || res;
-    }
-  });
-  const newUserDiscountInputRef = useRef(null);
-
-  const handleSaveWalletSettings = async () => {
-    try {
-      const value = Number(newUserDiscountInputRef.current?.value) || 0;
-      await adminAPI.updateWalletSettings({ newUserDiscountAmount: value });
-      toast.success('Wallet settings updated');
-      refetchWalletSettings();
-    } catch {
-      toast.error('Failed to update wallet settings');
-    }
-  };
 
   const { data: customerSubscriptionSettings, refetch: refetchCustomerSubscriptionSettings } = useQuery({
     queryKey: ['customerSubscriptionSettings'],
@@ -330,25 +311,14 @@ const SubscriptionManagement = () => {
             </div>
             <div className="flex-1">
               <p className="text-[12px] font-bold text-gray-800">New-customer wallet discount</p>
-              <p className="text-[10px] text-gray-400">Flat amount taken from a merchant's discount wallet the first time any customer redeems anywhere on Offerly.</p>
+              <p className="text-[10px] text-gray-400">Now set with the other customer bonuses (minimum order, flat or %) under Distribution Fund.</p>
             </div>
-            <div className="flex items-center gap-2">
-              <span className="text-gray-400 text-sm font-bold">₹</span>
-              <input
-                key={walletSettings?.newUserDiscountAmount ?? 'loading'}
-                type="number"
-                min="0"
-                ref={newUserDiscountInputRef}
-                defaultValue={walletSettings?.newUserDiscountAmount ?? 0}
-                className="w-24 bg-gray-50 border border-gray-200 rounded-xl py-2 px-3 text-sm font-bold focus:ring-2 focus:ring-primary/10 focus:border-primary outline-none"
-              />
-              <button
-                onClick={handleSaveWalletSettings}
-                className="px-4 py-2 bg-gray-900 text-white rounded-xl text-[11px] font-bold hover:bg-black transition-all"
-              >
-                Save
-              </button>
-            </div>
+            <Link
+              to="/admin/distribution-fund"
+              className="px-4 py-2 bg-gray-900 text-white rounded-xl text-[11px] font-bold hover:bg-black transition-all text-center"
+            >
+              Open Distribution Fund
+            </Link>
           </div>
         )}
 

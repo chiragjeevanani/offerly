@@ -2,34 +2,27 @@ import Joi from 'joi';
 import Cart from '../models/Cart.js';
 import Product from '../../merchant/models/Product.js';
 import Merchant from '../../merchant/models/Merchant.js';
-import Redemption from '../models/Redemption.js';
-import WalletSettings from '../../admin/models/WalletSettings.js';
+import { getIncentiveSettings, evaluateCustomerBonus } from '../../user/services/incentiveService.js';
 import { resolveLine, stockError, variantLabel } from '../../merchant/services/inventoryService.js';
 
+// Preview of the Distribution Fund bonus the server will grant at claim time
+// (same rules as redemptionController), plus the credit-spending rules.
 const calculateOfferlyExtraDiscount = async (cart, customerId) => {
-  if (!cart || !cart.merchantId || !cart.items || cart.items.length === 0) return 0;
+  const settings = await getIncentiveSettings();
+  const credits = { minOrderValue: settings.credits.minOrderValue || 0, maxPerOrder: settings.credits.maxPerOrder || 0 };
+  if (!cart || !cart.merchantId || !cart.items || cart.items.length === 0) return { amount: 0, label: '', credits };
 
   try {
-    const hasCompletedBefore = await Redemption.exists({ customerId, status: 'completed' });
-    if (hasCompletedBefore) return 0;
-
     const merchantId = cart.merchantId._id || cart.merchantId;
-    const [merchantDoc, walletSettings] = await Promise.all([
-      Merchant.findById(merchantId).select('discountWallet'),
-      WalletSettings.findOne(),
-    ]);
-
-    const configuredAmount = walletSettings?.newUserDiscountAmount || 0;
-    const availableBalance = merchantDoc?.discountWallet?.balance || 0;
-    const totalOfferPrice = cart.items.reduce(
-      (sum, item) => sum + ((item.product?.offerPrice || 0) * (item.qty || 1)),
-      0
+    const merchantDoc = await Merchant.findById(merchantId).select('discountWallet');
+    const subtotal = Math.round(
+      cart.items.reduce((sum, item) => sum + ((item.product?.offerPrice || 0) * (item.qty || 1)), 0)
     );
-
-    return Math.max(0, Math.round(Math.min(configuredAmount, availableBalance, totalOfferPrice)));
+    const bonus = await evaluateCustomerBonus({ customerId, merchantDoc, subtotal, settings });
+    return { amount: bonus?.amount || 0, label: bonus?.label || '', credits };
   } catch (e) {
     console.error('Error calculating extra discount:', e);
-    return 0;
+    return { amount: 0, label: '', credits };
   }
 };
 
@@ -68,7 +61,10 @@ const shapeCart = (cart) => {
 
 const sendCart = async (res, cart, customerId) => {
   const cartData = shapeCart(cart);
-  cartData.offerlyExtraDiscount = await calculateOfferlyExtraDiscount(cartData, customerId);
+  const extra = await calculateOfferlyExtraDiscount(cartData, customerId);
+  cartData.offerlyExtraDiscount = extra.amount;
+  cartData.offerlyBonusLabel = extra.label;
+  cartData.creditRules = extra.credits;
   return res.status(200).json({ success: true, data: cartData });
 };
 
