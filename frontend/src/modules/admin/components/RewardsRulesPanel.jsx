@@ -342,24 +342,28 @@ const RulesForm = ({ initial, levelCount }) => {
         </div>
       </Section>
 
-      <div className="sticky bottom-20 lg:bottom-4 z-10 flex items-center justify-end gap-3 bg-white/90 backdrop-blur border border-gray-100 shadow-md rounded-2xl p-3">
-        <span className="text-xs text-gray-500 mr-auto">{dirty ? 'You have unsaved changes' : 'All changes saved'}</span>
-        <button
-          type="button"
-          disabled={!dirty || saveMutation.isPending}
-          onClick={() => setForm(initial)}
-          className="px-4 py-2.5 text-xs font-semibold text-gray-600 hover:bg-gray-100 rounded-xl disabled:opacity-40"
-        >
-          Discard
-        </button>
-        <button
-          type="submit"
-          disabled={!dirty || saveMutation.isPending}
-          className="px-5 py-2.5 bg-primary text-white text-xs font-semibold rounded-xl shadow-md hover:bg-primary-dark transition-all disabled:opacity-50"
-        >
-          {saveMutation.isPending ? 'Saving...' : 'Save Rules'}
-        </button>
-      </div>
+      {/* Only shown while there is something to save - a permanent bar sat on top of
+          the settings on phones. Solid background so the page does not show through. */}
+      {dirty && (
+        <div className="sticky bottom-20 lg:bottom-4 z-10 flex items-center gap-2 bg-white border border-gray-200 shadow-lg rounded-2xl p-3">
+          <span className="text-xs font-medium text-gray-600 mr-auto min-w-0 truncate">Unsaved changes</span>
+          <button
+            type="button"
+            disabled={saveMutation.isPending}
+            onClick={() => setForm(initial)}
+            className="shrink-0 whitespace-nowrap px-3 py-2.5 text-xs font-semibold text-gray-600 hover:bg-gray-100 rounded-xl disabled:opacity-40"
+          >
+            Discard
+          </button>
+          <button
+            type="submit"
+            disabled={saveMutation.isPending}
+            className="shrink-0 whitespace-nowrap px-5 py-2.5 bg-primary text-white text-xs font-semibold rounded-xl shadow-md hover:bg-primary-dark transition-all disabled:opacity-50"
+          >
+            {saveMutation.isPending ? 'Saving...' : 'Save Rules'}
+          </button>
+        </div>
+      )}
     </form>
   );
 };
