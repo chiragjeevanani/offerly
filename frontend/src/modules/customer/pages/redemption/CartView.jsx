@@ -271,9 +271,10 @@ const CartView = () => {
   return (
     <PageTransition>
       {/* Full-Screen Graffiti / Confetti Celebration Modal */}
-      <AnimatePresence>
-        {showCelebrationModal && totalDiscount > 0 && createPortal(
-          <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
+      {createPortal(
+        <AnimatePresence>
+          {showCelebrationModal && totalDiscount > 0 && (
+          <div key="celebration-modal" className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
             {/* Dimmed Backdrop */}
             <motion.div
               initial={{ opacity: 0 }}
@@ -361,10 +362,11 @@ const CartView = () => {
                 <span>🚀</span>
               </motion.button>
             </motion.div>
-          </div>,
-          document.body
-        )}
-      </AnimatePresence>
+          </div>
+          )}
+        </AnimatePresence>,
+        document.body
+      )}
 
       <div className="min-h-screen bg-[#F8FAFC] pb-32">
         {/* Concise Premium Header */}
