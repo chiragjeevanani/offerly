@@ -42,7 +42,12 @@ const incentiveSettingsSchema = new mongoose.Schema(
     },
     bonuses: {
       newUser: { ...bonusFields },
-      returning: { ...bonusFields },
+      returning: {
+        ...bonusFields,
+        // After a customer gets this bonus, it skips them for this many days
+        // (0 = every repeat order). Keeps it from draining store wallets.
+        cooldownDays: { type: Number, default: 7, min: 0 },
+      },
       welcomeBack: {
         ...bonusFields,
         inactiveDays: { type: Number, default: 30, min: 1 },

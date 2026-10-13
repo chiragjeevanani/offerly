@@ -73,7 +73,7 @@ const rupees = (n) => `₹${Math.round(Number(n) || 0).toLocaleString('en-IN')}`
 
 const BONUSES = [
   { key: 'newUser', title: 'New User Bonus', icon: FiberNewRoundedIcon, hint: "Extra discount on a customer's first visit on Offerly." },
-  { key: 'returning', title: 'Returning User Bonus', icon: ReplayRoundedIcon, hint: 'Extra discount every time a customer visits again.' },
+  { key: 'returning', title: 'Returning User Bonus', icon: ReplayRoundedIcon, hint: 'Extra discount when a customer visits again, at most once per gap you set.' },
   { key: 'welcomeBack', title: 'Welcome Back Bonus', icon: WavingHandRoundedIcon, hint: "For customers who haven't visited for a while." },
   { key: 'loyal', title: 'Loyal Customer Bonus', icon: FavoriteRoundedIcon, hint: 'Extra discount once a customer has made enough visits.' },
   { key: 'specialDay', title: 'Special Day Bonus', icon: CelebrationRoundedIcon, hint: 'On birthdays, festivals or other occasions you add.' },
@@ -144,6 +144,14 @@ const BonusCard = ({ meta, bonus, stats, onChange }) => {
           </Field>
         </div>
 
+        {meta.key === 'returning' && (
+          <Field
+            label="Gap between uses"
+            hint="After a customer gets this bonus, they can't get it again for this many days. 0 = on every repeat order."
+          >
+            <NumberInput value={bonus.cooldownDays} onChange={(cooldownDays) => set({ cooldownDays })} suffix="days" />
+          </Field>
+        )}
         {meta.key === 'welcomeBack' && (
           <Field label="Counts as 'away' after" hint="Days since the customer's last visit">
             <NumberInput value={bonus.inactiveDays} onChange={(inactiveDays) => set({ inactiveDays })} suffix="days" min={1} />

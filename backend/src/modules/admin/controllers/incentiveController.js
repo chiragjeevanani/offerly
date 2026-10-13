@@ -52,6 +52,7 @@ const buildUpdate = (body) => {
       if ('value' in b) num(`${p}.value`, b.value, isPercent ? { max: 100 } : {});
       if ('maxDiscount' in b) num(`${p}.maxDiscount`, b.maxDiscount);
       if ('minOrderValue' in b) num(`${p}.minOrderValue`, b.minOrderValue);
+      if (type === 'returning' && 'cooldownDays' in b) num(`${p}.cooldownDays`, b.cooldownDays, { max: 365 });
       if (type === 'welcomeBack' && 'inactiveDays' in b) num(`${p}.inactiveDays`, b.inactiveDays, { min: 1, max: 3650 });
       if (type === 'loyal' && 'minVisits' in b) num(`${p}.minVisits`, b.minVisits, { min: 2, max: 1000 });
       if (type === 'specialDay') {

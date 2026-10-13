@@ -75,15 +75,25 @@ const activeOccasion = (occasions = [], now) => {
 // Visits are completed redemptions anywhere on Offerly.
 const qualifyingBonuses = async (customerId, settings, now) => {
   const b = settings.bonuses;
-  const [visits, last, user] = await Promise.all([
+  const cooldownDays = b.returning?.enabled ? b.returning.cooldownDays || 0 : 0;
+  const [visits, last, user, recentReturning] = await Promise.all([
     Redemption.countDocuments({ customerId, status: 'completed' }),
     Redemption.findOne({ customerId, status: 'completed' }).sort({ createdAt: -1 }).select('scannedAt updatedAt createdAt').lean(),
     b.specialDay?.enabled && b.specialDay.birthday ? User.findById(customerId).select('dob').lean() : null,
+    // A Returning bonus on a live or completed pass within the gap blocks another
+    cooldownDays > 0
+      ? Redemption.exists({
+          customerId,
+          status: { $in: ['pending', 'completed'] },
+          'totals.bonusType': 'returning',
+          createdAt: { $gte: new Date(now.getTime() - cooldownDays * DAY_MS) },
+        })
+      : null,
   ]);
 
   const found = [];
   if (visits === 0) found.push({ type: 'newUser' });
-  if (visits >= 1) found.push({ type: 'returning' });
+  if (visits >= 1 && !recentReturning) found.push({ type: 'returning' });
   if (visits >= (b.loyal?.minVisits || Infinity)) found.push({ type: 'loyal' });
   if (visits >= 1 && last) {
     const lastVisit = new Date(last.scannedAt || last.updatedAt || last.createdAt);
