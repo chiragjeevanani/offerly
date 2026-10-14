@@ -25,6 +25,8 @@ import CategoryRoundedIcon from '@mui/icons-material/CategoryRounded';
 import SpaRoundedIcon from '@mui/icons-material/SpaRounded';
 import AppsRoundedIcon from '@mui/icons-material/AppsRounded';
 import AccountBalanceWalletRoundedIcon from '@mui/icons-material/AccountBalanceWalletRounded';
+import PointOfSaleRoundedIcon from '@mui/icons-material/PointOfSaleRounded';
+import CompareArrowsRoundedIcon from '@mui/icons-material/CompareArrowsRounded';
 
 import { useApp } from '../customer/context/AppContext';
 import { merchantAPI } from '../../api/merchant.api';
@@ -60,6 +62,8 @@ const Support = lazy(() => import('./pages/static/Support'));
 const Notifications = lazy(pages.notifications);
 const Profile = lazy(pages.profile);
 const Wallet = lazy(pages.wallet);
+const WalkinSale = lazy(pages.walkin);
+const OnlineOffline = lazy(pages.onlineOffline);
 
 import SubscriptionRenewal from './components/SubscriptionRenewal';
 
@@ -82,6 +86,8 @@ const MerchantSidebar = ({ merchant, isMobileMenuOpen, setIsMobileMenuOpen }) =>
     { name: 'Insights', path: '/merchant/insights', icon: InsightsRoundedIcon, badge: insightsEnabled ? null : 'PRO' },
     { name: 'Live Bookings', path: '/merchant/bookings', icon: ReceiptLongRoundedIcon },
     { name: 'Verify QR', path: '/merchant/scanner', icon: QrCodeScannerRoundedIcon },
+    { name: 'Walk-in Sale', path: '/merchant/walk-in', icon: PointOfSaleRoundedIcon },
+    { name: 'Online vs Offline', path: '/merchant/online-offline', icon: CompareArrowsRoundedIcon },
   ];
 
   const storeNavItems = [
@@ -594,6 +600,8 @@ const MerchantApp = () => {
                 <Route path="/advertise" element={<Advertise merchant={merchant} />} />
                 <Route path="/subscription" element={<SubscriptionRenewal merchant={merchant} />} />
                 <Route path="/wallet" element={<Wallet />} />
+                <Route path="/walk-in" element={<WalkinSale />} />
+                <Route path="/online-offline" element={<OnlineOffline />} />
                 <Route path="/notifications" element={<Notifications />} />
                 <Route path="/profile" element={<Profile merchant={merchant} onMerchantUpdate={fetchMerchant} />} />
                 <Route path="/about" element={<About />} />

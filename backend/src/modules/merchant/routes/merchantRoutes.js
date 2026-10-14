@@ -35,6 +35,14 @@ import {
 } from "../controllers/analyticsController.js";
 import { deleteMerchant } from "../../admin/controllers/adminController.js";
 import { getMySettlement, updateMyBankDetails, createMyPayoutRequest } from "../../payment/controllers/settlementController.js";
+import {
+  lookupWalkinCustomer,
+  sendWalkinOtp,
+  verifyWalkinOtp,
+  createWalkinOrder,
+  getWalkinOrders,
+  getSalesComparison,
+} from "../../booking/controllers/walkinController.js";
 
 const router = express.Router();
 
@@ -48,6 +56,30 @@ const pushTestLimiter = rateLimit({
   legacyHeaders: false,
   message: { message: "Too many test notifications, please wait a moment" },
 });
+
+// Walk-in OTPs are real SMS sends and number lookups reveal names - cap both per client.
+const walkinOtpLimiter = rateLimit({
+  windowMs: 10 * 60 * 1000,
+  limit: 20,
+  standardHeaders: "draft-7",
+  legacyHeaders: false,
+  message: { success: false, error: "Too many OTP requests, please wait a few minutes" },
+});
+const walkinLookupLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  limit: 30,
+  standardHeaders: "draft-7",
+  legacyHeaders: false,
+  message: { success: false, error: "Too many lookups, please wait a moment" },
+});
+
+// Walk-in (offline) sales rung up at the counter
+router.post("/me/walkin/lookup", protect, authorize("merchant"), walkinLookupLimiter, lookupWalkinCustomer);
+router.post("/me/walkin/send-otp", protect, authorize("merchant"), walkinOtpLimiter, sendWalkinOtp);
+router.post("/me/walkin/verify-otp", protect, authorize("merchant"), walkinOtpLimiter, verifyWalkinOtp);
+router.get("/me/walkin/orders", protect, authorize("merchant"), getWalkinOrders);
+router.post("/me/walkin/orders", protect, authorize("merchant"), createWalkinOrder);
+router.get("/me/sales-comparison", protect, authorize("merchant"), getSalesComparison);
 
 router.get("/", optionalAuth, getMerchants);
 router.get("/me", protect, authorize("merchant", "admin"), getMyStore);

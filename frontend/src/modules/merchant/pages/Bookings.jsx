@@ -4,6 +4,7 @@ import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import SearchRoundedIcon from '@mui/icons-material/SearchRounded';
 import QrCodeScannerRoundedIcon from '@mui/icons-material/QrCodeScannerRounded';
+import PointOfSaleRoundedIcon from '@mui/icons-material/PointOfSaleRounded';
 import CheckCircleRoundedIcon from '@mui/icons-material/CheckCircleRounded';
 import HourglassEmptyRoundedIcon from '@mui/icons-material/HourglassEmptyRounded';
 import VisibilityRoundedIcon from '@mui/icons-material/VisibilityRounded';
@@ -261,13 +262,22 @@ const Bookings = ({ merchant }) => {
             </div>
             <h1 className="text-xl lg:text-2xl font-bold text-gray-900">Manage Requests</h1>
           </div>
-          <button 
-            onClick={() => navigate('/merchant/scanner')}
-            className="flex items-center justify-center gap-2 bg-[#5EB929] text-white px-5 py-2.5 rounded-xl font-bold shadow-[0_4px_12px_rgba(94, 185, 41,0.2),inset_0_-2px_4px_rgba(0,0,0,0.1)] hover:scale-105 transition-all text-xs active:scale-95"
-          >
-            <QrCodeScannerRoundedIcon sx={{ fontSize: 18 }} />
-            Open Scanner
-          </button>
+          <div className="flex gap-2">
+            <button
+              onClick={() => navigate('/merchant/walk-in')}
+              className="flex-1 md:flex-none flex items-center justify-center gap-2 bg-white text-gray-800 border border-gray-200 px-4 py-2.5 rounded-xl font-bold hover:border-[#5EB929] transition-all text-xs active:scale-95"
+            >
+              <PointOfSaleRoundedIcon sx={{ fontSize: 18 }} className="text-[#5EB929]" />
+              Walk-in Sale
+            </button>
+            <button
+              onClick={() => navigate('/merchant/scanner')}
+              className="flex-1 md:flex-none flex items-center justify-center gap-2 bg-[#5EB929] text-white px-5 py-2.5 rounded-xl font-bold shadow-[0_4px_12px_rgba(94, 185, 41,0.2),inset_0_-2px_4px_rgba(0,0,0,0.1)] hover:scale-105 transition-all text-xs active:scale-95"
+            >
+              <QrCodeScannerRoundedIcon sx={{ fontSize: 18 }} />
+              Open Scanner
+            </button>
+          </div>
         </div>
 
         {/* Stats Row */}

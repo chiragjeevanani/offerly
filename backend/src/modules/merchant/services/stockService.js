@@ -187,6 +187,11 @@ const deductUnreservedLines = async (lines, { redemptionId, passId }) => {
   await logMovements(entries);
 };
 
+/** A walk-in sale at the counter: tracked items leave the shelf straight away. */
+export const deductStockForWalkin = async (items, { orderId }) => {
+  await deductUnreservedLines(await trackedLines(items), { redemptionId: null, passId: orderId });
+};
+
 /**
  * Called once a pass is completed. Moves its held units out of stock; for a
  * legacy pass with no hold, deducts the items directly. Safe to call twice.

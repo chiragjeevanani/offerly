@@ -15,7 +15,13 @@ const otpSessionSchema = new mongoose.Schema(
     purpose: {
       type: String,
       required: true,
-      enum: ['login', 'register'],
+      // walkin: a merchant confirming a walk-in customer's number at the counter
+      enum: ['login', 'register', 'walkin'],
+    },
+    // Only for purpose 'walkin': the store that asked, so another store can't use the code.
+    merchantId: {
+      type: mongoose.Schema.Types.ObjectId,
+      default: null,
     },
     otpHash: {
       type: String,

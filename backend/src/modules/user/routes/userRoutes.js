@@ -29,6 +29,7 @@ import {
 
 import { getPublicIncentiveRules } from "../../admin/controllers/incentiveController.js";
 import { getPublicHomeBanners, trackHomeBannerClick } from "../../admin/controllers/homeBannerController.js";
+import { getMyWalkinPurchases } from "../../booking/controllers/walkinController.js";
 
 const router = express.Router();
 
@@ -77,6 +78,7 @@ router.delete("/me/push-tokens", protect, authorize("customer"), unregisterPushT
 router.post("/me/push-tokens/test", protect, authorize("customer"), pushTestLimiter, sendTestPush);
 
 router.get("/me/subscription", protect, authorize("customer"), getMySubscriptionStatus);
+router.get("/me/walkin-purchases", protect, authorize("customer"), getMyWalkinPurchases);
 router.post("/me/subscription/purchase", protect, authorize("customer"), purchaseCustomerSubscription);
 router.post("/me/subscription/verify", protect, authorize("customer"), verifyCustomerSubscription);
 

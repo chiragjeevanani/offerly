@@ -9,6 +9,7 @@ import ChevronRightRoundedIcon from '@mui/icons-material/ChevronRightRounded';
 import RateReviewRoundedIcon from '@mui/icons-material/RateReviewRounded';
 import { bookingAPI } from '../../../../api/booking.api';
 import PageTransition from '../../components/ui/PageTransition';
+import WalkinPurchases from './WalkinPurchases';
 
 const statusConfig = {
   completed: { icon: CheckCircleRoundedIcon, color: 'text-green-600', bg: 'bg-green-50', label: 'Completed' },
@@ -21,6 +22,8 @@ const MyRedemptions = () => {
   const navigate = useNavigate();
   const [redemptions, setRedemptions] = useState([]);
   const [loading, setLoading] = useState(true);
+  // 'app' = bookings made in Offerly, 'store' = purchases a store rang up at the counter
+  const [tab, setTab] = useState(() => (new URLSearchParams(window.location.search).get('tab') === 'store' ? 'store' : 'app'));
 
   useEffect(() => {
     const loadRedemptions = async () => {
@@ -38,10 +41,41 @@ const MyRedemptions = () => {
     loadRedemptions();
   }, []);
 
+  const tabBar = (
+    <div className="flex bg-white p-1 rounded-xl border border-gray-100 shadow-sm">
+      {[
+        { key: 'app', label: 'App bookings' },
+        { key: 'store', label: 'In-store' },
+      ].map((t) => (
+        <button
+          key={t.key}
+          onClick={() => setTab(t.key)}
+          className={`flex-1 py-2 rounded-lg text-[11px] font-bold uppercase tracking-widest transition-all ${
+            tab === t.key ? 'bg-[#5EB929] text-white shadow-sm' : 'text-gray-400'
+          }`}
+        >
+          {t.label}
+        </button>
+      ))}
+    </div>
+  );
+
+  if (tab === 'store') {
+    return (
+      <PageTransition>
+        <div className="min-h-screen bg-background px-4 py-4 pb-24 space-y-4">
+          {tabBar}
+          <WalkinPurchases />
+        </div>
+      </PageTransition>
+    );
+  }
+
   if (loading) {
     return (
       <PageTransition>
         <div className="px-4 py-4 pb-6 space-y-4">
+          {tabBar}
           {[1, 2, 3].map(i => (
             <div key={i} className="h-24 bg-surface rounded-2xl animate-pulse"></div>
           ))}
@@ -53,7 +87,7 @@ const MyRedemptions = () => {
   return (
     <PageTransition>
       <div className="min-h-screen bg-background px-4 py-4 pb-24 space-y-4">
-        
+        {tabBar}
         {redemptions.length === 0 ? (
           <motion.div
             initial={{ opacity: 0, scale: 0.95 }}

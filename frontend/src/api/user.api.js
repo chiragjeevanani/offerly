@@ -43,6 +43,11 @@ export const userAPI = {
     return axiosInstance.patch('/users/notifications/read-all');
   },
 
+  // Purchases a store rang up for this customer at the counter (matched by account or phone)
+  getWalkinPurchases: async () => {
+    return axiosInstance.get('/users/me/walkin-purchases');
+  },
+
   // Admin-managed ad posters for the home carousel (empty city = every city)
   getHomeBanners: async (city) => {
     return axiosInstance.get('/users/home-banners', { params: { city } });

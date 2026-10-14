@@ -163,6 +163,15 @@ export const merchantAPI = {
     }
   },
 
+  // Walk-in (offline) sales rung up at the counter
+  walkinLookup: async (phone) => axiosInstance.post('/merchants/me/walkin/lookup', { phone }),
+  walkinSendOtp: async (phone) => axiosInstance.post('/merchants/me/walkin/send-otp', { phone }),
+  walkinVerifyOtp: async (phone, otp) => axiosInstance.post('/merchants/me/walkin/verify-otp', { phone, otp }),
+  createWalkinOrder: async (data) => axiosInstance.post('/merchants/me/walkin/orders', data),
+  getWalkinOrders: async (params) => axiosInstance.get('/merchants/me/walkin/orders', { params }),
+  // Online (app) bookings vs offline (walk-in) sales
+  getSalesComparison: async (period) => axiosInstance.get('/merchants/me/sales-comparison', { params: { period } }),
+
   // Settlement wallet: what Offerly owes the store for points and bonuses
   getSettlement: async () => {
     return axiosInstance.get('/merchants/me/settlement');
