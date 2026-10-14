@@ -637,7 +637,7 @@ const CartView = () => {
                 className="w-full bg-gray-900 text-white rounded-xl py-4 font-bold text-[11px] uppercase tracking-[0.25em] flex items-center justify-center gap-3 shadow-2xl shadow-black/20 active:scale-95 transition-all"
               >
                 <QrCode2RoundedIcon sx={{ fontSize: 18 }} />
-                Generate Booking QR
+                Generate Pickup QR
               </motion.button>
            </div>
         </div>

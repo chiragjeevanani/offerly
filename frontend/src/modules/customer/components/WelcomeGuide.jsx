@@ -45,7 +45,7 @@ const STEPS = [
   {
     icon: QrCode2RoundedIcon,
     title: 'Show your QR at the store',
-    body: 'Tap “Generate Booking QR” and show it at the counter. You pay at the store - nothing is paid online.',
+    body: 'Tap “Generate Pickup QR” and show it at the counter. You pay at the store - nothing is paid online.',
   },
   {
     icon: EmojiEventsRoundedIcon,
