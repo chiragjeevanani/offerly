@@ -132,12 +132,12 @@ export const getMerchants = async (req, res) => {
   // Handle search query (q)
   if (typeof req.query.q === "string" && req.query.q.trim()) {
     const searchRegex = new RegExp(escapeRegex(req.query.q.trim()), "i");
-    query.$or = [
-      { storeName: searchRegex },
-      { ownerName: searchRegex },
-      { phone: searchRegex },
-      { email: searchRegex },
-    ];
+    // Customers search stores by name/category only - matching owner phone or
+    // email publicly would let anyone look up who owns a number.
+    query.$or =
+      req.user?.role === "admin"
+        ? [{ storeName: searchRegex }, { ownerName: searchRegex }, { phone: searchRegex }, { email: searchRegex }]
+        : [{ storeName: searchRegex }, { category: searchRegex }];
   }
 
   // Pagination & Sorting
