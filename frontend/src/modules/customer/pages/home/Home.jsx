@@ -96,7 +96,29 @@ const EMPTY_FEED = {
   recommended: [],
 };
 
+const OUTLETS_SHOWN = 5;
+
+// Small seeded PRNG so the outlet pick is stable while Home is open (re-renders
+// don't reshuffle) but different on every visit.
+const seededRandom = (seed) => () => {
+  seed = (seed + 0x6d2b79f5) | 0;
+  let t = Math.imul(seed ^ (seed >>> 15), 1 | seed);
+  t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+  return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+};
+
+const shuffled = (list, rand) => {
+  const out = [...list];
+  for (let i = out.length - 1; i > 0; i--) {
+    const j = Math.floor(rand() * (i + 1));
+    [out[i], out[j]] = [out[j], out[i]];
+  }
+  return out;
+};
+
 const Home = () => {
+  // New seed per visit -> a fresh random set of Nearby Outlets each time.
+  const [outletSeed] = useState(() => Math.floor(Math.random() * 2 ** 31));
   // First-time walkthrough, shown once (Profile -> How Offerly works reopens it)
   const [showGuide, setShowGuide] = useState(() => !hasSeenGuide());
   const navigate = useNavigate();
@@ -230,6 +252,14 @@ const Home = () => {
     nearbyOffers.length === 0 &&
     mostPopulatedStores.length === 0 &&
     recommendedOffers.length === 0;
+
+  // The feed sends a pool of nearby stores; show 5 at random, open ones first.
+  const randomOutlets = useMemo(() => {
+    const rand = seededRandom(outletSeed);
+    const open = mostPopulatedStores.filter((s) => isMerchantOpen(s));
+    const closed = mostPopulatedStores.filter((s) => !isMerchantOpen(s));
+    return [...shuffled(open, rand), ...shuffled(closed, rand)].slice(0, OUTLETS_SHOWN);
+  }, [mostPopulatedStores, outletSeed]);
 
   // Banners can shrink after a refetch; never index past the end.
   const activeSlide = currentSlide < featuredBanners.length ? currentSlide : 0;
@@ -502,7 +532,7 @@ const Home = () => {
                <button onClick={() => navigate('/explore')} className="text-xs font-semibold text-primary hover:underline">View All</button>
             </div>
             <div className="space-y-3">
-              {mostPopulatedStores.map((merchant, idx) => (
+              {randomOutlets.map((merchant, idx) => (
                 <motion.div
                   key={merchant._id || merchant.id}
                   {...(animateEntry

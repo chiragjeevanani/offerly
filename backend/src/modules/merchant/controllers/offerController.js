@@ -151,7 +151,9 @@ const validateProductLinks = async (merchant, { productId, variantId, applyToAll
 const FEED_DEFAULTS = {
   trendingLimit: 5,
   nearYouLimit: 4,
-  storesLimit: 3,
+  // A pool, not the final list: the app shows 5 picked at random from it on every
+  // visit (the feed itself is cached for a minute, so shuffling here would freeze).
+  storesLimit: 30,
   recommendedLimit: 6,
   bannersLimit: 5,
 };
