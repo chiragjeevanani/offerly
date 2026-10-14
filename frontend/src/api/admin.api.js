@@ -65,6 +65,13 @@ export const adminAPI = {
 
   // Update merchant status
   // Support email / phone / WhatsApp / hours shown in the customer and merchant apps
+  // Home Banners - ad carousel above "Select Services" in the customer app
+  getHomeBanners: async () => axiosInstance.get('/admin/home-banners'),
+  createHomeBanner: async (data) => axiosInstance.post('/admin/home-banners', data),
+  updateHomeBanner: async (id, data) => axiosInstance.put(`/admin/home-banners/${id}`, data),
+  reorderHomeBanners: async (ids) => axiosInstance.put('/admin/home-banners/reorder', { ids }),
+  deleteHomeBanner: async (id) => axiosInstance.delete(`/admin/home-banners/${id}`),
+
   getSupportContacts: async () => axiosInstance.get('/support'),
   updateSupportContacts: async (data) => axiosInstance.put('/admin/support-contacts', data),
 

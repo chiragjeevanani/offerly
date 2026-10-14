@@ -43,6 +43,15 @@ export const userAPI = {
     return axiosInstance.patch('/users/notifications/read-all');
   },
 
+  // Admin-managed ad posters for the home carousel (empty city = every city)
+  getHomeBanners: async (city) => {
+    return axiosInstance.get('/users/home-banners', { params: { city } });
+  },
+
+  trackHomeBannerClick: async (id) => {
+    return axiosInstance.post(`/users/home-banners/${id}/click`);
+  },
+
   // Referral
   // Admin-set Refer & Earn amounts and credit-spending rules
   getIncentiveRules: async () => {

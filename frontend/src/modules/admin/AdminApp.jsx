@@ -27,6 +27,7 @@ import ShareRoundedIcon from '@mui/icons-material/ShareRounded';
 import AccountBalanceWalletRoundedIcon from '@mui/icons-material/AccountBalanceWalletRounded';
 import PersonRoundedIcon from '@mui/icons-material/PersonRounded';
 import SupportAgentRoundedIcon from '@mui/icons-material/SupportAgentRounded';
+import ViewCarouselRoundedIcon from '@mui/icons-material/ViewCarouselRounded';
 
 // Admin Pages (Lazy Loaded for performance and ad-blocker resilience)
 const AdminDashboard = lazy(() => import('./pages/Dashboard'));
@@ -38,6 +39,7 @@ const SubscriptionManagement = lazy(() => import('./pages/SubscriptionManagement
 const PromotionRequest = lazy(() => import('./pages/PromotionRequest'));
 const Analytics = lazy(() => import('./pages/Analytics'));
 const SupportContacts = lazy(() => import('./pages/SupportContacts'));
+const HomeBanners = lazy(() => import('./pages/HomeBanners'));
 const CategoryManagement = lazy(() => import('./pages/CategoryManagement'));
 const RewardsManagement = lazy(() => import('./pages/RewardsManagement'));
 const IncentivesManagement = lazy(() => import('./pages/IncentivesManagement'));
@@ -73,6 +75,7 @@ const AdminSidebar = ({ isMobileMenuOpen, setIsMobileMenuOpen }) => {
     { name: 'Categories', path: '/admin/categories', icon: CategoryRoundedIcon },
     { name: 'Subscriptions', path: '/admin/plans', icon: PaymentsRoundedIcon },
     { name: 'Cities & Zones', path: '/admin/cities', icon: MapRoundedIcon },
+    { name: 'Home Banners', path: '/admin/home-banners', icon: ViewCarouselRoundedIcon },
     { name: 'Ad Requests', path: '/admin/ads', icon: CampaignRoundedIcon },
     { name: 'Bookings', path: '/admin/ledger', icon: ViewListRoundedIcon },
     { name: 'Analytics', path: '/admin/analytics', icon: BarChartRoundedIcon },
@@ -379,6 +382,7 @@ const AdminLayout = ({ children }) => {
       ['/admin/categories', 'Categories'],
       ['/admin/plans', 'Subscriptions'],
       ['/admin/cities', 'Cities & Zones'],
+      ['/admin/home-banners', 'Home Banners'],
       ['/admin/ads', 'Ad Requests'],
       ['/admin/ledger', 'Bookings'],
       ['/admin/analytics', 'Analytics'],
@@ -491,6 +495,7 @@ const AdminApp = () => {
           <Route path="/distribution-fund" element={<IncentivesManagement section="fund" />} />
           <Route path="/payouts" element={<MerchantPayouts />} />
           <Route path="/plans" element={<SubscriptionManagement />} />
+          <Route path="/home-banners" element={<HomeBanners />} />
           <Route path="/ads" element={<PromotionRequest />} />
           <Route path="/ledger" element={<BookingLedger />} />
           <Route path="/categories" element={<CategoryManagement />} />

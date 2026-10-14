@@ -31,6 +31,13 @@ import {
 import { getMerchantWallet, adjustMerchantWallet } from '../controllers/merchantWalletController.js';
 import { protect, authorize } from '../../../middlewares/auth.js';
 import { updateSupportContacts } from '../controllers/supportSettingsController.js';
+import {
+  getHomeBanners,
+  createHomeBanner,
+  updateHomeBanner,
+  reorderHomeBanners,
+  deleteHomeBanner,
+} from '../controllers/homeBannerController.js';
 
 const router = express.Router();
 
@@ -68,6 +75,13 @@ router.put('/payouts/:id/reject', authorize('admin'), rejectPayoutRequest);
 router.get('/customer-subscription-settings', authorize('admin'), getCustomerSubscriptionSettingsConfig);
 router.put('/customer-subscription-settings', authorize('admin'), updateCustomerSubscriptionSettingsConfig);
 router.put('/support-contacts', authorize('admin'), updateSupportContacts);
+
+// Home Banners (ad carousel above "Select Services" in the customer app)
+router.get('/home-banners', authorize('admin'), getHomeBanners);
+router.post('/home-banners', authorize('admin'), createHomeBanner);
+router.put('/home-banners/reorder', authorize('admin'), reorderHomeBanners);
+router.put('/home-banners/:id', authorize('admin'), updateHomeBanner);
+router.delete('/home-banners/:id', authorize('admin'), deleteHomeBanner);
 
 // Helper public routes
 router.get('/cities', getCities);

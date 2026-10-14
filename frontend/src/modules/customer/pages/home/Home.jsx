@@ -26,6 +26,7 @@ import OfferCard from '../../components/ui/OfferCard';
 import AllStoresClosedView from '../../components/home/AllStoresClosedView';
 import CategoryTile from '../../../../components/CategoryTile';
 import WelcomeGuide, { hasSeenGuide } from '../../components/WelcomeGuide';
+import HomeBannerCarousel from '../../components/home/HomeBannerCarousel';
 
 // Helper to check if a merchant is currently open based on isOpen flag and businessHours
 export const isMerchantOpen = (merchant) => {
@@ -326,6 +327,9 @@ const Home = () => {
             </button>
           </motion.section>
         )}
+
+        {/* 1.5 Admin ad banners (Admin -> Home Banners) */}
+        <HomeBannerCarousel city={resolvedCity} />
 
         {/* 2. Categories Section */}
         <motion.section {...(animateEntry ? { variants: containerVariants, initial: 'hidden', animate: 'visible' } : { initial: false })}>

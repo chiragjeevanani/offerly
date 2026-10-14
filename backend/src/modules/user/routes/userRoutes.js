@@ -28,6 +28,7 @@ import {
 } from "../controllers/subscriptionController.js";
 
 import { getPublicIncentiveRules } from "../../admin/controllers/incentiveController.js";
+import { getPublicHomeBanners, trackHomeBannerClick } from "../../admin/controllers/homeBannerController.js";
 
 const router = express.Router();
 
@@ -42,6 +43,17 @@ const pushTestLimiter = rateLimit({
   message: { message: "Too many test notifications, please wait a moment" },
 });
 
+// Banner taps are an unauthenticated counter bump - cap them per client.
+const bannerClickLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  limit: 30,
+  standardHeaders: "draft-7",
+  legacyHeaders: false,
+  message: { message: "Too many requests" },
+});
+
+router.get("/home-banners", getPublicHomeBanners);
+router.post("/home-banners/:id/click", bannerClickLimiter, trackHomeBannerClick);
 router.get("/cities", getCities);
 router.get("/plans", getPlans);
 router.get("/me", protect, getMyProfile);
