@@ -113,14 +113,21 @@ const qualifyingBonuses = async (customerId, settings, now) => {
 // The one Distribution Fund bonus for this order: the biggest the customer
 // qualifies for, capped by the store's discount wallet and the order value.
 // Returns null when nothing applies.
-export const evaluateCustomerBonus = async ({ customerId, merchantDoc, subtotal, settings, now = new Date() }) => {
+export const evaluateCustomerBonus = async (args) => (await evaluateBonusOptions(args)).best;
+
+// The bonus that applies now (`best`), and the nearest bigger one the customer
+// would unlock by spending more (`next`): { label, minOrderValue, amount, gain }.
+// `gain` is the extra rupees off versus what they get now, at that minimum.
+export const evaluateBonusOptions = async ({ customerId, merchantDoc, subtotal, settings, now = new Date() }) => {
+  const none = { best: null, next: null };
   const config = settings || (await getIncentiveSettings());
-  const walletBalance = Math.max(0, Number(merchantDoc?.discountWallet?.balance || 0));
-  if (!(subtotal > 0) || walletBalance <= 0) return null;
-  if (!BONUS_TYPES.some((t) => config.bonuses[t]?.enabled)) return null;
+  const walletBalance = Math.max(0, Math.round(Number(merchantDoc?.discountWallet?.balance || 0)));
+  if (!(subtotal > 0) || walletBalance <= 0) return none;
+  if (!BONUS_TYPES.some((t) => config.bonuses[t]?.enabled)) return none;
 
   let best = null;
-  for (const q of await qualifyingBonuses(customerId, config, now)) {
+  const qualifying = await qualifyingBonuses(customerId, config, now);
+  for (const q of qualifying) {
     const rule = config.bonuses[q.type];
     const amount = bonusAmountFor(rule, subtotal);
     if (amount > 0 && (!best || amount > best.amount)) {
@@ -137,9 +144,22 @@ export const evaluateCustomerBonus = async ({ customerId, merchantDoc, subtotal,
       };
     }
   }
-  if (!best) return null;
-  best.amount = Math.min(best.amount, Math.round(walletBalance));
-  return best.amount > 0 ? best : null;
+  if (best) best.amount = Math.min(best.amount, walletBalance);
+  const current = best && best.amount > 0 ? best.amount : 0;
+
+  let next = null;
+  for (const q of qualifying) {
+    const rule = config.bonuses[q.type];
+    const target = Math.round(rule?.minOrderValue || 0);
+    if (!rule?.enabled || target <= subtotal) continue;
+    const amount = Math.min(bonusAmountFor(rule, target), walletBalance);
+    const gain = amount - current;
+    if (gain <= 0) continue;
+    if (!next || target < next.minOrderValue || (target === next.minOrderValue && gain > next.gain)) {
+      next = { type: q.type, label: q.label || BONUS_LABELS[q.type], minOrderValue: target, amount, gain };
+    }
+  }
+  return { best: current > 0 ? best : null, next };
 };
 
 // Most credits a customer may spend on an order: none below the admin's

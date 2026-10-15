@@ -2,15 +2,16 @@ import Joi from 'joi';
 import Cart from '../models/Cart.js';
 import Product from '../../merchant/models/Product.js';
 import Merchant from '../../merchant/models/Merchant.js';
-import { getIncentiveSettings, evaluateCustomerBonus } from '../../user/services/incentiveService.js';
+import { getIncentiveSettings, evaluateBonusOptions } from '../../user/services/incentiveService.js';
 import { resolveLine, stockError, variantLabel } from '../../merchant/services/inventoryService.js';
 
 // Preview of the Distribution Fund bonus the server will grant at claim time
-// (same rules as redemptionController), plus the credit-spending rules.
+// (same rules as redemptionController), the next bigger bonus a larger order
+// would unlock, plus the credit-spending rules.
 const calculateOfferlyExtraDiscount = async (cart, customerId) => {
   const settings = await getIncentiveSettings();
   const credits = { minOrderValue: settings.credits.minOrderValue || 0, maxPerOrder: settings.credits.maxPerOrder || 0 };
-  if (!cart || !cart.merchantId || !cart.items || cart.items.length === 0) return { amount: 0, label: '', credits };
+  if (!cart || !cart.merchantId || !cart.items || cart.items.length === 0) return { amount: 0, label: '', next: null, credits };
 
   try {
     const merchantId = cart.merchantId._id || cart.merchantId;
@@ -18,11 +19,11 @@ const calculateOfferlyExtraDiscount = async (cart, customerId) => {
     const subtotal = Math.round(
       cart.items.reduce((sum, item) => sum + ((item.product?.offerPrice || 0) * (item.qty || 1)), 0)
     );
-    const bonus = await evaluateCustomerBonus({ customerId, merchantDoc, subtotal, settings });
-    return { amount: bonus?.amount || 0, label: bonus?.label || '', credits };
+    const { best, next } = await evaluateBonusOptions({ customerId, merchantDoc, subtotal, settings });
+    return { amount: best?.amount || 0, label: best?.label || '', next, credits };
   } catch (e) {
     console.error('Error calculating extra discount:', e);
-    return { amount: 0, label: '', credits };
+    return { amount: 0, label: '', next: null, credits };
   }
 };
 
@@ -64,6 +65,7 @@ const sendCart = async (res, cart, customerId) => {
   const extra = await calculateOfferlyExtraDiscount(cartData, customerId);
   cartData.offerlyExtraDiscount = extra.amount;
   cartData.offerlyBonusLabel = extra.label;
+  cartData.offerlyNextUnlock = extra.next;
   cartData.creditRules = extra.credits;
   return res.status(200).json({ success: true, data: cartData });
 };

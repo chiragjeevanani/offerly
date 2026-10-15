@@ -81,6 +81,12 @@ const CartView = () => {
   const totalDiscount = Math.round(storeDiscount + offerlyExtraDiscount);
   const payableBeforePoints = Math.max(0, Math.round(totalOfferPrice - offerlyExtraDiscount));
 
+  // Next bigger Offerly bonus a larger order would unlock. The server says
+  // where it starts; the gap is measured here so it moves as quantities change.
+  const nextUnlock = cart?.offerlyNextUnlock || null;
+  const unlockRemaining = nextUnlock ? Math.max(0, nextUnlock.minOrderValue - totalOfferPrice) : 0;
+  const unlockProgress = nextUnlock ? Math.min(100, Math.round((totalOfferPrice / nextUnlock.minOrderValue) * 100)) : 0;
+
   // Referral points (1 point = ₹1), opt-in. The choice is remembered for the
   // draft pass screen, where the server actually deducts the points.
   const availablePoints = Math.max(0, Math.floor(user?.credits || 0));
@@ -442,6 +448,38 @@ const CartView = () => {
                 </div>
               </div>
             </motion.div>
+          )}
+
+          {/* Add-more nudge: how far the order is from the next Offerly bonus */}
+          {nextUnlock && unlockRemaining > 0 && (
+            <div className="rounded-3xl bg-white border border-[#5EB929]/30 p-4 shadow-sm">
+              <div className="flex items-center gap-3">
+                <div className="w-9 h-9 rounded-xl bg-[#5EB929]/10 flex items-center justify-center flex-shrink-0">
+                  <SparklesIcon sx={{ fontSize: 18 }} className="text-[#5EB929]" />
+                </div>
+                <p className="text-[12px] font-semibold text-gray-700 leading-snug">
+                  Add items worth <span className="font-black text-gray-900">₹{unlockRemaining}</span> more to{' '}
+                  {offerlyExtraDiscount > 0 ? 'get' : 'unlock'}{' '}
+                  <span className="font-black text-[#4E9F1F]">
+                    ₹{offerlyExtraDiscount > 0 ? nextUnlock.gain : nextUnlock.amount}
+                  </span>{' '}
+                  {offerlyExtraDiscount > 0 ? 'more off' : 'extra discount'}
+                  <span className="text-gray-400 font-medium"> ({nextUnlock.label})</span>
+                </p>
+              </div>
+              <div className="mt-3 h-2 rounded-full bg-gray-100 overflow-hidden" role="progressbar" aria-valuemin={0} aria-valuemax={100} aria-valuenow={unlockProgress}>
+                <motion.div
+                  className="h-full rounded-full bg-gradient-to-r from-[#5EB929] to-[#8cee50]"
+                  initial={false}
+                  animate={{ width: `${unlockProgress}%` }}
+                  transition={{ type: 'spring', stiffness: 120, damping: 20 }}
+                />
+              </div>
+              <div className="mt-1.5 flex justify-between text-[10px] font-bold text-gray-400">
+                <span>₹{totalOfferPrice}</span>
+                <span>₹{nextUnlock.minOrderValue}</span>
+              </div>
+            </div>
           )}
 
           {/* Party Details - Concierge Card */}
