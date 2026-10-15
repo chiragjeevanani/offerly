@@ -8,6 +8,7 @@ import {
   registerDeliveryPartner,
   adminLogin,
 } from '../controllers/authController.js';
+import { isDevOtpNumber } from '../../../utils/sms.js';
 
 const router = express.Router();
 
@@ -15,11 +16,17 @@ const router = express.Router();
 // which otherwise leaves them open to SMS-bombing and brute-force guessing with
 // no cost to the caller. Keyed by IP, so legitimate shared-network users don't
 // get walled off by one bad actor for more than the window.
+// The delivery partner test numbers never send an SMS and use the fixed dev OTP,
+// so limiting them protects nothing - it only locks out whoever is testing.
+const isPartnerTestNumber = (req) =>
+  req.body?.role === 'delivery' && isDevOtpNumber(String(req.body?.phone || ''), 'delivery');
+
 const otpRequestLimiter = rateLimit({
   windowMs: 10 * 60 * 1000,
   limit: 5,
   standardHeaders: 'draft-7',
   legacyHeaders: false,
+  skip: isPartnerTestNumber,
   message: { message: 'Too many OTP requests, please try again later' },
 });
 
@@ -28,6 +35,7 @@ const otpVerifyLimiter = rateLimit({
   limit: 15,
   standardHeaders: 'draft-7',
   legacyHeaders: false,
+  skip: isPartnerTestNumber,
   message: { message: 'Too many attempts, please try again later' },
 });
 
