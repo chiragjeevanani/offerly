@@ -18,6 +18,16 @@ import StockMovement from '../models/StockMovement.js';
 const PRODUCT_IMAGE_REQUIRED_MESSAGE = 'A product image is required for your store type';
 const hasImage = (images) => Array.isArray(images) && images.some((img) => typeof img === 'string' && img.trim());
 
+// Photos per product. The first is the main photo (lists, cart); the product
+// page shows them all. Keep in step with the merchant product form.
+const MAX_PRODUCT_IMAGES = 5;
+const cleanImages = (body) => {
+  if (!('images' in body)) return;
+  const list = Array.isArray(body.images) ? body.images : [];
+  body.images = [...new Set(list.filter((img) => typeof img === 'string').map((img) => img.trim()).filter(Boolean))]
+    .slice(0, MAX_PRODUCT_IMAGES);
+};
+
 // Pulls the inventory fields out of a create/update body. Returns { error } or
 // { options, variants }, normalising body.variantOptions/trackInventory/stock in
 // place. Only touches variants when the client sent variantOptions, so callers
@@ -219,6 +229,7 @@ export const createProduct = async (req, res) => {
     if (inventory.error) {
       return res.status(400).json({ success: false, message: inventory.error });
     }
+    cleanImages(req.body);
 
     // Discount is always derived from the category, never merchant-entered
     const price = Number(req.body.price);
@@ -301,6 +312,7 @@ export const updateProduct = async (req, res) => {
     if (inventory.error) {
       return res.status(400).json({ success: false, message: inventory.error });
     }
+    cleanImages(req.body);
 
     // Discount is always derived from the (possibly new) category, never merchant-entered
     delete req.body.discount;

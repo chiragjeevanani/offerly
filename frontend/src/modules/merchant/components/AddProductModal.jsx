@@ -14,6 +14,9 @@ import InventoryEditor from './InventoryEditor';
 import FoodTypeMark, { FOOD_TYPES } from '../../../components/ui/FoodTypeMark';
 import { rebuildVariants } from '../utils/inventory';
 
+// Keep in step with MAX_PRODUCT_IMAGES in the backend productController
+const MAX_PRODUCT_IMAGES = 5;
+
 const CATEGORY_BEHAVIOURS = {
   'Food': { type: 'product_based', icon: '🍔', showVeg: true },
   'Restaurant': { type: 'product_based', icon: '🍽️', showVeg: true },
@@ -65,10 +68,11 @@ const AddProductModal = ({ isOpen, onClose, merchant, editingProduct, onSave }) 
 
   const isProductBased = formData.categoryType === 'product_based';
   const imageRequired = requiresProductImage(merchant, formData.categoryType);
-  const imageSrc = formData.imagePreview || formData.images?.[0];
 
   const [isSaving, setIsSaving] = useState(false);
-  const [uploadingImage, setUploadingImage] = useState(false);
+  // Photos still uploading: { id, file, preview }
+  const [pendingImages, setPendingImages] = useState([]);
+  const uploadingImage = pendingImages.length > 0;
   const galleryInputRef = useRef(null);
   const cameraInputRef = useRef(null);
   const [categories, setCategories] = useState([]);
@@ -93,8 +97,9 @@ const AddProductModal = ({ isOpen, onClose, merchant, editingProduct, onSave }) 
 
   useEffect(() => {
     if (editingProduct) {
-      setFormData({ 
+      setFormData({
         ...editingProduct,
+        images: [...new Set([...(editingProduct.images || []), editingProduct.image].filter(Boolean))].slice(0, MAX_PRODUCT_IMAGES),
         categoryType: editingProduct.categoryType || (merchant?.storeType === 'service_based' ? 'service_based' : 'product_based')
       });
       const options = editingProduct.variantOptions || [];
@@ -121,6 +126,7 @@ const AddProductModal = ({ isOpen, onClose, merchant, editingProduct, onSave }) 
       });
     }
     setIsSaving(false);
+    setPendingImages([]);
   }, [editingProduct, isOpen, merchant?.storeType, merchant?.category]);
 
   const handleChange = (field, value) => setFormData(prev => ({ ...prev, [field]: value }));
@@ -131,23 +137,56 @@ const AddProductModal = ({ isOpen, onClose, merchant, editingProduct, onSave }) 
     ? Math.round((parseFloat(formData.price) * (100 - discountPercent)) / 100 * 100) / 100
     : null;
 
+  // Several photos per product; the first one is the main photo shown in
+  // lists and the cart, the rest are swiped through on the product page.
+  const images = (formData.images || []).filter(Boolean);
+  const mainImage = images[0] || pendingImages[0]?.preview || null;
+  const imagesFull = images.length + pendingImages.length >= MAX_PRODUCT_IMAGES;
+
   const handleImageUpload = async (e) => {
-    const file = e.target.files?.[0];
+    const picked = Array.from(e.target.files || []);
     // Clear the input so picking the same photo again still fires onChange
     e.target.value = '';
-    if (!file) return;
-    try {
-      setUploadingImage(true);
-      const reader = new FileReader();
-      reader.onloadend = () => setFormData(prev => ({ ...prev, imagePreview: reader.result }));
-      reader.readAsDataURL(file);
-      const { uploadAPI } = await import('../../../api/upload.api');
-      const response = await uploadAPI.uploadImage(file);
-      setFormData(prev => ({ ...prev, images: [response?.url || response] }));
-      toast.success('Ready');
-    } catch (err) { toast.error('Upload Error'); }
-    finally { setUploadingImage(false); }
+    if (!picked.length) return;
+    const room = MAX_PRODUCT_IMAGES - images.length - pendingImages.length;
+    if (room <= 0) return toast.error(`Up to ${MAX_PRODUCT_IMAGES} photos per item`);
+    if (picked.length > room) toast.error(`Only ${room} more photo${room === 1 ? '' : 's'} can be added`);
+    const batch = picked.slice(0, room).map((file) => ({
+      id: `${Date.now()}-${Math.random()}`,
+      file,
+      preview: URL.createObjectURL(file),
+    }));
+    setPendingImages((prev) => [...prev, ...batch]);
+    const { uploadAPI } = await import('../../../api/upload.api');
+    let failed = 0;
+    // One at a time, so photos keep the order they were picked in
+    for (const item of batch) {
+      try {
+        const response = await uploadAPI.uploadImage(item.file);
+        const url = response?.url || response;
+        if (typeof url === 'string' && url) {
+          setFormData((prev) => ({ ...prev, images: [...(prev.images || []).filter(Boolean), url].slice(0, MAX_PRODUCT_IMAGES) }));
+        } else {
+          failed += 1;
+        }
+      } catch {
+        failed += 1;
+      } finally {
+        URL.revokeObjectURL(item.preview);
+        setPendingImages((prev) => prev.filter((p) => p.id !== item.id));
+      }
+    }
+    if (failed) toast.error(failed === 1 ? 'A photo failed to upload' : `${failed} photos failed to upload`);
   };
+
+  const removeImage = (idx) =>
+    setFormData((prev) => ({ ...prev, images: (prev.images || []).filter(Boolean).filter((_, i) => i !== idx) }));
+
+  const makeMainImage = (idx) =>
+    setFormData((prev) => {
+      const list = (prev.images || []).filter(Boolean);
+      return { ...prev, images: [list[idx], ...list.filter((_, i) => i !== idx)] };
+    });
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -272,32 +311,70 @@ const AddProductModal = ({ isOpen, onClose, merchant, editingProduct, onSave }) 
                     <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1 block">
                       Image {imageRequired ? '*' : <span className="normal-case tracking-normal">(optional)</span>}
                     </label>
-                    <input ref={galleryInputRef} type="file" accept="image/*" onChange={handleImageUpload} className="hidden" />
+                    <input ref={galleryInputRef} type="file" accept="image/*" multiple onChange={handleImageUpload} className="hidden" />
                     {/* capture opens the phone camera directly; desktops fall back to a file picker */}
                     <input ref={cameraInputRef} type="file" accept="image/*" capture="environment" onChange={handleImageUpload} className="hidden" />
                     <button
                        type="button"
-                       onClick={() => galleryInputRef.current?.click()}
+                       onClick={() => !imagesFull && galleryInputRef.current?.click()}
                        className="group relative block w-full h-[116px] rounded-xl bg-white border-2 border-dashed border-gray-100 hover:border-[#5EB929]/30 transition-all shadow-sm overflow-hidden"
                     >
-                       {imageSrc ? (
-                          <img src={imageSrc} className="w-full h-full object-cover" alt="" />
+                       {mainImage ? (
+                          <img src={mainImage} className="w-full h-full object-cover" alt="" />
                        ) : (
                           <span className="flex h-full items-center justify-center">
                              <AddPhotoAlternateRoundedIcon className="text-gray-200" />
                           </span>
                        )}
-                       {uploadingImage && (
+                       {mainImage && (
+                          <span className="absolute top-1.5 left-1.5 px-1.5 py-0.5 rounded-md bg-black/60 text-white text-[9px] font-bold uppercase tracking-wide">Main photo</span>
+                       )}
+                       {!mainImage && uploadingImage && (
                           <span className="absolute inset-0 flex items-center justify-center bg-white/70">
                              <span className="w-6 h-6 border-2 border-[#5EB929] border-t-transparent rounded-full animate-spin" />
                           </span>
                        )}
                     </button>
+                    {(images.length > 0 || pendingImages.length > 0) && (
+                       <div className="flex flex-wrap gap-1.5 mt-2">
+                          {images.map((src, i) => (
+                             <div key={src} className={`relative w-12 h-12 rounded-lg overflow-hidden border-2 ${i === 0 ? 'border-[#5EB929]' : 'border-gray-100'}`}>
+                                <button
+                                   type="button"
+                                   onClick={() => makeMainImage(i)}
+                                   aria-label={i === 0 ? 'Main photo' : 'Make main photo'}
+                                   className="block w-full h-full"
+                                >
+                                   <img src={src} alt="" className="w-full h-full object-cover" />
+                                </button>
+                                <button
+                                   type="button"
+                                   onClick={() => removeImage(i)}
+                                   aria-label="Remove photo"
+                                   className="absolute top-0 right-0 w-4 h-4 rounded-bl-md bg-black/60 text-white flex items-center justify-center"
+                                >
+                                   <CloseRoundedIcon sx={{ fontSize: 11 }} />
+                                </button>
+                             </div>
+                          ))}
+                          {pendingImages.map((p) => (
+                             <div key={p.id} className="relative w-12 h-12 rounded-lg overflow-hidden border-2 border-gray-100">
+                                <img src={p.preview} alt="" className="w-full h-full object-cover opacity-50" />
+                                <span className="absolute inset-0 flex items-center justify-center">
+                                   <span className="w-4 h-4 border-2 border-[#5EB929] border-t-transparent rounded-full animate-spin" />
+                                </span>
+                             </div>
+                          ))}
+                       </div>
+                    )}
+                    <p className="text-[9px] font-semibold text-gray-400 mt-1.5">
+                       {images.length}/{MAX_PRODUCT_IMAGES} photos{images.length > 1 ? ' · tap one to make it the main photo' : ''}
+                    </p>
                     <div className="grid grid-cols-2 gap-2 mt-2">
                        <button
                           type="button"
                           onClick={() => galleryInputRef.current?.click()}
-                          disabled={uploadingImage}
+                          disabled={imagesFull}
                           className="flex items-center justify-center gap-1.5 py-2 rounded-xl bg-white border border-gray-200 text-[10px] font-bold uppercase tracking-wide text-gray-700 active:scale-95 transition-all disabled:opacity-50"
                        >
                           <PhotoLibraryRoundedIcon sx={{ fontSize: 15 }} className="text-[#5EB929]" />
@@ -306,7 +383,7 @@ const AddProductModal = ({ isOpen, onClose, merchant, editingProduct, onSave }) 
                        <button
                           type="button"
                           onClick={() => cameraInputRef.current?.click()}
-                          disabled={uploadingImage}
+                          disabled={imagesFull}
                           className="flex items-center justify-center gap-1.5 py-2 rounded-xl bg-[#5EB929]/10 border border-[#5EB929]/30 text-[10px] font-bold uppercase tracking-wide text-[#3f8c17] active:scale-95 transition-all disabled:opacity-50"
                        >
                           <PhotoCameraRoundedIcon sx={{ fontSize: 15 }} />
