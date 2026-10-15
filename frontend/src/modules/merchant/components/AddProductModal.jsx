@@ -1,10 +1,12 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 import Inventory2RoundedIcon from '@mui/icons-material/Inventory2Rounded';
 import SpaRoundedIcon from '@mui/icons-material/SpaRounded';
 import AddPhotoAlternateRoundedIcon from '@mui/icons-material/AddPhotoAlternateRounded';
+import PhotoLibraryRoundedIcon from '@mui/icons-material/PhotoLibraryRounded';
+import PhotoCameraRoundedIcon from '@mui/icons-material/PhotoCameraRounded';
 import toast from 'react-hot-toast';
 import { productCategoryAPI } from '../../../api/productCategory.api';
 import { isServiceCategory, isFoodCategory, requiresProductImage } from '../../../utils/storeTypeHelper';
@@ -67,6 +69,8 @@ const AddProductModal = ({ isOpen, onClose, merchant, editingProduct, onSave }) 
 
   const [isSaving, setIsSaving] = useState(false);
   const [uploadingImage, setUploadingImage] = useState(false);
+  const galleryInputRef = useRef(null);
+  const cameraInputRef = useRef(null);
   const [categories, setCategories] = useState([]);
 
   // Inventory: stock tracking + size/colour variants. Kept apart from formData
@@ -129,6 +133,8 @@ const AddProductModal = ({ isOpen, onClose, merchant, editingProduct, onSave }) 
 
   const handleImageUpload = async (e) => {
     const file = e.target.files?.[0];
+    // Clear the input so picking the same photo again still fires onChange
+    e.target.value = '';
     if (!file) return;
     try {
       setUploadingImage(true);
@@ -266,15 +272,46 @@ const AddProductModal = ({ isOpen, onClose, merchant, editingProduct, onSave }) 
                     <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1 block">
                       Image {imageRequired ? '*' : <span className="normal-case tracking-normal">(optional)</span>}
                     </label>
-                    <div className="relative group h-[116px]">
-                       <input type="file" accept="image/*" onChange={handleImageUpload} className="absolute inset-0 opacity-0 z-10 cursor-pointer" />
-                       <div className="w-full h-full rounded-xl bg-white border-2 border-dashed border-gray-100 flex flex-col items-center justify-center group-hover:border-[#5EB929]/30 transition-all shadow-sm overflow-hidden">
-                          {imageSrc ? (
-                             <img src={imageSrc} className="w-full h-full object-cover" alt="" />
-                          ) : (
+                    <input ref={galleryInputRef} type="file" accept="image/*" onChange={handleImageUpload} className="hidden" />
+                    {/* capture opens the phone camera directly; desktops fall back to a file picker */}
+                    <input ref={cameraInputRef} type="file" accept="image/*" capture="environment" onChange={handleImageUpload} className="hidden" />
+                    <button
+                       type="button"
+                       onClick={() => galleryInputRef.current?.click()}
+                       className="group relative block w-full h-[116px] rounded-xl bg-white border-2 border-dashed border-gray-100 hover:border-[#5EB929]/30 transition-all shadow-sm overflow-hidden"
+                    >
+                       {imageSrc ? (
+                          <img src={imageSrc} className="w-full h-full object-cover" alt="" />
+                       ) : (
+                          <span className="flex h-full items-center justify-center">
                              <AddPhotoAlternateRoundedIcon className="text-gray-200" />
-                          )}
-                       </div>
+                          </span>
+                       )}
+                       {uploadingImage && (
+                          <span className="absolute inset-0 flex items-center justify-center bg-white/70">
+                             <span className="w-6 h-6 border-2 border-[#5EB929] border-t-transparent rounded-full animate-spin" />
+                          </span>
+                       )}
+                    </button>
+                    <div className="grid grid-cols-2 gap-2 mt-2">
+                       <button
+                          type="button"
+                          onClick={() => galleryInputRef.current?.click()}
+                          disabled={uploadingImage}
+                          className="flex items-center justify-center gap-1.5 py-2 rounded-xl bg-white border border-gray-200 text-[10px] font-bold uppercase tracking-wide text-gray-700 active:scale-95 transition-all disabled:opacity-50"
+                       >
+                          <PhotoLibraryRoundedIcon sx={{ fontSize: 15 }} className="text-[#5EB929]" />
+                          Take from gallery
+                       </button>
+                       <button
+                          type="button"
+                          onClick={() => cameraInputRef.current?.click()}
+                          disabled={uploadingImage}
+                          className="flex items-center justify-center gap-1.5 py-2 rounded-xl bg-[#5EB929]/10 border border-[#5EB929]/30 text-[10px] font-bold uppercase tracking-wide text-[#3f8c17] active:scale-95 transition-all disabled:opacity-50"
+                       >
+                          <PhotoCameraRoundedIcon sx={{ fontSize: 15 }} />
+                          Capture image
+                       </button>
                     </div>
                  </div>
               </div>
