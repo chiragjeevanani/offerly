@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, Navigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { toast } from 'react-hot-toast';
 import ShoppingBagRoundedIcon from '@mui/icons-material/ShoppingBagRounded';
@@ -151,6 +151,11 @@ const ProductDetailPage = () => {
         <div className="w-10 h-10 border-4 border-primary border-t-transparent rounded-full animate-spin" />
       </div>
     );
+  }
+
+  // A direct link to an item whose page the merchant switched off
+  if (merchant && product && product.showDetailPage === false) {
+    return <Navigate to={`/store/${storeId}`} replace />;
   }
 
   if (!merchant || !product) {

@@ -58,7 +58,7 @@ const AddProductModal = ({ isOpen, onClose, merchant, editingProduct, onSave }) 
     categoryType: getInitialType(),
     categoryId: '', foodType: null, stock: '', sku: '',
     duration: '30 mins', inclusions: [''], maxBookings: '',
-    validityDays: '30', images: [], imagePreview: null,
+    validityDays: '30', images: [], imagePreview: null, showDetailPage: true,
   });
 
   const isProductBased = formData.categoryType === 'product_based';
@@ -113,7 +113,7 @@ const AddProductModal = ({ isOpen, onClose, merchant, editingProduct, onSave }) 
         name: '', description: '', price: '', categoryId: '',
         categoryType: initialType,
         foodType: null, stock: '', sku: '', duration: '30 mins', inclusions: [''],
-        maxBookings: '', validityDays: '30', images: [], imagePreview: null,
+        maxBookings: '', validityDays: '30', images: [], imagePreview: null, showDetailPage: true,
       });
     }
     setIsSaving(false);
@@ -330,6 +330,27 @@ const AddProductModal = ({ isOpen, onClose, merchant, editingProduct, onSave }) 
                       )}
                       <div className="sm:col-span-2">
                         <InventoryEditor value={inventory} onChange={setInventory} basePrice={formData.price} />
+                      </div>
+                      <div className="sm:col-span-2 bg-white rounded-xl border border-gray-100 shadow-sm p-3">
+                        <label className="flex items-center justify-between gap-3 cursor-pointer select-none">
+                          <span>
+                            <span className="block text-[12px] font-bold text-gray-800">Show full product page</span>
+                            <span className="block text-[10px] font-medium text-gray-400">
+                              {formData.showDetailPage !== false
+                                ? 'Customers can tap this item to open its page'
+                                : 'Hidden: customers can only add it to their cart'}
+                            </span>
+                          </span>
+                          <button
+                            type="button"
+                            role="switch"
+                            aria-checked={formData.showDetailPage !== false}
+                            onClick={() => handleChange('showDetailPage', formData.showDetailPage === false)}
+                            className={`relative w-10 h-6 rounded-full transition-colors shrink-0 ${formData.showDetailPage !== false ? 'bg-[#5EB929]' : 'bg-gray-200'}`}
+                          >
+                            <span className={`absolute top-1 left-1 w-4 h-4 bg-white rounded-full shadow transition-transform ${formData.showDetailPage !== false ? 'translate-x-4' : ''}`} />
+                          </button>
+                        </label>
                       </div>
                     </>
                  ) : (

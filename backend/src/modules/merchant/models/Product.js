@@ -74,6 +74,12 @@ const productSchema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
+    // Whether tapping the item in the store opens its full product page. Off =
+    // the item stays a plain row the customer can only add to the cart.
+    showDetailPage: {
+      type: Boolean,
+      default: true,
+    },
     // e.g. [{ name: 'Size', values: ['S','M','L'] }, { name: 'Colour', values: ['Red','Blue'] }]
     // Each combination is a ProductVariant with its own stock (and optional price).
     variantOptions: {

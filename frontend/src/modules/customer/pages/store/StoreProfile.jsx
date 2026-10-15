@@ -416,6 +416,8 @@ const StoreProfilePage = () => {
                         const qty = getQty(productId);
                         const soldOut = product.inStock === false;
                         const atStockLimit = product.trackInventory && !product.hasVariants && qty >= (product.totalAvailable ?? product.totalStock ?? 0);
+                        // The merchant can switch the full page off per item
+                        const opensPage = !isServiceBased && product.showDetailPage !== false;
                         return (
                           <motion.div
                             key={productId}
@@ -426,8 +428,8 @@ const StoreProfilePage = () => {
                           >
                             {/* Product stores: tapping the item opens its full page */}
                             <div
-                              className={`flex-1 min-w-0 flex gap-4 ${isServiceBased ? '' : 'cursor-pointer'}`}
-                              {...(isServiceBased ? {} : {
+                              className={`flex-1 min-w-0 flex gap-4 ${opensPage ? 'cursor-pointer' : ''}`}
+                              {...(!opensPage ? {} : {
                                 role: 'link',
                                 tabIndex: 0,
                                 onClick: () => navigate(`/store/${id}/product/${productId}`),
@@ -453,7 +455,7 @@ const StoreProfilePage = () => {
                               {product.trackInventory && !soldOut && (product.totalAvailable ?? product.totalStock) <= 5 && (
                                 <p className="text-[11px] font-bold text-amber-600 mt-1">Only {product.totalAvailable ?? product.totalStock} left</p>
                               )}
-                              {!isServiceBased && (
+                              {opensPage && (
                                 <p className="text-[11px] font-semibold text-primary mt-1">View details</p>
                               )}
                             </div>

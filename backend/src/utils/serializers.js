@@ -223,6 +223,7 @@ const serializeProductBase = (product) => ({
       ? null
       : product?.foodType || (product?.isVeg === true ? 'veg' : product?.isVeg === false ? 'non_veg' : null),
   duration: product?.duration ?? null,
+  showDetailPage: product?.showDetailPage !== false,
   images: product?.images || [],
   image: product?.image || (product?.images && product?.images[0]) || '',
   status: product?.status || 'available',
