@@ -20,6 +20,21 @@ import { creditSettlementForRedemption } from '../../payment/services/settlement
 import { getCustomerSubscriptionStatus } from '../../../utils/customerSubscription.js';
 import DiscountWalletTransaction from '../../payment/models/DiscountWalletTransaction.js';
 import { resolveLine, stockError } from '../../merchant/services/inventoryService.js';
+import { calculateDistance } from '../../../utils/distance.js';
+import { createRazorpayOrder } from '../../../utils/razorpay.js';
+import {
+  getDeliverySettings,
+  deliveryFeeFor,
+  giftFor,
+  amountDue,
+  generateDeliveryOtp,
+  announceNewOrderToStore,
+  cancelDeliveryOrder,
+  withoutSecrets,
+  CANCELLABLE_STAGES,
+  DELIVERY_ORDER_TTL_MS,
+  PAYMENT_WINDOW_MS,
+} from '../../delivery/services/deliveryService.js';
 import {
   trackedLines,
   reserveLines,
@@ -95,6 +110,26 @@ export const createRedemption = async (req, res) => {
     })).required(),
     totals: Joi.object().unknown(true),
     useReferralPoints: Joi.boolean(),
+    fulfillment: Joi.string().valid('pickup', 'delivery'),
+    delivery: Joi.when('fulfillment', {
+      is: 'delivery',
+      then: Joi.object({
+        paymentMode: Joi.string().valid('cod', 'online').required(),
+        address: Joi.object({
+          name: Joi.string().trim().min(2).max(60).required(),
+          phone: Joi.string().trim().pattern(/^[6-9]\d{9}$/).required()
+            .messages({ 'string.pattern.base': 'Enter a valid 10-digit mobile number' }),
+          line1: Joi.string().trim().min(3).max(150).required(),
+          line2: Joi.string().trim().max(150).allow(''),
+          landmark: Joi.string().trim().max(100).allow(''),
+          pincode: Joi.string().trim().pattern(/^\d{6}$/).allow('')
+            .messages({ 'string.pattern.base': 'Enter a valid 6-digit pincode' }),
+          lat: Joi.number().min(-90).max(90).allow(null),
+          lng: Joi.number().min(-180).max(180).allow(null),
+        }).required(),
+      }).required(),
+      otherwise: Joi.forbidden(),
+    }),
   });
 
   const { error } = schema.validate(req.body);
@@ -104,6 +139,7 @@ export const createRedemption = async (req, res) => {
 
   try {
     const { offerId, merchantId } = req.body;
+    const isDelivery = req.body.fulfillment === 'delivery';
 
     const { enabled, isSubscribed } = await getCustomerSubscriptionStatus(req.user.id);
     if (enabled && !isSubscribed) {
@@ -122,12 +158,44 @@ export const createRedemption = async (req, res) => {
     }
 
     // The store must be live: approved, inside its membership, and open.
-    const merchantDoc = await Merchant.findById(merchantId).select('status isOpen discountWallet');
+    const merchantDoc = await Merchant.findById(merchantId).select('status isOpen discountWallet city coordinates');
     if (!merchantDoc || merchantDoc.status !== 'approved' || !(await hasActiveMerchantSubscription(merchantDoc._id))) {
       return res.status(400).json({ success: false, error: 'This store is not accepting bookings right now', code: 'STORE_UNAVAILABLE' });
     }
     if (merchantDoc.isOpen === false) {
       return res.status(400).json({ success: false, error: 'This store is closed for now', code: 'STORE_CLOSED' });
+    }
+
+    // Delivery: switched on by the admin, a payment mode they allow, and
+    // (when a radius is set) a drop pin close enough to the store.
+    const deliverySettings = await getDeliverySettings();
+    let distanceKm = null;
+    if (isDelivery) {
+      const { paymentMode, address } = req.body.delivery;
+      if (!deliverySettings.enabled) {
+        return res.status(400).json({ success: false, error: 'Home delivery is not available right now. Please choose pickup.', code: 'DELIVERY_DISABLED' });
+      }
+      if ((paymentMode === 'cod' && !deliverySettings.allowCod) || (paymentMode === 'online' && !deliverySettings.allowOnline)) {
+        return res.status(400).json({ success: false, error: 'This payment method is not available for delivery', code: 'PAYMENT_MODE_UNAVAILABLE' });
+      }
+      const storeLat = merchantDoc.coordinates?.lat;
+      const storeLng = merchantDoc.coordinates?.lng;
+      const hasPin = typeof address.lat === 'number' && typeof address.lng === 'number';
+      if (hasPin && storeLat && storeLng) {
+        distanceKm = Math.round(calculateDistance(storeLat, storeLng, address.lat, address.lng) * 10) / 10;
+      }
+      if (deliverySettings.maxDistanceKm > 0) {
+        if (distanceKm === null) {
+          return res.status(400).json({ success: false, error: 'Please pin your delivery location on the map', code: 'LOCATION_REQUIRED' });
+        }
+        if (distanceKm > deliverySettings.maxDistanceKm) {
+          return res.status(400).json({
+            success: false,
+            error: `This store delivers within ${deliverySettings.maxDistanceKm} km. Your address is ${distanceKm} km away.`,
+            code: 'OUT_OF_RANGE',
+          });
+        }
+      }
     }
 
     // When the claim is tied to an offer, that offer must belong to this store
@@ -221,9 +289,45 @@ export const createRedemption = async (req, res) => {
       creditsMaxPerOrder: incentiveSettings.credits.maxPerOrder || 0,
     };
 
-    // Generate QR Token
+    // Delivery charge and the admin's free gift, both on the items total.
+    const gift = giftFor(deliverySettings, subtotal, isDelivery ? 'delivery' : 'pickup');
+    let delivery;
+    if (isDelivery) {
+      const { address } = req.body.delivery;
+      const fee = deliveryFeeFor(deliverySettings, subtotal);
+      // Nothing to charge online (points + free delivery cover it all): no gateway trip.
+      const paymentMode = finalTotals.final + fee > 0 ? req.body.delivery.paymentMode : 'cod';
+      const awaitingPayment = paymentMode === 'online';
+      delivery = {
+        status: awaitingPayment ? 'awaiting_payment' : 'placed',
+        address: {
+          name: address.name,
+          phone: address.phone,
+          line1: address.line1,
+          line2: address.line2 || '',
+          landmark: address.landmark || '',
+          pincode: address.pincode || '',
+          lat: typeof address.lat === 'number' ? address.lat : undefined,
+          lng: typeof address.lng === 'number' ? address.lng : undefined,
+        },
+        city: merchantDoc.city || '',
+        distanceKm: distanceKm ?? undefined,
+        fee,
+        paymentMode,
+        paymentStatus: 'unpaid',
+        otp: generateDeliveryOtp(),
+        partnerPayout: Math.max(0, Math.round(deliverySettings.partnerPayoutPerDelivery || 0)),
+        placedAt: awaitingPayment ? undefined : new Date(),
+      };
+    }
+
+    // Generate QR Token. A delivery order lives for a day (or the payment
+    // window, until it is paid); a pickup pass for 2 hours.
     const qrToken = `qr_${merchantId}_${req.user.id}_${Date.now()}`;
-    const qrExpiry = new Date(Date.now() + 2 * 60 * 60 * 1000); // 2 hours
+    const ttl = !isDelivery
+      ? 2 * 60 * 60 * 1000
+      : delivery.status === 'awaiting_payment' ? PAYMENT_WINDOW_MS : DELIVERY_ORDER_TTL_MS;
+    const qrExpiry = new Date(Date.now() + ttl);
 
     let redemption;
     try {
@@ -239,12 +343,56 @@ export const createRedemption = async (req, res) => {
         qrToken,
         qrExpiry,
         internalId,
-        status: 'pending'
+        status: 'pending',
+        fulfillment: isDelivery ? 'delivery' : 'pickup',
+        ...(gift ? { freeGift: gift } : {}),
+        ...(delivery ? { delivery } : {}),
       });
     } catch (createErr) {
       await refundReferralPoints(req.user.id, referralDiscount);
       await releaseLines(stockLines, { redemptionId, passId: internalId });
       throw createErr;
+    }
+
+    if (isDelivery) {
+      if (delivery.status === 'placed') {
+        await announceNewOrderToStore(redemption);
+        return res.status(201).json({ success: true, data: redemption });
+      }
+
+      // Online: open a Razorpay order for items + delivery. The store hears
+      // about the order once it is paid (verify-payment or the webhook).
+      const amount = amountDue(redemption);
+      try {
+        const order = await createRazorpayOrder(amount, 'INR', `dlv_${internalId}_${Date.now()}`.slice(0, 40), {
+          purpose: 'delivery_order',
+          redemptionId: redemption._id.toString(),
+          internalId,
+          customerId: String(req.user.id),
+        });
+        redemption.delivery.razorpayOrderId = order.id;
+        await redemption.save();
+        return res.status(201).json({
+          success: true,
+          data: redemption,
+          payment: {
+            key: process.env.RAZORPAY_KEY_ID,
+            orderId: order.id,
+            amount: order.amount,
+            currency: order.currency,
+            customerDetails: { name: req.user.name, email: req.user.email, contact: req.user.phone },
+          },
+        });
+      } catch (payErr) {
+        console.error('Delivery payment order error:', payErr);
+        redemption.status = 'cancelled';
+        redemption.delivery.status = 'cancelled';
+        redemption.delivery.cancelledBy = 'system';
+        redemption.delivery.cancelReason = 'Payment could not be started';
+        await redemption.save();
+        await releaseHolds(redemption);
+        return res.status(502).json({ success: false, error: 'Online payment is unavailable right now. Please try Cash on Delivery.', code: 'PAYMENT_UNAVAILABLE' });
+      }
     }
 
     // Notify the merchant: persisted record + live socket event + FCM push.
@@ -318,14 +466,17 @@ export const getCustomerRedemptions = async (req, res) => {
 export const getRedemptionById = async (req, res) => {
   try {
     const redemption = await RedemptionModel.findById(req.params.id)
-        .populate('merchantId', 'storeName logo address city phone locality avgRating totalReviews verified')
+        .select('+delivery.otp')
+        .populate('merchantId', 'storeName logo address city phone locality avgRating totalReviews verified coordinates')
         .populate('offerId', 'title discountType discountValue validTo image category');
-        
+
     if (!redemption) {
       return res.status(404).json({ success: false, error: 'Redemption not found' });
     }
 
-    res.status(200).json({ success: true, data: redemption });
+    // The delivery handover code is for the customer's eyes only.
+    const isOwner = String(redemption.customerId) === String(req.user._id || req.user.id);
+    res.status(200).json({ success: true, data: isOwner ? redemption : withoutSecrets(redemption) });
   } catch (err) {
     res.status(500).json({ success: false, error: 'Server Error' });
   }
@@ -370,11 +521,35 @@ export const verifyQR = async (req, res) => {
        return res.status(401).json({ success: false, error: 'Not authorized for this merchant' });
     }
 
+    // Delivery orders are completed by the delivery partner at the door.
+    if (redemption.fulfillment === 'delivery') {
+      return res.status(400).json({ success: false, error: 'This is a delivery order. It is completed by the delivery partner.' });
+    }
+
     // Mark complete
     redemption.status = 'completed';
     redemption.scannedAt = Date.now();
     await redemption.save();
 
+    await runCompletionEffects(redemption);
+
+    res.status(200).json({ success: true, message: 'Redemption successful', data: redemption });
+  } catch (err) {
+    res.status(500).json({ success: false, error: 'Verification failed' });
+  }
+};
+
+// Everything that follows a pass being completed, whether scanned at the store
+// or handed over by a delivery partner: counters, savings, wallet debit, stock,
+// settlement credit, feed cache, customer notification, referral and milestone.
+// Call once, right after saving status 'completed'.
+export const runCompletionEffects = async (
+  redemption,
+  {
+    title = 'Booking Fulfilled!',
+    body = `Your booking #${redemption.internalId} has been verified and fulfilled.`,
+  } = {}
+) => {
     const updateTasks = [
       Merchant.findByIdAndUpdate(redemption.merchantId, { $inc: { totalRedemptions: 1 } }),
     ];
@@ -456,8 +631,8 @@ export const verifyQR = async (req, res) => {
     try {
       await notifyUser(redemption.customerId.toString(), {
         type: 'booking_fulfilled',
-        title: 'Booking Fulfilled!',
-        body: `Your booking #${redemption.internalId} has been verified and fulfilled.`,
+        title,
+        body,
         data: {
           redemptionId: redemption._id.toString(),
           internalId: redemption.internalId,
@@ -483,11 +658,6 @@ export const verifyQR = async (req, res) => {
     } catch (milestoneErr) {
       console.error('[Milestone] Trigger error:', milestoneErr);
     }
-
-    res.status(200).json({ success: true, message: 'Redemption successful', data: redemption });
-  } catch (err) {
-    res.status(500).json({ success: false, error: 'Verification failed' });
-  }
 };
 
 // @desc    Get redemptions for merchant
@@ -496,7 +666,8 @@ export const verifyQR = async (req, res) => {
 export const getMerchantRedemptions = async (req, res) => {
   try {
     // req.user IS the merchant document for merchant role
-    const redemptions = await RedemptionModel.find({ merchantId: req.user._id })
+    // Online-pay delivery orders reach the store only once paid.
+    const redemptions = await RedemptionModel.find({ merchantId: req.user._id, 'delivery.status': { $ne: 'awaiting_payment' } })
         .populate('offerId', 'title')
         .sort('-createdAt');
         
@@ -521,6 +692,10 @@ export const lookupByInternalId = async (req, res) => {
 
     if (!redemption) {
       return res.status(404).json({ success: false, error: `Pass ID "${internalId}" not found or belongs to another store.` });
+    }
+
+    if (redemption.fulfillment === 'delivery') {
+      return res.status(400).json({ success: false, error: `"${internalId}" is a delivery order. Manage it from Bookings; the delivery partner completes it.` });
     }
 
     if (redemption.status !== 'pending') {
@@ -652,6 +827,11 @@ export const updateRedemptionItems = async (req, res) => {
       return res.status(400).json({ success: false, error: `Cannot edit a ${redemption.status} booking` });
     }
 
+    // A delivery order is priced and (maybe) paid as placed; it can only be cancelled.
+    if (redemption.fulfillment === 'delivery') {
+      return res.status(400).json({ success: false, error: "Items on a delivery order can't be changed. Cancel it and place a new order instead." });
+    }
+
     if (new Date(redemption.qrExpiry) < new Date()) {
       redemption.status = 'expired';
       await redemption.save();
@@ -695,6 +875,11 @@ export const updateMyRedemptionItems = async (req, res) => {
 
     if (redemption.status !== 'pending') {
       return res.status(400).json({ success: false, error: `Cannot edit a ${redemption.status} booking` });
+    }
+
+    // A delivery order is priced and (maybe) paid as placed; it can only be cancelled.
+    if (redemption.fulfillment === 'delivery') {
+      return res.status(400).json({ success: false, error: "Items on a delivery order can't be changed. Cancel it and place a new order instead." });
     }
 
     if (new Date(redemption.qrExpiry) < new Date()) {
@@ -766,6 +951,19 @@ export const cancelRedemption = async (req, res) => {
       return res.status(400).json({ success: false, error: `Cannot cancel a ${redemption.status} booking` });
     }
 
+    // Delivery: only before the partner has it; refunds an online payment.
+    if (redemption.fulfillment === 'delivery') {
+      if (!CANCELLABLE_STAGES.includes(redemption.delivery?.status)) {
+        return res.status(400).json({ success: false, error: 'The delivery partner already has this order' });
+      }
+      const reason = typeof req.body?.reason === 'string' ? req.body.reason.trim().slice(0, 200) : '';
+      const cancelled = await cancelDeliveryOrder(redemption, { by: 'store', reason });
+      if (!cancelled) {
+        return res.status(409).json({ success: false, error: 'This order changed just now. Please refresh.' });
+      }
+      return res.status(200).json({ success: true, data: withoutSecrets(cancelled) });
+    }
+
     redemption.status = 'cancelled';
     await redemption.save();
     await releaseHolds(redemption);
@@ -813,6 +1011,10 @@ export const previewQR = async (req, res) => {
     // Verify merchant ownership
     if (redemption.merchantId.toString() !== req.user._id.toString()) {
        return res.status(401).json({ success: false, error: 'Not authorized for this merchant' });
+    }
+
+    if (redemption.fulfillment === 'delivery') {
+      return res.status(400).json({ success: false, error: 'This is a delivery order. It is completed by the delivery partner.' });
     }
 
     res.status(200).json({ success: true, data: redemption });

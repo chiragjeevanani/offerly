@@ -40,6 +40,8 @@ const Referral = lazy(pages.referral);
 const Notifications = lazy(pages.notifications);
 const SearchResults = lazy(pages.search);
 const CartView = lazy(pages.cart);
+const DeliveryCheckout = lazy(pages.checkout);
+const OrderTracking = lazy(pages.orderTracking);
 const SubscribePage = lazy(pages.subscribe);
 const RewardsHub = lazy(pages.rewards);
 
@@ -52,6 +54,7 @@ const Support = lazy(() => import('./modules/customer/pages/static/Support'));
 
 // Business & Platform modules
 const MerchantApp = lazy(() => import('./modules/merchant/MerchantApp'));
+const DeliveryPartnerApp = lazy(() => import('./modules/delivery/DeliveryPartnerApp'));
 const AdminApp = lazy(() => import('./modules/admin/AdminApp'));
 
 const ProtectedRoute = ({ children }) => {
@@ -101,14 +104,14 @@ const markSplashSeen = () => {
 const AppRoutes = () => {
   const { isLoggedIn, authStatus } = useApp();
   const location = useLocation();
-  const isBusinessRoute = location.pathname.startsWith('/merchant') || location.pathname.startsWith('/admin');
+  const isBusinessRoute = ['/merchant', '/admin', '/delivery'].some((p) => location.pathname.startsWith(p));
 
   const [showSplash, setShowSplash] = useState(() => {
     if (typeof window === 'undefined') return false;
     const params = new URLSearchParams(window.location.search);
     if (params.get('splash') === '1' || params.get('splash') === 'true') return true;
     const path = window.location.pathname;
-    if (path.startsWith('/merchant') || path.startsWith('/admin')) return false;
+    if (path.startsWith('/merchant') || path.startsWith('/admin') || path.startsWith('/delivery')) return false;
     return !hasSeenSplash();
   });
 
@@ -143,6 +146,9 @@ const AppRoutes = () => {
         {/* Admin Panel - Independent Layout */}
         <Route path="/admin/*" element={<AdminApp />} />
 
+        {/* Delivery Partner App - Independent Layout */}
+        <Route path="/delivery/*" element={<DeliveryPartnerApp />} />
+
         {/* Customer Auth Routes - WITHOUT AppLayout (no navbar/sidebar) */}
         <Route path="/" element={isLoggedIn ? <Navigate to="/home" replace /> : <Navigate to="/login" replace />} />
         <Route path="/login" element={<PublicOnlyRoute><CustomerLogin /></PublicOnlyRoute>} />
@@ -158,6 +164,8 @@ const AppRoutes = () => {
                 <Route path="explore" element={<ProtectedRoute><Explore /></ProtectedRoute>} />
                 <Route path="map" element={<ProtectedRoute><MapView /></ProtectedRoute>} />
                 <Route path="cart" element={<ProtectedRoute><CartView /></ProtectedRoute>} />
+                <Route path="checkout" element={<ProtectedRoute><DeliveryCheckout /></ProtectedRoute>} />
+                <Route path="order/:id" element={<ProtectedRoute><OrderTracking /></ProtectedRoute>} />
                 <Route path="subscribe" element={<ProtectedRoute><SubscribePage /></ProtectedRoute>} />
                 <Route path="offer/:id" element={<ProtectedRoute><OfferDetail /></ProtectedRoute>} />
                 <Route path="saved" element={<ProtectedRoute><SavedOffers /></ProtectedRoute>} />

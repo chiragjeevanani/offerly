@@ -14,6 +14,9 @@ import QrCode2RoundedIcon from '@mui/icons-material/QrCode2Rounded';
 import AddRoundedIcon from '@mui/icons-material/AddRounded';
 import RemoveRoundedIcon from '@mui/icons-material/RemoveRounded';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
+import LocalShippingRoundedIcon from '@mui/icons-material/LocalShippingRounded';
+import CardGiftcardRoundedIcon from '@mui/icons-material/CardGiftcardRounded';
+import ArrowForwardRoundedIcon from '@mui/icons-material/ArrowForwardRounded';
 
 import toast from 'react-hot-toast';
 import { cartAPI } from '../../../../api/cart.api';
@@ -23,6 +26,8 @@ import { useCustomerSubscription } from '../../../../hooks/useCustomerSubscripti
 import PageTransition from '../../components/ui/PageTransition';
 import ProductThumb from '../../components/ui/ProductThumb';
 import { getUseReferralPoints, setUseReferralPoints } from '../../../../utils/referralPoints';
+import { useDeliveryConfig, priceDelivery } from '../../../../hooks/useDeliveryConfig';
+import { getFulfillment, setFulfillment } from '../../../../utils/fulfillment';
 
 const CountUp = ({ to }) => {
   const [count, setCount] = useState(0);
@@ -103,7 +108,17 @@ const CartView = () => {
     ? 0
     : Math.min(availablePoints, payableBeforePoints, creditRules.maxPerOrder > 0 ? creditRules.maxPerOrder : Infinity);
   const referralDiscount = useReferralPoints ? usablePoints : 0;
-  const finalPayable = payableBeforePoints - referralDiscount;
+  // Pickup or home delivery. Delivery is offered only while the admin has it on.
+  const { config: deliveryConfig } = useDeliveryConfig();
+  const [method, setMethodState] = useState(getFulfillment);
+  const fulfillment = deliveryConfig.enabled ? method : 'pickup';
+  const chooseMethod = (next) => {
+    setFulfillment(next);
+    setMethodState(next);
+  };
+  const deliveryPricing = priceDelivery(deliveryConfig, totalOfferPrice, fulfillment);
+  const deliveryFee = deliveryPricing.fee;
+  const finalPayable = payableBeforePoints - referralDiscount + deliveryFee;
   const discountPercent = totalBasePrice > 0 ? Math.round((totalDiscount / totalBasePrice) * 100) : 0;
 
   // showCelebrationModal is TRUE immediately on frame 0 if discount > 0!
@@ -239,11 +254,12 @@ const CartView = () => {
   const { enabled: subscriptionEnabled, isSubscribed } = useCustomerSubscription();
 
   const handleProceed = () => {
+     const next = fulfillment === 'delivery' ? '/checkout' : '/redeem/draft';
      if (subscriptionEnabled && !isSubscribed) {
-       navigate('/subscribe', { state: { from: '/redeem/draft' } });
+       navigate('/subscribe', { state: { from: next } });
        return;
      }
-     navigate('/redeem/draft');
+     navigate(next);
   };
 
   if (loading && (!cart || !merchant)) {
@@ -499,6 +515,76 @@ const CartView = () => {
              </div>
           </div>
 
+          {/* Pickup or delivery */}
+          {deliveryConfig.enabled && (
+            <div className="bg-white rounded-[2rem] p-5 shadow-sm border border-gray-50">
+              <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest mb-3">How do you want it?</p>
+              <div className="grid grid-cols-2 gap-3" role="radiogroup" aria-label="Pickup or delivery">
+                {[
+                  { key: 'pickup', label: 'Store Pickup', hint: 'Show QR at the store', icon: StorefrontRoundedIcon },
+                  {
+                    key: 'delivery',
+                    label: 'Home Delivery',
+                    hint: deliveryPricing.freeDelivery || !deliveryConfig.deliveryFee
+                      ? 'Free delivery'
+                      : `₹${deliveryConfig.deliveryFee} delivery fee`,
+                    icon: LocalShippingRoundedIcon,
+                  },
+                ].map((opt) => {
+                  const active = fulfillment === opt.key;
+                  return (
+                    <button
+                      key={opt.key}
+                      type="button"
+                      role="radio"
+                      aria-checked={active}
+                      onClick={() => chooseMethod(opt.key)}
+                      className={`relative text-left rounded-2xl border-2 p-3.5 transition-all ${
+                        active ? 'border-[#5EB929] bg-[#5EB929]/5' : 'border-gray-100 bg-white hover:border-gray-200'
+                      }`}
+                    >
+                      <div className={`w-9 h-9 rounded-xl flex items-center justify-center mb-2 ${active ? 'bg-[#5EB929] text-white' : 'bg-gray-50 text-gray-400'}`}>
+                        <opt.icon sx={{ fontSize: 20 }} />
+                      </div>
+                      <p className="text-[12px] font-bold text-gray-900 leading-tight">{opt.label}</p>
+                      <p className={`text-[10px] font-semibold mt-0.5 ${active ? 'text-[#4E9F1F]' : 'text-gray-400'}`}>{opt.hint}</p>
+                      {active && <span className="absolute top-3 right-3 w-2 h-2 rounded-full bg-[#5EB929]" />}
+                    </button>
+                  );
+                })}
+              </div>
+              {fulfillment === 'delivery' && deliveryPricing.toFreeDelivery > 0 && (
+                <p className="mt-3 text-[11px] font-semibold text-gray-600">
+                  Add items worth <span className="font-black text-gray-900">₹{deliveryPricing.toFreeDelivery}</span> more for{' '}
+                  <span className="font-black text-[#4E9F1F]">free delivery</span>.
+                </p>
+              )}
+            </div>
+          )}
+
+          {/* Free gift: unlocked, or how far away */}
+          {deliveryPricing.giftOn && (
+            <div className={`rounded-3xl p-4 border flex items-center gap-3 ${deliveryPricing.giftUnlocked ? 'bg-gradient-to-r from-amber-50 to-orange-50 border-amber-200' : 'bg-white border-amber-100'}`}>
+              <div className="w-10 h-10 rounded-xl bg-amber-400/15 text-amber-600 flex items-center justify-center flex-shrink-0">
+                <CardGiftcardRoundedIcon sx={{ fontSize: 22 }} />
+              </div>
+              <div className="min-w-0">
+                {deliveryPricing.giftUnlocked ? (
+                  <>
+                    <p className="text-[12px] font-black text-amber-800">You get a free {deliveryPricing.gift.title}!</p>
+                    {deliveryPricing.gift.description && <p className="text-[11px] font-medium text-amber-700/80 leading-snug">{deliveryPricing.gift.description}</p>}
+                  </>
+                ) : (
+                  <p className="text-[12px] font-semibold text-gray-700 leading-snug">
+                    Add items worth <span className="font-black text-gray-900">₹{deliveryPricing.toGift}</span> more to get a{' '}
+                    <span className="font-black text-amber-700">free {deliveryPricing.gift.title}</span>
+                    {deliveryPricing.gift.appliesTo !== 'all' && fulfillment !== 'delivery' ? ' with delivery' : ''}.
+                  </p>
+                )}
+              </div>
+            </div>
+          )}
+
           {/* Service Items - High-Density List */}
           <div className="bg-white rounded-[2rem] p-6 shadow-sm border border-gray-50">
              <div className="flex items-center justify-between mb-6">
@@ -611,6 +697,22 @@ const CartView = () => {
                    <span className="text-[13px] font-bold text-[#5EB929]">- ₹{referralDiscount}</span>
                  </div>
                )}
+               {fulfillment === 'delivery' && (
+                 <div className="flex justify-between items-center">
+                   <span className="text-[12px] font-bold text-gray-500 uppercase tracking-tight">Delivery Fee</span>
+                   {deliveryFee > 0 ? (
+                     <span className="text-[13px] font-bold text-gray-900">+ ₹{deliveryFee}</span>
+                   ) : (
+                     <span className="text-[13px] font-bold text-[#5EB929] uppercase">Free</span>
+                   )}
+                 </div>
+               )}
+               {deliveryPricing.giftUnlocked && (
+                 <div className="flex justify-between items-center">
+                   <span className="text-[12px] font-bold text-gray-500 uppercase tracking-tight truncate pr-3">Free {deliveryPricing.gift.title}</span>
+                   <span className="text-[13px] font-bold text-amber-600 uppercase">₹0</span>
+                 </div>
+               )}
              </div>
 
              {availablePoints > 0 && payableBeforePoints > 0 && belowCreditMinimum && (
@@ -660,7 +762,9 @@ const CartView = () => {
              <div className="mt-6 p-4 bg-[#FFF8F1] rounded-2xl border border-[#FFE8D1] flex gap-3">
                <InfoOutlinedIcon className="text-[#B56D24]" sx={{ fontSize: 16 }} />
                <p className="text-[10px] text-[#8C541B] font-bold uppercase tracking-wide leading-relaxed">
-                 Pay at store directly. This is a digital reservation, not an online payment.
+                 {fulfillment === 'delivery'
+                   ? 'Delivered to your door. Pay online or with cash / UPI on delivery - choose at checkout.'
+                   : 'Pay at store directly. This is a digital reservation, not an online payment.'}
                </p>
              </div>
           </div>
@@ -674,8 +778,18 @@ const CartView = () => {
                 onClick={handleProceed}
                 className="w-full bg-gray-900 text-white rounded-xl py-4 font-bold text-[11px] uppercase tracking-[0.25em] flex items-center justify-center gap-3 shadow-2xl shadow-black/20 active:scale-95 transition-all"
               >
-                <QrCode2RoundedIcon sx={{ fontSize: 18 }} />
-                Generate Pickup QR
+                {fulfillment === 'delivery' ? (
+                  <>
+                    <LocalShippingRoundedIcon sx={{ fontSize: 18 }} />
+                    Proceed to Checkout
+                    <ArrowForwardRoundedIcon sx={{ fontSize: 16 }} />
+                  </>
+                ) : (
+                  <>
+                    <QrCode2RoundedIcon sx={{ fontSize: 18 }} />
+                    Generate Pickup QR
+                  </>
+                )}
               </motion.button>
            </div>
         </div>

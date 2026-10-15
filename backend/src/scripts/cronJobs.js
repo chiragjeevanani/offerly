@@ -6,6 +6,7 @@ import { invalidateFeedCache } from '../utils/feedCache.js';
 import { releaseUnrefundedReferralPoints } from '../modules/user/services/referralService.js';
 import { releaseUnreleasedStockHolds } from '../modules/merchant/services/stockService.js';
 import { expireRewardCredits, expireUnscratchedCards } from '../modules/rewards/services/rewardCreditService.js';
+import { sweepLapsedDeliveryOrders } from '../modules/delivery/services/deliveryService.js';
 
 /**
  * Keeps each merchant's open/closed toggle in step with their business hours.
@@ -46,8 +47,9 @@ export const initCronJobs = () => {
     try {
       const now = new Date();
       // Find and update all pending redemptions where qrExpiry has passed
+      // A delivery order already with the partner is never expired from under them.
       const result = await Redemption.updateMany(
-        { status: 'pending', qrExpiry: { $lt: now } },
+        { status: 'pending', qrExpiry: { $lt: now }, 'delivery.status': { $ne: 'picked_up' } },
         { $set: { status: 'expired' } }
       );
 
@@ -64,6 +66,9 @@ export const initCronJobs = () => {
       if (refunded > 0) {
         console.log(`[Cron] Returned referral points for ${refunded} expired/cancelled pass(es).`);
       }
+
+      const deliveryRefunds = await sweepLapsedDeliveryOrders();
+      if (deliveryRefunds > 0) console.log(`[Cron] Refunded ${deliveryRefunds} online payment(s) on lapsed delivery orders.`);
 
       // Milestone rewards: unscratched cards and unspent credits past their expiry
       const expiredCards = await expireUnscratchedCards(now);

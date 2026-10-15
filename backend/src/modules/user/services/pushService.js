@@ -1,6 +1,7 @@
 import { getMessaging } from "../../../config/firebase.js";
 import Merchant from "../../merchant/models/Merchant.js";
 import User from "../models/User.js";
+import DeliveryPartner from "../../delivery/models/DeliveryPartner.js";
 
 // Shared push layer for every persona that can own device tokens. It lives in
 // the user module because that module already hosts the cross-persona auth
@@ -42,7 +43,7 @@ const arrayPath = (platform) => `fcmTokens.${normalizePlatform(platform)}`;
 // from every collection before registering keeps one device mapped to exactly
 // one signed-in account -- otherwise a merchant would keep receiving pushes
 // for the customer account that previously used that browser.
-const OWNER_MODELS = [User, Merchant];
+const OWNER_MODELS = [User, Merchant, DeliveryPartner];
 
 const tokenFilter = (token) => ({
   $or: [{ "fcmTokens.web.token": token }, { "fcmTokens.app.token": token }],
@@ -207,3 +208,4 @@ export const sendPush = async (
 // Persona-bound conveniences, so call sites don't have to import the models.
 export const sendPushToUser = (userId, payload) => sendPush(User, userId, payload);
 export const sendPushToMerchant = (merchantId, payload) => sendPush(Merchant, merchantId, payload);
+export const sendPushToPartner = (partnerId, payload) => sendPush(DeliveryPartner, partnerId, payload);

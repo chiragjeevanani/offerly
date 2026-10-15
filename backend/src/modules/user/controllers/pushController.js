@@ -25,7 +25,7 @@ const platformError = () => ({ message: `platform must be one of: ${PUSH_PLATFOR
  * it to its own model. `req.user` is already the right document either way:
  * the auth middleware resolves it from the JWT role.
  */
-export const createPushHandlers = (Model) => ({
+export const createPushHandlers = (Model, { testLink } = {}) => ({
   register: async (req, res) => {
     const { token, platform } = req.body || {};
 
@@ -113,7 +113,7 @@ export const createPushHandlers = (Model) => ({
       title: "Offerly test notification",
       body: "Push notifications are working on this device 🎉",
       data: { type: "test" },
-      link: Model === Merchant ? "/merchant/notifications" : "/notifications",
+      link: testLink || (Model === Merchant ? "/merchant/notifications" : "/notifications"),
       platforms,
     });
 

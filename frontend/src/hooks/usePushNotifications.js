@@ -12,6 +12,7 @@ import {
 const ENDPOINTS = {
   customer: '/users/me/push-tokens',
   merchant: '/merchants/me/push-tokens',
+  delivery: '/delivery/partner/me/push-tokens',
 };
 
 /**
@@ -23,7 +24,7 @@ const ENDPOINTS = {
  * reads `enabled`, not `permission`.
  *
  * @param {object} [options]
- * @param {'customer'|'merchant'} [options.persona]
+ * @param {'customer'|'merchant'|'delivery'} [options.persona]
  * @param {boolean} [options.isLoggedIn] Gate the initial lookup; each persona
  *   tracks auth in its own context, so the caller passes it in rather than
  *   this hook picking a context and breaking in the other app.

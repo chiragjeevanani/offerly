@@ -4,6 +4,7 @@ import User from '../models/User.js';
 import OtpSession from '../models/OtpSession.js';
 import Merchant from '../../merchant/models/Merchant.js';
 import Admin from '../../admin/models/Admin.js';
+import DeliveryPartner from '../../delivery/models/DeliveryPartner.js';
 import AdminNotification from '../../admin/models/AdminNotification.js';
 import ReferralHistory from '../models/ReferralHistory.js';
 import { emitAdminNotification } from '../../../config/socket.js';
@@ -37,13 +38,16 @@ const buildPhoneQuery = (phone) => {
   };
 };
 
+// Each role is its own collection.
+const modelForRole = (role) => (role === 'merchant' ? Merchant : role === 'delivery' ? DeliveryPartner : User);
+
 const findUserByPhone = async (Model, phone) => {
   return Model.findOne(buildPhoneQuery(phone));
 };
 
 const baseSchema = Joi.object({
   phone: Joi.string().required(),
-  role: Joi.string().valid('customer', 'merchant').required(),
+  role: Joi.string().valid('customer', 'merchant', 'delivery').required(),
   purpose: Joi.string().valid('login', 'register').required(),
 });
 
@@ -60,7 +64,7 @@ export const sendOtp = async (req, res) => {
   console.log(`[SendOTP] Attempting to send OTP: phone=${phone}, role=${role}, purpose=${purpose}`);
 
   try {
-    const Model = role === 'merchant' ? Merchant : User;
+    const Model = modelForRole(role);
     const existingUser = await findUserByPhone(Model, phone);
 
     console.log(`[SendOTP] User search result: ${existingUser ? 'Found' : 'Not Found'}`);
@@ -167,7 +171,7 @@ export const verifyOtp = async (req, res) => {
     await session.save();
 
     if (purpose === 'login') {
-      const Model = role === 'merchant' ? Merchant : User;
+      const Model = modelForRole(role);
       const user = await findUserByPhone(Model, phone);
       if (!user) {
         console.log(`[VerifyOTP] Login failed: User not found despite verified OTP (should not happen normally)`);
@@ -337,6 +341,85 @@ export const registerMerchantUser = async (req, res) => {
     console.error('Merchant registration error:', err);
     console.error('Error stack:', err.stack);
     res.status(500).json({ success: false, error: 'Merchant user registration failed' });
+  }
+};
+
+const deliveryRegisterSchema = Joi.object({
+  verificationToken: Joi.string().required(),
+  phone: Joi.string().required(),
+  name: Joi.string().trim().min(2).max(60).required(),
+  email: Joi.string().email().allow('', null),
+  city: Joi.string().trim().required(),
+  profilePhoto: Joi.string().allow('', null),
+  vehicleType: Joi.string().valid('bike', 'scooter', 'bicycle', 'other').required(),
+  vehicleNumber: Joi.string().trim().max(15).allow('', null),
+  licenceNumber: Joi.string().trim().max(25).allow('', null),
+  licenceImage: Joi.string().allow('', null),
+  // Documents are usually uploaded right after sign-up (uploads need the
+  // token this returns) via PUT /delivery/partner/me/documents.
+  idProofImage: Joi.string().allow('', null),
+});
+
+// @desc    Delivery partner sign-up (after OTP). Starts 'pending' until an admin approves.
+// @route   POST /api/auth/register-delivery-partner
+export const registerDeliveryPartner = async (req, res) => {
+  const { error } = deliveryRegisterSchema.validate(req.body);
+  if (error) {
+    return res.status(400).json({ success: false, error: error.details[0].message });
+  }
+
+  try {
+    const decoded = jwt.verify(req.body.verificationToken, process.env.JWT_SECRET);
+    if (decoded.kind !== 'otp_verified' || decoded.role !== 'delivery' || decoded.purpose !== 'register') {
+      return res.status(401).json({ success: false, error: 'Invalid verification token' });
+    }
+
+    const phone = normalizePhone(req.body.phone);
+    if (phone !== decoded.phone) {
+      return res.status(400).json({ success: false, error: 'Phone mismatch' });
+    }
+
+    if (await findUserByPhone(DeliveryPartner, phone)) {
+      return res.status(400).json({ success: false, error: 'Phone number already registered' });
+    }
+
+    // A motorised vehicle needs its number and a driving licence.
+    const motorised = req.body.vehicleType !== 'bicycle';
+    if (motorised && (!req.body.vehicleNumber || !req.body.licenceNumber)) {
+      return res.status(400).json({ success: false, error: 'Vehicle number and driving licence number are required' });
+    }
+
+    const partner = await DeliveryPartner.create({
+      name: req.body.name,
+      email: req.body.email || undefined,
+      phone,
+      city: req.body.city,
+      profilePhoto: req.body.profilePhoto || '',
+      vehicleType: req.body.vehicleType,
+      vehicleNumber: req.body.vehicleNumber || '',
+      documents: {
+        licenceNumber: req.body.licenceNumber || '',
+        licenceImage: req.body.licenceImage || '',
+        idProofImage: req.body.idProofImage || '',
+      },
+      status: 'pending',
+    });
+
+    const notification = await AdminNotification.create({
+      title: 'New Delivery Partner',
+      body: `${partner.name} (${partner.city}) signed up as a delivery partner and is waiting for approval.`,
+      type: 'delivery_partner_signup',
+      data: { partnerId: partner._id },
+    });
+    emitAdminNotification(notification);
+
+    await OtpSession.deleteOne({ phone, role: 'delivery', purpose: 'register' });
+
+    const token = signAuthToken(partner._id, 'delivery');
+    res.status(201).json({ success: true, token, user: serializeUser(partner) });
+  } catch (err) {
+    console.error('Delivery partner registration error:', err);
+    res.status(500).json({ success: false, error: 'Registration failed' });
   }
 };
 

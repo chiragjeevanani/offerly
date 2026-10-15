@@ -48,7 +48,7 @@ export const bookingAPI = {
   },
 
   // Cancel a pending booking (merchant rejects the whole cart)
-  cancel: async (id) => {
-    return axiosInstance.post(`${API_ENDPOINTS.CREATE_REDEMPTION}/${id}/cancel`);
+  cancel: async (id, reason = '') => {
+    return axiosInstance.post(`${API_ENDPOINTS.CREATE_REDEMPTION}/${id}/cancel`, { reason });
   },
 };

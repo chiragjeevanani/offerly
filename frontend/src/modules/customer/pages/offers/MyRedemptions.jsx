@@ -16,6 +16,7 @@ const statusConfig = {
   pending: { icon: AccessTimeRoundedIcon, color: 'text-amber-600', bg: 'bg-amber-50', label: 'Pending' },
   expired: { icon: CancelRoundedIcon, color: 'text-red-500', bg: 'bg-red-50', label: 'Expired' },
   invalid: { icon: CancelRoundedIcon, color: 'text-gray-500', bg: 'bg-gray-50', label: 'Invalid' },
+  cancelled: { icon: CancelRoundedIcon, color: 'text-gray-500', bg: 'bg-gray-100', label: 'Cancelled' },
 };
 
 const MyRedemptions = () => {
@@ -146,7 +147,7 @@ const MyRedemptions = () => {
 
                       <div className="flex-1 min-w-0">
                         <h4 className="text-[13px] font-bold text-gray-900 truncate tracking-tight leading-tight uppercase">
-                          {offer?.title || 'Offer'}
+                          {redemption.fulfillment === 'delivery' ? `Delivery #${redemption.internalId}` : offer?.title || 'Offer'}
                         </h4>
                         <div className="flex items-center gap-1.5 mt-0.5">
                            <span className="text-[9px] font-bold text-[#5EB929] uppercase tracking-widest">{merchant?.storeName}</span>
@@ -173,7 +174,14 @@ const MyRedemptions = () => {
                             Add Review
                           </button>
                         )}
-                        {displayStatus === 'pending' && (
+                        {redemption.fulfillment === 'delivery' ? (
+                          <button
+                            onClick={() => navigate(`/order/${redemption._id || redemption.id}`)}
+                            className="flex items-center gap-1 text-[9px] font-bold text-white uppercase tracking-widest bg-gray-900 px-3 py-2 rounded-xl active:scale-95 transition-all"
+                          >
+                            {displayStatus === 'pending' ? 'Track' : 'Details'} <ChevronRightRoundedIcon sx={{ fontSize: 10 }} />
+                          </button>
+                        ) : displayStatus === 'pending' && (
                           <button
                             onClick={() => navigate(`/redeem/${redemption._id || redemption.id}`)}
                             className="flex items-center gap-1 text-[9px] font-bold text-white uppercase tracking-widest bg-[#5EB929] px-3 py-2 rounded-xl shadow-lg shadow-[#5EB929]/20 active:scale-95 transition-all"

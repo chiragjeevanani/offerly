@@ -108,6 +108,11 @@ const QrScreen = () => {
           const response = await bookingAPI.getById(id);
           if (response && response.success) {
             const b = response.data;
+            // Delivery orders have their own tracking screen, not a QR pass.
+            if (b.fulfillment === 'delivery') {
+              navigate(`/order/${b._id}`, { replace: true });
+              return;
+            }
             setBooking(b);
             setMerchant(b.merchantId); // API populates merchantId
             setIsDraft(false);
@@ -453,6 +458,12 @@ const QrScreen = () => {
                           </div>
                         );
                       })}
+                    </div>
+                  )}
+
+                  {booking.freeGift?.title && (
+                    <div className="mb-3 px-2.5 py-1.5 rounded-lg bg-amber-50 border border-amber-200 text-[10px] font-bold text-amber-800">
+                      🎁 Free {booking.freeGift.title} - collect it with your order
                     </div>
                   )}
 

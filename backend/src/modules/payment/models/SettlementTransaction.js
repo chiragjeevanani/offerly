@@ -15,6 +15,7 @@ const settlementTransactionSchema = new mongoose.Schema(
       enum: [
         'points_discount', // customer paid part of a bill with points/credits
         'bonus_discount', // Distribution Fund bonus on a bill
+        'delivery_order', // items bill of a delivered order (Offerly/its partner collected it)
         'payout_requested', // balance moved into an open payout request
         'payout_paid', // Offerly paid the request
         'payout_rejected', // request declined, money back in the balance

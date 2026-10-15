@@ -14,7 +14,7 @@ const adminNotificationSchema = new mongoose.Schema(
     },
     type: {
       type: String,
-      enum: ['merchant_signup', 'kyc_update', 'ad_request', 'subscription', 'support', 'general'],
+      enum: ['merchant_signup', 'delivery_partner_signup', 'kyc_update', 'ad_request', 'subscription', 'support', 'delivery', 'general'],
       default: 'general',
     },
     data: {

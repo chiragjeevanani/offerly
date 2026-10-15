@@ -7,6 +7,7 @@ import MerchantApplicationDraft from "../models/MerchantApplicationDraft.js";
 import MerchantSubscription from "../models/MerchantSubscription.js";
 import Payment from "../models/Payment.js";
 import { claimAndActivateOrder } from "../services/subscriptionActivation.js";
+import { markDeliveryOrderPaid } from "../../delivery/services/deliveryService.js";
 
 // Plain `!==` on signatures leaks timing information an attacker can use to
 // guess the correct value byte-by-byte. Compare in constant time instead.
@@ -338,8 +339,11 @@ export const razorpayWebhook = async (req, res) => {
           await activateDraft(payment.draftId, payment);
         }
       } else if (isPaid) {
-        // Renewals, ad plans and customer subscriptions are tracked as SubscriptionOrder.
-        await claimAndActivateOrder({ orderId }, razorpayPaymentId);
+        // A prepaid delivery order (the customer may have closed the app before
+        // /verify-payment); otherwise renewals, ad plans and customer
+        // subscriptions, tracked as SubscriptionOrder.
+        const deliveryOrder = await markDeliveryOrderPaid(orderId, razorpayPaymentId);
+        if (!deliveryOrder) await claimAndActivateOrder({ orderId }, razorpayPaymentId);
       }
     } catch (err) {
       // A non-2xx makes Razorpay redeliver the event, which is what we want when

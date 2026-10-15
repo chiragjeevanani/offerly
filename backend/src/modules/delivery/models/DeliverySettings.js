@@ -1,0 +1,38 @@
+import mongoose from 'mongoose';
+
+// Singleton document (there is only ever one). Everything an admin controls
+// about home delivery of product orders. With `enabled` off the whole module
+// disappears: customers only see pickup, and new delivery orders are refused.
+// Orders already placed still run to the end.
+const deliverySettingsSchema = new mongoose.Schema(
+  {
+    enabled: { type: Boolean, default: false },
+    // Flat charge per delivery order, waived once the items total reaches
+    // freeDeliveryMinOrder (0 = never free).
+    deliveryFee: { type: Number, default: 30, min: 0 },
+    freeDeliveryMinOrder: { type: Number, default: 0, min: 0 },
+    // Which ways a delivery order can be paid. At least one stays on.
+    allowCod: { type: Boolean, default: true },
+    allowOnline: { type: Boolean, default: true },
+    // Stores further than this from the customer's pin can't deliver (0 = no limit).
+    maxDistanceKm: { type: Number, default: 0, min: 0 },
+    // What a delivery partner earns per completed delivery, paid out by admin.
+    partnerPayoutPerDelivery: { type: Number, default: 0, min: 0 },
+    // Orders one partner can carry at once.
+    maxActiveOrdersPerPartner: { type: Number, default: 3, min: 1, max: 20 },
+    // Pool shows only area/pincode until a partner accepts; off = full address + phone up front.
+    hideDropUntilAccepted: { type: Boolean, default: true },
+    // A free item for orders at or above minOrderValue, described by the admin.
+    freeGift: {
+      enabled: { type: Boolean, default: false },
+      minOrderValue: { type: Number, default: 0, min: 0 },
+      title: { type: String, trim: true, default: '' },
+      description: { type: String, trim: true, default: '' },
+      // 'delivery' = only delivery orders get it, 'all' = pickup orders too.
+      appliesTo: { type: String, enum: ['delivery', 'all'], default: 'delivery' },
+    },
+  },
+  { timestamps: true }
+);
+
+export default mongoose.models.DeliverySettings || mongoose.model('DeliverySettings', deliverySettingsSchema);

@@ -21,6 +21,7 @@ import paymentRoutes from "./modules/payment/routes/paymentRoutes.js";
 import authRoutes from "./modules/user/routes/authRoutes.js";
 import userRoutes from "./modules/user/routes/userRoutes.js";
 import rewardRoutes from "./modules/rewards/routes/rewardRoutes.js";
+import deliveryRoutes from "./modules/delivery/routes/deliveryRoutes.js";
 import categoryRoutes from "./routes/categoryRoutes.js";
 import uploadRoutes from "./routes/uploadRoutes.js";
 import { UPLOAD_DIR } from "./utils/fileStorage.js";
@@ -116,6 +117,7 @@ app.use("/support", supportRoutes);
 app.use("/plans", planRoutes);
 app.use("/payments", paymentRoutes);
 app.use("/rewards", rewardRoutes);
+app.use("/delivery", deliveryRoutes);
 app.use("/upload", uploadRoutes);
 
 app.use((req, res) => {

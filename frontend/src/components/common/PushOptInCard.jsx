@@ -11,10 +11,11 @@ import { usePushNotifications } from '../../hooks/usePushNotifications';
  * blacklist a site once a user picks "Block", and an unprompted dialog on page
  * load is the surest way to earn that.
  *
- * @param {'customer'|'merchant'} persona
+ * @param {'customer'|'merchant'|'delivery'} persona
  * @param {boolean} isLoggedIn
+ * @param {boolean} hideWhenOn Render nothing once push is on (for nudges, not settings).
  */
-const PushOptInCard = ({ persona = 'customer', isLoggedIn = true, className = '' }) => {
+const PushOptInCard = ({ persona = 'customer', isLoggedIn = true, className = '', hideWhenOn = false }) => {
   const { supported, permission, enabled, busy, enable, disable, sendTest } = usePushNotifications({
     persona,
     isLoggedIn,
@@ -29,7 +30,9 @@ const PushOptInCard = ({ persona = 'customer', isLoggedIn = true, className = ''
   const blurb =
     persona === 'merchant'
       ? 'Get alerted the moment a customer books or your store status changes.'
-      : 'Get notified the moment a booking is verified or a reward unlocks.';
+      : persona === 'delivery'
+        ? 'Get a ping for new orders nearby and your approval, even when the app is closed.'
+        : 'Get notified the moment a booking is verified or a reward unlocks.';
 
   if (permission === 'denied') {
     return (
@@ -46,6 +49,7 @@ const PushOptInCard = ({ persona = 'customer', isLoggedIn = true, className = ''
   }
 
   if (enabled) {
+    if (hideWhenOn) return null;
     return (
       <div className={`flex items-center gap-3 p-3.5 rounded-2xl bg-white border border-gray-100 shadow-sm ${className}`}>
         <div className="w-9 h-9 rounded-xl bg-[#5EB929]/5 flex items-center justify-center flex-shrink-0">

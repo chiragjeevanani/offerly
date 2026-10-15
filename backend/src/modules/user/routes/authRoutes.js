@@ -5,6 +5,7 @@ import {
   verifyOtp,
   registerCustomer,
   registerMerchantUser,
+  registerDeliveryPartner,
   adminLogin,
 } from '../controllers/authController.js';
 
@@ -42,6 +43,7 @@ router.post('/send-otp', otpRequestLimiter, sendOtp);
 router.post('/verify-otp', otpVerifyLimiter, verifyOtp);
 router.post('/register-customer', registerCustomer);
 router.post('/register-merchant-user', registerMerchantUser);
+router.post('/register-delivery-partner', registerDeliveryPartner);
 router.post('/admin-login', adminLoginLimiter, adminLogin);
 
 export default router;

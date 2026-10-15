@@ -33,6 +33,7 @@ const merchantNotificationSchema = new mongoose.Schema(
         'store_status',
         'merchant_application',
         'stock_alert',
+        'delivery_update',
         'general',
       ],
       default: 'general',

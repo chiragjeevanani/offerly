@@ -181,6 +181,68 @@ const redemptionSchema = new mongoose.Schema(
       },
     },
     internalId: String,
+    // 'pickup' = the customer shows the QR at the store (the original flow).
+    // 'delivery' = a delivery partner brings it; see `delivery` below.
+    fulfillment: {
+      type: String,
+      enum: ['pickup', 'delivery'],
+      default: 'pickup',
+    },
+    // Free item the order qualified for (admin-set gift), frozen at claim time.
+    freeGift: {
+      title: String,
+      description: String,
+    },
+    // Delivery orders only (no defaults, so pickup passes carry nothing).
+    // `totals.final` stays the items bill (store revenue); the customer pays
+    // totals.final + delivery.fee.
+    delivery: {
+      status: {
+        type: String,
+        enum: ['awaiting_payment', 'placed', 'preparing', 'ready', 'picked_up', 'delivered', 'cancelled'],
+      },
+      address: {
+        name: String,
+        phone: String,
+        line1: String,
+        line2: String,
+        landmark: String,
+        pincode: String,
+        lat: Number,
+        lng: Number,
+      },
+      // Store's city, so partners only see orders in their own city.
+      city: String,
+      distanceKm: Number,
+      fee: Number,
+      paymentMode: { type: String, enum: ['cod', 'online'] },
+      paymentStatus: {
+        type: String,
+        enum: ['unpaid', 'paid', 'refund_pending', 'refunded', 'refund_failed'],
+      },
+      razorpayOrderId: String,
+      razorpayPaymentId: String,
+      refundId: String,
+      // Told to the partner by the customer at the door; never sent to the
+      // store or the partner.
+      otp: { type: String, select: false },
+      partnerId: { type: mongoose.Schema.Types.ObjectId, ref: 'DeliveryPartner' },
+      partnerName: String,
+      partnerPhone: String,
+      partnerPayout: Number,
+      cashCollected: Number,
+      // Set once the store's settlement wallet got the items bill.
+      storeCredited: Boolean,
+      cancelReason: String,
+      cancelledBy: String,
+      placedAt: Date,
+      acceptedAt: Date,
+      readyAt: Date,
+      assignedAt: Date,
+      pickedUpAt: Date,
+      deliveredAt: Date,
+      cancelledAt: Date,
+    },
   },
   {
     timestamps: true,
@@ -197,5 +259,9 @@ redemptionSchema.index({ status: 1, createdAt: -1 });
 redemptionSchema.index({ merchantId: 1, customerId: 1, status: 1, createdAt: 1 });
 // Backs the per-offer performance rollup.
 redemptionSchema.index({ merchantId: 1, offerId: 1, status: 1, createdAt: -1 });
+// Delivery partner's open pool (city + stage, unassigned) and their own orders.
+redemptionSchema.index({ fulfillment: 1, 'delivery.city': 1, 'delivery.status': 1, 'delivery.partnerId': 1 });
+redemptionSchema.index({ 'delivery.partnerId': 1, 'delivery.status': 1, updatedAt: -1 });
+redemptionSchema.index({ 'delivery.razorpayOrderId': 1 }, { sparse: true });
 
 export default mongoose.model('Redemption', redemptionSchema);

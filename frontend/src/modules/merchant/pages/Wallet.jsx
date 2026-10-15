@@ -8,6 +8,7 @@ import SouthWestRoundedIcon from '@mui/icons-material/SouthWestRounded';
 import ScheduleRoundedIcon from '@mui/icons-material/ScheduleRounded';
 import ReplayRoundedIcon from '@mui/icons-material/ReplayRounded';
 import EditRoundedIcon from '@mui/icons-material/EditRounded';
+import LocalShippingRoundedIcon from '@mui/icons-material/LocalShippingRounded';
 import toast from 'react-hot-toast';
 import { merchantAPI } from '../../../api/merchant.api';
 
@@ -19,6 +20,7 @@ const when = (d) =>
 const ENTRY = {
   points_discount: { icon: StarsRoundedIcon, sign: '+', tone: 'text-[#5EB929] bg-[#5EB929]/10', title: 'Customer used points' },
   bonus_discount: { icon: CardGiftcardRoundedIcon, sign: '+', tone: 'text-[#5EB929] bg-[#5EB929]/10', title: 'Offerly bonus on an order' },
+  delivery_order: { icon: LocalShippingRoundedIcon, sign: '+', tone: 'text-[#5EB929] bg-[#5EB929]/10', title: 'Delivery order' },
   payout_requested: { icon: ScheduleRoundedIcon, sign: '−', tone: 'text-amber-600 bg-amber-50', title: 'Payout requested' },
   payout_paid: { icon: SouthWestRoundedIcon, sign: '', tone: 'text-blue-600 bg-blue-50', title: 'Paid to you by Offerly' },
   payout_rejected: { icon: ReplayRoundedIcon, sign: '+', tone: 'text-gray-600 bg-gray-100', title: 'Payout request declined' },

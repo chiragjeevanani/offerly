@@ -21,6 +21,8 @@ export const customerPageLoaders = {
   notifications: () => import('../modules/customer/pages/profile/Notifications'),
   search: () => import('../modules/customer/pages/search/SearchResults'),
   cart: () => import('../modules/customer/pages/redemption/CartView'),
+  checkout: () => import('../modules/customer/pages/redemption/DeliveryCheckout'),
+  orderTracking: () => import('../modules/customer/pages/redemption/OrderTracking'),
   subscribe: () => import('../modules/customer/pages/subscription/SubscribePage'),
   rewards: () => import('../modules/customer/pages/rewards/RewardsHub'),
 };

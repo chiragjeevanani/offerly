@@ -14,6 +14,9 @@ import PersonRoundedIcon from '@mui/icons-material/PersonRounded';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 import AccessTimeRoundedIcon from '@mui/icons-material/AccessTimeRounded';
 import ChevronRightRoundedIcon from '@mui/icons-material/ChevronRightRounded';
+import LocalShippingRoundedIcon from '@mui/icons-material/LocalShippingRounded';
+import DeliveryOrderModal from '../components/DeliveryOrderModal';
+import { DELIVERY_STAGE } from '../utils/deliveryStage';
 import { QRCodeSVG } from 'qrcode.react';
 import { bookingAPI } from '../../../api/booking.api';
 import { useNavigate } from 'react-router-dom';
@@ -223,6 +226,9 @@ const Bookings = ({ merchant }) => {
         playNotificationSound({ type: 'chime' });
         toast.success(`New request from ${notif.data?.customerName || 'Customer'}!`);
         fetchBookings();
+      } else if (notif.type === 'delivery_update') {
+        setSelectedBooking(prev => (prev && notif.data?._id && prev._id === notif.data._id ? notif.data : prev));
+        fetchBookings();
       } else if (notif.type === 'booking_updated') {
         toast(`${notif.data?.customerName || 'A customer'} changed booking #${notif.data?.internalId || ''}`);
         setSelectedBooking(prev => (prev && notif.data?._id && prev._id === notif.data._id ? notif.data : prev));
@@ -232,6 +238,14 @@ const Bookings = ({ merchant }) => {
     socket.on('merchant_notification', handleNotification);
     return () => socket.off('merchant_notification', handleNotification);
   }, [socket, merchant]);
+
+  // A delivery order moved a step (accepted, packed, rejected) from the modal.
+  const handleDeliveryChanged = (updated) => {
+    if (!updated?._id) return;
+    queryClient.setQueryData(bookingsKey, (prev = []) => prev.map(b => (b._id === updated._id ? updated : b)));
+    setSelectedBooking(updated.status === 'pending' ? updated : null);
+    fetchBookings();
+  };
 
   const handleFulfilled = (bookingId) => {
     queryClient.setQueryData(bookingsKey, (prev = []) => prev.map(b =>
@@ -336,9 +350,16 @@ const Bookings = ({ merchant }) => {
                       <div>
                         <div className="flex items-center gap-2">
                            <h4 className="text-[13px] font-bold text-gray-800 leading-tight">{booking.customerName || 'Guest Customer'}</h4>
-                           <span className={`text-[8px] font-bold uppercase px-2 py-0.5 rounded-full ${booking.status === 'pending' ? 'bg-amber-50 text-amber-600' : 'bg-green-50 text-green-600'}`}>
-                              {booking.status}
-                           </span>
+                           {booking.fulfillment === 'delivery' ? (
+                             <span className={`text-[8px] font-bold uppercase px-2 py-0.5 rounded-full inline-flex items-center gap-1 ${(DELIVERY_STAGE[booking.delivery?.status] || DELIVERY_STAGE.placed).cls}`}>
+                               <LocalShippingRoundedIcon sx={{ fontSize: 10 }} />
+                               {(DELIVERY_STAGE[booking.delivery?.status] || DELIVERY_STAGE.placed).label}
+                             </span>
+                           ) : (
+                             <span className={`text-[8px] font-bold uppercase px-2 py-0.5 rounded-full ${booking.status === 'pending' ? 'bg-amber-50 text-amber-600' : 'bg-green-50 text-green-600'}`}>
+                                {booking.status}
+                             </span>
+                           )}
                         </div>
                         <div className="flex items-center gap-2 mt-1">
                           <span className="text-[9px] font-mono font-bold text-primary">#{booking.internalId || booking._id?.slice(-6)}</span>
@@ -369,7 +390,14 @@ const Bookings = ({ merchant }) => {
       </div>
 
       <AnimatePresence>
-        {selectedBooking && (
+        {selectedBooking && selectedBooking.fulfillment === 'delivery' && (
+          <DeliveryOrderModal
+            booking={selectedBooking}
+            onClose={() => setSelectedBooking(null)}
+            onChanged={handleDeliveryChanged}
+          />
+        )}
+        {selectedBooking && selectedBooking.fulfillment !== 'delivery' && (
           <BookingDetailModal
             booking={selectedBooking}
             onClose={() => setSelectedBooking(null)}

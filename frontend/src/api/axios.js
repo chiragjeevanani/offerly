@@ -45,6 +45,10 @@ axiosInstance.interceptors.response.use(
           window.location.href = '/admin/login';
         } else if (pathname.startsWith('/merchant') && !pathname.includes('/login') && !pathname.includes('/signup')) {
           window.location.href = '/merchant/login';
+        } else if (pathname.startsWith('/delivery')) {
+          if (!pathname.includes('/login') && !pathname.includes('/signup') && !pathname.includes('/verify')) {
+            window.location.href = '/delivery/login';
+          }
         } else if (!pathname.startsWith('/login') && !pathname.startsWith('/signup') && !pathname.startsWith('/verify')) {
           window.location.href = '/login';
         }

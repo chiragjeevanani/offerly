@@ -28,6 +28,9 @@ import AccountBalanceWalletRoundedIcon from '@mui/icons-material/AccountBalanceW
 import PersonRoundedIcon from '@mui/icons-material/PersonRounded';
 import SupportAgentRoundedIcon from '@mui/icons-material/SupportAgentRounded';
 import ViewCarouselRoundedIcon from '@mui/icons-material/ViewCarouselRounded';
+import LocalShippingRoundedIcon from '@mui/icons-material/LocalShippingRounded';
+import TwoWheelerRoundedIcon from '@mui/icons-material/TwoWheelerRounded';
+import TuneRoundedIcon from '@mui/icons-material/TuneRounded';
 
 // Admin Pages (Lazy Loaded for performance and ad-blocker resilience)
 const AdminDashboard = lazy(() => import('./pages/Dashboard'));
@@ -47,6 +50,9 @@ const MerchantPayouts = lazy(() => import('./pages/MerchantPayouts'));
 const Notifications = lazy(() => import('./pages/Notifications'));
 const SearchResults = lazy(() => import('./pages/SearchResults'));
 const AdminLogin = lazy(() => import('./pages/AdminLogin'));
+const DeliverySettings = lazy(() => import('./pages/DeliverySettings'));
+const DeliveryPartners = lazy(() => import('./pages/DeliveryPartners'));
+const DeliveryOrders = lazy(() => import('./pages/DeliveryOrders'));
 import { STORAGE_KEYS } from '../../config/constants';
 import { useApp } from '../customer/context/AppContext';
 import { adminAPI } from '../../api/admin.api';
@@ -78,6 +84,9 @@ const AdminSidebar = ({ isMobileMenuOpen, setIsMobileMenuOpen }) => {
     { name: 'Home Banners', path: '/admin/home-banners', icon: ViewCarouselRoundedIcon },
     { name: 'Ad Requests', path: '/admin/ads', icon: CampaignRoundedIcon },
     { name: 'Bookings', path: '/admin/ledger', icon: ViewListRoundedIcon },
+    { name: 'Delivery Orders', path: '/admin/delivery-orders', icon: LocalShippingRoundedIcon },
+    { name: 'Delivery Partners', path: '/admin/delivery-partners', icon: TwoWheelerRoundedIcon },
+    { name: 'Delivery Settings', path: '/admin/delivery-settings', icon: TuneRoundedIcon },
     { name: 'Analytics', path: '/admin/analytics', icon: BarChartRoundedIcon },
     { name: 'Support Contacts', path: '/admin/support', icon: SupportAgentRoundedIcon },
   ];
@@ -385,6 +394,9 @@ const AdminLayout = ({ children }) => {
       ['/admin/home-banners', 'Home Banners'],
       ['/admin/ads', 'Ad Requests'],
       ['/admin/ledger', 'Bookings'],
+      ['/admin/delivery-orders', 'Delivery Orders'],
+      ['/admin/delivery-partners', 'Delivery Partners'],
+      ['/admin/delivery-settings', 'Delivery Settings'],
       ['/admin/analytics', 'Analytics'],
       ['/admin/support', 'Support Contacts'],
       ['/admin/notifications', 'Notifications'],
@@ -498,6 +510,9 @@ const AdminApp = () => {
           <Route path="/home-banners" element={<HomeBanners />} />
           <Route path="/ads" element={<PromotionRequest />} />
           <Route path="/ledger" element={<BookingLedger />} />
+          <Route path="/delivery-orders" element={<DeliveryOrders />} />
+          <Route path="/delivery-partners" element={<DeliveryPartners />} />
+          <Route path="/delivery-settings" element={<DeliverySettings />} />
           <Route path="/categories" element={<CategoryManagement />} />
           <Route path="/notifications" element={<Notifications />} />
           <Route path="/search" element={<SearchResults />} />

@@ -10,7 +10,7 @@ const otpSessionSchema = new mongoose.Schema(
     role: {
       type: String,
       required: true,
-      enum: ['customer', 'merchant'],
+      enum: ['customer', 'merchant', 'delivery'],
     },
     purpose: {
       type: String,

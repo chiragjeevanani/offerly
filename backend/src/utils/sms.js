@@ -14,6 +14,9 @@ export const getRoleDevNumbers = (role) => {
   if (role === 'merchant') {
     return parseNumbers(process.env.DEFAULT_MERCHANT_DEV_NUMBERS || '0987654321,8888888881,9876543210,9999999999');
   }
+  if (role === 'delivery') {
+    return parseNumbers(process.env.DEFAULT_DELIVERY_DEV_NUMBERS || '7777777771,7777777772');
+  }
   return parseNumbers(process.env.DEFAULT_CUSTOMER_DEV_NUMBERS || '1234567890,9999999991,9876543210,9999999999');
 };
 

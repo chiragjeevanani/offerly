@@ -3,6 +3,7 @@ import jwt from "jsonwebtoken";
 import User from "../modules/user/models/User.js";
 import Merchant from "../modules/merchant/models/Merchant.js";
 import Admin from "../modules/admin/models/Admin.js";
+import DeliveryPartner from "../modules/delivery/models/DeliveryPartner.js";
 
 const getTokenFromRequest = (req) => {
   const authorization = req.headers.authorization || req.headers.Authorization;
@@ -26,6 +27,8 @@ const resolveUserFromToken = async (token) => {
     user = await Admin.findById(decoded.id).select("-password");
   } else if (decoded.role === "merchant") {
     user = await Merchant.findById(decoded.id).select("-password");
+  } else if (decoded.role === "delivery") {
+    user = await DeliveryPartner.findById(decoded.id);
   } else {
     user = await User.findById(decoded.id).select("-password");
   }

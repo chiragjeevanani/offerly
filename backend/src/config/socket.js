@@ -15,13 +15,17 @@ export const initSocket = (server) => {
 
     // Join specific rooms based on user role/ID
     socket.on('join', (data) => {
-      const { userId, role } = data;
+      const { userId, role, city } = data || {};
       if (role === 'admin') {
         socket.join('admin_room');
         console.log(`Admin joined room: admin_room`);
       } else if (role === 'merchant' && userId) {
         socket.join(`merchant_${userId}`);
         console.log(`Merchant joined room: merchant_${userId}`);
+      } else if (role === 'delivery' && userId) {
+        // Own room for order updates, plus a city room for new orders in the pool.
+        socket.join(`delivery_${userId}`);
+        if (city) socket.join(`delivery_city_${String(city).toLowerCase()}`);
       } else if (role === 'customer' && userId) {
         socket.join(`customer_${userId}`);
         console.log(`Customer joined room: customer_${userId}`);
@@ -59,5 +63,18 @@ export const emitMerchantNotification = (merchantId, notification) => {
 export const emitUserNotification = (userId, notification) => {
   if (io) {
     io.to(`customer_${userId}`).emit('user_notification', notification);
+  }
+};
+
+export const emitDeliveryPartnerNotification = (partnerId, notification) => {
+  if (io) {
+    io.to(`delivery_${partnerId}`).emit('delivery_notification', notification);
+  }
+};
+
+// Every partner in a city: an order joined or left the open pool.
+export const emitDeliveryPoolUpdate = (city, payload) => {
+  if (io && city) {
+    io.to(`delivery_city_${String(city).toLowerCase()}`).emit('delivery_notification', payload);
   }
 };

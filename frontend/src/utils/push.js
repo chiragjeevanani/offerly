@@ -15,6 +15,7 @@ const SW_PATH = '/firebase-messaging-sw.js';
 const ENDPOINTS = {
   customer: '/users/me/push-tokens',
   merchant: '/merchants/me/push-tokens',
+  delivery: '/delivery/partner/me/push-tokens',
 };
 
 const endpointFor = (persona) => ENDPOINTS[persona] || ENDPOINTS.customer;
@@ -81,7 +82,7 @@ const getSwRegistration = async () => {
  * @param {boolean} [options.requestPermission] Prompt if permission is still
  *   'default'. Leave false for the silent on-login sync so we never fire a
  *   browser permission dialog the user didn't ask for.
- * @param {'customer'|'merchant'} [options.persona] Which account the token is
+ * @param {'customer'|'merchant'|'delivery'} [options.persona] Which account the token is
  *   registered against.
  * @returns {Promise<{ok: boolean, reason?: string, token?: string, platform?: string}>}
  */

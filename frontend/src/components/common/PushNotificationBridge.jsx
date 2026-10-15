@@ -33,7 +33,7 @@ const PushNotificationBridge = () => {
 
   // Admin has no push surface, so it gets no token and no listener.
   const isAdminArea = location.pathname.startsWith('/admin') || user?.type === 'admin';
-  const persona = user?.type === 'merchant' ? 'merchant' : 'customer';
+  const persona = user?.type === 'merchant' ? 'merchant' : user?.type === 'delivery' ? 'delivery' : 'customer';
   const active = isLoggedIn && !isAdminArea && isPushSupported();
 
   // Re-register on login and whenever the persona changes. The token itself
@@ -76,6 +76,8 @@ const PushNotificationBridge = () => {
         const link = payload?.data?.link;
 
         if (!title && !body) return;
+        // The open partner app already toasts these from its own socket.
+        if (window.location.pathname.startsWith('/delivery')) return;
 
         toast(
           (t) => (
