@@ -6,6 +6,9 @@ import CurrencyRupeeRoundedIcon from '@mui/icons-material/CurrencyRupeeRounded';
 import CardGiftcardRoundedIcon from '@mui/icons-material/CardGiftcardRounded';
 import PaymentsRoundedIcon from '@mui/icons-material/PaymentsRounded';
 import TwoWheelerRoundedIcon from '@mui/icons-material/TwoWheelerRounded';
+import EmojiEventsRoundedIcon from '@mui/icons-material/EmojiEventsRounded';
+import AddRoundedIcon from '@mui/icons-material/AddRounded';
+import DeleteOutlineRoundedIcon from '@mui/icons-material/DeleteOutlineRounded';
 import { deliveryAPI } from '../../../api/delivery.api';
 
 const Toggle = ({ checked, onChange, label, disabled }) => (
@@ -59,6 +62,13 @@ const MoneyField = ({ label, value, onChange, hint, suffix = '₹', disabled }) 
 
 const num = (v) => (v === '' || v == null ? 0 : Number(v));
 
+const PERIODS = [
+  { key: 'daily', label: 'In a day', short: 'a day' },
+  { key: 'weekly', label: 'In a week', short: 'a week (Mon-Sun)' },
+  { key: 'monthly', label: 'In a month', short: 'a month' },
+];
+const MAX_TARGETS = 12;
+
 const DeliverySettings = () => {
   const queryClient = useQueryClient();
   const { data, isLoading } = useQuery({
@@ -84,6 +94,7 @@ const DeliverySettings = () => {
       partnerPayoutPerDelivery: num(s.partnerPayoutPerDelivery),
       maxActiveOrdersPerPartner: num(s.maxActiveOrdersPerPartner),
       hideDropUntilAccepted: s.hideDropUntilAccepted,
+      targets: (s.targets || []).map((t) => ({ id: t.id || '', period: t.period, deliveries: num(t.deliveries), bonus: num(t.bonus), active: t.active !== false })),
       freeGift: { ...s.freeGift, minOrderValue: num(s.freeGift.minOrderValue) },
     });
     return pick(form) !== pick(data);
@@ -91,6 +102,11 @@ const DeliverySettings = () => {
 
   const set = (key) => (value) => setForm((f) => ({ ...f, [key]: value }));
   const setGift = (key) => (value) => setForm((f) => ({ ...f, freeGift: { ...f.freeGift, [key]: value } }));
+  const setTarget = (idx, patch) =>
+    setForm((f) => ({ ...f, targets: f.targets.map((t, i) => (i === idx ? { ...t, ...patch } : t)) }));
+  const addTarget = () =>
+    setForm((f) => ({ ...f, targets: [...f.targets, { period: 'daily', deliveries: '', bonus: '', active: true }] }));
+  const removeTarget = (idx) => setForm((f) => ({ ...f, targets: f.targets.filter((_, i) => i !== idx) }));
 
   // The master switch saves on its own, straight away.
   const toggleModule = async (enabled) => {
@@ -109,6 +125,11 @@ const DeliverySettings = () => {
   };
 
   const save = async () => {
+    const badTarget = form.targets.findIndex((t) => !(Number.isInteger(num(t.deliveries)) && num(t.deliveries) >= 1 && num(t.bonus) >= 1));
+    if (badTarget >= 0) {
+      toast.error(`Target ${badTarget + 1}: enter the number of deliveries and the bonus amount`);
+      return;
+    }
     setSaving(true);
     try {
       const res = await deliveryAPI.updateAdminSettings({
@@ -120,6 +141,13 @@ const DeliverySettings = () => {
         partnerPayoutPerDelivery: num(form.partnerPayoutPerDelivery),
         maxActiveOrdersPerPartner: Math.min(20, Math.max(1, num(form.maxActiveOrdersPerPartner) || 1)),
         hideDropUntilAccepted: form.hideDropUntilAccepted,
+        targets: form.targets.map((t) => ({
+          ...(t.id ? { id: t.id } : {}),
+          period: t.period,
+          deliveries: num(t.deliveries),
+          bonus: Math.round(num(t.bonus)),
+          active: t.active !== false,
+        })),
         freeGift: {
           enabled: form.freeGift.enabled,
           minOrderValue: num(form.freeGift.minOrderValue),
@@ -285,6 +313,65 @@ const DeliverySettings = () => {
           </div>
         </Section>
       </div>
+
+      <Section
+        icon={EmojiEventsRoundedIcon}
+        title="Partner targets"
+        subtitle="Extra incentive when a partner completes enough deliveries"
+        right={
+          form.targets.length < MAX_TARGETS && (
+            <button type="button" onClick={addTarget} className="h-9 px-3 rounded-xl bg-[#5EB929] text-white text-[12px] font-semibold flex items-center gap-1">
+              <AddRoundedIcon sx={{ fontSize: 16 }} /> Add target
+            </button>
+          )
+        }
+      >
+        {form.targets.length === 0 ? (
+          <p className="text-[13px] text-gray-500">
+            No targets yet. Add one, for example <span className="font-semibold">10 deliveries in a day = ₹200 bonus</span>.
+          </p>
+        ) : (
+          <div className="space-y-3">
+            {form.targets.map((t, idx) => {
+              const period = PERIODS.find((p) => p.key === t.period) || PERIODS[0];
+              return (
+                <div key={t.id || `new-${idx}`} className={`rounded-xl border p-3 ${t.active === false ? 'border-gray-100 bg-gray-50/60' : 'border-gray-200'}`}>
+                  <div className="grid grid-cols-2 md:grid-cols-[1fr_1fr_1fr_auto_auto] gap-3 items-end">
+                    <label className="block">
+                      <span className="text-[11px] font-semibold text-gray-500 uppercase tracking-wide">Period</span>
+                      <select
+                        value={t.period}
+                        onChange={(e) => setTarget(idx, { period: e.target.value })}
+                        className="mt-1.5 w-full h-11 px-3 bg-white border border-gray-200 rounded-xl text-[14px] outline-none focus:border-[#5EB929]"
+                      >
+                        {PERIODS.map((p) => <option key={p.key} value={p.key}>{p.label}</option>)}
+                      </select>
+                    </label>
+                    <MoneyField label="Deliveries" suffix="#" value={t.deliveries} onChange={(v) => setTarget(idx, { deliveries: v })} />
+                    <MoneyField label="Bonus" value={t.bonus} onChange={(v) => setTarget(idx, { bonus: v })} />
+                    <div className="flex items-center gap-2 h-11">
+                      <Toggle checked={t.active !== false} onChange={(v) => setTarget(idx, { active: v })} label={`Target ${idx + 1} active`} />
+                      <span className="text-[12px] text-gray-500 md:hidden">{t.active !== false ? 'On' : 'Off'}</span>
+                    </div>
+                    <button type="button" onClick={() => removeTarget(idx)} className="h-11 w-11 rounded-xl border border-gray-200 text-gray-400 hover:text-red-500 hover:border-red-200 flex items-center justify-center justify-self-end" aria-label={`Remove target ${idx + 1}`}>
+                      <DeleteOutlineRoundedIcon sx={{ fontSize: 20 }} />
+                    </button>
+                  </div>
+                  {num(t.deliveries) > 0 && num(t.bonus) > 0 && (
+                    <p className="mt-2 text-[12px] text-gray-500">
+                      Deliver <span className="font-semibold text-gray-800">{num(t.deliveries)}</span> order{num(t.deliveries) === 1 ? '' : 's'} in {period.short} and earn{' '}
+                      <span className="font-semibold text-[#3F7F17]">₹{num(t.bonus)}</span> extra{t.active === false ? ' (switched off)' : ''}.
+                    </p>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        )}
+        <p className="text-[11px] text-gray-400">
+          The bonus is added to the partner's earnings once per target per period (days, Monday-to-Sunday weeks and months follow Indian time) and is paid out with their other earnings under Delivery Partners. Changing a target never changes bonuses already paid.
+        </p>
+      </Section>
 
       <div className="bg-gray-50 border border-gray-100 rounded-2xl p-4 text-[12px] text-gray-600">
         <span className="font-semibold text-gray-800">Customers see: </span>

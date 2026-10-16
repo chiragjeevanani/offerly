@@ -1,5 +1,6 @@
 import DeliverySettings from '../models/DeliverySettings.js';
 import DeliveryPartner from '../models/DeliveryPartner.js';
+import DeliveryTargetAward from '../models/DeliveryTargetAward.js';
 import Redemption from '../../booking/models/Redemption.js';
 import Merchant from '../../merchant/models/Merchant.js';
 import SettlementTransaction from '../../payment/models/SettlementTransaction.js';
@@ -432,6 +433,126 @@ export const creditPartnerForDelivery = async (redemption) => {
       },
     }
   );
+};
+
+/* ───────────────────────────── Incentive targets ───────────────────────────── */
+
+const IST_OFFSET_MS = 330 * 60 * 1000;
+const DAY_MS = 24 * 60 * 60 * 1000;
+export const TARGET_PERIODS = ['daily', 'weekly', 'monthly'];
+
+// The IST day / Monday-start week / calendar month containing `now`.
+// `key` identifies that period (its first IST day) for the once-per-period award.
+export const targetWindow = (period, now = new Date()) => {
+  const ist = new Date(now.getTime() + IST_OFFSET_MS); // read the UTC fields as IST
+  const y = ist.getUTCFullYear();
+  const m = ist.getUTCMonth();
+  let start = new Date(Date.UTC(y, m, ist.getUTCDate()));
+  let end = new Date(start.getTime() + DAY_MS);
+  if (period === 'weekly') {
+    start = new Date(start.getTime() - ((ist.getUTCDay() + 6) % 7) * DAY_MS);
+    end = new Date(start.getTime() + 7 * DAY_MS);
+  } else if (period === 'monthly') {
+    start = new Date(Date.UTC(y, m, 1));
+    end = new Date(Date.UTC(y, m + 1, 1));
+  }
+  return {
+    key: `${period}:${start.toISOString().slice(0, 10)}`,
+    start: new Date(start.getTime() - IST_OFFSET_MS),
+    end: new Date(end.getTime() - IST_OFFSET_MS),
+  };
+};
+
+const liveTargets = (settings) =>
+  (settings.targets || []).filter((t) => t.active !== false && t.bonus > 0 && t.deliveries > 0);
+
+const deliveredCount = (partnerId, window) =>
+  Redemption.countDocuments({
+    'delivery.partnerId': partnerId,
+    'delivery.status': 'delivered',
+    'delivery.deliveredAt': { $gte: window.start, $lt: window.end },
+  });
+
+// Where a partner stands on every running target, for their app.
+export const targetProgress = async (partnerId, settings) => {
+  const targets = liveTargets(settings);
+  if (!targets.length) return [];
+  const windows = Object.fromEntries(TARGET_PERIODS.map((p) => [p, targetWindow(p)]));
+  const counts = {};
+  await Promise.all(
+    [...new Set(targets.map((t) => t.period))].map(async (p) => {
+      counts[p] = await deliveredCount(partnerId, windows[p]);
+    })
+  );
+  const awards = await DeliveryTargetAward.find({
+    partnerId,
+    windowKey: { $in: Object.values(windows).map((w) => w.key) },
+  }).select('targetId windowKey').lean();
+  const won = new Set(awards.map((a) => `${a.targetId}|${a.windowKey}`));
+
+  return targets.map((t) => {
+    const w = windows[t.period];
+    return {
+      id: String(t._id),
+      period: t.period,
+      deliveries: t.deliveries,
+      bonus: t.bonus,
+      done: counts[t.period] || 0,
+      achieved: won.has(`${t._id}|${w.key}`),
+      resetsAt: w.end,
+    };
+  });
+};
+
+// Called after a delivery is completed: pays every target the partner has now
+// reached in its current period, once each. Never throws.
+export const awardTargetBonuses = async (partnerId, redemptionId = null) => {
+  try {
+    const settings = await getDeliverySettings();
+    const targets = liveTargets(settings);
+    if (!targets.length) return [];
+
+    const counts = {};
+    const earned = [];
+    for (const t of targets) {
+      const w = targetWindow(t.period);
+      if (counts[t.period] === undefined) counts[t.period] = await deliveredCount(partnerId, w);
+      if (counts[t.period] < t.deliveries) continue;
+
+      try {
+        await DeliveryTargetAward.create({
+          partnerId,
+          targetId: t._id,
+          period: t.period,
+          windowKey: w.key,
+          deliveries: t.deliveries,
+          bonus: t.bonus,
+          redemptionId,
+        });
+      } catch (err) {
+        if (err?.code === 11000) continue; // already paid for this period
+        throw err;
+      }
+      await DeliveryPartner.updateOne(
+        { _id: partnerId },
+        { $inc: { 'stats.totalEarnings': t.bonus, 'stats.earningsDue': t.bonus } }
+      );
+      earned.push(t);
+    }
+
+    for (const t of earned) {
+      notifyPartner(partnerId, {
+        type: 'target_achieved',
+        title: 'Target achieved! 🎉',
+        body: `You completed ${t.deliveries} deliveries ${{ daily: 'today', weekly: 'this week', monthly: 'this month' }[t.period]}. ₹${t.bonus} bonus added to your earnings.`,
+        link: '/delivery/earnings',
+      });
+    }
+    return earned;
+  } catch (err) {
+    console.error('[Delivery] Target bonus error (non-blocking):', err);
+    return [];
+  }
 };
 
 // Cron: online payments on cancelled/expired orders that still need refunding,

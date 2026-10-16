@@ -22,6 +22,21 @@ const deliverySettingsSchema = new mongoose.Schema(
     maxActiveOrdersPerPartner: { type: Number, default: 3, min: 1, max: 20 },
     // Pool shows only area/pincode until a partner accepts; off = full address + phone up front.
     hideDropUntilAccepted: { type: Boolean, default: true },
+    // Incentive targets: deliver `deliveries` orders within the period and earn
+    // `bonus` on top of the per-delivery payout. Several can run at once (say a
+    // daily one and a weekly one). Periods follow IST calendar days, Monday-start
+    // weeks and calendar months.
+    targets: {
+      type: [
+        {
+          period: { type: String, enum: ['daily', 'weekly', 'monthly'], required: true },
+          deliveries: { type: Number, required: true, min: 1, max: 5000 },
+          bonus: { type: Number, required: true, min: 1, max: 1000000 },
+          active: { type: Boolean, default: true },
+        },
+      ],
+      default: [],
+    },
     // A free item for orders at or above minOrderValue, described by the admin.
     freeGift: {
       enabled: { type: Boolean, default: false },

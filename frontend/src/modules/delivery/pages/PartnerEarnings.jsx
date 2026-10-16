@@ -2,6 +2,7 @@ import AccountBalanceWalletRoundedIcon from '@mui/icons-material/AccountBalanceW
 import PaymentsRoundedIcon from '@mui/icons-material/PaymentsRounded';
 import LocalShippingRoundedIcon from '@mui/icons-material/LocalShippingRounded';
 import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
+import EmojiEventsRoundedIcon from '@mui/icons-material/EmojiEventsRounded';
 import { Card, SectionLabel } from '../components/PartnerUI';
 import { rupees } from '../utils/partner';
 
@@ -49,6 +50,24 @@ const PartnerEarnings = ({ me }) => {
           {!hasPayout && ' Add your UPI ID or bank account in Profile so we can pay you.'}
         </p>
       </Card>
+
+      {me.bonuses?.length > 0 && (
+        <section className="space-y-2.5">
+          <SectionLabel className="px-1">Target bonuses</SectionLabel>
+          {me.bonuses.map((b) => (
+            <Card key={b.id} className="p-4 flex items-center gap-3">
+              <span className="w-10 h-10 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center shrink-0">
+                <EmojiEventsRoundedIcon sx={{ fontSize: 20 }} />
+              </span>
+              <div className="flex-1 min-w-0">
+                <p className="text-[13px] font-bold text-gray-900">{b.deliveries} deliveries {{ daily: 'in a day', weekly: 'in a week', monthly: 'in a month' }[b.period]}</p>
+                <p className="text-[11px] font-medium text-gray-400">{new Date(b.at).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}</p>
+              </div>
+              <p className="text-[14px] font-black text-[#5EB929]">+{rupees(b.bonus)}</p>
+            </Card>
+          ))}
+        </section>
+      )}
 
       <section className="space-y-2.5 pb-4">
         <SectionLabel className="px-1">Settlements</SectionLabel>

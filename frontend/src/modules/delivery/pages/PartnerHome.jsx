@@ -10,6 +10,8 @@ import ChevronRightRoundedIcon from '@mui/icons-material/ChevronRightRounded';
 import CardGiftcardRoundedIcon from '@mui/icons-material/CardGiftcardRounded';
 import Inventory2RoundedIcon from '@mui/icons-material/Inventory2Rounded';
 import TwoWheelerRoundedIcon from '@mui/icons-material/TwoWheelerRounded';
+import EmojiEventsRoundedIcon from '@mui/icons-material/EmojiEventsRounded';
+import CheckCircleRoundedIcon from '@mui/icons-material/CheckCircleRounded';
 import { deliveryAPI } from '../../../api/delivery.api';
 import { Card, SectionLabel, StageBadge, Spinner } from '../components/PartnerUI';
 import { rupees } from '../utils/partner';
@@ -87,6 +89,47 @@ const OrderCard = ({ order, action, onAction, busy, onOpen }) => (
       </button>
     )}
   </Card>
+);
+
+const PERIOD_LABEL = { daily: 'Today', weekly: 'This week', monthly: 'This month' };
+
+// Progress toward the admin's incentive targets.
+const TargetsCard = ({ targets }) => (
+  <section className="space-y-3">
+    <SectionLabel>Your targets</SectionLabel>
+    {targets.map((t) => {
+      const pct = Math.min(100, Math.round((t.done / t.deliveries) * 100));
+      const left = Math.max(0, t.deliveries - t.done);
+      return (
+        <Card key={t.id} className={`p-4 ${t.achieved ? 'border-[#5EB929]/40' : ''}`}>
+          <div className="flex items-center gap-3">
+            <span className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${t.achieved ? 'bg-[#5EB929] text-white' : 'bg-amber-50 text-amber-600'}`}>
+              {t.achieved ? <CheckCircleRoundedIcon sx={{ fontSize: 22 }} /> : <EmojiEventsRoundedIcon sx={{ fontSize: 22 }} />}
+            </span>
+            <div className="flex-1 min-w-0">
+              <p className="text-[13px] font-bold text-gray-900">
+                {t.deliveries} deliveries <span className="text-gray-400 font-semibold">· {PERIOD_LABEL[t.period]}</span>
+              </p>
+              <p className={`text-[11px] font-semibold ${t.achieved ? 'text-[#3F7F17]' : 'text-gray-500'}`}>
+                {t.achieved ? 'Target achieved! Bonus added to your earnings' : `${left} more to earn the bonus`}
+              </p>
+            </div>
+            <div className="text-right shrink-0">
+              <p className="text-lg font-black text-gray-900">{rupees(t.bonus)}</p>
+              <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest">Bonus</p>
+            </div>
+          </div>
+          <div className="mt-3 h-2 rounded-full bg-gray-100 overflow-hidden" role="progressbar" aria-valuemin={0} aria-valuemax={t.deliveries} aria-valuenow={Math.min(t.done, t.deliveries)} aria-label={`${t.done} of ${t.deliveries} deliveries`}>
+            <div className={`h-full rounded-full transition-all duration-500 ${t.achieved ? 'bg-[#5EB929]' : 'bg-gradient-to-r from-amber-400 to-[#5EB929]'}`} style={{ width: `${pct}%` }} />
+          </div>
+          <div className="mt-1.5 flex justify-between text-[10px] font-bold text-gray-400">
+            <span>{Math.min(t.done, t.deliveries)} / {t.deliveries} done</span>
+            <span>Resets {new Date(t.resetsAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}</span>
+          </div>
+        </Card>
+      );
+    })}
+  </section>
 );
 
 const PartnerHome = ({ me }) => {
@@ -211,6 +254,8 @@ const PartnerHome = ({ me }) => {
           </Card>
         ))}
       </div>
+
+      {me.targets?.length > 0 && <TargetsCard targets={me.targets} />}
 
       {/* My active orders */}
       {(loadingActive || active.length > 0) && (

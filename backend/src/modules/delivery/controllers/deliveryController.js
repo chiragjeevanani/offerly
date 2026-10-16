@@ -3,6 +3,7 @@ import mongoose from 'mongoose';
 import Redemption from '../../booking/models/Redemption.js';
 import DeliveryPartner from '../models/DeliveryPartner.js';
 import AdminNotification from '../../admin/models/AdminNotification.js';
+import DeliveryTargetAward from '../models/DeliveryTargetAward.js';
 import { emitAdminNotification } from '../../../config/socket.js';
 import { verifyRazorpayPayment } from '../../../utils/razorpay.js';
 import { runCompletionEffects } from '../../booking/controllers/redemptionController.js';
@@ -21,6 +22,8 @@ import {
   refundDeliveryPayment,
   creditStoreForDelivery,
   creditPartnerForDelivery,
+  awardTargetBonuses,
+  targetProgress,
   partnerLimits,
   sameCity,
   POOL_STAGES,
@@ -222,19 +225,31 @@ export const getPartnerMe = async (req, res) => {
   try {
     const partner = await DeliveryPartner.findById(req.user._id);
     const since = startOfIstDay();
-    const [today, activeCount, settings] = await Promise.all([
+    const [today, activeCount, settings, bonusToday, bonusHistory] = await Promise.all([
       Redemption.aggregate([
         { $match: { 'delivery.partnerId': partner._id, 'delivery.status': 'delivered', 'delivery.deliveredAt': { $gte: since } } },
         { $group: { _id: null, count: { $sum: 1 }, earnings: { $sum: { $ifNull: ['$delivery.partnerPayout', 0] } }, cash: { $sum: { $ifNull: ['$delivery.cashCollected', 0] } } } },
       ]),
       Redemption.countDocuments({ 'delivery.partnerId': partner._id, status: 'pending', 'delivery.status': { $in: [...POOL_STAGES, 'picked_up'] } }),
       getDeliverySettings(),
+      DeliveryTargetAward.aggregate([
+        { $match: { partnerId: partner._id, createdAt: { $gte: since } } },
+        { $group: { _id: null, total: { $sum: '$bonus' } } },
+      ]),
+      DeliveryTargetAward.find({ partnerId: partner._id }).sort({ createdAt: -1 }).limit(20).lean(),
     ]);
+    const targets = await targetProgress(partner._id, settings);
     res.status(200).json({
       success: true,
       data: {
         partner: serializePartner(partner),
-        today: { deliveries: today[0]?.count || 0, earnings: today[0]?.earnings || 0, cashCollected: today[0]?.cash || 0 },
+        today: {
+          deliveries: today[0]?.count || 0,
+          earnings: (today[0]?.earnings || 0) + (bonusToday[0]?.total || 0),
+          cashCollected: today[0]?.cash || 0,
+        },
+        targets,
+        bonuses: bonusHistory.map((b) => ({ id: String(b._id), period: b.period, deliveries: b.deliveries, bonus: b.bonus, at: b.createdAt })),
         activeCount,
         maxActive: partnerLimits(settings).maxActive,
         payoutPerDelivery: settings.partnerPayoutPerDelivery || 0,
@@ -530,6 +545,7 @@ export const deliverOrder = async (req, res) => {
     try {
       await creditStoreForDelivery(plain);
       await creditPartnerForDelivery(plain);
+      await awardTargetBonuses(plain.delivery.partnerId, plain._id);
     } catch (creditErr) {
       console.error('[Delivery] Credit error (non-blocking):', creditErr);
     }
@@ -556,6 +572,15 @@ const settingsSchema = Joi.object({
   partnerPayoutPerDelivery: Joi.number().min(0).max(10000),
   maxActiveOrdersPerPartner: Joi.number().integer().min(1).max(20),
   hideDropUntilAccepted: Joi.boolean(),
+  targets: Joi.array().max(12).items(
+    Joi.object({
+      id: Joi.string().hex().length(24),
+      period: Joi.string().valid('daily', 'weekly', 'monthly').required(),
+      deliveries: Joi.number().integer().min(1).max(5000).required(),
+      bonus: Joi.number().integer().min(1).max(1000000).required(),
+      active: Joi.boolean(),
+    })
+  ),
   freeGift: Joi.object({
     enabled: Joi.boolean(),
     minOrderValue: Joi.number().min(0).max(1000000),
@@ -569,6 +594,7 @@ const adminSettingsView = (s) => ({
   ...publicDeliveryConfig(s),
   partnerPayoutPerDelivery: s.partnerPayoutPerDelivery || 0,
   ...(({ maxActive, hideDropUntilAccepted }) => ({ maxActiveOrdersPerPartner: maxActive, hideDropUntilAccepted }))(partnerLimits(s)),
+  targets: (s.targets || []).map((t) => ({ id: String(t._id), period: t.period, deliveries: t.deliveries, bonus: t.bonus, active: t.active !== false })),
   freeGift: {
     enabled: Boolean(s.freeGift?.enabled),
     minOrderValue: s.freeGift?.minOrderValue || 0,
@@ -599,6 +625,10 @@ export const updateAdminSettings = async (req, res) => {
       if (value[key] !== undefined) s[key] = value[key];
     }
     if (value.freeGift) s.freeGift = { ...s.freeGift?.toObject?.(), ...value.freeGift };
+    if (value.targets) {
+      // Keep the id of a target that already exists, so what it has paid stays linked to it.
+      s.targets = value.targets.map(({ id, ...t }) => (id ? { _id: id, ...t } : t));
+    }
     if (!s.allowCod && !s.allowOnline) {
       return res.status(400).json({ success: false, error: 'Keep at least one payment method on' });
     }
