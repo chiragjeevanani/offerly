@@ -2,6 +2,10 @@
 // { center, radiusMeters, path } - `path` is the 6 precomputed vertices.
 // Mirrors frontend/src/utils/geoHex.js so both sides agree on what a zone covers.
 
+// How big an admin can make a zone (centre to corner), and the smallest.
+export const MIN_ZONE_RADIUS_METERS = 100;
+export const MAX_ZONE_RADIUS_METERS = 10000;
+
 const EARTH_RADIUS_METERS = 6371000;
 const HEXAGON_BEARINGS = [0, 60, 120, 180, 240, 300];
 const toRadians = (deg) => (deg * Math.PI) / 180;

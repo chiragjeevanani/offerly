@@ -45,48 +45,57 @@ const TabButton = ({ label, isActive, onClick }) => (
 
 const UserManagement = () => {
   const queryClient = useQueryClient();
-  const [activeTab, setActiveTab] = useState('all'); // 'all', 'active', 'suspended'
+  const [activeTab, setActiveTab] = useState('all'); // 'all', 'active', 'blocked'
   const [searchQuery, setSearchQuery] = useState('');
   const debouncedSearch = useDebounce(searchQuery, 400);
-  const [page, setPage] = useState(1);
-  const limit = 20;
+  // Everything is loaded; the list renders in chunks so thousands of users
+  // don't freeze the page, and "Show all" renders the lot.
+  const CHUNK = 100;
+  const [visible, setVisible] = useState(CHUNK);
 
   const [viewingUser, setViewingUser] = useState(null);
   const [isSlideOverOpen, setIsSlideOverOpen] = useState(false);
 
-  // 1. Fetch users with React Query
-  const { data, isLoading: loading, isFetching, refetch } = useQuery({
-    queryKey: ['adminUsers', activeTab, debouncedSearch, page],
+  // 1. Fetch every customer once; tabs and search filter it in the browser.
+  const { data: allUsers = [], isLoading: loading, isFetching, refetch } = useQuery({
+    queryKey: ['adminUsers'],
     queryFn: async () => {
       const res = await adminAPI.getAllUsers();
-      let users = res.data?.users || res.users || res.data || [];
-      
-      // Filter for customers only
-      users = users.filter(user => user.role === 'customer');
-
-      // Manual filtering for tab and search since the current backend endpoint might not support all params
-      if (activeTab !== 'all') {
-        users = users.filter(u => u.status === activeTab);
-      }
-      if (debouncedSearch) {
-        const q = debouncedSearch.toLowerCase();
-        users = users.filter(u => 
-          u.name?.toLowerCase().includes(q) || 
-          u.phone?.includes(q) || 
-          u.email?.toLowerCase().includes(q)
-        );
-      }
-
-      return {
-        users: users.slice((page - 1) * limit, page * limit),
-        total: users.length
-      };
+      const list = res.data?.users || res.users || res.data || [];
+      return list.filter((user) => user.role === 'customer');
     },
-    keepPreviousData: true,
   });
 
-  const users = data?.users || [];
-  const total = data?.total || 0;
+  const counts = useMemo(() => ({
+    all: allUsers.length,
+    active: allUsers.filter((u) => (u.status || 'active') === 'active').length,
+    blocked: allUsers.filter((u) => u.status === 'blocked').length,
+  }), [allUsers]);
+
+  const filtered = useMemo(() => {
+    let list = allUsers;
+    if (activeTab === 'active') list = list.filter((u) => (u.status || 'active') === 'active');
+    if (activeTab === 'blocked') list = list.filter((u) => u.status === 'blocked');
+    if (debouncedSearch) {
+      const q = debouncedSearch.trim().toLowerCase();
+      list = list.filter((u) =>
+        u.name?.toLowerCase().includes(q) ||
+        u.phone?.includes(q) ||
+        u.email?.toLowerCase().includes(q) ||
+        u.city?.toLowerCase().includes(q)
+      );
+    }
+    return list;
+  }, [allUsers, activeTab, debouncedSearch]);
+
+  const total = filtered.length;
+  const users = filtered.slice(0, visible);
+
+  // Back to the first chunk whenever the list being shown changes.
+  const showTab = (tab) => {
+    setActiveTab(tab);
+    setVisible(CHUNK);
+  };
 
   const handleEntityView = (user) => {
     setViewingUser(user);
@@ -96,27 +105,18 @@ const UserManagement = () => {
   const handleStatusToggle = async (user) => {
     const targetId = user.id || user._id;
     const currentStatus = user.status || 'active';
-    const newStatus = currentStatus === 'active' ? 'suspended' : 'active';
+    const newStatus = currentStatus === 'active' ? 'blocked' : 'active';
     const action = newStatus === 'active' ? 'Activated' : 'Restricted';
     
     try {
       await adminAPI.updateUserStatus(targetId, newStatus);
 
       // Immediately update React Query cache so the UI updates instantly
-      queryClient.setQueriesData({ queryKey: ['adminUsers'] }, (oldData) => {
-        if (!oldData) return oldData;
-        if (Array.isArray(oldData.users)) {
-          return {
-            ...oldData,
-            users: oldData.users.map((u) =>
-              (u._id === targetId || u.id === targetId)
-                ? { ...u, status: newStatus }
-                : u
-            ),
-          };
-        }
-        return oldData;
-      });
+      queryClient.setQueryData(['adminUsers'], (oldData) =>
+        Array.isArray(oldData)
+          ? oldData.map((u) => ((u._id === targetId || u.id === targetId) ? { ...u, status: newStatus } : u))
+          : oldData
+      );
 
       setViewingUser((prev) =>
         prev && (prev._id === targetId || prev.id === targetId)
@@ -142,7 +142,9 @@ const UserManagement = () => {
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-2 mb-1.5">
           <div>
             <h1 className="text-xl lg:text-2xl font-medium text-gray-800 tracking-tight">Customer Oversight</h1>
-            <p className="text-[12px] text-gray-500 tracking-tight">Global Management of Platform Users</p>
+            <p className="text-[12px] text-gray-500 tracking-tight">
+              Global Management of Platform Users{!loading && ` · ${counts.all} customer${counts.all === 1 ? '' : 's'} in total`}
+            </p>
           </div>
 
           <button
@@ -158,18 +160,18 @@ const UserManagement = () => {
         {/* Filters & Search Section */}
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-2.5 mb-2.5">
           <div className="flex items-center gap-1 bg-white/50 p-0.5 rounded-[12px] border border-gray-100 overflow-x-auto no-scrollbar">
-            <TabButton label="All" isActive={activeTab === 'all'} onClick={() => { setActiveTab('all'); setPage(1); }} />
-            <TabButton label="Active" isActive={activeTab === 'active'} onClick={() => { setActiveTab('active'); setPage(1); }} />
-            <TabButton label="Blocked" isActive={activeTab === 'suspended'} onClick={() => { setActiveTab('suspended'); setPage(1); }} />
+            <TabButton label={`All (${counts.all})`} isActive={activeTab === 'all'} onClick={() => showTab('all')} />
+            <TabButton label={`Active (${counts.active})`} isActive={activeTab === 'active'} onClick={() => showTab('active')} />
+            <TabButton label={`Blocked (${counts.blocked})`} isActive={activeTab === 'blocked'} onClick={() => showTab('blocked')} />
           </div>
 
           <div className="relative flex-1 max-w-md w-full">
             <SearchRoundedIcon className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" sx={{ fontSize: 18 }} />
             <input 
               type="text" 
-              placeholder="Search by name, phone or email..."
+              placeholder="Search by name, phone, email or city..."
               value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
+              onChange={(e) => { setSearchQuery(e.target.value); setVisible(CHUNK); }}
               className="w-full bg-white border border-gray-100 rounded-[12px] py-1.5 pl-11 pr-4 text-[12px] text-gray-800 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-[#5EB929]/10 focus:border-[#5EB929]/30 transition-all shadow-sm"
             />
           </div>
@@ -178,7 +180,7 @@ const UserManagement = () => {
         {/* Mobile-only Section Title */}
         <div className="lg:hidden mb-4">
           <h2 className="text-[15px] font-semibold text-gray-800">
-            {activeTab === 'suspended' ? 'Blocked Users' : 'Platform Users'} 
+            {activeTab === 'blocked' ? 'Blocked Users' : 'Platform Users'} 
             <span className="text-gray-400 ml-1">({total})</span>
           </h2>
         </div>
@@ -199,6 +201,23 @@ const UserManagement = () => {
                 onStatusToggle={() => handleStatusToggle(user)}
               />
             ))}
+            {total > users.length && (
+              <div className="flex flex-col sm:flex-row items-center justify-center gap-2 pt-2 pb-4">
+                <p className="text-[12px] text-gray-500">Showing {users.length} of {total}</p>
+                <button
+                  onClick={() => setVisible((v) => v + CHUNK)}
+                  className="px-4 py-2 rounded-[10px] bg-white border border-gray-200 text-[12px] font-medium text-gray-700 hover:border-[#5EB929]/40"
+                >
+                  Show {Math.min(CHUNK, total - users.length)} more
+                </button>
+                <button
+                  onClick={() => setVisible(total)}
+                  className="px-4 py-2 rounded-[10px] bg-[#5EB929] text-white text-[12px] font-medium"
+                >
+                  Show all {total}
+                </button>
+              </div>
+            )}
           </div>
         ) : (
           <div className="py-20 text-center bg-white rounded-3xl border border-dashed border-gray-200">
@@ -293,7 +312,7 @@ const UserManagement = () => {
                   </div>
                   <div className="py-4 flex justify-between items-center gap-4">
                     <span className="text-[13px] text-gray-500">Account Status</span>
-                    <span className={`text-[10px] font-bold px-3 py-1 rounded-full uppercase tracking-tight ${viewingUser.status === 'suspended' ? 'bg-red-50 text-red-500' : 'bg-green-50 text-green-600'}`}>
+                    <span className={`text-[10px] font-bold px-3 py-1 rounded-full uppercase tracking-tight ${viewingUser.status === 'blocked' ? 'bg-red-50 text-red-500' : 'bg-green-50 text-green-600'}`}>
                       {viewingUser.status || 'Active'}
                     </span>
                   </div>
@@ -334,13 +353,13 @@ const UserManagement = () => {
               <button 
                 onClick={() => handleStatusToggle(viewingUser)}
                 className={`flex-1 flex items-center justify-center gap-2 py-3.5 rounded-xl font-semibold text-[14px] transition-all shadow-sm ${
-                  viewingUser.status === 'suspended' 
+                  viewingUser.status === 'blocked' 
                     ? 'bg-green-50 border border-green-100 text-green-600 hover:bg-green-100' 
                     : 'bg-white border border-red-100 text-red-500 hover:bg-red-50'
                 }`}
               >
-                {viewingUser.status === 'suspended' ? <CheckCircleRoundedIcon sx={{ fontSize: 20 }} /> : <BlockRoundedIcon sx={{ fontSize: 20 }} />}
-                {viewingUser.status === 'suspended' ? 'Activate User' : 'Block User'}
+                {viewingUser.status === 'blocked' ? <CheckCircleRoundedIcon sx={{ fontSize: 20 }} /> : <BlockRoundedIcon sx={{ fontSize: 20 }} />}
+                {viewingUser.status === 'blocked' ? 'Activate User' : 'Block User'}
               </button>
             </div>
           </div>

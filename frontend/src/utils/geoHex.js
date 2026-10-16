@@ -7,7 +7,9 @@ const EARTH_RADIUS_METERS = 6371000;
 const HEXAGON_BEARINGS = [0, 60, 120, 180, 240, 300];
 
 export const MIN_ZONE_RADIUS_METERS = 100;
-export const MAX_ZONE_RADIUS_METERS = 5000;
+// Keep in step with MAX_ZONE_RADIUS_METERS in backend/src/utils/zones.js, which
+// clamps whatever is saved.
+export const MAX_ZONE_RADIUS_METERS = 10000;
 export const DEFAULT_ZONE_RADIUS_METERS = 800;
 export const ZONE_RADIUS_STEP_METERS = 25;
 

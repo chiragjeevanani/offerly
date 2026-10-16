@@ -20,7 +20,7 @@ import IncentiveSettings from '../models/IncentiveSettings.js';
 import { getCustomerSubscriptionSettings } from '../../../utils/customerSubscription.js';
 import { startWelcomeTrialOnApproval } from '../../merchant/services/merchantTrialService.js';
 import { invalidateFeedCache } from '../../../utils/feedCache.js';
-import { zoneIdForPoint, zonePath } from '../../../utils/zones.js';
+import { zoneIdForPoint, zonePath, MIN_ZONE_RADIUS_METERS, MAX_ZONE_RADIUS_METERS } from '../../../utils/zones.js';
 
 // ───────────────────────── DASHBOARD STATS ─────────────────────────
 
@@ -163,7 +163,8 @@ export const getDashboardStats = async (req, res) => {
 
 export const getAllUsers = async (req, res) => {
   try {
-    const users = await User.find().sort('-createdAt');
+    // Device push tokens are send credentials - the admin list has no use for them.
+    const users = await User.find().select('-fcmTokens').sort('-createdAt').lean();
     res.status(200).json({ success: true, count: users.length, data: users });
   } catch (err) {
     res.status(500).json({ success: false, error: 'Server Error' });
@@ -449,7 +450,7 @@ const sanitizeZones = (zones = []) =>
     .map((zone) => {
       const id = zone._id || zone.id;
       const center = toPoint(zone.center);
-      const radiusMeters = Math.min(5000, Math.max(100, Number(zone.radiusMeters) || 800));
+      const radiusMeters = Math.min(MAX_ZONE_RADIUS_METERS, Math.max(MIN_ZONE_RADIUS_METERS, Number(zone.radiusMeters) || 800));
       // The outline is always rebuilt from center + size, never trusted from the client.
       const path = center ? zonePath({ center, radiusMeters }) : [];
       return {
