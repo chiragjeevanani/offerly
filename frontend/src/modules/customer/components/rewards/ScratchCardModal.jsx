@@ -11,16 +11,21 @@ import SparklesIcon from '@mui/icons-material/AutoAwesomeRounded';
 import AccountBalanceWalletRoundedIcon from '@mui/icons-material/AccountBalanceWalletRounded';
 import toast from 'react-hot-toast';
 
-// One finger swipe across the card clears roughly a quarter of it, which is
-// enough to reveal - customers shouldn't have to rub the whole card away.
+// Customers shouldn't have to rub the whole card away: the reward opens after
+// three scratches (swipes), or sooner if they happen to clear a quarter of it.
 const SCRATCH_BRUSH = 64;
 const REVEAL_AT_PERCENT = 25;
+const SCRATCHES_TO_REVEAL = 3;
+// A swipe has to travel at least this far (px) to count, so a tap doesn't.
+const MIN_SWIPE_DISTANCE = 50;
 
 const ScratchCardModal = ({ isOpen, card, onClose, onScratched }) => {
   const canvasRef = useRef(null);
   const isDrawing = useRef(false);
   const lastPos = useRef(null);
   const progressQueued = useRef(false);
+  const swipeDistance = useRef(0);
+  const [scratchCount, setScratchCount] = useState(0);
   const [isRevealed, setIsRevealed] = useState(card?.status === 'scratched');
   const [copied, setCopied] = useState(false);
   const [scratchProgress, setScratchProgress] = useState(card?.status === 'scratched' ? 100 : 0);
@@ -34,6 +39,8 @@ const ScratchCardModal = ({ isOpen, card, onClose, onScratched }) => {
     const alreadyScratched = card.status === 'scratched';
     setIsRevealed(alreadyScratched);
     setScratchProgress(alreadyScratched ? 100 : 0);
+    setScratchCount(0);
+    swipeDistance.current = 0;
     setCopied(false);
 
     if (alreadyScratched) return;
@@ -101,6 +108,7 @@ const ScratchCardModal = ({ isOpen, card, onClose, onScratched }) => {
 
     ctx.beginPath();
     if (isDrawing.current && lastPos.current) {
+      swipeDistance.current += Math.hypot(x - lastPos.current.x, y - lastPos.current.y);
       ctx.moveTo(lastPos.current.x, lastPos.current.y);
       ctx.lineTo(x, y);
       ctx.stroke();
@@ -140,7 +148,8 @@ const ScratchCardModal = ({ isOpen, card, onClose, onScratched }) => {
     const totalSampled = pixels.length / 16;
     const percent = Math.round((transparentPixels / totalSampled) * 100);
     // Progress bar fills relative to the reveal point, not the whole card
-    setScratchProgress(Math.min(100, Math.round((percent / REVEAL_AT_PERCENT) * 100)));
+    const coverage = Math.min(100, Math.round((percent / REVEAL_AT_PERCENT) * 100));
+    setScratchProgress((prev) => Math.max(prev, coverage));
 
     if (percent >= REVEAL_AT_PERCENT && !isRevealed) {
       triggerFullReveal();
@@ -168,9 +177,25 @@ const ScratchCardModal = ({ isOpen, card, onClose, onScratched }) => {
     }
   };
 
+  // One finished swipe = one scratch. The third opens the card.
+  const endSwipe = () => {
+    if (!isDrawing.current) return;
+    isDrawing.current = false;
+    lastPos.current = null;
+    const counted = swipeDistance.current >= MIN_SWIPE_DISTANCE;
+    swipeDistance.current = 0;
+    if (!counted || isRevealed) return;
+
+    const next = scratchCount + 1;
+    setScratchCount(next);
+    setScratchProgress((prev) => Math.max(prev, Math.round((next / SCRATCHES_TO_REVEAL) * 100)));
+    if (next >= SCRATCHES_TO_REVEAL) triggerFullReveal();
+  };
+
   const handleMouseDown = (e) => {
     isDrawing.current = true;
     lastPos.current = null;
+    swipeDistance.current = 0;
     scratch(e.clientX, e.clientY);
   };
 
@@ -179,14 +204,12 @@ const ScratchCardModal = ({ isOpen, card, onClose, onScratched }) => {
     scratch(e.clientX, e.clientY);
   };
 
-  const handleMouseUp = () => {
-    isDrawing.current = false;
-    lastPos.current = null;
-  };
+  const handleMouseUp = endSwipe;
 
   const handleTouchStart = (e) => {
     isDrawing.current = true;
     lastPos.current = null;
+    swipeDistance.current = 0;
     const touch = e.touches[0];
     scratch(touch.clientX, touch.clientY);
   };
@@ -345,7 +368,9 @@ const ScratchCardModal = ({ isOpen, card, onClose, onScratched }) => {
               <div className="text-center">
                 <div className="flex items-center justify-center gap-1.5 text-xs font-semibold text-gray-500">
                   <SparklesIcon sx={{ fontSize: 15 }} className="text-primary" />
-                  Scratch the card to reveal your reward! ({scratchProgress}%)
+                  {scratchCount === 0
+                    ? 'Scratch the card 3 times to reveal your reward!'
+                    : `Scratch ${SCRATCHES_TO_REVEAL - scratchCount} more time${SCRATCHES_TO_REVEAL - scratchCount === 1 ? '' : 's'}!`}
                 </div>
                 <div className="w-full bg-gray-100 h-1.5 rounded-full mt-2 overflow-hidden">
                   <div
