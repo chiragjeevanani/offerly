@@ -117,6 +117,11 @@ export const getMerchants = async (req, res) => {
     query.category = req.query.category;
   }
 
+  // Filter by area (zone id) - same string check as above to keep operator objects out of the query
+  if (typeof req.query.zone === "string" && req.query.zone.trim()) {
+    query.zone = req.query.zone.trim();
+  }
+
   // Existing: Filter by status (only approved for non-admin)
   // Fix: Admins should see the filtered status even if it's not "approved"
   if (req.user && req.user.role === "admin") {

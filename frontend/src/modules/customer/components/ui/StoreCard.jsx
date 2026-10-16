@@ -54,6 +54,15 @@ const StoreCard = ({ merchant, offerCount, variant = 'row' }) => {
               <StarRoundedIcon sx={{ fontSize: 13 }} className="text-amber-400" />
               <span className="text-xs font-medium text-gray-600">{merchant.avgRating || '4.5'}</span>
             </div>
+            {merchant.distance && (
+              <>
+                <div className="w-1 h-1 bg-gray-300 rounded-full" />
+                <div className="flex items-center gap-0.5">
+                  <LocationOnRoundedIcon sx={{ fontSize: 12 }} className="text-gray-400" />
+                  <span className="text-xs font-normal text-gray-500">{merchant.distance}</span>
+                </div>
+              </>
+            )}
           </div>
         </div>
 

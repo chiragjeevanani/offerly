@@ -5,9 +5,11 @@ import SearchRoundedIcon from '@mui/icons-material/SearchRounded';
 import ChevronRightRoundedIcon from '@mui/icons-material/ChevronRightRounded';
 
 import { offerAPI } from '../../../../api/offer.api';
+import { merchantAPI } from '../../../../api/merchant.api';
 import { useCities, useCategories } from '../../../../hooks/useReferenceData';
 import { CategoryChip } from '../../components/ui/CategoryChip';
 import OfferCard from '../../components/ui/OfferCard';
+import StoreCard from '../../components/ui/StoreCard';
 import PageTransition from '../../components/ui/PageTransition';
 import { useApp } from '../../context/AppContext';
 
@@ -74,6 +76,34 @@ const Explore = () => {
 
   const offers = useMemo(() => data?.offers || [], [data]);
   const totalPages = data?.totalPages || 1;
+
+  // Shops follow the same city / category / area / search filters as the deals, and include shops
+  // with no live offer so the list matches the "partners" count on each area.
+  const { data: shopData, isLoading: isShopsLoading } = useQuery({
+    queryKey: ['explore-shops', cityFilter || 'no-city', selectedCategory, selectedZone, debouncedSearch, userLocation ? Number(userLocation.lat.toFixed(2)) : null],
+    queryFn: async () => {
+      if (!cityFilter) return { merchants: [] };
+      const response = await merchantAPI.getAll({
+        city: cityFilter,
+        zone: selectedZone || undefined,
+        category: selectedCategory !== 'All' ? selectedCategory : undefined,
+        q: debouncedSearch.trim() || undefined,
+        limit: 30,
+        userLat: userLocation?.lat,
+        userLng: userLocation?.lng,
+      });
+      return { merchants: response.merchants || [] };
+    },
+    placeholderData: keepPreviousData,
+  });
+
+  // Shops with live offers first, then by name
+  const shops = useMemo(
+    () => [...(shopData?.merchants || [])].sort(
+      (a, b) => (b.offerCount || 0) - (a.offerCount || 0) || (a.storeName || '').localeCompare(b.storeName || '')
+    ),
+    [shopData]
+  );
 
   // 3. Derived states (Memoized to prevent lag during typing)
   const trendingOffers = useMemo(() => offers.filter((o) => o.isTrending), [offers]);
@@ -151,13 +181,32 @@ const Explore = () => {
           <div className="flex flex-col">
             <p className="text-[9px] text-gray-400 font-bold uppercase tracking-widest leading-none">Discovery Results</p>
             <p className="text-[11px] text-gray-800 font-bold mt-0.5">
-              {isOffersLoading ? 'FETCHING...' : `${offers.length} DEALS IN ${cityFilter?.toUpperCase() || 'OFFERLY'}`}
+              {isOffersLoading || isShopsLoading
+                ? 'FETCHING...'
+                : `${shops.length} ${shops.length === 1 ? 'SHOP' : 'SHOPS'} · ${offers.length} ${offers.length === 1 ? 'DEAL' : 'DEALS'} IN ${cityFilter?.toUpperCase() || 'OFFERLY'}`}
             </p>
           </div>
         </div>
 
+        {/* Shops */}
+        {shops.length > 0 && (
+          <section>
+            <div className="flex items-center gap-2 mb-3">
+              <div className="h-1.5 w-1.5 rounded-full bg-[#5EB929] shadow-[0_0_8px_#5EB929]" />
+              <h2 className="text-[11px] font-bold text-gray-900 uppercase tracking-tight">
+                {selectedCategory !== 'All' ? `${selectedCategory} Shops` : 'Shops'}
+              </h2>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              {shops.map((shop) => (
+                <StoreCard key={shop._id || shop.id} merchant={shop} variant="row" offerCount={shop.offerCount} />
+              ))}
+            </div>
+          </section>
+        )}
+
         {/* Loader Skeletons */}
-        {isOffersLoading && !offers.length && (
+        {(isOffersLoading && !offers.length || isShopsLoading && !shops.length) && (
           <div className="space-y-3 pt-1">
             {[1, 2, 3].map(i => (
               <div key={i} className="h-24 bg-white rounded-2xl animate-pulse border border-gray-100" />
@@ -239,12 +288,12 @@ const Explore = () => {
             )}
 
             {/* Empty State */}
-            {offers.length === 0 && !isOffersLoading && (
+            {offers.length === 0 && !isOffersLoading && shops.length === 0 && !isShopsLoading && (
               <div className="flex flex-col items-center py-20 text-center">
                 <div className="w-16 h-16 bg-white rounded-2xl flex items-center justify-center mb-4 shadow-sm border border-gray-100">
                   <SearchRoundedIcon sx={{ fontSize: 32 }} className="text-gray-200" />
                 </div>
-                <h3 className="text-sm font-bold text-gray-800 uppercase tracking-tight">No deals found</h3>
+                <h3 className="text-sm font-bold text-gray-800 uppercase tracking-tight">No shops or deals found</h3>
                 <p className="text-[11px] text-gray-400 font-medium px-8 mt-1">
                   Try different keywords or check another city for the best offers.
                 </p>
