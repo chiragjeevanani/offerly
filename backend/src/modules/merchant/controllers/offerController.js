@@ -940,7 +940,7 @@ export const getOffers = async (req, res) => {
   }
 
   const offersQuery = Offer.find(query)
-    .populate('merchantId', 'storeName businessName verified coordinates city isOpen totalRedemptions subscriptionPlanId')
+    .populate('merchantId', 'storeName businessName verified coordinates city isOpen totalRedemptions subscriptionPlanId logo category avgRating totalReviews')
     .populate('productId', 'name price')
     .populate('servicePlanId', 'name price')
     .sort(sortObj)
@@ -991,6 +991,9 @@ export const getOffers = async (req, res) => {
         _id: offerObj.merchantId._id,
         storeName: offerObj.merchantId.storeName || offerObj.merchantId.businessName,
         verified: offerObj.merchantId.verified || false,
+        logo: offerObj.merchantId.logo || '',
+        category: offerObj.merchantId.category || '',
+        avgRating: offerObj.merchantId.avgRating || 0,
         coordinates: offerObj.merchantId.coordinates,
         city: offerObj.merchantId.city,
         isOpen: offerObj.merchantId.isOpen !== false,

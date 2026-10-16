@@ -5,8 +5,6 @@ import SearchRoundedIcon from '@mui/icons-material/SearchRounded';
 import ArrowBackRoundedIcon from '@mui/icons-material/ArrowBackRounded';
 import HistoryRoundedIcon from '@mui/icons-material/HistoryRounded';
 import SentimentDissatisfiedRoundedIcon from '@mui/icons-material/SentimentDissatisfiedRounded';
-import StorefrontRoundedIcon from '@mui/icons-material/StorefrontRounded';
-import LocalOfferRoundedIcon from '@mui/icons-material/LocalOfferRounded';
 import { offerAPI } from '../../../../api/offer.api';
 import { merchantAPI } from '../../../../api/merchant.api';
 import OfferCard from '../../components/ui/OfferCard';
@@ -84,20 +82,25 @@ const SearchResults = () => {
     };
   }, [query, cityFilter]);
 
-  // Each matching store with its offers (taken from the offer results, which
-  // include every active offer of a store whose name matches).
-  const storeResults = useMemo(
-    () =>
-      stores.map((store) => {
-        const id = String(store._id || store.id);
-        const storeOffers = results.filter(
-          (o) => String(o.merchant?._id || o.merchantId?._id || o.merchantId) === id
-        );
-        return { store, offers: storeOffers };
-      }),
-    [stores, results]
-  );
-  const matchCount = results.length + stores.length;
+  // Everything is shown under its store: the stores whose name matched, then
+  // stores that only showed up because one of their offers matched. Offers come
+  // from the offer results, which include every active offer of a store whose
+  // name matches.
+  const storeResults = useMemo(() => {
+    const offerStoreId = (o) => String(o.merchant?._id || o.merchantId?._id || o.merchantId);
+    const groups = new Map();
+    stores.forEach((store) => groups.set(String(store._id || store.id), { store, offers: [] }));
+    results.forEach((offer) => {
+      const id = offerStoreId(offer);
+      if (!groups.has(id)) {
+        // The offer carries a slim copy of its store - enough for the store row.
+        groups.set(id, { store: { ...offer.merchant, _id: id, id }, offers: [] });
+      }
+      groups.get(id).offers.push(offer);
+    });
+    return [...groups.values()];
+  }, [stores, results]);
+  const matchCount = storeResults.length;
   const resultsPending = isLoading || searchedTerm !== query.trim();
 
   return (
@@ -231,61 +234,31 @@ const SearchResults = () => {
                 </motion.div>
               ) : (
                 <div className="space-y-6">
-                  {/* Offers */}
-                  {results.length > 0 && (
-                    <section className="space-y-3">
-                      <h3 className="text-[11px] font-bold text-gray-900 uppercase tracking-widest flex items-center gap-1.5 px-1">
-                        <LocalOfferRoundedIcon sx={{ fontSize: 14 }} className="text-[#5EB929]" />
-                        Offers ({results.length})
-                      </h3>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                        {results.map((offer, idx) => (
-                          <motion.div
-                            key={offer._id || offer.id}
-                            initial={{ opacity: 0, y: 10 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            transition={{ delay: Math.min(idx, 8) * 0.05 }}
-                          >
-                            <OfferCard offer={offer} variant="list" viewSource="search" />
-                          </motion.div>
-                        ))}
-                      </div>
-                    </section>
-                  )}
-
-                  {/* Stores, each with its offers */}
-                  {storeResults.length > 0 && (
-                    <section className="space-y-3">
-                      <h3 className="text-[11px] font-bold text-gray-900 uppercase tracking-widest flex items-center gap-1.5 px-1">
-                        <StorefrontRoundedIcon sx={{ fontSize: 14 }} className="text-[#5EB929]" />
-                        Stores ({storeResults.length})
-                      </h3>
-                      <div className="space-y-4">
-                        {storeResults.map(({ store, offers }, idx) => (
-                          <motion.div
-                            key={store._id || store.id}
-                            initial={{ opacity: 0, y: 10 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            transition={{ delay: Math.min(idx, 6) * 0.05 }}
-                            className="space-y-2"
-                          >
-                            <StoreCard merchant={store} variant="row" offerCount={store.offerCount || offers.length} />
-                            {offers.length > 0 ? (
-                              <div className="flex gap-3 overflow-x-auto scrollbar-hide snap-x pb-1 pl-1 -mr-4 pr-4">
-                                {offers.map((offer) => (
-                                  <div key={offer._id || offer.id} className="w-[140px] flex-shrink-0 snap-start">
-                                    <OfferCard offer={offer} variant="grid" viewSource="search" />
-                                  </div>
-                                ))}
+                  {/* Each store with its offers right below it */}
+                  <div className="space-y-5">
+                    {storeResults.map(({ store, offers }, idx) => (
+                      <motion.div
+                        key={store._id || store.id}
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: Math.min(idx, 6) * 0.05 }}
+                        className="space-y-2"
+                      >
+                        <StoreCard merchant={store} variant="row" offerCount={store.offerCount || offers.length} />
+                        {offers.length > 0 ? (
+                          <div className="flex gap-3 overflow-x-auto scrollbar-hide snap-x pb-1 pl-1 -mr-4 pr-4">
+                            {offers.map((offer) => (
+                              <div key={offer._id || offer.id} className="w-[140px] flex-shrink-0 snap-start">
+                                <OfferCard offer={offer} variant="grid" viewSource="search" />
                               </div>
-                            ) : (
-                              <p className="text-[11px] text-gray-400 px-2">No live offers right now - tap the store to see its menu.</p>
-                            )}
-                          </motion.div>
-                        ))}
-                      </div>
-                    </section>
-                  )}
+                            ))}
+                          </div>
+                        ) : (
+                          <p className="text-[11px] text-gray-400 px-2">No live offers right now - tap the store to see its menu.</p>
+                        )}
+                      </motion.div>
+                    ))}
+                  </div>
                 </div>
               )}
             </div>
