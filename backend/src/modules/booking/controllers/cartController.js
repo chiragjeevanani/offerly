@@ -29,7 +29,7 @@ const calculateOfferlyExtraDiscount = async (cart, customerId) => {
 
 const populateCart = (query) =>
   query
-    .populate('merchantId', 'storeName logo address locality phone discountWallet coordinates')
+    .populate('merchantId', 'storeName logo address locality phone discountWallet coordinates deliveryOnly')
     .populate({
       path: 'items.product',
       select: 'name categoryId price offerPrice images isVeg foodType variantOptions trackInventory stock reserved',

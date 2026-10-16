@@ -158,6 +158,12 @@ const merchantSchema = new mongoose.Schema(
       enum: ['pending', 'approved', 'rejected'],
       default: 'pending',
     },
+    // Cloud kitchens and other stores with no counter: orders can only be
+    // home-delivered, never picked up / dined in (no QR passes). Product stores only.
+    deliveryOnly: {
+      type: Boolean,
+      default: false,
+    },
     // Manual open/closed toggle the merchant flips themselves - independent
     // of businessHours (that's a schedule; this is "are we taking orders right now").
     isOpen: {

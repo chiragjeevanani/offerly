@@ -24,6 +24,8 @@ import SpaRoundedIcon from '@mui/icons-material/SpaRounded';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 import SaveRoundedIcon from '@mui/icons-material/SaveRounded';
 import StorefrontRoundedIcon from '@mui/icons-material/StorefrontRounded';
+import LocalShippingRoundedIcon from '@mui/icons-material/LocalShippingRounded';
+import { useDeliveryConfig } from '../../../hooks/useDeliveryConfig';
 import PhotoCameraRoundedIcon from '@mui/icons-material/PhotoCameraRounded';
 import AddRoundedIcon from '@mui/icons-material/AddRounded';
 import { useEffect, useMemo, useState } from 'react';
@@ -142,8 +144,10 @@ const Profile = ({ merchant, onMerchantUpdate }) => {
     logo: merchant?.logo || '',
     extraPhones: merchant?.extraPhones || [],
     extraEmails: merchant?.extraEmails || [],
+    deliveryOnly: Boolean(merchant?.deliveryOnly),
   });
   const [uploadingCover, setUploadingCover] = useState(false);
+  const { config: deliveryConfig } = useDeliveryConfig();
   const [uploadingLogo, setUploadingLogo] = useState(false);
 
   useEffect(() => {
@@ -161,6 +165,7 @@ const Profile = ({ merchant, onMerchantUpdate }) => {
         logo: merchant.logo || '',
         extraPhones: merchant.extraPhones || [],
         extraEmails: merchant.extraEmails || [],
+        deliveryOnly: Boolean(merchant.deliveryOnly),
       });
     }
   }, [merchant]);
@@ -632,6 +637,46 @@ const Profile = ({ merchant, onMerchantUpdate }) => {
                     </button>
                   </div>
                 </div>
+
+                {/* How customers get their order - product stores only */}
+                {profileFormData.storeType === 'product_based' && (
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">How Customers Get Orders</label>
+                    <div className="grid grid-cols-2 gap-2.5" role="radiogroup" aria-label="How customers get orders">
+                      {[
+                        { value: false, label: 'Pickup & Delivery', hint: 'Customers can visit or order in', icon: StorefrontRoundedIcon },
+                        { value: true, label: 'Delivery Only', hint: 'Cloud kitchen, no pickup or dine-in', icon: LocalShippingRoundedIcon },
+                      ].map((opt) => {
+                        const active = profileFormData.deliveryOnly === opt.value;
+                        return (
+                          <button
+                            key={opt.label}
+                            type="button"
+                            role="radio"
+                            aria-checked={active}
+                            onClick={() => setProfileFormData((p) => ({ ...p, deliveryOnly: opt.value }))}
+                            className={`p-3 rounded-xl border text-left transition-all ${
+                              active ? 'border-[#5EB929] bg-[#5EB929]/5 text-gray-900' : 'border-gray-200 text-gray-600'
+                            }`}
+                          >
+                            <span className="flex items-center gap-2">
+                              <opt.icon sx={{ fontSize: 16 }} className={active ? 'text-[#5EB929]' : 'text-gray-400'} />
+                              <span className={`text-xs ${active ? 'font-bold' : 'font-semibold'}`}>{opt.label}</span>
+                            </span>
+                            <span className="block text-[10px] text-gray-400 mt-1 leading-snug">{opt.hint}</span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                    {profileFormData.deliveryOnly && (
+                      <p className={`text-[10px] font-semibold leading-relaxed ${deliveryConfig.enabled ? 'text-gray-500' : 'text-amber-600'}`}>
+                        {deliveryConfig.enabled
+                          ? 'Customers will only see Home Delivery for your store. No pickup QR passes will be issued.'
+                          : 'Home delivery is paused by Offerly right now, so customers can\'t order from your store until it is switched on.'}
+                      </p>
+                    )}
+                  </div>
+                )}
 
                 <div className="space-y-1.5">
                   <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Store Name</label>

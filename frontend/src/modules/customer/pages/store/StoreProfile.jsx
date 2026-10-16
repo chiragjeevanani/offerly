@@ -18,6 +18,7 @@ import {
   getProductsByMerchant,
 } from '../../data/localStorageUtils';
 import AccessTimeRoundedIcon from '@mui/icons-material/AccessTimeRounded';
+import LocalShippingRoundedIcon from '@mui/icons-material/LocalShippingRounded';
 import ExpandMoreRoundedIcon from '@mui/icons-material/ExpandMoreRounded';
 import { merchantAPI } from '../../../../api/merchant.api';
 import { productAPI } from '../../../../api/product.api';
@@ -311,6 +312,14 @@ const StoreProfilePage = () => {
                       <a key={email} href={`mailto:${email}`} className="font-medium text-gray-700 break-all">{email}</a>
                     ))}
                   </div>
+                </div>
+              )}
+
+              {merchant.deliveryOnly && (
+                <div className="pt-3 border-t border-gray-50 flex items-center gap-3">
+                  <LocalShippingRoundedIcon sx={{ fontSize: 18 }} className="text-[#5EB929]" />
+                  <span className="text-sm font-bold text-gray-800">Delivery only</span>
+                  <span className="text-xs font-medium text-gray-400">No pickup or dine-in</span>
                 </div>
               )}
 

@@ -111,7 +111,10 @@ const CartView = () => {
   // Pickup or home delivery. Delivery is offered only while the admin has it on.
   const { config: deliveryConfig } = useDeliveryConfig();
   const [method, setMethodState] = useState(getFulfillment);
-  const fulfillment = deliveryConfig.enabled ? method : 'pickup';
+  // A delivery-only store (cloud kitchen) can't be picked up from.
+  const deliveryOnly = Boolean(merchant?.deliveryOnly);
+  const fulfillment = deliveryOnly ? 'delivery' : deliveryConfig.enabled ? method : 'pickup';
+  const cannotOrder = deliveryOnly && !deliveryConfig.enabled;
   const chooseMethod = (next) => {
     setFulfillment(next);
     setMethodState(next);
@@ -515,8 +518,31 @@ const CartView = () => {
              </div>
           </div>
 
+          {/* Delivery-only store */}
+          {deliveryOnly && (
+            <div className={`rounded-[2rem] p-5 border flex items-center gap-3 ${cannotOrder ? 'bg-amber-50 border-amber-200' : 'bg-white border-gray-50 shadow-sm'}`}>
+              <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${cannotOrder ? 'bg-amber-100 text-amber-700' : 'bg-[#5EB929] text-white'}`}>
+                <LocalShippingRoundedIcon sx={{ fontSize: 20 }} />
+              </div>
+              <div className="min-w-0">
+                <p className="text-[12px] font-bold text-gray-900">Delivery only</p>
+                <p className={`text-[11px] font-semibold ${cannotOrder ? 'text-amber-700' : 'text-gray-500'}`}>
+                  {cannotOrder
+                    ? "This store only delivers, and delivery isn't available right now. Please check back later."
+                    : `This store doesn't offer pickup or dine-in. ${deliveryPricing.freeDelivery || !deliveryConfig.deliveryFee ? 'Free delivery.' : `₹${deliveryConfig.deliveryFee} delivery fee.`}`}
+                </p>
+                {!cannotOrder && deliveryPricing.toFreeDelivery > 0 && (
+                  <p className="mt-1 text-[11px] font-semibold text-gray-600">
+                    Add items worth <span className="font-black text-gray-900">₹{deliveryPricing.toFreeDelivery}</span> more for{' '}
+                    <span className="font-black text-[#4E9F1F]">free delivery</span>.
+                  </p>
+                )}
+              </div>
+            </div>
+          )}
+
           {/* Pickup or delivery */}
-          {deliveryConfig.enabled && (
+          {deliveryConfig.enabled && !deliveryOnly && (
             <div className="bg-white rounded-[2rem] p-5 shadow-sm border border-gray-50">
               <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest mb-3">How do you want it?</p>
               <div className="grid grid-cols-2 gap-3" role="radiogroup" aria-label="Pickup or delivery">
@@ -776,7 +802,8 @@ const CartView = () => {
               <motion.button
                 whileTap={{ scale: 0.98 }}
                 onClick={handleProceed}
-                className="w-full bg-gray-900 text-white rounded-xl py-4 font-bold text-[11px] uppercase tracking-[0.25em] flex items-center justify-center gap-3 shadow-2xl shadow-black/20 active:scale-95 transition-all"
+                disabled={cannotOrder}
+                className="w-full disabled:opacity-40 disabled:pointer-events-none bg-gray-900 text-white rounded-xl py-4 font-bold text-[11px] uppercase tracking-[0.25em] flex items-center justify-center gap-3 shadow-2xl shadow-black/20 active:scale-95 transition-all"
               >
                 {fulfillment === 'delivery' ? (
                   <>

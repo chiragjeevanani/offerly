@@ -786,6 +786,12 @@ export const updateMyStore = async (req, res) => {
     merchant.isOpen = Boolean(req.body.isOpen);
   }
 
+  if ("deliveryOnly" in req.body) {
+    merchant.deliveryOnly = Boolean(req.body.deliveryOnly);
+  }
+  // Only products can be delivered, so a service store can't be delivery-only.
+  if (merchant.storeType === "service_based") merchant.deliveryOnly = false;
+
   // A merchant's zone is never changed from here: once set at registration,
   // only an admin can move a store to another zone (PUT /admin/merchants/:id/zone).
 

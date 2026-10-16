@@ -158,12 +158,17 @@ export const createRedemption = async (req, res) => {
     }
 
     // The store must be live: approved, inside its membership, and open.
-    const merchantDoc = await Merchant.findById(merchantId).select('status isOpen discountWallet city coordinates');
+    const merchantDoc = await Merchant.findById(merchantId).select('status isOpen discountWallet city coordinates deliveryOnly');
     if (!merchantDoc || merchantDoc.status !== 'approved' || !(await hasActiveMerchantSubscription(merchantDoc._id))) {
       return res.status(400).json({ success: false, error: 'This store is not accepting bookings right now', code: 'STORE_UNAVAILABLE' });
     }
     if (merchantDoc.isOpen === false) {
       return res.status(400).json({ success: false, error: 'This store is closed for now', code: 'STORE_CLOSED' });
+    }
+
+    // A delivery-only store (cloud kitchen) has no counter to collect from.
+    if (!isDelivery && merchantDoc.deliveryOnly) {
+      return res.status(400).json({ success: false, error: 'This store only delivers. Please choose Home Delivery.', code: 'DELIVERY_ONLY' });
     }
 
     // Delivery: switched on by the admin, a payment mode they allow, and

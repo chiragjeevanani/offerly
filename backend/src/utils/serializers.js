@@ -83,6 +83,7 @@ export const serializeMerchant = (merchant) => ({
   photos: merchant?.photos || [],
   verified: Boolean(merchant?.verified),
   isOpen: merchant?.isOpen !== false,
+  deliveryOnly: Boolean(merchant?.deliveryOnly),
   status: merchant?.status || 'pending',
   subscriptionPlanId: objectIdToString(merchant?.subscriptionPlanId),
   walletBalance: merchant?.discountWallet?.balance || 0,
