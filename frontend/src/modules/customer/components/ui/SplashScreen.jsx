@@ -176,7 +176,7 @@ const SplashScreen = ({ onFinish, duration = 2200, forceShow = false }) => {
         setTimeout(() => {
           setIsExiting(true);
           restoreSystemBars();
-        }, 220);
+        }, 100);
       }
     };
 
@@ -193,7 +193,7 @@ const SplashScreen = ({ onFinish, duration = 2200, forceShow = false }) => {
           exit={{ 
             opacity: 0,
             scale: 1.02,
-            transition: { duration: 0.4, ease: [0.22, 1, 0.36, 1] }
+            transition: { duration: 0.25, ease: [0.22, 1, 0.36, 1] }
           }}
           className="fixed inset-0 z-[99999] flex items-center justify-center bg-gradient-to-b from-[#FAFEF7] via-[#F4FBF1] to-[#E2F5DC] select-none overflow-hidden touch-none"
           style={{
@@ -217,7 +217,7 @@ const SplashScreen = ({ onFinish, duration = 2200, forceShow = false }) => {
             
             {/* Ultra high-resolution Retina splash screen background artwork */}
             <picture className="absolute inset-0 w-full h-full pointer-events-none select-none">
-              <source srcSet="/splash-screen-clean@3x.webp?v=6" type="image/webp" />
+              <source srcSet="/splash-screen-clean@2x.webp?v=7" type="image/webp" />
               <img
                 src="/splash-screen-clean@3x.png?v=6"
                 alt="Offerly Splash Screen"

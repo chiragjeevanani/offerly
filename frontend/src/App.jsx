@@ -131,7 +131,7 @@ const AppRoutes = () => {
     <>
       {showSplash && !isBusinessRoute && (
         <SplashScreen
-          duration={1500}
+          duration={800}
           onFinish={() => {
             markSplashSeen();
             setShowSplash(false);

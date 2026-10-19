@@ -40,8 +40,8 @@ messaging.onBackgroundMessage((payload) => {
 
   self.registration.showNotification(data.title || 'Offerly', {
     body: data.body || '',
-    icon: '/offerly-logo-ring.png',
-    badge: '/offerly-logo-ring.png',
+    icon: '/offerly-icon-192.png',
+    badge: '/offerly-icon-192.png',
     tag: data.type || 'offerly',
     data: { link: data.link || '/notifications' },
   });

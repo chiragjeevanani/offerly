@@ -11,19 +11,19 @@
   "background_color": "#EAF7E8",
   "icons": [
     {
-      "src": "/offerly-logo-ring.png",
+      "src": "/offerly-icon-192.png",
       "sizes": "192x192",
       "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "/offerly-logo-ring.png",
+      "src": "/offerly-icon-512.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "/offerly-logo-ring.png",
+      "src": "/offerly-icon-512.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "maskable"

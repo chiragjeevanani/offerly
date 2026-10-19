@@ -70,7 +70,7 @@ const SubscriptionRenewal = ({ merchant }) => {
           currency: res.currency,
           name: 'Offerly Premium',
           description: `Subscription for ${plan.name}`,
-          image: '/offerly-logo-ring.png',
+          image: '/offerly-icon-192.png',
           order_id: res.orderId,
           handler: async function (response) {
             const verifyingToast = toast.loading('Verifying transaction...');

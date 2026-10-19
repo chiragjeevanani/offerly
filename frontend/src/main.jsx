@@ -67,3 +67,7 @@ createRoot(document.getElementById('root')).render(
     </QueryClientProvider>
   </StrictMode>,
 )
+
+// The static splash in index.html only covers the JS download; React's own
+// SplashScreen is on top by now, so drop it after the first frame.
+requestAnimationFrame(() => requestAnimationFrame(() => document.getElementById('boot-splash')?.remove()))
