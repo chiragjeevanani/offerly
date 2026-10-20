@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useParams, useNavigate, Navigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { toast } from 'react-hot-toast';
@@ -7,21 +7,26 @@ import StorefrontRoundedIcon from '@mui/icons-material/StorefrontRounded';
 import AddRoundedIcon from '@mui/icons-material/AddRounded';
 import RemoveRoundedIcon from '@mui/icons-material/RemoveRounded';
 import ChevronRightRoundedIcon from '@mui/icons-material/ChevronRightRounded';
+import ZoomInRoundedIcon from '@mui/icons-material/ZoomInRounded';
 import { merchantAPI } from '../../../../api/merchant.api';
 import { productAPI } from '../../../../api/product.api';
 import { cartAPI } from '../../../../api/cart.api';
 import PageTransition from '../../components/ui/PageTransition';
 import FoodTypeMark, { getFoodType } from '../../../../components/ui/FoodTypeMark';
+import ImageZoomViewer from '../../../../components/ui/ImageZoomViewer';
 import { shouldShowVegIndicator } from '../../../../utils/storeTypeHelper';
 import { storeCache } from './storeCache';
 import { useStoreCart, useGoToCart, StoreCartDialogs, EMPTY_CART } from '../../hooks/useStoreCart';
 
 const rupees = (n) => `₹${Math.round(Number(n) || 0).toLocaleString('en-IN')}`;
 
-// Swipeable images with dots and thumbnails, like a shop's product gallery
+// Swipeable images with dots and thumbnails, like a shop's product gallery.
+// Tapping a photo opens it full screen to zoom.
 const Gallery = ({ images, name }) => {
   const [index, setIndex] = useState(0);
   const [failed, setFailed] = useState({});
+  const [viewerAt, setViewerAt] = useState(null);
+  const closeViewer = useCallback(() => setViewerAt(null), []);
   const trackRef = useRef(null);
   const shown = images.filter((src) => src && !failed[src]);
 
@@ -39,7 +44,7 @@ const Gallery = ({ images, name }) => {
   }
 
   return (
-    <div className="bg-white">
+    <div className="bg-white relative">
       <div
         ref={trackRef}
         onScroll={(e) => {
@@ -49,17 +54,29 @@ const Gallery = ({ images, name }) => {
         className="flex overflow-x-auto snap-x snap-mandatory scrollbar-hide"
         style={{ scrollbarWidth: 'none' }}
       >
-        {shown.map((src) => (
-          <div key={src} className="w-full shrink-0 snap-center aspect-[4/3] max-h-[42vh] flex items-center justify-center bg-white">
+        {shown.map((src, i) => (
+          <button
+            key={src}
+            type="button"
+            aria-label={`Zoom photo ${i + 1}`}
+            onClick={() => setViewerAt(i)}
+            className="w-full shrink-0 snap-center aspect-[4/3] max-h-[42vh] flex items-center justify-center bg-white cursor-zoom-in"
+          >
             <img
               src={src}
               alt={name}
               className="w-full h-full object-contain"
               onError={() => setFailed((f) => ({ ...f, [src]: true }))}
             />
-          </div>
+          </button>
         ))}
       </div>
+      <span className="pointer-events-none absolute right-3 top-3 w-8 h-8 rounded-full bg-black/45 text-white flex items-center justify-center">
+        <ZoomInRoundedIcon sx={{ fontSize: 20 }} />
+      </span>
+      {viewerAt !== null && (
+        <ImageZoomViewer images={shown} startIndex={viewerAt} alt={name} onClose={closeViewer} />
+      )}
       {shown.length > 1 && (
         <>
           <div className="flex justify-center gap-1.5 py-2.5">
