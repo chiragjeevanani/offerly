@@ -7,6 +7,8 @@ import LocationOnRoundedIcon from '@mui/icons-material/LocationOnRounded';
 import PhoneRoundedIcon from '@mui/icons-material/PhoneRounded';
 import EmailRoundedIcon from '@mui/icons-material/EmailRounded';
 import BlueTick from '../../../../components/ui/BlueTick';
+import ShareRoundedIcon from '@mui/icons-material/ShareRounded';
+import { SITE_URL, shareOrCopy } from '../../../../utils/share';
 import ShoppingCartRoundedIcon from '@mui/icons-material/ShoppingCartRounded';
 import ArrowForwardRoundedIcon from '@mui/icons-material/ArrowForwardRounded';
 import AddRoundedIcon from '@mui/icons-material/AddRounded';
@@ -215,6 +217,18 @@ const StoreProfilePage = () => {
   const storeEmails = [...new Set([merchant.email, ...(merchant.extraEmails || [])].filter(Boolean))];
   const storePhotos = [...new Set([merchant.coverImage, ...(merchant.photos || [])].filter(Boolean))];
 
+  // The short link (getofferly.in/<slug>) when the store has one.
+  const shareStore = async () => {
+    const url = merchant.slug ? `${SITE_URL}/${merchant.slug}` : `${SITE_URL}/store/${merchant._id || merchant.id}`;
+    const result = await shareOrCopy({
+      title: merchant.storeName,
+      text: `Check out ${merchant.storeName} on Offerly - see their offers and deals`,
+      url,
+    });
+    if (result === 'copied') toast.success('Store link copied - paste it anywhere to share');
+    if (result === 'failed') toast.error("Couldn't share this store");
+  };
+
   return (
     <PageTransition>
       <div className="pb-32">
@@ -229,6 +243,14 @@ const StoreProfilePage = () => {
             }}
           />
           <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
+          <button
+            type="button"
+            onClick={shareStore}
+            aria-label="Share this store"
+            className="absolute top-3 right-3 w-10 h-10 rounded-full bg-black/45 backdrop-blur-sm text-white flex items-center justify-center active:scale-95 transition-transform"
+          >
+            <ShareRoundedIcon sx={{ fontSize: 19 }} />
+          </button>
         </div>
 
         {/* Store info */}
