@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useLocation, useNavigate, Navigate } from 'react-router-dom';
+import { Link, useLocation, useNavigate, Navigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { cityAPI } from '../../../api/city.api';
 import { deliveryAPI } from '../../../api/delivery.api';
@@ -183,6 +183,11 @@ const PartnerSignup = () => {
             </div>
           </Card>
 
+          <p className="text-center text-[11px] font-medium text-gray-500">
+            By submitting you agree to the{' '}
+            <Link to="/delivery/terms" className="font-bold text-[#5EB929]">Partner Terms</Link> and{' '}
+            <Link to="/delivery/privacy" className="font-bold text-[#5EB929]">Privacy Policy</Link>.
+          </p>
           <PrimaryButton type="submit" loading={Boolean(saving)} className="w-full">
             Submit Application
           </PrimaryButton>

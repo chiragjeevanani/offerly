@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import toast from 'react-hot-toast';
 import SmartphoneRoundedIcon from '@mui/icons-material/SmartphoneRounded';
@@ -146,6 +146,11 @@ const PartnerLogin = () => {
             </div>
           </motion.div>
 
+          <p className="text-center text-[10px] font-bold text-gray-400">
+            <Link to="/delivery/terms" className="text-gray-500">Partner Terms</Link>
+            {' · '}
+            <Link to="/delivery/privacy" className="text-gray-500">Privacy Policy</Link>
+          </p>
           <p className="text-center text-[10px] font-bold text-gray-400">
             Shopping on Offerly? <a href="/login" className="text-[#5EB929]">Open the customer app</a>
           </p>

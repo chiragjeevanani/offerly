@@ -6,6 +6,9 @@ import VerifiedRoundedIcon from '@mui/icons-material/VerifiedRounded';
 import SupportAgentRoundedIcon from '@mui/icons-material/SupportAgentRounded';
 import PhoneRoundedIcon from '@mui/icons-material/PhoneRounded';
 import EditRoundedIcon from '@mui/icons-material/EditRounded';
+import DescriptionRoundedIcon from '@mui/icons-material/DescriptionRounded';
+import ChevronRightRoundedIcon from '@mui/icons-material/ChevronRightRounded';
+import { Link } from 'react-router-dom';
 import { useApp } from '../../customer/context/AppContext';
 import { deliveryAPI } from '../../../api/delivery.api';
 import { supportAPI } from '../../../api/support.api';
@@ -138,6 +141,18 @@ const PartnerProfile = ({ partner }) => {
           </a>
         </Card>
       )}
+
+      <Card className="divide-y divide-gray-50">
+        {[
+          ['/delivery/terms', 'Partner Terms'],
+          ['/delivery/privacy', 'Privacy Policy'],
+        ].map(([to, label]) => (
+          <Link key={to} to={to} className="flex items-center justify-between px-4 py-3.5 text-[13px] font-bold text-gray-800">
+            <span className="flex items-center gap-3"><DescriptionRoundedIcon sx={{ fontSize: 18 }} className="text-gray-400" /> {label}</span>
+            <ChevronRightRoundedIcon sx={{ fontSize: 18 }} className="text-gray-300" />
+          </Link>
+        ))}
+      </Card>
 
       <PrimaryButton variant="danger" className="w-full" onClick={signOut}>
         <LogoutRoundedIcon sx={{ fontSize: 18 }} /> Sign Out

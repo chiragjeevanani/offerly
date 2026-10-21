@@ -20,6 +20,7 @@ const PartnerOrderDetail = lazy(() => import('./pages/PartnerOrderDetail'));
 const PartnerHistory = lazy(() => import('./pages/PartnerHistory'));
 const PartnerEarnings = lazy(() => import('./pages/PartnerEarnings'));
 const PartnerProfile = lazy(() => import('./pages/PartnerProfile'));
+const PartnerLegal = lazy(() => import('./pages/PartnerLegal'));
 
 const Loader = () => (
   <div className="min-h-screen bg-[#F8FAFC] flex items-center justify-center">
@@ -136,9 +137,21 @@ const SignedInApp = () => {
   );
 };
 
+// Terms and Privacy open for everyone - signed out, pending approval or approved.
+const LEGAL_DOCS = { '/delivery/terms': 'terms', '/delivery/privacy': 'privacy' };
+
 const DeliveryPartnerApp = () => {
   const { user, isLoggedIn, authStatus } = useApp();
+  const location = useLocation();
+  const legalDoc = LEGAL_DOCS[location.pathname.replace(/\/$/, '')];
 
+  if (legalDoc) {
+    return (
+      <Suspense fallback={<Loader />}>
+        <PartnerLegal doc={legalDoc} />
+      </Suspense>
+    );
+  }
   if (authStatus === 'loading') return <Loader />;
 
   const isPartner = isLoggedIn && (user?.type === 'delivery' || user?.role === 'delivery');
