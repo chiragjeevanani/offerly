@@ -8,6 +8,8 @@ import AddRoundedIcon from '@mui/icons-material/AddRounded';
 import RemoveRoundedIcon from '@mui/icons-material/RemoveRounded';
 import ChevronRightRoundedIcon from '@mui/icons-material/ChevronRightRounded';
 import ZoomInRoundedIcon from '@mui/icons-material/ZoomInRounded';
+import ShareRoundedIcon from '@mui/icons-material/ShareRounded';
+import { SITE_URL, shareOrCopy } from '../../../../utils/share';
 import { merchantAPI } from '../../../../api/merchant.api';
 import { productAPI } from '../../../../api/product.api';
 import { cartAPI } from '../../../../api/cart.api';
@@ -194,6 +196,18 @@ const ProductDetailPage = () => {
   const price = Number(product.price) || 0;
   const offerPrice = Number(product.offerPrice) || price;
   const percentOff = price > 0 && offerPrice < price ? Math.round(((price - offerPrice) / price) * 100) : 0;
+
+  const shareProduct = async () => {
+    const url = `${SITE_URL}/store/${storeId}/product/${productId}`;
+    const deal = percentOff > 0 ? ` for ${rupees(offerPrice)} (${percentOff}% off)` : ` for ${rupees(offerPrice)}`;
+    const result = await shareOrCopy({
+      title: product.name,
+      text: `${product.name}${deal}${merchant?.storeName ? ` at ${merchant.storeName}` : ""} on Offerly`,
+      url,
+    });
+    if (result === 'copied') toast.success('Link copied - paste it anywhere to share');
+    if (result === 'failed') toast.error("Couldn't share this product");
+  };
   const foodType = shouldShowVegIndicator(merchant, product) ? getFoodType(product) : null;
   const images = [...new Set([...(product.images || []), product.image].filter(Boolean))];
 
@@ -211,7 +225,17 @@ const ProductDetailPage = () => {
         {/* Name, price, stock */}
         <div className="bg-white px-4 pt-4 pb-5 border-b border-gray-100 space-y-2">
           {foodType && <FoodTypeMark type={foodType} size={14} />}
-          <h1 className="text-lg font-bold text-gray-900 leading-snug">{product.name}</h1>
+          <div className="flex items-start justify-between gap-3">
+            <h1 className="text-lg font-bold text-gray-900 leading-snug">{product.name}</h1>
+            <button
+              type="button"
+              onClick={shareProduct}
+              aria-label="Share this product"
+              className="shrink-0 w-10 h-10 -mt-1 rounded-full bg-gray-50 border border-gray-100 text-gray-700 flex items-center justify-center active:scale-95 transition-transform"
+            >
+              <ShareRoundedIcon sx={{ fontSize: 19 }} />
+            </button>
+          </div>
           {product.categoryName && product.categoryName !== 'Uncategorized' && (
             <p className="text-xs font-medium text-gray-400">{product.categoryName}</p>
           )}

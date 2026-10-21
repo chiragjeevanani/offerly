@@ -9,7 +9,7 @@ import PushNotificationBridge from './components/common/PushNotificationBridge';
 import SplashScreen from './modules/customer/components/ui/SplashScreen';
 import { useRewardsEnabled } from './hooks/useRewardsEnabled';
 import { customerPageLoaders as pages, preloadCustomerPages } from './routes/customerPages';
-import { takeAfterLogin } from './utils/afterLogin';
+import { rememberAfterLogin, takeAfterLogin } from './utils/afterLogin';
 
 // Loading Component
 const PageLoader = () => (
@@ -59,10 +59,17 @@ const MerchantApp = lazy(() => import('./modules/merchant/MerchantApp'));
 const DeliveryPartnerApp = lazy(() => import('./modules/delivery/DeliveryPartnerApp'));
 const AdminApp = lazy(() => import('./modules/admin/AdminApp'));
 
+// Pages people share links to: a logged-out visitor comes back here after login.
+const SHARED_PAGE = /^\/(store|offer)\//;
+
 const ProtectedRoute = ({ children }) => {
   const { isLoggedIn, authStatus } = useApp();
+  const location = useLocation();
   if (authStatus === 'loading') {
     return <PageLoader />;
+  }
+  if (!isLoggedIn && SHARED_PAGE.test(location.pathname)) {
+    rememberAfterLogin(location.pathname); // idempotent, so fine during render
   }
   return isLoggedIn ? children : <Navigate to="/login" replace />;
 };

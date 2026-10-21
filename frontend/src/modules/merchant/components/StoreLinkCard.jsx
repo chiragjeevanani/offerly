@@ -6,30 +6,10 @@ import CheckRoundedIcon from '@mui/icons-material/CheckRounded';
 import ShareRoundedIcon from '@mui/icons-material/ShareRounded';
 import WhatsAppIcon from '@mui/icons-material/WhatsApp';
 
+import { SITE_URL, copyText, shareOrCopy } from '../../../utils/share';
+
 // The store's short link (getofferly.in/<slug>) with copy / share buttons, so the
 // merchant can send customers straight to their store page.
-
-// Always the public site: inside the Android app the page's own origin can be a
-// local WebView address. Local dev keeps its own origin so links can be tried.
-const SITE_URL = import.meta.env.DEV ? window.location.origin : 'https://getofferly.in';
-const copyText = async (text) => {
-  try {
-    await navigator.clipboard.writeText(text);
-    return true;
-  } catch {
-    // Older WebViews: fall back to a hidden textarea.
-    const area = document.createElement('textarea');
-    area.value = text;
-    area.setAttribute('readonly', '');
-    area.style.position = 'fixed';
-    area.style.opacity = '0';
-    document.body.appendChild(area);
-    area.select();
-    const ok = document.execCommand('copy');
-    area.remove();
-    return ok;
-  }
-};
 
 const StoreLinkCard = ({ merchant }) => {
   const [copied, setCopied] = useState(false);
@@ -50,15 +30,9 @@ const StoreLinkCard = ({ merchant }) => {
   };
 
   const share = async () => {
-    if (navigator.share) {
-      try {
-        await navigator.share({ title: merchant.storeName, text: message, url });
-      } catch {
-        // Closed the share sheet - nothing to do.
-      }
-    } else {
-      copy();
-    }
+    const result = await shareOrCopy({ title: merchant.storeName, text: message, url });
+    if (result === 'copied') toast.success('Store link copied');
+    if (result === 'failed') toast.error('Could not copy - press and hold the link to copy it');
   };
 
   return (
