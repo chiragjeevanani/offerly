@@ -356,7 +356,7 @@ const QrScreen = () => {
               <div className="bg-[#F8FAFC] rounded-3xl p-6 border border-gray-50 mb-6">
                 {draftReferralDiscount > 0 && (
                   <div className="flex justify-between items-center mb-3 pb-3 border-b border-dashed border-gray-200">
-                    <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Referral Points</p>
+                    <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Points</p>
                     <p className="text-[12px] font-bold text-[#5EB929]">-₹{draftReferralDiscount}</p>
                   </div>
                 )}
@@ -485,7 +485,7 @@ const QrScreen = () => {
 
                   {booking.totals?.referralDiscount > 0 && (
                     <div className="flex justify-between items-center text-[10px] mb-1.5">
-                      <span className="font-bold text-[#5EB929]">Referral Points Used</span>
+                      <span className="font-bold text-[#5EB929]">Points Used</span>
                       <span className="font-bold text-[#5EB929]">-₹{Math.round(booking.totals.referralDiscount)}</span>
                     </div>
                   )}

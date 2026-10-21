@@ -415,7 +415,7 @@ const DeliveryCheckout = () => {
               <Row label="Item total (MRP)" value={`₹${base}`} />
               {storeDiscount > 0 && <Row label="Store discount" value={`- ₹${storeDiscount}`} green />}
               {bonus > 0 && <Row label={cart.offerlyBonusLabel || 'Offerly bonus'} value={`- ₹${bonus}`} green />}
-              {points > 0 && <Row label="Referral points" value={`- ₹${points}`} green />}
+              {points > 0 && <Row label="Points" value={`- ₹${points}`} green />}
               <Row
                 label="Delivery fee"
                 value={pricing.fee > 0 ? `+ ₹${pricing.fee}` : 'FREE'}

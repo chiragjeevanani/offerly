@@ -719,7 +719,7 @@ const CartView = () => {
                )}
                {referralDiscount > 0 && (
                  <div className="flex justify-between items-center">
-                   <span className="text-[12px] font-bold text-gray-500 uppercase tracking-tight">Referral Points</span>
+                   <span className="text-[12px] font-bold text-gray-500 uppercase tracking-tight">Points</span>
                    <span className="text-[13px] font-bold text-[#5EB929]">- ₹{referralDiscount}</span>
                  </div>
                )}
@@ -743,7 +743,7 @@ const CartView = () => {
 
              {availablePoints > 0 && payableBeforePoints > 0 && belowCreditMinimum && (
                <p className="mb-4 text-[11px] font-semibold text-gray-500">
-                 Add ₹{Math.round(creditRules.minOrderValue - totalOfferPrice)} more to use your {availablePoints} referral points.
+                 Add ₹{Math.round(creditRules.minOrderValue - totalOfferPrice)} more to use your {availablePoints} points.
                </p>
              )}
 
@@ -768,8 +768,10 @@ const CartView = () => {
                    )}
                  </span>
                  <span className="text-[12px] font-semibold text-gray-700">
-                   Use {usablePoints} referral points
-                   <span className="text-gray-400 font-medium"> ({availablePoints} available)</span>
+                   Use available points
+                   <span className="text-gray-400 font-medium">
+                     {" "}({usablePoints < availablePoints ? `${usablePoints} of ${availablePoints}` : availablePoints})
+                   </span>
                  </span>
                </label>
              )}

@@ -275,7 +275,7 @@ const EditBookingItemsSheet = ({ booking, merchantId, onClose, onSaved }) => {
           )}
           {referralDiscount > 0 && (
             <div className="flex justify-between text-[11px] font-bold text-[#5EB929] mb-1">
-              <span>Referral Points</span>
+              <span>Points</span>
               <span>-₹{referralDiscount}</span>
             </div>
           )}

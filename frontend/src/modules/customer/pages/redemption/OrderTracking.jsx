@@ -350,7 +350,7 @@ const OrderTracking = () => {
                 <div className="flex justify-between text-[#5EB929]"><span>{order.totals.bonusLabel || 'Offerly bonus'}</span><span>- ₹{Math.round(order.totals.walletDiscount)}</span></div>
               )}
               {order.totals?.referralDiscount > 0 && (
-                <div className="flex justify-between text-[#5EB929]"><span>Referral points</span><span>- ₹{Math.round(order.totals.referralDiscount)}</span></div>
+                <div className="flex justify-between text-[#5EB929]"><span>Points</span><span>- ₹{Math.round(order.totals.referralDiscount)}</span></div>
               )}
               <div className="flex justify-between text-gray-500">
                 <span>Delivery fee</span>
