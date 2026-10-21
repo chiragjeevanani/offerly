@@ -18,6 +18,9 @@ import {
   announceStage,
   notifyPartner,
   cancelDeliveryOrder,
+  startDeliveryReturn,
+  confirmDeliveryReturn,
+  RETURN_REASONS,
   markDeliveryOrderPaid,
   refundDeliveryPayment,
   creditStoreForDelivery,
@@ -216,6 +219,23 @@ export const storeMarkReady = storeStep(['preparing'], 'ready', 'readyAt', async
   });
 });
 
+// @route POST /delivery/store/orders/:id/returned  - the partner handed a returned order back
+export const storeConfirmReturn = async (req, res) => {
+  if (!validId(req.params.id)) return res.status(400).json({ success: false, error: 'Invalid order' });
+  try {
+    const order = await Redemption.findOne({ _id: req.params.id, merchantId: req.user._id, fulfillment: 'delivery' });
+    if (!order || order.delivery?.status !== 'returning') {
+      return res.status(400).json({ success: false, error: 'This order is not on its way back to you' });
+    }
+    const done = await confirmDeliveryReturn(order, { by: 'store' });
+    if (!done) return res.status(409).json({ success: false, error: 'This order changed just now. Please refresh.' });
+    res.status(200).json({ success: true, data: withoutSecrets(done) });
+  } catch (err) {
+    console.error('storeConfirmReturn error:', err);
+    res.status(500).json({ success: false, error: 'Failed to confirm the return' });
+  }
+};
+
 /* ───────────────────────────── Partner ───────────────────────────── */
 
 const isApproved = (partner) => partner.status === 'approved';
@@ -374,8 +394,8 @@ export const getPartnerOrders = async (req, res) => {
   try {
     const history = req.query.scope === 'history';
     const filter = history
-      ? { 'delivery.partnerId': req.user._id, 'delivery.status': { $in: ['delivered', 'cancelled'] } }
-      : { 'delivery.partnerId': req.user._id, status: 'pending', 'delivery.status': { $in: [...POOL_STAGES, 'picked_up'] } };
+      ? { 'delivery.partnerId': req.user._id, 'delivery.status': { $in: ['delivered', 'cancelled', 'returned'] } }
+      : { 'delivery.partnerId': req.user._id, $or: [{ status: 'pending', 'delivery.status': { $in: [...POOL_STAGES, 'picked_up'] } }, { 'delivery.status': 'returning' }] };
     const orders = await Redemption.find(filter)
       .populate('merchantId', STORE_FIELDS)
       .sort(history ? { updatedAt: -1 } : { 'delivery.assignedAt': 1 })
@@ -413,10 +433,10 @@ export const acceptOrder = async (req, res) => {
     if (!isApproved(partner) || !partner.isOnline) {
       return res.status(403).json({ success: false, error: 'Go online to accept orders' });
     }
+    // Orders still in hand, including ones being taken back to a store.
     const active = await Redemption.countDocuments({
       'delivery.partnerId': partner._id,
-      status: 'pending',
-      'delivery.status': { $in: [...POOL_STAGES, 'picked_up'] },
+      $or: [{ status: 'pending', 'delivery.status': { $in: [...POOL_STAGES, 'picked_up'] } }, { 'delivery.status': 'returning' }],
     });
     const { maxActive } = partnerLimits(await getDeliverySettings());
     if (active >= maxActive) {
@@ -498,6 +518,30 @@ export const pickupOrder = async (req, res) => {
   } catch (err) {
     console.error('pickupOrder error:', err);
     res.status(500).json({ success: false, error: 'Failed to update order' });
+  }
+};
+
+// @route POST /delivery/partner/orders/:id/return  body: { reason, note }
+// Picked up but can't be delivered - the partner takes it back to the store.
+export const returnOrder = async (req, res) => {
+  if (!validId(req.params.id)) return res.status(400).json({ success: false, error: 'Invalid order' });
+  const code = String(req.body?.reason || '');
+  if (!RETURN_REASONS[code]) return res.status(400).json({ success: false, error: 'Pick why the order could not be delivered' });
+  const note = String(req.body?.note || '').trim().slice(0, 160);
+  if (code === 'other' && !note) return res.status(400).json({ success: false, error: 'Tell us what went wrong' });
+  try {
+    const order = await Redemption.findOne({ _id: req.params.id, 'delivery.partnerId': req.user._id });
+    if (!order || order.status !== 'pending' || order.delivery?.status !== 'picked_up') {
+      return res.status(400).json({ success: false, error: 'Only an order you have picked up can be returned' });
+    }
+    const reason = code === 'other' ? note : note ? `${RETURN_REASONS[code]}: ${note}` : RETURN_REASONS[code];
+    const returning = await startDeliveryReturn(order, { by: 'partner', reason });
+    if (!returning) return res.status(409).json({ success: false, error: 'This order changed just now. Please refresh.' });
+    const fresh = await Redemption.findById(returning._id).populate('merchantId', STORE_FIELDS);
+    res.status(200).json({ success: true, data: partnerView(fresh, { full: true }) });
+  } catch (err) {
+    console.error('returnOrder error:', err);
+    res.status(500).json({ success: false, error: 'Failed to start the return' });
   }
 };
 
@@ -761,10 +805,10 @@ export const getAdminOrders = async (req, res) => {
   try {
     const filter = { fulfillment: 'delivery' };
     const stage = String(req.query.stage || '');
-    if (stage === 'active') filter['delivery.status'] = { $in: ['placed', ...POOL_STAGES, 'picked_up'] };
+    if (stage === 'active') filter['delivery.status'] = { $in: ['placed', ...POOL_STAGES, 'picked_up', 'returning'] };
     else if (stage === 'unassigned') Object.assign(filter, { 'delivery.status': { $in: POOL_STAGES }, 'delivery.partnerId': null, status: 'pending' });
     else if (stage === 'refunds') filter['delivery.paymentStatus'] = { $in: ['refund_pending', 'refund_failed'] };
-    else if (['awaiting_payment', 'placed', 'preparing', 'ready', 'picked_up', 'delivered', 'cancelled'].includes(stage)) filter['delivery.status'] = stage;
+    else if (['awaiting_payment', 'placed', 'preparing', 'ready', 'picked_up', 'delivered', 'cancelled', 'returning', 'returned'].includes(stage)) filter['delivery.status'] = stage;
     const q = String(req.query.q || '').trim();
     if (q) {
       const rx = new RegExp(escapeRegex(q), 'i');
@@ -833,16 +877,39 @@ export const adminCancelOrder = async (req, res) => {
   try {
     const order = await Redemption.findOne({ _id: req.params.id, fulfillment: 'delivery' });
     if (!order) return res.status(404).json({ success: false, error: 'Order not found' });
-    if (order.status !== 'pending' || !CANCELLABLE_STAGES.includes(order.delivery?.status)) {
-      return res.status(400).json({ success: false, error: 'Only orders that have not been picked up can be cancelled' });
-    }
     const reason = String(req.body?.reason || '').trim().slice(0, 200);
+    // Already with the partner: cancelling means a return to the store.
+    if (order.status === 'pending' && order.delivery?.status === 'picked_up') {
+      const returning = await startDeliveryReturn(order, { by: 'admin', reason });
+      if (!returning) return res.status(409).json({ success: false, error: 'This order changed just now. Please refresh.' });
+      return res.status(200).json({ success: true, data: adminOrderView(await Redemption.findById(returning._id).populate('merchantId', 'storeName phone city')) });
+    }
+    if (order.status !== 'pending' || !CANCELLABLE_STAGES.includes(order.delivery?.status)) {
+      return res.status(400).json({ success: false, error: 'This order can no longer be cancelled' });
+    }
     const cancelled = await cancelDeliveryOrder(order, { by: 'admin', reason });
     if (!cancelled) return res.status(409).json({ success: false, error: 'This order changed just now. Please refresh.' });
     res.status(200).json({ success: true, data: adminOrderView(await Redemption.findById(cancelled._id).populate('merchantId', 'storeName phone city')) });
   } catch (err) {
     console.error('adminCancelOrder error:', err);
     res.status(500).json({ success: false, error: 'Failed to cancel order' });
+  }
+};
+
+// @route POST /delivery/admin/orders/:id/returned  - close a return the store hasn't confirmed
+export const adminConfirmReturn = async (req, res) => {
+  if (!validId(req.params.id)) return res.status(400).json({ success: false, error: 'Invalid order' });
+  try {
+    const order = await Redemption.findOne({ _id: req.params.id, fulfillment: 'delivery' });
+    if (!order || order.delivery?.status !== 'returning') {
+      return res.status(400).json({ success: false, error: 'This order is not being returned' });
+    }
+    const done = await confirmDeliveryReturn(order, { by: 'admin' });
+    if (!done) return res.status(409).json({ success: false, error: 'This order changed just now. Please refresh.' });
+    res.status(200).json({ success: true, data: adminOrderView(await Redemption.findById(done._id).populate('merchantId', 'storeName phone city')) });
+  } catch (err) {
+    console.error('adminConfirmReturn error:', err);
+    res.status(500).json({ success: false, error: 'Failed to close the return' });
   }
 };
 

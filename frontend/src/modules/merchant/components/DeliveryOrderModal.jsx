@@ -29,6 +29,7 @@ const DeliveryOrderModal = ({ booking, onClose, onChanged }) => {
   const d = booking.delivery || {};
   const stage = booking.status === 'expired' ? 'cancelled' : d.status;
   const stageInfo = DELIVERY_STAGE[stage] || DELIVERY_STAGE.placed;
+  const sentBack = ['returning', 'returned'].includes(stage);
   const addr = d.address || {};
   const itemsValue = Math.round(booking.totals?.final || 0);
   const offerlyShare = Math.round((booking.totals?.referralDiscount || 0) + (booking.totals?.walletDiscount || 0));
@@ -69,7 +70,7 @@ const DeliveryOrderModal = ({ booking, onClose, onChanged }) => {
 
         <div className="p-5 space-y-4 max-h-[65vh] overflow-y-auto">
           <div className="bg-background rounded-xl p-4 border border-gray-100">
-            <h4 className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-3">Pack these items</h4>
+            <h4 className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-3">{sentBack ? 'Items coming back' : 'Pack these items'}</h4>
             <div className="space-y-2">
               {booking.items?.map((it, idx) => (
                 <div key={idx} className="flex justify-between items-center text-xs font-bold text-gray-700">
@@ -90,8 +91,10 @@ const DeliveryOrderModal = ({ booking, onClose, onChanged }) => {
                 <span className="text-lg font-bold text-[#5EB929]">₹{(itemsValue + offerlyShare).toLocaleString()}</span>
               </div>
               <p className="text-[10px] font-semibold text-gray-500 leading-relaxed">
-                {d.paymentMode === 'online' ? 'Paid online.' : 'Cash on delivery, collected by the delivery partner.'} Don't collect any money at the counter:
-                Offerly adds the full amount to your Offerly Wallet once it is delivered.
+                {sentBack
+                  ? 'Not delivered, so there is no payment for this order.'
+                  : <>{d.paymentMode === 'online' ? 'Paid online.' : 'Cash on delivery, collected by the delivery partner.'} Don't collect any money at the counter:
+                    Offerly adds the full amount to your Offerly Wallet once it is delivered.</>}
               </p>
             </div>
           </div>
@@ -119,7 +122,7 @@ const DeliveryOrderModal = ({ booking, onClose, onChanged }) => {
                 <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Delivery partner</p>
                 <p className="text-[13px] font-bold text-gray-900 truncate">{d.partnerName}</p>
               </div>
-              {d.partnerPhone && ['preparing', 'ready'].includes(stage) && (
+              {d.partnerPhone && ['preparing', 'ready', 'returning'].includes(stage) && (
                 <a href={`tel:${d.partnerPhone}`} className="w-9 h-9 rounded-xl bg-gray-50 flex items-center justify-center text-gray-600" aria-label="Call partner">
                   <PhoneRoundedIcon sx={{ fontSize: 16 }} />
                 </a>
@@ -130,6 +133,17 @@ const DeliveryOrderModal = ({ booking, onClose, onChanged }) => {
               <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse" /> Finding a delivery partner...
             </p>
           ) : null}
+
+          {stage === 'returning' && (
+            <div className="p-3 rounded-xl bg-orange-50 border border-orange-200">
+              <p className="text-[12px] font-bold text-orange-800">{d.partnerName || 'The partner'} couldn't deliver this order and is bringing it back.</p>
+              {d.cancelReason && <p className="text-[11px] font-semibold text-orange-700 mt-0.5">Reason: {d.cancelReason}</p>}
+              <p className="text-[11px] font-medium text-orange-700 mt-1">Check the items when they arrive, then tap Received back. The stock goes back on sale.</p>
+            </div>
+          )}
+          {stage === 'returned' && (
+            <p className="text-[11px] font-semibold text-gray-500">Returned to your store{d.cancelReason ? ` - ${d.cancelReason}` : ''}. The customer was not charged.</p>
+          )}
 
           {stage === 'cancelled' && d.cancelReason && (
             <p className="text-[11px] font-semibold text-gray-500">Cancelled{d.cancelledBy ? ` by ${d.cancelledBy}` : ''}: {d.cancelReason}</p>
@@ -184,6 +198,15 @@ const DeliveryOrderModal = ({ booking, onClose, onChanged }) => {
                   className="flex-[2] py-3 bg-[#5EB929] text-white rounded-xl font-bold text-sm shadow-lg shadow-[#5EB929]/20 flex items-center justify-center gap-2 disabled:opacity-60"
                 >
                   {busy === 'ready' ? <Spinner /> : <><Inventory2RoundedIcon sx={{ fontSize: 18 }} /> Mark Packed</>}
+                </button>
+              )}
+              {stage === 'returning' && (
+                <button
+                  onClick={() => run('returned', () => deliveryAPI.storeReturned(booking._id), 'Return received. Stock is back on sale.')}
+                  disabled={Boolean(busy)}
+                  className="flex-[2] py-3 bg-orange-500 text-white rounded-xl font-bold text-sm shadow-lg shadow-orange-500/20 flex items-center justify-center gap-2 disabled:opacity-60"
+                >
+                  {busy === 'returned' ? <Spinner /> : <><CheckCircleRoundedIcon sx={{ fontSize: 18 }} /> Received back</>}
                 </button>
               )}
               {stage === 'ready' && (

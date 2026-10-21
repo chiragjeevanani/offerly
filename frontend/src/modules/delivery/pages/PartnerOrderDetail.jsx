@@ -13,6 +13,7 @@ import CheckRoundedIcon from '@mui/icons-material/CheckRounded';
 import CheckCircleRoundedIcon from '@mui/icons-material/CheckCircleRounded';
 import PaymentsRoundedIcon from '@mui/icons-material/PaymentsRounded';
 import VerifiedRoundedIcon from '@mui/icons-material/VerifiedRounded';
+import UndoRoundedIcon from '@mui/icons-material/UndoRounded';
 import { deliveryAPI } from '../../../api/delivery.api';
 import { Card, PrimaryButton, SectionLabel, StageBadge, Spinner } from '../components/PartnerUI';
 import { mapsLink, rupees } from '../utils/partner';
@@ -138,12 +139,88 @@ const DeliverSheet = ({ order, onClose, onDone }) => {
   );
 };
 
+const RETURN_REASONS = [
+  { key: 'customer_refused', label: 'Customer refused the order' },
+  { key: 'not_reachable', label: "Couldn't reach the customer" },
+  { key: 'wrong_address', label: 'Wrong or unsafe address' },
+  { key: 'other', label: 'Something else' },
+];
+
+// Picked up but can't be delivered: pick a reason, then take it back to the store.
+const ReturnSheet = ({ order, onClose, onDone }) => {
+  const [reason, setReason] = useState('');
+  const [note, setNote] = useState('');
+  const [busy, setBusy] = useState(false);
+
+  const submit = async () => {
+    setBusy(true);
+    try {
+      await deliveryAPI.returnOrder(order.id, reason, note.trim());
+      onDone();
+    } catch (err) {
+      toast.error(err?.error || 'Could not start the return');
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center">
+      <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => !busy && onClose()} className="absolute inset-0 bg-black/50 backdrop-blur-sm" />
+      <motion.div
+        initial={{ y: 60, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        exit={{ y: 60, opacity: 0 }}
+        className="relative w-full max-w-lg bg-white rounded-t-[2rem] sm:rounded-[2rem] p-6 pb-8 shadow-2xl space-y-4"
+        role="dialog"
+        aria-label="Can't deliver"
+      >
+        <div className="w-10 h-1 bg-gray-200 rounded-full mx-auto sm:hidden" />
+        <div>
+          <h3 className="text-lg font-bold text-gray-900">Can't deliver this order?</h3>
+          <p className="text-[12px] text-gray-500 font-medium">
+            Try calling {order.drop.name || 'the customer'} first. If it still can't be delivered, take it back to {order.store.name}. The customer is refunded; there's no payout for this trip.
+          </p>
+        </div>
+        <div className="space-y-2">
+          {RETURN_REASONS.map((r) => (
+            <button
+              key={r.key}
+              type="button"
+              onClick={() => setReason(r.key)}
+              aria-pressed={reason === r.key}
+              className={`w-full text-left px-4 py-3 rounded-2xl border-2 text-[13px] font-bold transition-all ${
+                reason === r.key ? 'border-[#5EB929] bg-[#5EB929]/5 text-gray-900' : 'border-gray-100 text-gray-600'
+              }`}
+            >
+              {r.label}
+            </button>
+          ))}
+        </div>
+        {reason && (
+          <textarea
+            value={note}
+            onChange={(e) => setNote(e.target.value.slice(0, 160))}
+            rows={2}
+            placeholder={reason === 'other' ? 'What went wrong? (required)' : 'Add a note (optional)'}
+            className="w-full rounded-2xl bg-[#F8FAFC] border border-gray-100 px-4 py-3 text-[13px] outline-none focus:bg-white focus:border-[#5EB929]/50"
+          />
+        )}
+        <PrimaryButton variant="dark" onClick={submit} loading={busy} disabled={!reason || (reason === 'other' && !note.trim())} className="w-full">
+          <UndoRoundedIcon sx={{ fontSize: 18 }} /> Return to Store
+        </PrimaryButton>
+      </motion.div>
+    </div>
+  );
+};
+
 const PartnerOrderDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [busy, setBusy] = useState('');
   const [delivering, setDelivering] = useState(false);
+  const [returning, setReturning] = useState(false);
   const [done, setDone] = useState(false);
 
   const { data: order, isLoading, isError } = useQuery({
@@ -190,7 +267,10 @@ const PartnerOrderDetail = () => {
   const mine = order.mine;
   const stage = order.stage;
   const stepIdx = !mine ? 0 : stage === 'picked_up' ? 2 : stage === 'delivered' ? 3 : 1;
-  const finished = ['delivered', 'cancelled'].includes(stage) || order.status !== 'pending';
+  // Being taken back to the store: the order is cancelled, but the partner still has the goods.
+  const goingBack = mine && stage === 'returning';
+  const finished = !goingBack && (['delivered', 'cancelled', 'returned'].includes(stage) || order.status !== 'pending');
+  const noPayout = ['returning', 'returned'].includes(stage);
   const store = order.store;
   const drop = order.drop;
 
@@ -204,7 +284,7 @@ const PartnerOrderDetail = () => {
           <h1 className="text-lg font-bold text-gray-900 leading-none">Order #{order.internalId}</h1>
           <div className="mt-1.5"><StageBadge stage={stage} /></div>
         </div>
-        {order.payout > 0 && (
+        {order.payout > 0 && !noPayout && (
           <div className="text-right">
             <SectionLabel>You earn</SectionLabel>
             <p className="text-lg font-black text-[#5EB929]">{rupees(order.payout)}</p>
@@ -213,7 +293,24 @@ const PartnerOrderDetail = () => {
       </div>
 
       <div className="p-4 space-y-4">
-        {!finished && (
+        {goingBack && (
+          <Card className="p-4 border-orange-200 bg-orange-50">
+            <p className="text-[14px] font-bold text-orange-800 flex items-center gap-2">
+              <UndoRoundedIcon sx={{ fontSize: 18 }} /> Take this order back to {store.name}
+            </p>
+            {order.cancelReason && <p className="mt-1 text-[12px] font-medium text-orange-700">Reason: {order.cancelReason}</p>}
+            <p className="mt-2 text-[12px] font-medium text-orange-700">
+              Hand everything to the store. They tap "Received back" and the order closes. Don't collect any money.
+            </p>
+          </Card>
+        )}
+        {stage === 'returned' && (
+          <Card className="p-4">
+            <p className="text-[13px] font-bold text-gray-800">Returned to the store{order.cancelReason ? ` - ${order.cancelReason}` : ''}.</p>
+          </Card>
+        )}
+
+        {!finished && !goingBack && (
           <Card className="p-4">
             <ol className="flex items-center">
               {STEPS.map((s, i) => (
@@ -239,14 +336,14 @@ const PartnerOrderDetail = () => {
         <PlaceCard
           icon={StorefrontRoundedIcon}
           tone="bg-gray-100 text-gray-600"
-          title="Pick up from"
+          title={goingBack ? 'Return to' : 'Pick up from'}
           name={store.name}
           lines={[store.address, store.locality]}
           phone={mine && !finished ? store.phone : ''}
           mapTarget={!finished ? { lat: store.lat, lng: store.lng, query: `${store.name} ${store.address}` } : null}
         />
 
-        <PlaceCard
+        {!goingBack && <PlaceCard
           icon={LocationOnRoundedIcon}
           tone="bg-[#5EB929]/10 text-[#5EB929]"
           title="Deliver to"
@@ -260,7 +357,7 @@ const PartnerOrderDetail = () => {
           ]}
           phone={mine && !finished ? drop.phone : ''}
           mapTarget={!finished && (mine || drop.lat != null) ? { lat: drop.lat, lng: drop.lng, query: [drop.line1, drop.line2, drop.pincode].filter(Boolean).join(', ') } : null}
-        />
+        />}
         {order.addressHidden && <p className="text-[11px] text-gray-400 font-medium px-1">The full address and phone number appear once you accept.</p>}
 
         <Card className="p-4">
@@ -288,12 +385,16 @@ const PartnerOrderDetail = () => {
           <div className="flex-1">
             <SectionLabel>Payment</SectionLabel>
             <p className="text-[14px] font-bold text-gray-900">
-              {order.collectAmount > 0 ? `Collect ${rupees(order.collectAmount)} at the door` : 'Prepaid - nothing to collect'}
+              {noPayout
+                ? 'Nothing to collect - the order was cancelled'
+                : order.collectAmount > 0
+                  ? `Collect ${rupees(order.collectAmount)} at the door`
+                  : 'Prepaid - nothing to collect'}
             </p>
           </div>
         </Card>
 
-        {mine && !finished && stage !== 'picked_up' && (
+        {mine && !finished && !goingBack && stage !== 'picked_up' && (
           <button
             onClick={() => act('release', () => deliveryAPI.releaseOrder(order.id), 'Order released', () => navigate('/delivery', { replace: true }))}
             disabled={Boolean(busy)}
@@ -302,10 +403,18 @@ const PartnerOrderDetail = () => {
             {busy === 'release' ? 'Releasing...' : "Can't do this order? Release it"}
           </button>
         )}
+        {mine && stage === 'picked_up' && (
+          <button
+            onClick={() => setReturning(true)}
+            className="w-full h-11 rounded-xl text-[11px] font-bold uppercase tracking-widest text-red-500 hover:bg-red-50"
+          >
+            Can't deliver? Return to store
+          </button>
+        )}
       </div>
 
       {/* Primary action */}
-      {!finished && (
+      {!finished && !goingBack && (
         <div className="fixed bottom-0 inset-x-0 z-40 bg-white/95 backdrop-blur-xl border-t border-gray-100 pb-safe">
           <div className="max-w-lg mx-auto p-3">
             {!mine ? (
@@ -333,6 +442,20 @@ const PartnerOrderDetail = () => {
             onDone={() => {
               setDelivering(false);
               setDone(true);
+              refresh();
+            }}
+          />
+        )}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {returning && (
+          <ReturnSheet
+            order={order}
+            onClose={() => setReturning(false)}
+            onDone={() => {
+              setReturning(false);
+              toast.success('Return started. Take the order back to the store.');
               refresh();
             }}
           />

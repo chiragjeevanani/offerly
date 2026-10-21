@@ -17,6 +17,8 @@ export const STAGE_LABEL = {
   picked_up: { label: 'Out for delivery', cls: 'bg-sky-50 text-sky-700' },
   delivered: { label: 'Delivered', cls: 'bg-green-50 text-green-700' },
   cancelled: { label: 'Cancelled', cls: 'bg-gray-100 text-gray-500' },
+  returning: { label: 'Return to store', cls: 'bg-orange-50 text-orange-700' },
+  returned: { label: 'Returned', cls: 'bg-gray-100 text-gray-500' },
 };
 
 export const rupees = (n) => `₹${Math.round(n || 0).toLocaleString('en-IN')}`;

@@ -268,7 +268,7 @@ const PartnerHome = ({ me }) => {
               <OrderCard
                 key={o.id}
                 order={o}
-                action={o.stage === 'picked_up' ? 'Deliver' : 'Go to store'}
+                action={o.stage === 'picked_up' ? 'Deliver' : o.stage === 'returning' ? 'Return to store' : 'Go to store'}
                 onAction={() => navigate(`/delivery/orders/${o.id}`)}
                 onOpen={() => navigate(`/delivery/orders/${o.id}`)}
               />

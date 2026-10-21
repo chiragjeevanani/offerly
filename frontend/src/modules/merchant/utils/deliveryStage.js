@@ -6,4 +6,6 @@ export const DELIVERY_STAGE = {
   picked_up: { label: 'Out for delivery', cls: 'bg-sky-50 text-sky-600' },
   delivered: { label: 'Delivered', cls: 'bg-green-50 text-green-600' },
   cancelled: { label: 'Cancelled', cls: 'bg-gray-100 text-gray-500' },
+  returning: { label: 'Coming back', cls: 'bg-orange-50 text-orange-600' },
+  returned: { label: 'Returned', cls: 'bg-gray-100 text-gray-500' },
 };

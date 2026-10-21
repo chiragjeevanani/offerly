@@ -15,6 +15,7 @@ export const deliveryAPI = {
   // Store
   storeAccept: async (orderId) => axiosInstance.post(`/delivery/store/orders/${orderId}/accept`),
   storeReady: async (orderId) => axiosInstance.post(`/delivery/store/orders/${orderId}/ready`),
+  storeReturned: async (orderId) => axiosInstance.post(`/delivery/store/orders/${orderId}/returned`),
 
   // Delivery partner
   registerPartner: async (verificationToken, data) =>
@@ -28,6 +29,7 @@ export const deliveryAPI = {
   acceptOrder: async (orderId) => axiosInstance.post(`/delivery/partner/orders/${orderId}/accept`),
   releaseOrder: async (orderId) => axiosInstance.post(`/delivery/partner/orders/${orderId}/release`),
   pickupOrder: async (orderId) => axiosInstance.post(`/delivery/partner/orders/${orderId}/pickup`),
+  returnOrder: async (orderId, reason, note = '') => axiosInstance.post(`/delivery/partner/orders/${orderId}/return`, { reason, note }),
   deliverOrder: async (orderId, otp, cashCollected) =>
     axiosInstance.post(`/delivery/partner/orders/${orderId}/deliver`, { otp, cashCollected }),
 
@@ -41,5 +43,6 @@ export const deliveryAPI = {
   getAdminOrders: async (params = {}) => axiosInstance.get('/delivery/admin/orders', { params }),
   unassignOrder: async (orderId) => axiosInstance.post(`/delivery/admin/orders/${orderId}/unassign`),
   adminCancelOrder: async (orderId, reason) => axiosInstance.post(`/delivery/admin/orders/${orderId}/cancel`, { reason }),
+  adminConfirmReturn: async (orderId) => axiosInstance.post(`/delivery/admin/orders/${orderId}/returned`),
   retryRefund: async (orderId) => axiosInstance.post(`/delivery/admin/orders/${orderId}/retry-refund`),
 };

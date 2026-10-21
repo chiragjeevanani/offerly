@@ -230,7 +230,8 @@ export const releaseStockHold = async (redemption) => {
 
 /** Cron sweep: every expired/cancelled pass still holding stock. */
 export const releaseUnreleasedStockHolds = async () => {
-  const passes = await Redemption.find({ status: { $in: ['expired', 'cancelled'] }, 'stockHold.status': 'held' })
+  // A delivery on its way back keeps its hold until the store confirms receipt.
+  const passes = await Redemption.find({ status: { $in: ['expired', 'cancelled'] }, 'stockHold.status': 'held', 'delivery.status': { $ne: 'returning' } })
     .select('stockHold internalId status')
     .lean();
   for (const pass of passes) await releaseStockHold(pass);

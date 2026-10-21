@@ -39,6 +39,7 @@ const HERO = {
   picked_up: { title: 'On the way!', sub: 'Your delivery partner is heading to you.', icon: TwoWheelerRoundedIcon },
   delivered: { title: 'Delivered', sub: 'Enjoy your order!', icon: CheckRoundedIcon },
   cancelled: { title: 'Order cancelled', sub: '', icon: CancelRoundedIcon },
+  returned: { title: "Couldn't deliver", sub: '', icon: CancelRoundedIcon },
 };
 
 const time = (d) => (d ? new Date(d).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' }) : '');
@@ -159,15 +160,19 @@ const OrderTracking = () => {
 
   const d = order.delivery || {};
   const store = order.merchantId || {};
-  const lapsed = order.status === 'expired' || stage === 'cancelled';
-  const hero = HERO[lapsed ? 'cancelled' : stage] || HERO.placed;
+  // Returning/returned: the partner couldn't deliver it and took it back to the store.
+  const sentBack = ['returning', 'returned'].includes(stage);
+  const lapsed = order.status === 'expired' || stage === 'cancelled' || sentBack;
+  const hero = HERO[sentBack ? 'returned' : lapsed ? 'cancelled' : stage] || HERO.placed;
   const HeroIcon = hero.icon;
   const currentIdx = STEP_INDEX[stage] ?? -1;
   const total = Math.round((order.totals?.final || 0) + (d.fee || 0));
   const canCancel = isLive && ['awaiting_payment', 'placed', 'preparing', 'ready'].includes(stage);
   const showCode = isLive && ['placed', 'preparing', 'ready', 'picked_up'].includes(stage) && d.otp;
   const addr = d.address || {};
-  const cancelSub = d.cancelledBy === 'customer'
+  const cancelSub = sentBack
+    ? `We couldn't deliver this order${d.cancelReason ? ` (${d.cancelReason})` : ''}, so it went back to the store.${d.paymentMode === 'cod' ? " You won't be charged." : ''}`
+    : d.cancelledBy === 'customer'
     ? 'You cancelled this order.'
     : d.cancelledBy === 'store'
       ? `The store cancelled this order.${d.cancelReason ? ` ${d.cancelReason}` : ''}`

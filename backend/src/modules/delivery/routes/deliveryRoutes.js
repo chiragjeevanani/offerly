@@ -10,6 +10,7 @@ import {
   cancelMyOrder,
   storeAcceptOrder,
   storeMarkReady,
+  storeConfirmReturn,
   getPartnerMe,
   updatePartnerMe,
   updatePartnerDocuments,
@@ -20,6 +21,7 @@ import {
   releaseOrder,
   pickupOrder,
   deliverOrder,
+  returnOrder,
   getAdminSettings,
   updateAdminSettings,
   getAdminPartners,
@@ -28,6 +30,7 @@ import {
   getAdminOrders,
   adminUnassignOrder,
   adminCancelOrder,
+  adminConfirmReturn,
   adminRetryRefund,
 } from '../controllers/deliveryController.js';
 
@@ -66,6 +69,7 @@ router.post('/orders/:id/cancel', protect, authorize('customer'), cancelMyOrder)
 // Store
 router.post('/store/orders/:id/accept', protect, authorize('merchant'), storeAcceptOrder);
 router.post('/store/orders/:id/ready', protect, authorize('merchant'), storeMarkReady);
+router.post('/store/orders/:id/returned', protect, authorize('merchant'), storeConfirmReturn);
 
 // Delivery partner
 router.get('/partner/me', protect, authorize('delivery'), getPartnerMe);
@@ -81,6 +85,7 @@ router.get('/partner/orders/:id', protect, authorize('delivery'), getPartnerOrde
 router.post('/partner/orders/:id/accept', protect, authorize('delivery'), acceptOrder);
 router.post('/partner/orders/:id/release', protect, authorize('delivery'), releaseOrder);
 router.post('/partner/orders/:id/pickup', protect, authorize('delivery'), pickupOrder);
+router.post('/partner/orders/:id/return', protect, authorize('delivery'), returnOrder);
 router.post('/partner/orders/:id/deliver', protect, authorize('delivery'), deliverLimiter, deliverOrder);
 
 // Admin
@@ -92,6 +97,7 @@ router.post('/admin/partners/:id/settle', protect, authorize('admin'), settlePar
 router.get('/admin/orders', protect, authorize('admin'), getAdminOrders);
 router.post('/admin/orders/:id/unassign', protect, authorize('admin'), adminUnassignOrder);
 router.post('/admin/orders/:id/cancel', protect, authorize('admin'), adminCancelOrder);
+router.post('/admin/orders/:id/returned', protect, authorize('admin'), adminConfirmReturn);
 router.post('/admin/orders/:id/retry-refund', protect, authorize('admin'), adminRetryRefund);
 
 export default router;

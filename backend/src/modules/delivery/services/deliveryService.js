@@ -101,6 +101,9 @@ export const partnerView = (order, { full = false } = {}) => {
     assignedAt: o.delivery?.assignedAt,
     pickedUpAt: o.delivery?.pickedUpAt,
     deliveredAt: o.delivery?.deliveredAt,
+    cancelReason: o.delivery?.cancelReason || '',
+    returnStartedAt: o.delivery?.returnStartedAt,
+    returnedAt: o.delivery?.returnedAt,
     store: {
       id: store._id ? String(store._id) : String(o.merchantId || ''),
       name: store.storeName || '',
@@ -328,6 +331,89 @@ export const cancelDeliveryOrder = async (redemption, { by, reason = '' }) => {
         title: 'Delivery order cancelled',
         body: `Order #${updated.internalId} was cancelled${by === 'customer' ? ' by the customer' : ''}.${why}`,
       },
+    });
+  }
+  return updated;
+};
+
+/* ── Returns: the partner has the order but it can't be delivered ── */
+
+export const RETURN_REASONS = {
+  customer_refused: 'Customer refused the order',
+  not_reachable: "Couldn't reach the customer",
+  wrong_address: 'Wrong or unsafe address',
+  other: 'Other',
+};
+
+// Turns a picked-up order into a return: the customer's order is cancelled and
+// fully refunded (items + delivery fee) straight away, the partner earns nothing
+// for it and takes the goods back, and the store confirms receipt
+// (confirmDeliveryReturn), which is when the held stock goes back on sale.
+// `by` is 'partner' or 'admin'. Returns the order, or null if it wasn't picked up.
+export const startDeliveryReturn = async (redemption, { by, reason = '' }) => {
+  const now = new Date();
+  const updated = await Redemption.findOneAndUpdate(
+    { _id: redemption._id, status: 'pending', 'delivery.status': 'picked_up' },
+    {
+      $set: {
+        status: 'cancelled',
+        'delivery.status': 'returning',
+        'delivery.cancelledAt': now,
+        'delivery.cancelledBy': by,
+        'delivery.cancelReason': reason,
+        'delivery.returnStartedAt': now,
+      },
+    },
+    { new: true }
+  );
+  if (!updated) return null;
+
+  await releaseReferralPoints(updated);
+  const payment = updated.delivery.paymentStatus === 'paid' ? await refundDeliveryPayment(updated) : null;
+
+  const why = reason ? ` (${reason})` : '';
+  const money = payment ? ` Your ₹${amountDue(updated)} is being refunded.` : '';
+  await announceStage(updated, {
+    customer: {
+      title: "Order couldn't be delivered",
+      body: `We couldn't deliver order #${updated.internalId}${why}, so it's going back to the store.${money}`,
+    },
+    store: {
+      title: 'Order coming back to you',
+      body: `#${updated.internalId} couldn't be delivered${why}. ${updated.delivery.partnerName || 'The partner'} is bringing it back - tap "Received back" when you have it.`,
+    },
+  });
+  if (by !== 'partner' && updated.delivery.partnerId) {
+    notifyPartner(updated.delivery.partnerId, {
+      type: 'order_returning',
+      orderId: String(updated._id),
+      title: 'Take the order back to the store',
+      body: `Offerly cancelled #${updated.internalId}. Please return it to the store.`,
+    });
+  }
+  return updated;
+};
+
+// The store (or an admin) has the returned goods back. `by` is 'store' or 'admin'.
+export const confirmDeliveryReturn = async (redemption, { by }) => {
+  const updated = await Redemption.findOneAndUpdate(
+    { _id: redemption._id, 'delivery.status': 'returning' },
+    { $set: { 'delivery.status': 'returned', 'delivery.returnedAt': new Date(), 'delivery.returnConfirmedBy': by } },
+    { new: true }
+  );
+  if (!updated) return null;
+  await releaseStockHold(updated);
+  if (updated.delivery.partnerId) {
+    notifyPartner(updated.delivery.partnerId, {
+      type: 'order_returned',
+      orderId: String(updated._id),
+      title: 'Return complete',
+      body: `The store has #${updated.internalId} back. You're done with this order.`,
+    });
+  }
+  if (by === 'admin') {
+    await announceStage(updated, {
+      store: { title: 'Return closed', body: `Offerly marked #${updated.internalId} as returned to your store.` },
     });
   }
   return updated;

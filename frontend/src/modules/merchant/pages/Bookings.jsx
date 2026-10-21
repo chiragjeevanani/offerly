@@ -190,6 +190,10 @@ const BookingDetailModal = ({ booking, onClose, onFulfilled }) => {
 const NO_BOOKINGS = [];
 
 /* ─── Main Bookings Page ────────────────────────────────────────────────────── */
+// Live Queue: open bookings, plus delivery orders on their way back to the store
+// (cancelled, but the store still has to confirm it got the goods back).
+const isLive = (b) => b.status === 'pending' || b.delivery?.status === 'returning';
+
 const Bookings = ({ merchant }) => {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('pending');
@@ -243,7 +247,7 @@ const Bookings = ({ merchant }) => {
   const handleDeliveryChanged = (updated) => {
     if (!updated?._id) return;
     queryClient.setQueryData(bookingsKey, (prev = []) => prev.map(b => (b._id === updated._id ? updated : b)));
-    setSelectedBooking(updated.status === 'pending' ? updated : null);
+    setSelectedBooking(isLive(updated) ? updated : null);
     fetchBookings();
   };
 
@@ -255,12 +259,12 @@ const Bookings = ({ merchant }) => {
   };
 
   const filtered = bookings.filter(b =>
-    b.status === activeTab &&
+    (activeTab === 'pending' ? isLive(b) : b.status === activeTab) &&
     ((b.internalId || b._id || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
       (b.customerName || '').toLowerCase().includes(searchQuery.toLowerCase()))
   );
 
-  const pendingCount = bookings.filter(b => b.status === 'pending').length;
+  const pendingCount = bookings.filter(isLive).length;
   const completedCount = bookings.filter(b => b.status === 'completed' || b.status === 'fulfilled').length;
   const totalRevenue = bookings.filter(b => b.status === 'completed' || b.status === 'fulfilled').reduce((sum, b) => sum + (b.totals?.final || 0), 0);
 

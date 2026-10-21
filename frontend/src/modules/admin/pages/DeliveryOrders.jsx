@@ -16,6 +16,8 @@ const STAGES = {
   picked_up: { label: 'Out for delivery', cls: 'bg-sky-50 text-sky-700' },
   delivered: { label: 'Delivered', cls: 'bg-green-50 text-green-700' },
   cancelled: { label: 'Cancelled', cls: 'bg-gray-100 text-gray-500' },
+  returning: { label: 'Returning to store', cls: 'bg-orange-50 text-orange-700' },
+  returned: { label: 'Returned', cls: 'bg-gray-100 text-gray-500' },
 };
 
 const PAY = {
@@ -31,6 +33,7 @@ const FILTERS = [
   { key: 'unassigned', label: 'No partner' },
   { key: 'delivered', label: 'Delivered' },
   { key: 'cancelled', label: 'Cancelled' },
+  { key: 'returning', label: 'Returns' },
   { key: 'refunds', label: 'Refund issues' },
   { key: '', label: 'All' },
 ];
@@ -46,6 +49,8 @@ const OrderPanel = ({ order, onClose, onChanged }) => {
   const stage = order.status === 'expired' ? 'cancelled' : d.status;
   const a = d.address || {};
   const preStage = ['placed', 'preparing', 'ready', 'awaiting_payment'].includes(stage) && order.status === 'pending';
+  // Already with the partner: cancelling sends it back to the store instead.
+  const outForDelivery = stage === 'picked_up' && order.status === 'pending';
 
   const run = async (key, fn, message) => {
     setBusy(key);
@@ -108,7 +113,8 @@ const OrderPanel = ({ order, onClose, onChanged }) => {
               ['Partner assigned', d.assignedAt],
               ['Picked up', d.pickedUpAt],
               ['Delivered', d.deliveredAt],
-              ['Cancelled', d.cancelledAt],
+              [d.returnStartedAt ? 'Return started' : 'Cancelled', d.cancelledAt],
+              ['Returned to store', d.returnedAt],
             ].filter(([, v]) => v).map(([k, v]) => (
               <div key={k} className="flex justify-between"><span>{k}</span><span className="text-gray-700">{when(v)}</span></div>
             ))}
@@ -132,8 +138,8 @@ const OrderPanel = ({ order, onClose, onChanged }) => {
           {cancelling ? (
             <>
               <button onClick={() => setCancelling(false)} className="flex-1 h-11 rounded-xl bg-gray-100 text-gray-600 text-[13px] font-semibold">Back</button>
-              <button disabled={Boolean(busy)} onClick={() => run('cancel', () => deliveryAPI.adminCancelOrder(order._id, reason.trim()), 'Order cancelled')} className="flex-1 h-11 rounded-xl bg-red-500 text-white text-[13px] font-semibold">
-                {busy === 'cancel' ? 'Cancelling...' : 'Cancel order'}
+              <button disabled={Boolean(busy)} onClick={() => run('cancel', () => deliveryAPI.adminCancelOrder(order._id, reason.trim()), outForDelivery ? 'Partner told to return it to the store' : 'Order cancelled')} className="flex-1 h-11 rounded-xl bg-red-500 text-white text-[13px] font-semibold">
+                {busy === 'cancel' ? 'Cancelling...' : outForDelivery ? 'Cancel & return to store' : 'Cancel order'}
               </button>
             </>
           ) : (
@@ -143,7 +149,12 @@ const OrderPanel = ({ order, onClose, onChanged }) => {
                   Reassign
                 </button>
               )}
-              {preStage && (
+              {stage === 'returning' && (
+                <button disabled={Boolean(busy)} onClick={() => run('returned', () => deliveryAPI.adminConfirmReturn(order._id), 'Marked as returned. Stock is back on sale.')} className="flex-1 h-11 rounded-xl bg-orange-500 text-white text-[13px] font-semibold">
+                  {busy === 'returned' ? 'Saving...' : 'Mark returned to store'}
+                </button>
+              )}
+              {(preStage || outForDelivery) && (
                 <button onClick={() => setCancelling(true)} className="flex-1 h-11 rounded-xl border border-red-200 text-red-500 text-[13px] font-semibold">Cancel order</button>
               )}
             </>
@@ -170,7 +181,7 @@ const DeliveryOrders = () => {
   const summary = data?.summary || { stages: {} };
 
   const tiles = [
-    { label: 'Live orders', value: ['placed', 'preparing', 'ready', 'picked_up'].reduce((s, k) => s + (summary.stages?.[k] || 0), 0) },
+    { label: 'Live orders', value: ['placed', 'preparing', 'ready', 'picked_up', 'returning'].reduce((s, k) => s + (summary.stages?.[k] || 0), 0) },
     { label: 'Waiting for partner', value: summary.unassigned || 0, warn: summary.unassigned > 0 },
     { label: 'Delivered today', value: summary.deliveredToday || 0 },
     { label: 'Value today', value: rupees(summary.valueToday), sub: `${rupees(summary.feesToday)} in fees` },
