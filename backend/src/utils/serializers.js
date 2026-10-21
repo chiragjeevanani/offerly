@@ -263,6 +263,8 @@ export const serializeNotification = (notification) => ({
   body: notification?.body || notification?.message || '',
   read: Boolean(notification?.isRead ?? notification?.read),
   isRead: Boolean(notification?.isRead ?? notification?.read),
+  // In-app page a tap opens (admin-sent notifications), '' for none.
+  link: notification?.data?.link || '',
   createdAt: notification?.createdAt || null,
 });
 

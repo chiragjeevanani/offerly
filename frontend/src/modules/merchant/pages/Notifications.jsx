@@ -157,6 +157,8 @@ const Notifications = () => {
 };
 
 const NotifStrip = ({ notif, idx, handleRead, formatDate, isRead }) => {
+  const navigate = useNavigate();
+  const link = notif.data?.link;
   const config = typeConfig[notif.type] || typeConfig.general;
   const Icon = config.icon;
 
@@ -165,7 +167,11 @@ const NotifStrip = ({ notif, idx, handleRead, formatDate, isRead }) => {
       initial={{ opacity: 0, x: -10 }}
       animate={{ opacity: 1, x: 0 }}
       transition={{ delay: idx * 0.05 }}
-      onClick={() => !isRead && handleRead(notif._id)}
+      onClick={() => {
+        if (!isRead) handleRead(notif._id);
+        // Admin-sent notifications can open a panel page.
+        if (link?.startsWith('/merchant')) navigate(link);
+      }}
       className={`group flex items-start gap-4 p-4 rounded-2xl border transition-all cursor-pointer ${
         !isRead 
         ? 'bg-white border-[#5EB929]/20 shadow-lg shadow-[#5EB929]/5 ring-1 ring-[#5EB929]/5' 

@@ -28,6 +28,7 @@ import AccountBalanceWalletRoundedIcon from '@mui/icons-material/AccountBalanceW
 import PersonRoundedIcon from '@mui/icons-material/PersonRounded';
 import SupportAgentRoundedIcon from '@mui/icons-material/SupportAgentRounded';
 import VerifiedRoundedIcon from '@mui/icons-material/VerifiedRounded';
+import NotificationsActiveRoundedIcon from '@mui/icons-material/NotificationsActiveRounded';
 import ViewCarouselRoundedIcon from '@mui/icons-material/ViewCarouselRounded';
 import LocalShippingRoundedIcon from '@mui/icons-material/LocalShippingRounded';
 import TwoWheelerRoundedIcon from '@mui/icons-material/TwoWheelerRounded';
@@ -44,6 +45,7 @@ const PromotionRequest = lazy(() => import('./pages/PromotionRequest'));
 const Analytics = lazy(() => import('./pages/Analytics'));
 const SupportContacts = lazy(() => import('./pages/SupportContacts'));
 const BlueTickSettings = lazy(() => import('./pages/BlueTickSettings'));
+const SendNotification = lazy(() => import('./pages/SendNotification'));
 const HomeBanners = lazy(() => import('./pages/HomeBanners'));
 const CategoryManagement = lazy(() => import('./pages/CategoryManagement'));
 const RewardsManagement = lazy(() => import('./pages/RewardsManagement'));
@@ -79,6 +81,7 @@ const AdminSidebar = ({ isMobileMenuOpen, setIsMobileMenuOpen }) => {
     { name: 'Milestones & Rewards', path: '/admin/rewards', icon: EmojiEventsRoundedIcon },
     { name: 'Refer & Earn', path: '/admin/refer-earn', icon: ShareRoundedIcon },
     { name: 'Blue Tick', path: '/admin/blue-tick', icon: VerifiedRoundedIcon },
+    { name: 'Send Notification', path: '/admin/send-notification', icon: NotificationsActiveRoundedIcon },
     { name: 'Distribution Fund', path: '/admin/distribution-fund', icon: AccountBalanceWalletRoundedIcon },
     { name: 'Merchant Payouts', path: '/admin/payouts', icon: PaymentsRoundedIcon },
     { name: 'Categories', path: '/admin/categories', icon: CategoryRoundedIcon },
@@ -403,6 +406,7 @@ const AdminLayout = ({ children }) => {
       ['/admin/analytics', 'Analytics'],
       ['/admin/support', 'Support Contacts'],
       ['/admin/blue-tick', 'Blue Tick'],
+      ['/admin/send-notification', 'Send Notification'],
       ['/admin/notifications', 'Notifications'],
       ['/admin/search', 'Search'],
     ];
@@ -504,6 +508,7 @@ const AdminApp = () => {
           <Route path="/analytics" element={<Analytics />} />
           <Route path="/support" element={<SupportContacts />} />
           <Route path="/blue-tick" element={<BlueTickSettings />} />
+          <Route path="/send-notification" element={<SendNotification />} />
           <Route path="/cities" element={<CityManagement />} />
           <Route path="/merchants" element={<MerchantManagement />} />
           <Route path="/users" element={<UserManagement />} />

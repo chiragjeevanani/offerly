@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
+import { useNavigate } from 'react-router-dom';
 import NotificationsRoundedIcon from '@mui/icons-material/NotificationsRounded';
 import LocalOfferRoundedIcon from '@mui/icons-material/LocalOfferRounded';
 import ReceiptRoundedIcon from '@mui/icons-material/ReceiptRounded';
@@ -25,6 +26,7 @@ const Notifications = () => {
   const [notifications, setNotifications] = useState([]);
   const [loading, setLoading] = useState(true);
   const { enabled: rewardsEnabled } = useRewardsEnabled();
+  const navigate = useNavigate();
 
   const fetchNotifications = async () => {
     if (!isLoggedIn) return;
@@ -81,7 +83,11 @@ const Notifications = () => {
     return (
       <motion.button
         whileTap={{ scale: 0.98 }}
-        onClick={() => handleRead(notif.id)}
+        onClick={() => {
+          handleRead(notif.id);
+          // Admin-sent notifications can open a store, offer or Home.
+          if (notif.link?.startsWith('/')) navigate(notif.link);
+        }}
         className={`w-full flex items-start gap-3 p-4 rounded-2xl transition-all text-left ${
           !notif.read ? 'bg-primary-light border border-primary/20' : 'bg-surface'
         } shadow-card`}

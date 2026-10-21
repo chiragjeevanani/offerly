@@ -133,6 +133,12 @@ export const adminAPI = {
     return axiosInstance.put(`/admin/payouts/${id}/reject`, data);
   },
 
+  // Send Notification (admin -> customers / merchants)
+  getBroadcasts: async () => axiosInstance.get('/admin/broadcasts'),
+  countBroadcastAudience: async (type, city) => axiosInstance.get('/admin/broadcasts/count', { params: { type, city } }),
+  searchBroadcastTargets: async (kind, q) => axiosInstance.get('/admin/broadcasts/search', { params: { kind, q } }),
+  sendBroadcast: async (data) => axiosInstance.post('/admin/broadcasts', data),
+
   // Blue tick (verified seller) rules
   getBlueTickSettings: async () => axiosInstance.get('/admin/blue-tick-settings'),
   updateBlueTickSettings: async (data) => axiosInstance.put('/admin/blue-tick-settings', data),
