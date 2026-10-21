@@ -211,7 +211,10 @@ const OrderTracking = () => {
               </div>
             </div>
             {lapsed && refundText[d.paymentStatus] && (
-              <p className="relative mt-4 text-[11px] font-semibold text-amber-200 bg-white/5 rounded-xl px-3 py-2">{refundText[d.paymentStatus]}</p>
+              <p className="relative mt-4 text-[11px] font-semibold text-amber-200 bg-white/5 rounded-xl px-3 py-2">
+                {refundText[d.paymentStatus]}
+                {d.feeRetained && d.fee > 0 && ` The ₹${Math.round(d.fee)} delivery fee isn't refunded.`}
+              </p>
             )}
           </motion.div>
 
@@ -395,7 +398,9 @@ const OrderTracking = () => {
               <motion.div initial={{ y: 40, opacity: 0 }} animate={{ y: 0, opacity: 1 }} exit={{ y: 40, opacity: 0 }} className="relative w-full max-w-sm bg-white rounded-[2rem] p-6 shadow-2xl">
                 <h3 className="text-lg font-bold text-gray-900">Cancel this order?</h3>
                 <p className="mt-1 text-[13px] text-gray-500">
-                  {d.paymentStatus === 'paid' ? `Your ₹${total} will be refunded to your original payment method.` : 'The store will be told not to pack it.'}
+                  {d.paymentStatus === 'paid'
+                    ? `₹${total - Math.round(d.fee || 0)} will be refunded to your original payment method.${d.fee > 0 ? ` The ₹${Math.round(d.fee)} delivery fee isn't refundable.` : ''}`
+                    : 'The store will be told not to pack it.'}
                 </p>
                 <div className="mt-6 flex gap-3">
                   <button onClick={() => setConfirmCancel(false)} disabled={busy} className="flex-1 h-12 rounded-xl bg-gray-100 text-gray-700 font-bold text-[12px] uppercase tracking-widest">Keep it</button>

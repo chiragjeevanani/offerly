@@ -225,6 +225,11 @@ const redemptionSchema = new mongoose.Schema(
       razorpayOrderId: String,
       razorpayPaymentId: String,
       refundId: String,
+      // True when the customer cancelled, refused it or wasn't reachable: the
+      // refund then leaves out the delivery fee. Set with the cancel, so the
+      // cron's and admin's refund retries refund the same amount.
+      feeRetained: Boolean,
+      refundAmount: Number,
       // Told to the partner by the customer at the door; never sent to the
       // store or the partner.
       otp: { type: String, select: false },

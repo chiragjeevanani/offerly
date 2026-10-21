@@ -535,7 +535,9 @@ export const returnOrder = async (req, res) => {
       return res.status(400).json({ success: false, error: 'Only an order you have picked up can be returned' });
     }
     const reason = code === 'other' ? note : note ? `${RETURN_REASONS[code]}: ${note}` : RETURN_REASONS[code];
-    const returning = await startDeliveryReturn(order, { by: 'partner', reason });
+    // The customer's side (refused it, or not there): no delivery fee back.
+    const feeRetained = ['customer_refused', 'not_reachable'].includes(code);
+    const returning = await startDeliveryReturn(order, { by: 'partner', reason, feeRetained });
     if (!returning) return res.status(409).json({ success: false, error: 'This order changed just now. Please refresh.' });
     const fresh = await Redemption.findById(returning._id).populate('merchantId', STORE_FIELDS);
     res.status(200).json({ success: true, data: partnerView(fresh, { full: true }) });

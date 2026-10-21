@@ -179,7 +179,7 @@ const ReturnSheet = ({ order, onClose, onDone }) => {
         <div>
           <h3 className="text-lg font-bold text-gray-900">Can't deliver this order?</h3>
           <p className="text-[12px] text-gray-500 font-medium">
-            Try calling {order.drop.name || 'the customer'} first. If it still can't be delivered, take it back to {order.store.name}. The customer is refunded; there's no payout for this trip.
+            Try calling {order.drop.name || 'the customer'} first. If it still can't be delivered, take it back to {order.store.name}. There's no payout for this trip.
           </p>
         </div>
         <div className="space-y-2">

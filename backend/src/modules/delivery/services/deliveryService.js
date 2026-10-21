@@ -72,6 +72,11 @@ export const giftFor = (settings, subtotal, fulfillment) => {
 export const amountDue = (redemption) =>
   Math.max(0, Math.round((redemption.totals?.final || 0) + (redemption.delivery?.fee || 0)));
 
+// What an online payment gets back on cancel: everything, or the items only
+// when the order was cancelled on the customer's side (feeRetained).
+export const refundableAmount = (redemption) =>
+  Math.max(0, amountDue(redemption) - (redemption.delivery?.feeRetained ? Math.round(redemption.delivery?.fee || 0) : 0));
+
 export const generateDeliveryOtp = () => String(Math.floor(1000 + Math.random() * 9000));
 
 // A pass as the store may see it: never the customer's handover code.
@@ -254,7 +259,11 @@ export const refundDeliveryPayment = async (redemption) => {
   );
   if (!claimed) return redemption.delivery?.paymentStatus;
 
-  const amount = amountDue(claimed);
+  const amount = refundableAmount(claimed);
+  if (amount <= 0) {
+    await Redemption.updateOne({ _id: claimed._id }, { $set: { 'delivery.paymentStatus': 'refunded', 'delivery.refundAmount': 0 } });
+    return 'refunded';
+  }
   try {
     if (!razorpay) throw new Error('Razorpay is not configured');
     if (!claimed.delivery.razorpayPaymentId) throw new Error('No payment id on this order');
@@ -264,7 +273,7 @@ export const refundDeliveryPayment = async (redemption) => {
     });
     await Redemption.updateOne(
       { _id: claimed._id },
-      { $set: { 'delivery.paymentStatus': 'refunded', 'delivery.refundId': refund?.id || '' } }
+      { $set: { 'delivery.paymentStatus': 'refunded', 'delivery.refundId': refund?.id || '', 'delivery.refundAmount': amount } }
     );
     try {
       await notifyUser(String(claimed.customerId), {
@@ -298,6 +307,8 @@ export const cancelDeliveryOrder = async (redemption, { by, reason = '' }) => {
         'delivery.cancelledAt': new Date(),
         'delivery.cancelledBy': by,
         'delivery.cancelReason': reason,
+        // The customer's own cancel doesn't get the delivery fee back.
+        'delivery.feeRetained': by === 'customer',
       },
     },
     { new: true }
@@ -346,11 +357,12 @@ export const RETURN_REASONS = {
 };
 
 // Turns a picked-up order into a return: the customer's order is cancelled and
-// fully refunded (items + delivery fee) straight away, the partner earns nothing
+// refunded straight away - in full, or without the delivery fee when the
+// customer refused it or wasn't reachable (`feeRetained`) - the partner earns nothing
 // for it and takes the goods back, and the store confirms receipt
 // (confirmDeliveryReturn), which is when the held stock goes back on sale.
 // `by` is 'partner' or 'admin'. Returns the order, or null if it wasn't picked up.
-export const startDeliveryReturn = async (redemption, { by, reason = '' }) => {
+export const startDeliveryReturn = async (redemption, { by, reason = '', feeRetained = false }) => {
   const now = new Date();
   const updated = await Redemption.findOneAndUpdate(
     { _id: redemption._id, status: 'pending', 'delivery.status': 'picked_up' },
@@ -362,6 +374,7 @@ export const startDeliveryReturn = async (redemption, { by, reason = '' }) => {
         'delivery.cancelledBy': by,
         'delivery.cancelReason': reason,
         'delivery.returnStartedAt': now,
+        'delivery.feeRetained': Boolean(feeRetained),
       },
     },
     { new: true }
@@ -372,7 +385,10 @@ export const startDeliveryReturn = async (redemption, { by, reason = '' }) => {
   const payment = updated.delivery.paymentStatus === 'paid' ? await refundDeliveryPayment(updated) : null;
 
   const why = reason ? ` (${reason})` : '';
-  const money = payment ? ` Your ₹${amountDue(updated)} is being refunded.` : '';
+  const fee = Math.round(updated.delivery.fee || 0);
+  const money = payment
+    ? ` ₹${refundableAmount(updated)} is being refunded${updated.delivery.feeRetained && fee > 0 ? ` (the ₹${fee} delivery fee isn't refundable)` : ''}.`
+    : '';
   await announceStage(updated, {
     customer: {
       title: "Order couldn't be delivered",
