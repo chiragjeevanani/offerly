@@ -11,6 +11,7 @@ import { authAPI } from '../../../../api/auth.api';
 import { storage } from '../../../../utils/storage';
 import toast from 'react-hot-toast';
 import PageTransition from '../../components/ui/PageTransition';
+import { takeAfterLogin } from '../../../../utils/afterLogin';
 
 const OTP_DURATION = 300; // 5 minutes
 const RESEND_COOLDOWN = 30;
@@ -101,14 +102,14 @@ const OtpVerify = () => {
             login(registerResponse.user);
             sessionStorage.removeItem('pendingRegistration');
             toast.success('IDENTITY CREATED');
-            navigate(userType === 'customer' ? '/home' : '/merchant/register');
+            navigate(userType === 'customer' ? takeAfterLogin() : '/merchant/register');
           }
         } else {
           storage.setToken(verifyResponse.token);
           storage.setUser(verifyResponse.user);
           login(verifyResponse.user);
           toast.success('ACCESS GRANTED');
-          navigate(userType === 'customer' ? '/home' : '/merchant');
+          navigate(userType === 'customer' ? takeAfterLogin() : '/merchant');
         }
       }
     } catch (error) {

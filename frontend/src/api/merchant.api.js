@@ -2,6 +2,9 @@ import axiosInstance from './axios';
 import { API_ENDPOINTS } from '../config/constants';
 
 export const merchantAPI = {
+  // Short store link getofferly.in/<slug> -> { merchantId, storeName } (public)
+  resolveStoreLink: async (slug) => axiosInstance.get(`/merchants/link/${encodeURIComponent(slug)}`),
+
   // Get all merchants with optional filters
   getAll: async (params) => {
     return axiosInstance.get(API_ENDPOINTS.GET_MERCHANTS, { params });

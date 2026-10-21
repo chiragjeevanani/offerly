@@ -16,6 +16,7 @@ import { storage } from '../../../../utils/storage';
 import { useApp } from '../../context/AppContext';
 import toast from 'react-hot-toast';
 import PageTransition from '../../components/ui/PageTransition';
+import { takeAfterLogin } from '../../../../utils/afterLogin';
 
 const isValidEmail = (email) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 
@@ -149,7 +150,7 @@ const CustomerSignup = () => {
           sessionStorage.removeItem('pendingRegistration');
           localStorage.removeItem(SIGNUP_DRAFT_KEY);
           toast.success('Account created successfully!');
-          navigate('/home', { replace: true });
+          navigate(takeAfterLogin(), { replace: true });
         }
       } catch (error) {
         toast.error(error?.error || 'Sign up failed. Please verify your number again.');

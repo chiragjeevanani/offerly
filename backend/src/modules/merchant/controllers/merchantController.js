@@ -25,6 +25,7 @@ import { resolveStoreType } from "../../../utils/storeTypeHelper.js";
 import { normalizePhone } from "../../../utils/phone.js";
 import { getAllActiveMerchantIds, hasActiveMerchantSubscription } from "../../../utils/merchantSubscription.js";
 import { isWithinBusinessHours, validateBusinessHours } from "../../../utils/businessHours.js";
+import { isValidSlug, uniqueStoreSlug } from "../../../utils/storeSlug.js";
 
 const escapeRegex = (value = "") => value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 
@@ -335,7 +336,28 @@ export const getMyStore = async (req, res) => {
     return res.status(404).json({ message: "Merchant profile not found" });
   }
 
+  // Stores whose name was set by an update (no save hook) get their short link here.
+  if (!merchant.slug && merchant.storeName?.trim()) {
+    merchant.slug = await uniqueStoreSlug(Merchant, merchant.storeName, merchant._id);
+    await Merchant.updateOne({ _id: merchant._id }, { $set: { slug: merchant.slug } });
+  }
+
   return res.status(200).json({ merchant: serializeMerchant(merchant) });
+};
+
+// @desc    Resolve a short store link (getofferly.in/<slug>) to the store id
+// @route   GET /merchants/link/:slug
+// @access  Public - only stores customers can already see (approved + active plan)
+export const resolveStoreLink = async (req, res) => {
+  const slug = String(req.params.slug || "").toLowerCase();
+  if (!isValidSlug(slug)) {
+    return res.status(404).json({ message: "Store not found" });
+  }
+  const merchant = await Merchant.findOne({ slug }).select("_id storeName status").lean();
+  if (!merchant || merchant.status !== "approved" || !(await hasActiveMerchantSubscription(merchant._id))) {
+    return res.status(404).json({ message: "Store not found" });
+  }
+  return res.status(200).json({ merchantId: String(merchant._id), storeName: merchant.storeName });
 };
 
 export const updateOnboarding = async (req, res) => {

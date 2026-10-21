@@ -18,7 +18,8 @@ import LogoutRoundedIcon from '@mui/icons-material/LogoutRounded';
 import ChevronRightRoundedIcon from '@mui/icons-material/ChevronRightRounded';
 import EditRoundedIcon from '@mui/icons-material/EditRounded';
 import WorkspacePremiumRoundedIcon from '@mui/icons-material/WorkspacePremiumRounded';
-import VerifiedRoundedIcon from '@mui/icons-material/VerifiedRounded';
+import BlueTick from '../../../components/ui/BlueTick';
+import StoreLinkCard from '../components/StoreLinkCard';
 import Inventory2RoundedIcon from '@mui/icons-material/Inventory2Rounded';
 import SpaRoundedIcon from '@mui/icons-material/SpaRounded';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
@@ -289,10 +290,16 @@ const Profile = ({ merchant, onMerchantUpdate }) => {
                <div className="flex-1 min-w-0">
                   <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-4">
                      <h2 className="text-lg sm:text-xl lg:text-2xl font-bold text-white tracking-tight leading-tight truncate">{merchant?.storeName}</h2>
-                     <div className="flex items-center gap-1.5 px-2 py-0.5 bg-[#5EB929]/10 border border-[#5EB929]/20 rounded-full w-fit">
-                        <VerifiedRoundedIcon className="text-[#5EB929]" sx={{ fontSize: 10 }} />
-                        <span className="text-[8px] font-bold text-[#5EB929] uppercase tracking-widest">Verified</span>
-                     </div>
+                     {merchant?.verified && (
+                       <button
+                         type="button"
+                         onClick={() => navigate('/merchant/blue-tick')}
+                         className="flex items-center gap-1.5 px-2 py-0.5 bg-[#1D9BF0]/15 border border-[#1D9BF0]/30 rounded-full w-fit"
+                       >
+                          <BlueTick size={12} />
+                          <span className="text-[8px] font-bold text-[#7CC4F5] uppercase tracking-widest">Verified seller</span>
+                       </button>
+                     )}
                   </div>
                   <p className="text-gray-400 font-bold text-[10px] sm:text-xs tracking-wide mt-1 truncate uppercase opacity-60">
                     {merchant?.category} • {merchant?.city} • #OFF-{merchant?._id?.slice(-6).toUpperCase()}
@@ -322,6 +329,8 @@ const Profile = ({ merchant, onMerchantUpdate }) => {
                </div>
             </div>
          </div>
+
+         <StoreLinkCard merchant={merchant} />
 
          {/* Store Offering Mode Selector (Product vs Service) */}
          <div className="bg-white rounded-[2rem] p-5 sm:p-6 border border-gray-100 shadow-sm space-y-4">

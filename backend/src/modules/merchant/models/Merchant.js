@@ -1,4 +1,5 @@
 import mongoose from 'mongoose';
+import { uniqueStoreSlug } from '../../../utils/storeSlug.js';
 
 const kybDocumentSchema = new mongoose.Schema(
   {
@@ -71,6 +72,15 @@ const merchantSchema = new mongoose.Schema(
       type: String,
       trim: true,
       default: '',
+    },
+    // Short link getofferly.in/<slug>. Set from the store name on the first save
+    // that has one, then kept for good (see utils/storeSlug.js).
+    slug: {
+      type: String,
+      trim: true,
+      lowercase: true,
+      unique: true,
+      sparse: true,
     },
     category: {
       type: String,
@@ -351,5 +361,10 @@ merchantSchema.index({ status: 1, zone: 1 });
 // which means looking merchants up by token.
 merchantSchema.index({ 'fcmTokens.web.token': 1 });
 merchantSchema.index({ 'fcmTokens.app.token': 1 });
+
+merchantSchema.pre('save', async function assignSlug() {
+  if (this.slug || !this.storeName?.trim()) return;
+  this.slug = await uniqueStoreSlug(this.constructor, this.storeName, this._id);
+});
 
 export default mongoose.model('Merchant', merchantSchema);

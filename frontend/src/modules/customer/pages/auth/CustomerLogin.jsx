@@ -6,6 +6,7 @@ import { storage } from '../../../../utils/storage';
 import { useApp } from '../../context/AppContext';
 import toast from 'react-hot-toast';
 import PageTransition from '../../components/ui/PageTransition';
+import { takeAfterLogin } from '../../../../utils/afterLogin';
 
 const loginBanners = [
   {
@@ -320,7 +321,7 @@ const CustomerLogin = () => {
               login(registerResponse.user);
               sessionStorage.removeItem('pendingRegistration');
               toast.success('Account created successfully!');
-              navigate('/home');
+              navigate(takeAfterLogin(), { replace: true });
               return;
             }
           }
@@ -344,7 +345,7 @@ const CustomerLogin = () => {
           storage.setUser(verifyResponse.user);
           login(verifyResponse.user);
           toast.success('Welcome back to Offerly!');
-          navigate('/home');
+          navigate(takeAfterLogin(), { replace: true });
         }
       }
     } catch (err) {

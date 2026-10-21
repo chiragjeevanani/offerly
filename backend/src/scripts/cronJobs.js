@@ -8,6 +8,7 @@ import { releaseUnreleasedStockHolds } from '../modules/merchant/services/stockS
 import { expireRewardCredits, expireUnscratchedCards } from '../modules/rewards/services/rewardCreditService.js';
 import { sweepLapsedDeliveryOrders } from '../modules/delivery/services/deliveryService.js';
 import { refreshAllBlueTicks } from '../modules/merchant/services/blueTickService.js';
+import { backfillStoreSlugs } from '../utils/storeSlug.js';
 
 /**
  * Keeps each merchant's open/closed toggle in step with their business hours.
@@ -43,6 +44,12 @@ export const syncStoreOpenWithHours = async (now = new Date()) => {
 };
 
 export const initCronJobs = () => {
+  // Short store links for stores saved before slugs existed (also re-run hourly
+  // below, for stores named through an update that skips the save hook).
+  backfillStoreSlugs(Merchant)
+    .then((n) => n > 0 && console.log(`[Boot] Gave ${n} store(s) a short link.`))
+    .catch((err) => console.error('[Boot] Store link backfill failed:', err));
+
   // Run every 5 minutes
   cron.schedule('*/5 * * * *', async () => {
     try {
@@ -95,6 +102,7 @@ export const initCronJobs = () => {
   // look at the last 7 / 30 days, so an hour's lag is fine.
   cron.schedule('7 * * * *', async () => {
     try {
+      await backfillStoreSlugs(Merchant);
       const { checked, verified, changed } = await refreshAllBlueTicks();
       if (changed > 0) console.log(`[Cron] Blue tick: ${verified}/${checked} store(s) verified, ${changed} changed.`);
     } catch (err) {

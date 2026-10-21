@@ -14,6 +14,7 @@ import {
   getMerchantDashboard,
   getMerchants,
   getMyStore,
+  resolveStoreLink,
   getMySubscription,
   registerStore,
   updateMyStore,
@@ -125,6 +126,7 @@ router.post("/me/push-tokens/test", protect, authorize("merchant"), pushTestLimi
 
 router.post("/register", protect, authorize("merchant"), registerStore);
 router.put("/me", protect, authorize("merchant", "admin"), updateMyStore);
+router.get("/link/:slug", resolveStoreLink);
 router.get("/:id", optionalAuth, getMerchantById);
 router.delete("/:id", protect, authorize("admin"), deleteMerchant);
 

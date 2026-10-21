@@ -9,6 +9,7 @@ import PushNotificationBridge from './components/common/PushNotificationBridge';
 import SplashScreen from './modules/customer/components/ui/SplashScreen';
 import { useRewardsEnabled } from './hooks/useRewardsEnabled';
 import { customerPageLoaders as pages, preloadCustomerPages } from './routes/customerPages';
+import { takeAfterLogin } from './utils/afterLogin';
 
 // Loading Component
 const PageLoader = () => (
@@ -34,6 +35,7 @@ const QrScreen = lazy(pages.qr);
 const LeaveReview = lazy(pages.leaveReview);
 const StoreProfile = lazy(pages.store);
 const ProductDetail = lazy(pages.productDetail);
+const StoreShortLink = lazy(() => import('./modules/customer/pages/store/StoreShortLink'));
 const HowItWorks = lazy(pages.guide);
 const Profile = lazy(pages.profile);
 const Referral = lazy(pages.referral);
@@ -79,7 +81,10 @@ const PublicOnlyRoute = ({ children }) => {
   if (authStatus === 'loading') {
     return <PageLoader />;
   }
-  return isLoggedIn ? <Navigate to="/home" replace /> : children;
+  // Logging in re-renders this before the login screen's own navigate() lands
+  // (router updates are transitions), so it must send people to the same place:
+  // a remembered store link, else Home.
+  return isLoggedIn ? <Navigate to={takeAfterLogin()} replace /> : children;
 };
 
 // The splash is branding, not loading - it runs on a timer, not on real progress.
@@ -189,6 +194,8 @@ const AppRoutes = () => {
                 <Route path="support" element={<Support />} />
 
                 {/* Catch-all - redirect to login */}
+                {/* getofferly.in/<store-slug> - links merchants share. Fixed paths above always win. */}
+                <Route path=":slug" element={<StoreShortLink />} />
                 <Route path="*" element={<Navigate to="/login" replace />} />
               </Routes>
             </Suspense>
