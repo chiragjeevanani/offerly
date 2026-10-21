@@ -6,7 +6,7 @@ import StarRoundedIcon from '@mui/icons-material/StarRounded';
 import LocationOnRoundedIcon from '@mui/icons-material/LocationOnRounded';
 import PhoneRoundedIcon from '@mui/icons-material/PhoneRounded';
 import EmailRoundedIcon from '@mui/icons-material/EmailRounded';
-import VerifiedRoundedIcon from '@mui/icons-material/VerifiedRounded';
+import BlueTick from '../../../../components/ui/BlueTick';
 import ShoppingCartRoundedIcon from '@mui/icons-material/ShoppingCartRounded';
 import ArrowForwardRoundedIcon from '@mui/icons-material/ArrowForwardRounded';
 import AddRoundedIcon from '@mui/icons-material/AddRounded';
@@ -261,10 +261,22 @@ const StoreProfilePage = () => {
               <div className="flex-1 pt-1">
                 <div className="flex items-center gap-2">
                   <h1 className="text-xl sm:text-2xl font-bold text-text-primary leading-tight">{merchant.storeName}</h1>
-                  {merchant.verified && (
-                    <VerifiedRoundedIcon sx={{ fontSize: 20 }} className="text-primary-500 flex-shrink-0" />
-                  )}
+                  {merchant.verified && <BlueTick size={22} />}
                 </div>
+                {merchant.verified && (
+                  <button
+                    type="button"
+                    onClick={() =>
+                      toast('Offerly verified seller: well rated by customers and keeps its orders and sales on time.', {
+                        icon: <BlueTick size={20} />,
+                        id: 'blue-tick-info',
+                      })
+                    }
+                    className="mt-1 inline-flex items-center gap-1 rounded-full bg-[#1D9BF0]/10 px-2 py-0.5 text-[11px] font-semibold text-[#1576B8]"
+                  >
+                    <BlueTick size={13} /> Verified seller
+                  </button>
+                )}
                 <p className="text-sm text-text-secondary mt-1 font-medium">{merchant.category}</p>
               </div>
             </div>

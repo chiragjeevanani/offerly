@@ -22,6 +22,7 @@ import ArrowDownwardRoundedIcon from '@mui/icons-material/ArrowDownwardRounded';
 import InsightsRoundedIcon from '@mui/icons-material/InsightsRounded';
 import { merchantAPI } from '../../../api/merchant.api';
 import SubscriptionRenewal from '../components/SubscriptionRenewal';
+import BlueTick, { BLUE_TICK_COLOR } from '../../../components/ui/BlueTick';
 import { nextAutoChange } from '../utils/businessHours';
 
 // Change against the same figure yesterday. A null change means there was no
@@ -233,6 +234,23 @@ const MerchantDashboard = ({ merchant, onMerchantUpdate }) => {
              Quick Scan
           </button>
         </div>
+
+        {/* Blue tick - status, and the way to the rules */}
+        <button
+          type="button"
+          onClick={() => navigate('/merchant/blue-tick')}
+          className="w-full flex items-center gap-3 rounded-2xl border px-4 py-3 text-left active:scale-[0.99] transition-transform"
+          style={{ background: merchant?.verified ? `${BLUE_TICK_COLOR}12` : '#fff', borderColor: merchant?.verified ? `${BLUE_TICK_COLOR}40` : '#F1F5F9' }}
+        >
+          <BlueTick size={26} />
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-bold text-gray-900">{merchant?.verified ? 'You have the blue tick' : 'Get the blue tick'}</p>
+            <p className="text-[11px] text-gray-500">
+              {merchant?.verified ? 'Customers see you as a verified seller.' : 'See the rules - verified stores stand out to customers.'}
+            </p>
+          </div>
+          <ChevronRightRoundedIcon className="text-gray-400" />
+        </button>
 
         {/* Today - the four numbers a merchant checks first thing */}
         <div>

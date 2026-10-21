@@ -7,6 +7,7 @@ import { releaseUnrefundedReferralPoints } from '../modules/user/services/referr
 import { releaseUnreleasedStockHolds } from '../modules/merchant/services/stockService.js';
 import { expireRewardCredits, expireUnscratchedCards } from '../modules/rewards/services/rewardCreditService.js';
 import { sweepLapsedDeliveryOrders } from '../modules/delivery/services/deliveryService.js';
+import { refreshAllBlueTicks } from '../modules/merchant/services/blueTickService.js';
 
 /**
  * Keeps each merchant's open/closed toggle in step with their business hours.
@@ -90,5 +91,16 @@ export const initCronJobs = () => {
     }
   });
 
-  console.log('Cron jobs initialized: auto-expire redemptions (5 min), store hours sync (1 min).');
+  // Hourly, at :07 so it doesn't land on the 5-minute sweep. Blue tick rules
+  // look at the last 7 / 30 days, so an hour's lag is fine.
+  cron.schedule('7 * * * *', async () => {
+    try {
+      const { checked, verified, changed } = await refreshAllBlueTicks();
+      if (changed > 0) console.log(`[Cron] Blue tick: ${verified}/${checked} store(s) verified, ${changed} changed.`);
+    } catch (err) {
+      console.error('[Cron Error] Failed to refresh blue ticks:', err);
+    }
+  });
+
+  console.log('Cron jobs initialized: auto-expire redemptions (5 min), store hours sync (1 min), blue ticks (hourly).');
 };

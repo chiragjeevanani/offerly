@@ -149,10 +149,13 @@ const merchantSchema = new mongoose.Schema(
       type: [String],
       default: [],
     },
+    // The blue tick in the customer app. Set only by blueTickService from the
+    // admin's Blue Tick rules - never edited by hand.
     verified: {
       type: Boolean,
       default: false,
     },
+    blueTickCheckedAt: Date,
     status: {
       type: String,
       enum: ['pending', 'approved', 'rejected'],

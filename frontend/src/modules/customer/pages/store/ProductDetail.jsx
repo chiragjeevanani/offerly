@@ -14,6 +14,7 @@ import { cartAPI } from '../../../../api/cart.api';
 import PageTransition from '../../components/ui/PageTransition';
 import FoodTypeMark, { getFoodType } from '../../../../components/ui/FoodTypeMark';
 import ImageZoomViewer from '../../../../components/ui/ImageZoomViewer';
+import BlueTick from '../../../../components/ui/BlueTick';
 import { shouldShowVegIndicator } from '../../../../utils/storeTypeHelper';
 import { storeCache } from './storeCache';
 import { useStoreCart, useGoToCart, StoreCartDialogs, EMPTY_CART } from '../../hooks/useStoreCart';
@@ -264,7 +265,10 @@ const ProductDetailPage = () => {
           </div>
           <div className="flex-1 min-w-0">
             <p className="text-[11px] text-gray-400 font-medium">Sold by</p>
-            <p className="text-sm font-bold text-gray-900 truncate">{merchant.storeName}</p>
+            <p className="text-sm font-bold text-gray-900 flex items-center gap-1 min-w-0">
+              <span className="truncate">{merchant.storeName}</span>
+              {merchant.verified && <BlueTick size={15} />}
+            </p>
           </div>
           <ChevronRightRoundedIcon className="text-gray-400" />
         </button>

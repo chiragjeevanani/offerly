@@ -6,7 +6,7 @@ import StarRoundedIcon from '@mui/icons-material/StarRounded';
 import StarBorderRoundedIcon from '@mui/icons-material/StarBorderRounded';
 import LocationOnRoundedIcon from '@mui/icons-material/LocationOnRounded';
 import AccessTimeRoundedIcon from '@mui/icons-material/AccessTimeRounded';
-import VerifiedRoundedIcon from '@mui/icons-material/VerifiedRounded';
+import BlueTick from '../../../../components/ui/BlueTick';
 import FavoriteRoundedIcon from '@mui/icons-material/FavoriteRounded';
 import FavoriteBorderRoundedIcon from '@mui/icons-material/FavoriteBorderRounded';
 import QrCodeScannerRoundedIcon from '@mui/icons-material/QrCodeScannerRounded';
@@ -216,9 +216,7 @@ const OfferDetail = () => {
               >
                 {merchant?.storeName}
               </button>
-              {merchant?.verified && (
-                <VerifiedRoundedIcon sx={{ fontSize: 15 }} className="text-primary" />
-              )}
+              {merchant?.verified && <BlueTick size={16} />}
             </div>
           </div>
 

@@ -27,6 +27,7 @@ import AppsRoundedIcon from '@mui/icons-material/AppsRounded';
 import AccountBalanceWalletRoundedIcon from '@mui/icons-material/AccountBalanceWalletRounded';
 import PointOfSaleRoundedIcon from '@mui/icons-material/PointOfSaleRounded';
 import CompareArrowsRoundedIcon from '@mui/icons-material/CompareArrowsRounded';
+import VerifiedRoundedIcon from '@mui/icons-material/VerifiedRounded';
 
 import { useApp } from '../customer/context/AppContext';
 import { merchantAPI } from '../../api/merchant.api';
@@ -64,6 +65,7 @@ const Profile = lazy(pages.profile);
 const Wallet = lazy(pages.wallet);
 const WalkinSale = lazy(pages.walkin);
 const OnlineOffline = lazy(pages.onlineOffline);
+const BlueTickPage = lazy(pages.blueTick);
 
 import SubscriptionRenewal from './components/SubscriptionRenewal';
 
@@ -104,6 +106,7 @@ const MerchantSidebar = ({ merchant, isMobileMenuOpen, setIsMobileMenuOpen }) =>
 
   const accountNavItems = [
     { name: 'Offerly Wallet', path: '/merchant/wallet', icon: AccountBalanceWalletRoundedIcon },
+    { name: 'Blue Tick', path: '/merchant/blue-tick', icon: VerifiedRoundedIcon, badge: merchant?.verified ? null : 'GET' },
     { name: 'My Plan', path: '/merchant/subscription', icon: WorkspacePremiumRoundedIcon },
     { name: 'Notifications', path: '/merchant/notifications', icon: NotificationsRoundedIcon },
     { name: 'Profile', path: '/merchant/profile', icon: PersonRoundedIcon },
@@ -601,6 +604,7 @@ const MerchantApp = () => {
                 <Route path="/subscription" element={<SubscriptionRenewal merchant={merchant} />} />
                 <Route path="/wallet" element={<Wallet />} />
                 <Route path="/walk-in" element={<WalkinSale />} />
+                <Route path="/blue-tick" element={<BlueTickPage />} />
                 <Route path="/online-offline" element={<OnlineOffline />} />
                 <Route path="/notifications" element={<Notifications />} />
                 <Route path="/profile" element={<Profile merchant={merchant} onMerchantUpdate={fetchMerchant} />} />

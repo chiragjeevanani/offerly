@@ -34,6 +34,7 @@ const merchantNotificationSchema = new mongoose.Schema(
         'merchant_application',
         'stock_alert',
         'delivery_update',
+        'blue_tick',
         'general',
       ],
       default: 'general',

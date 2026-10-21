@@ -43,6 +43,7 @@ import {
   getWalkinOrders,
   getSalesComparison,
 } from "../../booking/controllers/walkinController.js";
+import { getMyBlueTick } from "../controllers/blueTickController.js";
 
 const router = express.Router();
 
@@ -80,6 +81,7 @@ router.post("/me/walkin/verify-otp", protect, authorize("merchant"), walkinOtpLi
 router.get("/me/walkin/orders", protect, authorize("merchant"), getWalkinOrders);
 router.post("/me/walkin/orders", protect, authorize("merchant"), createWalkinOrder);
 router.get("/me/sales-comparison", protect, authorize("merchant"), getSalesComparison);
+router.get("/me/blue-tick", protect, authorize("merchant"), getMyBlueTick);
 
 router.get("/", optionalAuth, getMerchants);
 router.get("/me", protect, authorize("merchant", "admin"), getMyStore);

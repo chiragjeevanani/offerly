@@ -169,6 +169,8 @@ export const merchantAPI = {
   walkinVerifyOtp: async (phone, otp) => axiosInstance.post('/merchants/me/walkin/verify-otp', { phone, otp }),
   createWalkinOrder: async (data) => axiosInstance.post('/merchants/me/walkin/orders', data),
   getWalkinOrders: async (params) => axiosInstance.get('/merchants/me/walkin/orders', { params }),
+  // Blue tick (verified seller): status + progress on each rule
+  getBlueTick: async () => axiosInstance.get('/merchants/me/blue-tick'),
   // Online (app) bookings vs offline (walk-in) sales
   getSalesComparison: async (period) => axiosInstance.get('/merchants/me/sales-comparison', { params: { period } }),
 

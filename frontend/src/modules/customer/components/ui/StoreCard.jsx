@@ -2,7 +2,7 @@ import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import LocationOnRoundedIcon from '@mui/icons-material/LocationOnRounded';
 import StarRoundedIcon from '@mui/icons-material/StarRounded';
-import VerifiedRoundedIcon from '@mui/icons-material/VerifiedRounded';
+import BlueTick from '../../../../components/ui/BlueTick';
 import ChevronRightRoundedIcon from '@mui/icons-material/ChevronRightRounded';
 
 const StoreCard = ({ merchant, offerCount, variant = 'row' }) => {
@@ -42,9 +42,7 @@ const StoreCard = ({ merchant, offerCount, variant = 'row' }) => {
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-1.5">
             <span className="text-sm font-semibold text-gray-900 truncate">{merchant.storeName}</span>
-            {merchant.verified && (
-              <VerifiedRoundedIcon sx={{ fontSize: 13 }} className="text-blue-500 flex-shrink-0" />
-            )}
+            {merchant.verified && <BlueTick size={15} />}
           </div>
           
           <div className="flex items-center gap-2 mt-0.5">
@@ -102,7 +100,10 @@ const StoreCard = ({ merchant, offerCount, variant = 'row' }) => {
         )}
       </div>
       <div className="p-3 space-y-1">
-        <p className="text-xs font-semibold text-gray-900 truncate">{merchant.storeName}</p>
+        <div className="flex items-center gap-1 min-w-0">
+          <p className="text-xs font-semibold text-gray-900 truncate">{merchant.storeName}</p>
+          {merchant.verified && <BlueTick size={13} />}
+        </div>
         <div className="flex items-center justify-between">
            <p className="text-[11px] font-normal text-gray-500 capitalize">{merchant.category}</p>
            <div className="flex items-center gap-0.5">

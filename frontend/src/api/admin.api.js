@@ -133,6 +133,10 @@ export const adminAPI = {
     return axiosInstance.put(`/admin/payouts/${id}/reject`, data);
   },
 
+  // Blue tick (verified seller) rules
+  getBlueTickSettings: async () => axiosInstance.get('/admin/blue-tick-settings'),
+  updateBlueTickSettings: async (data) => axiosInstance.put('/admin/blue-tick-settings', data),
+
   // Refer & Earn + Customer Distribution Fund
   getIncentiveSettings: async () => {
     return axiosInstance.get('/admin/incentive-settings');

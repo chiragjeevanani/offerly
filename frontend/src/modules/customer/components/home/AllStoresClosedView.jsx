@@ -8,7 +8,7 @@ import StorefrontRoundedIcon from '@mui/icons-material/StorefrontRounded';
 import LocalOfferRoundedIcon from '@mui/icons-material/LocalOfferRounded';
 import StarRoundedIcon from '@mui/icons-material/StarRounded';
 import ChevronRightRoundedIcon from '@mui/icons-material/ChevronRightRounded';
-import VerifiedRoundedIcon from '@mui/icons-material/VerifiedRounded';
+import BlueTick from '../../../../components/ui/BlueTick';
 import LocationOnRoundedIcon from '@mui/icons-material/LocationOnRounded';
 import SportsEsportsRoundedIcon from '@mui/icons-material/SportsEsportsRounded';
 import CasinoRoundedIcon from '@mui/icons-material/CasinoRounded';
@@ -431,9 +431,7 @@ const AllStoresClosedView = ({
                         <h4 className="text-sm font-bold text-gray-900 truncate">
                           {item.storeName}
                         </h4>
-                        {item.verified && (
-                          <VerifiedRoundedIcon sx={{ fontSize: 14 }} className="text-blue-500 flex-shrink-0" />
-                        )}
+                        {item.verified && <BlueTick size={15} />}
                       </div>
                       <div className="flex items-center gap-1.5 text-[11px] text-gray-500 mt-0.5">
                         <span className="capitalize">{item.category}</span>

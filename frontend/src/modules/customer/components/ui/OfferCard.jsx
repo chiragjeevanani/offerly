@@ -11,6 +11,7 @@ import { useApp } from '../../context/AppContext';
 import toast from 'react-hot-toast';
 
 import { useOfferImpression } from '../../../../hooks/useOfferImpression';
+import BlueTick from '../../../../components/ui/BlueTick';
 
 const OfferCard = ({ offer, variant = 'list', onSaveToggle, viewSource = 'feed' }) => {
   const navigate = useNavigate();
@@ -120,7 +121,10 @@ const OfferCard = ({ offer, variant = 'list', onSaveToggle, viewSource = 'feed' 
         </div>
         <div className={`p-2.5 flex flex-col justify-between flex-1 space-y-1 ${!isMerchantOpen ? 'grayscale' : ''}`}>
           <div className="space-y-0.5">
-            <p className="text-[11px] font-semibold text-primary line-clamp-1">{merchant?.storeName}</p>
+            <div className="flex items-center gap-1 min-w-0">
+              <p className="text-[11px] font-semibold text-primary line-clamp-1">{merchant?.storeName}</p>
+              {merchant?.verified && <BlueTick size={12} />}
+            </div>
             <h3 className="text-xs font-semibold text-gray-900 leading-tight line-clamp-2">{offer.title}</h3>
           </div>
           <div className="flex items-center justify-between pt-1 border-t border-gray-50 mt-auto">
@@ -185,7 +189,10 @@ const OfferCard = ({ offer, variant = 'list', onSaveToggle, viewSource = 'feed' 
                </motion.button>
              </div>
              <div className="flex items-center gap-2">
-                <p className="text-xs font-semibold text-primary">{merchant?.storeName}</p>
+                <p className="text-xs font-semibold text-primary flex items-center gap-1">
+                  {merchant?.storeName}
+                  {merchant?.verified && <BlueTick size={13} />}
+                </p>
                 <div className="w-1 h-1 bg-gray-300 rounded-full" />
                 <div className="flex items-center gap-1">
                   <LocationOnRoundedIcon sx={{ fontSize: 12 }} className="text-gray-400" />

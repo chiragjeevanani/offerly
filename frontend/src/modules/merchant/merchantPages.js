@@ -17,6 +17,7 @@ export const merchantPageLoaders = {
   wallet: () => import('./pages/Wallet'),
   walkin: () => import('./pages/WalkinSale'),
   onlineOffline: () => import('./pages/OnlineOffline'),
+  blueTick: () => import('./pages/BlueTick'),
 };
 
 const loaderForPath = {
@@ -34,6 +35,7 @@ const loaderForPath = {
   '/merchant/wallet': merchantPageLoaders.wallet,
   '/merchant/walk-in': merchantPageLoaders.walkin,
   '/merchant/online-offline': merchantPageLoaders.onlineOffline,
+  '/merchant/blue-tick': merchantPageLoaders.blueTick,
 };
 
 const quietly = (loader) => {

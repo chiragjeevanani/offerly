@@ -7,7 +7,7 @@ import { useCategories } from '../../../../hooks/useReferenceData';
 import { useApp } from '../../context/AppContext';
 import PageTransition from '../../components/ui/PageTransition';
 import StoreCard from '../../components/ui/StoreCard';
-import CheckCircleRoundedIcon from '@mui/icons-material/CheckCircleRounded';
+import BlueTick from '../../../../components/ui/BlueTick';
 import { motion, AnimatePresence } from 'framer-motion';
 
 const MAP_CONTAINER_STYLE = {
@@ -232,8 +232,8 @@ const MapView = () => {
                     <div className="relative w-12 h-12 mx-auto mb-2">
                        <img src={selected.logo || selected.coverImage} className="w-full h-full rounded-2xl object-cover shadow-sm border-2 border-white" alt=""/>
                        {selected.verified && (
-                         <div className="absolute -top-1 -right-1 bg-[#5EB929] text-white p-0.5 rounded-full shadow-sm">
-                           <CheckCircleRoundedIcon sx={{ fontSize: 10 }} />
+                         <div className="absolute -top-1 -right-1 bg-white rounded-full leading-none">
+                           <BlueTick size={16} />
                          </div>
                        )}
                     </div>

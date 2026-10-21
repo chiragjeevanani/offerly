@@ -31,6 +31,7 @@ import {
 import { getMerchantWallet, adjustMerchantWallet } from '../controllers/merchantWalletController.js';
 import { protect, authorize } from '../../../middlewares/auth.js';
 import { updateSupportContacts } from '../controllers/supportSettingsController.js';
+import { getBlueTickConfig, updateBlueTickConfig } from '../../merchant/controllers/blueTickController.js';
 import {
   getHomeBanners,
   createHomeBanner,
@@ -68,6 +69,9 @@ router.put('/wallet-settings', authorize('admin'), updateWalletSettingsConfig);
 router.get('/incentive-settings', authorize('admin'), getIncentiveSettingsConfig);
 router.put('/incentive-settings', authorize('admin'), updateIncentiveSettingsConfig);
 router.get('/incentive-summary', authorize('admin'), getIncentiveSummary);
+// Blue tick (verified seller) rules
+router.get('/blue-tick-settings', authorize('admin'), getBlueTickConfig);
+router.put('/blue-tick-settings', authorize('admin'), updateBlueTickConfig);
 // Store payouts for Offerly-funded discounts
 router.get('/payouts', authorize('admin'), getPayoutRequests);
 router.put('/payouts/:id/pay', authorize('admin'), payPayoutRequest);
