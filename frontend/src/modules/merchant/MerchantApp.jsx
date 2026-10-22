@@ -1,6 +1,7 @@
 import { useState, useEffect, lazy, Suspense } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Routes, Route, Navigate, Link, useLocation, useNavigate } from 'react-router-dom';
+import StoreOrderAlert from './components/StoreOrderAlert';
 import DashboardRoundedIcon from '@mui/icons-material/DashboardRounded';
 import QrCodeScannerRoundedIcon from '@mui/icons-material/QrCodeScannerRounded';
 import Inventory2RoundedIcon from '@mui/icons-material/Inventory2Rounded';
@@ -578,6 +579,9 @@ const MerchantApp = () => {
            </div>
         </div>
         
+        {/* Rings until a new delivery order is accepted or rejected */}
+        <StoreOrderAlert merchant={merchant} />
+
         {/* New Premium Mobile Nav Bar */}
         <MerchantBottomNav
           unreadCount={unreadCount}

@@ -8,7 +8,7 @@ import razorpay from '../../../utils/razorpay.js';
 import { releaseReferralPoints } from '../../user/services/referralService.js';
 import { releaseStockHold } from '../../merchant/services/stockService.js';
 import { notifyMerchant, notifyUser } from '../../user/services/notificationService.js';
-import { sendPushToPartner } from '../../user/services/pushService.js';
+import { sendPushToPartner, sendPushToMerchant } from '../../user/services/pushService.js';
 import AdminNotification from '../../admin/models/AdminNotification.js';
 import { emitAdminNotification, emitDeliveryPartnerNotification, emitDeliveryPoolUpdate } from '../../../config/socket.js';
 
@@ -183,6 +183,7 @@ const pushNewOrderToCity = async (redemption, except) => {
     body: `#${redemption.internalId} · ${items} item${items === 1 ? '' : 's'}${cash}. Tap to accept before someone else does.`,
     data: { type: 'new_order', orderId: String(redemption._id) },
     link: `/delivery/orders/${redemption._id}`,
+    urgent: true,
   })));
 };
 
@@ -543,6 +544,7 @@ export const announceNewOrderToStore = async (redemption) => {
       data: { redemptionId: String(redemption._id), internalId: redemption.internalId || '' },
       socketData: withoutSecrets(redemption),
       link: '/merchant/bookings',
+      urgent: true,
     });
   } catch (err) {
     console.error('[Delivery] Store notification failed:', err.message);
@@ -731,4 +733,53 @@ export const sweepLapsedDeliveryOrders = async () => {
     if ((await refundDeliveryPayment(order)) === 'refunded') refunded += 1;
   }
   return refunded;
+};
+
+// Cron, every minute: an order nobody has answered keeps re-alerting by phone
+// push - the store for a new order (accept/reject), the online partners of its
+// city for an open one - roughly once a minute, up to ALERT_MAX times. This is
+// what keeps ringing when the app is closed; the open app rings by itself.
+const ALERT_EVERY_MS = 55 * 1000;
+const ALERT_MAX = 25;
+
+export const sweepUnansweredOrderAlerts = async () => {
+  const now = Date.now();
+  const ready = (start, last) => start && now - new Date(start).getTime() >= 50 * 1000 && (!last || now - new Date(last).getTime() >= ALERT_EVERY_MS);
+  let sent = 0;
+
+  const waitingForStore = await Redemption.find({
+    fulfillment: 'delivery',
+    status: 'pending',
+    'delivery.status': 'placed',
+    'delivery.storeAlerts': { $not: { $gte: ALERT_MAX } },
+  }).limit(100);
+  for (const order of waitingForStore) {
+    const d = order.delivery || {};
+    if (!ready(d.verifiedAt || d.placedAt || order.createdAt, d.lastStoreAlertAt)) continue;
+    await Redemption.updateOne({ _id: order._id }, { $inc: { 'delivery.storeAlerts': 1 }, $set: { 'delivery.lastStoreAlertAt': new Date() } });
+    sendPushToMerchant(String(order.merchantId), {
+      title: 'Delivery order waiting',
+      body: `#${order.internalId} is waiting for you. Accept or reject it.`,
+      data: { type: 'order_waiting', redemptionId: String(order._id) },
+      link: '/merchant/bookings',
+      urgent: true,
+    }).catch(() => {});
+    sent += 1;
+  }
+
+  const openInPool = await Redemption.find({
+    fulfillment: 'delivery',
+    status: 'pending',
+    'delivery.status': { $in: POOL_STAGES },
+    'delivery.partnerId': null,
+    'delivery.poolAlerts': { $not: { $gte: ALERT_MAX } },
+  }).limit(100);
+  for (const order of openInPool) {
+    const d = order.delivery || {};
+    if (!ready(d.acceptedAt || d.placedAt || order.createdAt, d.lastPoolAlertAt)) continue;
+    await Redemption.updateOne({ _id: order._id }, { $inc: { 'delivery.poolAlerts': 1 }, $set: { 'delivery.lastPoolAlertAt': new Date() } });
+    pushNewOrderToCity(order).catch(() => {});
+    sent += 1;
+  }
+  return sent;
 };

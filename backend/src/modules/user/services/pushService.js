@@ -135,7 +135,7 @@ const DEAD_TOKEN_CODES = new Set([
 export const sendPush = async (
   Model,
   ownerId,
-  { title, body, data = {}, platforms = PUSH_PLATFORMS, link = "" } = {},
+  { title, body, data = {}, platforms = PUSH_PLATFORMS, link = "", urgent = false } = {},
 ) => {
   try {
     const messaging = getMessaging();
@@ -165,15 +165,21 @@ export const sendPush = async (
       data: stringData,
       android: {
         priority: "high",
-        notification: { sound: "default", channelId: "offerly_default" },
+        // An order alert is worthless a few minutes late, so don't queue it.
+        ...(urgent ? { ttl: 120000 } : {}),
+        notification: { sound: "default", channelId: "offerly_default", ...(urgent ? { defaultVibrateTimings: true, visibility: "public" } : {}) },
       },
       apns: {
-        payload: { aps: { sound: "default", badge: 1 } },
+        payload: { aps: { sound: "default", badge: 1, ...(urgent ? { "interruption-level": "time-sensitive" } : {}) } },
+        ...(urgent ? { headers: { "apns-priority": "10" } } : {}),
       },
       webpush: {
+        ...(urgent ? { headers: { Urgency: "high", TTL: "120" } } : {}),
         notification: {
           icon: "/offerly-logo-ring.png",
           badge: "/offerly-logo-ring.png",
+          // Stays on screen until tapped, and buzzes, so it isn't missed.
+          ...(urgent ? { requireInteraction: true, vibrate: [300, 150, 300, 150, 300], renotify: true, tag: data?.type || "order" } : {}),
         },
         fcmOptions: link ? { link } : undefined,
       },

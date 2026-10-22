@@ -29,6 +29,8 @@ const notify = async (
     link = "",
     persist = true,
     push = true,
+    // Order alerts: delivered at once, stay on screen, buzz.
+    urgent = false,
   } = {},
 ) => {
   const id = String(ownerId);
@@ -55,7 +57,7 @@ const notify = async (
   }
 
   if (push) {
-    result.push = await sendPush(id, { title, body, data: { type, ...data }, link });
+    result.push = await sendPush(id, { title, body, data: { type, ...data }, link, urgent });
   }
 
   return result;

@@ -9,7 +9,7 @@ import AccountBalanceWalletRoundedIcon from '@mui/icons-material/AccountBalanceW
 import PersonRoundedIcon from '@mui/icons-material/PersonRounded';
 import { useApp } from '../customer/context/AppContext';
 import { deliveryAPI } from '../../api/delivery.api';
-import { playNotificationSound } from '../../utils/notificationSound';
+import PartnerOrderAlert from './components/PartnerOrderAlert';
 
 const PartnerLogin = lazy(() => import('./auth/PartnerLogin'));
 const PartnerVerify = lazy(() => import('./auth/PartnerVerify'));
@@ -53,7 +53,6 @@ const usePartnerSocket = (partner) => {
       queryClient.invalidateQueries({ queryKey: ['partnerActive'] });
       queryClient.invalidateQueries({ queryKey: ['partnerOrder'] });
       if (n?.type === 'pool_update' && n.action === 'added') {
-        playNotificationSound({ type: 'chime' });
         toast('New order nearby', { icon: '🛵' });
       } else if (n?.title) {
         toast(n.title + (n.body ? ` - ${n.body}` : ''));
@@ -123,6 +122,8 @@ const SignedInApp = () => {
 
   return (
     <PartnerLayout>
+      {/* Rings until a waiting order is accepted or rejected */}
+      <PartnerOrderAlert me={data} />
       <Suspense fallback={<Loader />}>
         <Routes>
           <Route path="/" element={<PartnerHome me={data} />} />

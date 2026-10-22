@@ -259,6 +259,11 @@ const redemptionSchema = new mongoose.Schema(
       returnedAt: Date,
       returnConfirmedBy: String,
       // The partner couldn't deliver and asked Offerly support what to do.
+      // Repeat order alerts while nobody has answered (cron, see sweepUnansweredOrderAlerts).
+      storeAlerts: Number,
+      lastStoreAlertAt: Date,
+      poolAlerts: Number,
+      lastPoolAlertAt: Date,
       supportRequestedAt: Date,
       supportReason: String,
     },
