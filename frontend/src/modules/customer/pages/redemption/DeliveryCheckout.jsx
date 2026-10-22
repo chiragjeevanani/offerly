@@ -143,18 +143,35 @@ const DeliveryCheckout = () => {
       return;
     }
     setLocating(true);
+    const onFix = (pos) => {
+      setAddress((prev) => ({ ...prev, lat: pos.coords.latitude, lng: pos.coords.longitude }));
+      setErrors((prev) => ({ ...prev, pin: '' }));
+      setLocating(false);
+      toast.success('Location pinned');
+    };
+    const onFail = (err) => {
+      setLocating(false);
+      if (err?.code === 1) {
+        const ios = /iPhone|iPad|iPod/i.test(navigator.userAgent);
+        toast.error(
+          ios
+            ? 'Location is blocked. Open Settings > Privacy > Location Services > Safari Websites and choose "While Using", then try again.'
+            : 'Location is blocked. Allow it for this site in your browser settings, then try again.',
+          { duration: 7000 }
+        );
+      } else {
+        toast.error("Couldn't get your location. Step outside or turn on Wi-Fi/GPS and try again.", { duration: 5000 });
+      }
+    };
+    // A precise GPS fix often times out indoors (especially on iPhone), so fall
+    // back to the quicker network-based position before giving up.
     navigator.geolocation.getCurrentPosition(
-      (pos) => {
-        setAddress((prev) => ({ ...prev, lat: pos.coords.latitude, lng: pos.coords.longitude }));
-        setErrors((prev) => ({ ...prev, pin: '' }));
-        setLocating(false);
-        toast.success('Location pinned');
+      onFix,
+      (err) => {
+        if (err?.code === 1) return onFail(err);
+        navigator.geolocation.getCurrentPosition(onFix, onFail, { enableHighAccuracy: false, timeout: 12000, maximumAge: 300000 });
       },
-      () => {
-        setLocating(false);
-        toast.error('Allow location access to pin your address');
-      },
-      { enableHighAccuracy: true, timeout: 15000 }
+      { enableHighAccuracy: true, timeout: 8000, maximumAge: 60000 }
     );
   };
 
