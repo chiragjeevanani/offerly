@@ -61,6 +61,7 @@ import { STORAGE_KEYS } from '../../config/constants';
 import { useApp } from '../customer/context/AppContext';
 import { adminAPI } from '../../api/admin.api';
 import { useSocket } from '../../hooks/useSocket';
+import AdminOrderAlert from './components/AdminOrderAlert';
 
 const AdminSidebar = ({ isMobileMenuOpen, setIsMobileMenuOpen }) => {
   const location = useLocation();
@@ -502,6 +503,8 @@ const AdminApp = () => {
   console.log('✅ Admin authenticated, showing dashboard');
   return (
     <AdminLayout>
+      {/* Rings until a delivery order waiting for verification is handled */}
+      <AdminOrderAlert />
       <Suspense fallback={<div className="p-8 text-center text-gray-500 font-bold">Loading...</div>}>
         <Routes>
           <Route path="/" element={<AdminDashboard />} />
