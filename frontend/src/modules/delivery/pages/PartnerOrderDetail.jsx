@@ -481,7 +481,11 @@ const PartnerOrderDetail = () => {
 
         {mine && !finished && !goingBack && stage !== 'picked_up' && (
           <button
-            onClick={() => act('release', () => deliveryAPI.releaseOrder(order.id), 'Order released', () => navigate('/delivery', { replace: true }))}
+            onClick={() => {
+              const limit = queryClient.getQueryData(['partnerMe'])?.cancellationLimit || 0;
+              if (limit > 0 && !window.confirm(`Releasing counts as a cancelled order. If you cancel ${limit} or more in a period, you lose the target bonus for that period. Release it anyway?`)) return;
+              act('release', () => deliveryAPI.releaseOrder(order.id), 'Order released', () => navigate('/delivery', { replace: true }));
+            }}
             disabled={Boolean(busy)}
             className="w-full h-11 rounded-xl text-[11px] font-bold uppercase tracking-widest text-red-500 hover:bg-red-50"
           >

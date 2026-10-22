@@ -4,6 +4,7 @@ import Redemption from '../../booking/models/Redemption.js';
 import DeliveryPartner from '../models/DeliveryPartner.js';
 import AdminNotification from '../../admin/models/AdminNotification.js';
 import DeliveryTargetAward from '../models/DeliveryTargetAward.js';
+import DeliveryRelease from '../models/DeliveryRelease.js';
 import { emitAdminNotification } from '../../../config/socket.js';
 import { verifyRazorpayPayment } from '../../../utils/razorpay.js';
 import { runCompletionEffects } from '../../booking/controllers/redemptionController.js';
@@ -28,6 +29,7 @@ import {
   creditPartnerForDelivery,
   awardTargetBonuses,
   targetProgress,
+  cancellationLimit,
   partnerLimits,
   sameCity,
   POOL_STAGES,
@@ -273,6 +275,7 @@ export const getPartnerMe = async (req, res) => {
         bonuses: bonusHistory.map((b) => ({ id: String(b._id), period: b.period, deliveries: b.deliveries, bonus: b.bonus, at: b.createdAt })),
         activeCount,
         maxActive: partnerLimits(settings).maxActive,
+        cancellationLimit: cancellationLimit(settings),
         payoutPerDelivery: settings.partnerPayoutPerDelivery || 0,
         deliveryEnabled: Boolean(settings.enabled),
       },
@@ -492,6 +495,8 @@ export const releaseOrder = async (req, res) => {
       { new: true }
     );
     if (!order) return res.status(400).json({ success: false, error: 'This order can no longer be released' });
+    // Counts toward the admin's cancellation limit for incentives.
+    await DeliveryRelease.create({ partnerId: req.user._id, redemptionId: order._id }).catch((err) => console.error('release record failed:', err.message));
     announceToPool(order, { except: req.user._id });
     await announceStage(order, {
       store: { title: 'Delivery partner changed', body: `The partner for #${order.internalId} dropped out. We're finding another one.` },
@@ -676,6 +681,7 @@ const settingsSchema = Joi.object({
   maxActiveOrdersPerPartner: Joi.number().integer().min(1).max(20),
   hideDropUntilAccepted: Joi.boolean(),
   adminVerification: Joi.boolean(),
+  maxCancellations: Joi.number().integer().min(0).max(1000),
   collectUpiId: Joi.string().trim().pattern(/^[\w.\-]{2,256}@[a-zA-Z][a-zA-Z0-9.\-]{1,64}$/).allow('').messages({ 'string.pattern.base': 'Enter a valid UPI ID, like name@bank' }),
   collectUpiName: Joi.string().trim().max(60).allow(''),
   targets: Joi.array().max(12).items(
@@ -699,6 +705,7 @@ const settingsSchema = Joi.object({
 const adminSettingsView = (s) => ({
   ...publicDeliveryConfig(s),
   partnerPayoutPerDelivery: s.partnerPayoutPerDelivery || 0,
+  maxCancellations: s.maxCancellations || 0,
   collectUpiId: s.collectUpiId || '',
   collectUpiName: s.collectUpiName || 'Offerly',
   ...(({ maxActive, hideDropUntilAccepted }) => ({ maxActiveOrdersPerPartner: maxActive, hideDropUntilAccepted }))(partnerLimits(s)),
@@ -729,7 +736,7 @@ export const updateAdminSettings = async (req, res) => {
   if (error) return res.status(400).json({ success: false, error: error.details[0].message });
   try {
     const s = await getDeliverySettings();
-    for (const key of ['enabled', 'deliveryFee', 'freeDeliveryMinOrder', 'allowCod', 'allowOnline', 'maxDistanceKm', 'partnerPayoutPerDelivery', 'maxActiveOrdersPerPartner', 'hideDropUntilAccepted', 'adminVerification', 'collectUpiId', 'collectUpiName']) {
+    for (const key of ['enabled', 'deliveryFee', 'freeDeliveryMinOrder', 'allowCod', 'allowOnline', 'maxDistanceKm', 'partnerPayoutPerDelivery', 'maxActiveOrdersPerPartner', 'hideDropUntilAccepted', 'adminVerification', 'maxCancellations', 'collectUpiId', 'collectUpiName']) {
       if (value[key] !== undefined) s[key] = value[key];
     }
     if (value.freeGift) s.freeGift = { ...s.freeGift?.toObject?.(), ...value.freeGift };

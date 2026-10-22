@@ -110,8 +110,8 @@ const TargetsCard = ({ targets }) => (
               <p className="text-[13px] font-bold text-gray-900">
                 {t.deliveries} deliveries <span className="text-gray-400 font-semibold">· {PERIOD_LABEL[t.period]}</span>
               </p>
-              <p className={`text-[11px] font-semibold ${t.achieved ? 'text-[#3F7F17]' : 'text-gray-500'}`}>
-                {t.achieved ? 'Target achieved! Bonus added to your earnings' : `${left} more to earn the bonus`}
+              <p className={`text-[11px] font-semibold ${t.achieved ? 'text-[#3F7F17]' : t.blocked ? 'text-red-500' : 'text-gray-500'}`}>
+                {t.achieved ? 'Target achieved! Bonus added to your earnings' : t.blocked ? `No bonus this period: ${t.cancelled} cancelled orders (limit ${t.cancelLimit})` : `${left} more to earn the bonus`}
               </p>
             </div>
             <div className="text-right shrink-0">
@@ -124,6 +124,7 @@ const TargetsCard = ({ targets }) => (
           </div>
           <div className="mt-1.5 flex justify-between text-[10px] font-bold text-gray-400">
             <span>{Math.min(t.done, t.deliveries)} / {t.deliveries} done</span>
+            {t.cancelLimit > 0 && !t.blocked && !t.achieved && <span>{t.cancelled} / {t.cancelLimit} cancelled</span>}
             <span>Resets {new Date(t.resetsAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}</span>
           </div>
         </Card>

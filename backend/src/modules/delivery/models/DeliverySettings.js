@@ -29,6 +29,9 @@ const deliverySettingsSchema = new mongoose.Schema(
     maxActiveOrdersPerPartner: { type: Number, default: 3, min: 1, max: 20 },
     // Pool shows only area/pincode until a partner accepts; off = full address + phone up front.
     hideDropUntilAccepted: { type: Boolean, default: true },
+    // A partner who cancels (accepts an order, then releases it) this many orders
+    // within a target's period gets no bonus for that target. 0 = no limit.
+    maxCancellations: { type: Number, default: 0, min: 0, max: 1000 },
     // Incentive targets: deliver `deliveries` orders within the period and earn
     // `bonus` on top of the per-delivery payout. Several can run at once (say a
     // daily one and a weekly one). Periods follow IST calendar days, Monday-start

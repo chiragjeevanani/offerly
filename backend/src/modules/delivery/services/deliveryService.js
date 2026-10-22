@@ -1,6 +1,7 @@
 import DeliverySettings from '../models/DeliverySettings.js';
 import DeliveryPartner from '../models/DeliveryPartner.js';
 import DeliveryTargetAward from '../models/DeliveryTargetAward.js';
+import DeliveryRelease from '../models/DeliveryRelease.js';
 import Redemption from '../../booking/models/Redemption.js';
 import Merchant from '../../merchant/models/Merchant.js';
 import SettlementTransaction from '../../payment/models/SettlementTransaction.js';
@@ -634,17 +635,25 @@ const deliveredCount = (partnerId, window) =>
     'delivery.deliveredAt': { $gte: window.start, $lt: window.end },
   });
 
+// Orders the partner accepted and then gave up inside a period.
+const cancelledCount = (partnerId, window) =>
+  DeliveryRelease.countDocuments({ partnerId, createdAt: { $gte: window.start, $lt: window.end } });
+
+export const cancellationLimit = (settings) => Math.max(0, Math.round(settings.maxCancellations || 0));
+
 // Where a partner stands on every running target, for their app.
 export const targetProgress = async (partnerId, settings) => {
   const targets = liveTargets(settings);
   if (!targets.length) return [];
   const windows = Object.fromEntries(TARGET_PERIODS.map((p) => [p, targetWindow(p)]));
   const counts = {};
+  const cancelled = {};
   await Promise.all(
     [...new Set(targets.map((t) => t.period))].map(async (p) => {
-      counts[p] = await deliveredCount(partnerId, windows[p]);
+      [counts[p], cancelled[p]] = await Promise.all([deliveredCount(partnerId, windows[p]), cancelledCount(partnerId, windows[p])]);
     })
   );
+  const limit = cancellationLimit(settings);
   const awards = await DeliveryTargetAward.find({
     partnerId,
     windowKey: { $in: Object.values(windows).map((w) => w.key) },
@@ -660,6 +669,10 @@ export const targetProgress = async (partnerId, settings) => {
       bonus: t.bonus,
       done: counts[t.period] || 0,
       achieved: won.has(`${t._id}|${w.key}`),
+      cancelled: cancelled[t.period] || 0,
+      cancelLimit: limit,
+      // Too many cancellations this period: this bonus is no longer available.
+      blocked: limit > 0 && (cancelled[t.period] || 0) >= limit && !won.has(`${t._id}|${w.key}`),
       resetsAt: w.end,
     };
   });
@@ -679,6 +692,9 @@ export const awardTargetBonuses = async (partnerId, redemptionId = null) => {
       const w = targetWindow(t.period);
       if (counts[t.period] === undefined) counts[t.period] = await deliveredCount(partnerId, w);
       if (counts[t.period] < t.deliveries) continue;
+      // Cancelled too many orders in this period: no incentive.
+      const limit = cancellationLimit(settings);
+      if (limit > 0 && (await cancelledCount(partnerId, w)) >= limit) continue;
 
       try {
         await DeliveryTargetAward.create({

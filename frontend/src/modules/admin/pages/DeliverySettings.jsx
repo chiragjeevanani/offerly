@@ -95,6 +95,7 @@ const DeliverySettings = () => {
       partnerPayoutPerDelivery: num(s.partnerPayoutPerDelivery),
       maxActiveOrdersPerPartner: num(s.maxActiveOrdersPerPartner),
       hideDropUntilAccepted: s.hideDropUntilAccepted,
+      maxCancellations: num(s.maxCancellations),
       collectUpiId: (s.collectUpiId || '').trim(),
       collectUpiName: (s.collectUpiName || '').trim(),
       targets: (s.targets || []).map((t) => ({ id: t.id || '', period: t.period, deliveries: num(t.deliveries), bonus: num(t.bonus), active: t.active !== false })),
@@ -160,6 +161,7 @@ const DeliverySettings = () => {
         partnerPayoutPerDelivery: num(form.partnerPayoutPerDelivery),
         maxActiveOrdersPerPartner: Math.min(20, Math.max(1, num(form.maxActiveOrdersPerPartner) || 1)),
         hideDropUntilAccepted: form.hideDropUntilAccepted,
+        maxCancellations: Math.max(0, Math.round(num(form.maxCancellations))),
         collectUpiId: (form.collectUpiId || '').trim(),
         collectUpiName: (form.collectUpiName || '').trim(),
         targets: form.targets.map((t) => ({
@@ -371,6 +373,15 @@ const DeliverySettings = () => {
           )
         }
       >
+        <div className="rounded-xl border border-gray-100 bg-gray-50/60 p-3">
+          <MoneyField
+            label="Order cancellation limit"
+            suffix="#"
+            value={form.maxCancellations}
+            onChange={set('maxCancellations')}
+            hint={num(form.maxCancellations) > 0 ? `A partner who accepts and then cancels ${num(form.maxCancellations)} or more orders in a target's period gets no bonus for that period` : '0 = no limit. Cancelling orders never costs a partner their bonus.'}
+          />
+        </div>
         {form.targets.length === 0 ? (
           <p className="text-[13px] text-gray-500">
             No targets yet. Add one, for example <span className="font-semibold">10 deliveries in a day = ₹200 bonus</span>.
