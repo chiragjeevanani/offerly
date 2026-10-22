@@ -42,6 +42,7 @@ export const deliveryAPI = {
   settlePartner: async (partnerId, note = '') => axiosInstance.post(`/delivery/admin/partners/${partnerId}/settle`, { note }),
   getAdminOrders: async (params = {}) => axiosInstance.get('/delivery/admin/orders', { params }),
   unassignOrder: async (orderId) => axiosInstance.post(`/delivery/admin/orders/${orderId}/unassign`),
+  adminVerifyOrder: async (orderId) => axiosInstance.post(`/delivery/admin/orders/${orderId}/verify`),
   adminCancelOrder: async (orderId, reason) => axiosInstance.post(`/delivery/admin/orders/${orderId}/cancel`, { reason }),
   adminConfirmReturn: async (orderId) => axiosInstance.post(`/delivery/admin/orders/${orderId}/returned`),
   retryRefund: async (orderId) => axiosInstance.post(`/delivery/admin/orders/${orderId}/retry-refund`),

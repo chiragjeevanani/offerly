@@ -4,12 +4,14 @@ import toast from 'react-hot-toast';
 import LocalShippingRoundedIcon from '@mui/icons-material/LocalShippingRounded';
 import SearchRoundedIcon from '@mui/icons-material/SearchRounded';
 import RefreshRoundedIcon from '@mui/icons-material/RefreshRounded';
+import PhoneRoundedIcon from '@mui/icons-material/PhoneRounded';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 import CardGiftcardRoundedIcon from '@mui/icons-material/CardGiftcardRounded';
 import { deliveryAPI } from '../../../api/delivery.api';
 
 const STAGES = {
   awaiting_payment: { label: 'Awaiting payment', cls: 'bg-gray-100 text-gray-600' },
+  verifying: { label: 'To verify', cls: 'bg-rose-50 text-rose-600' },
   placed: { label: 'New', cls: 'bg-blue-50 text-blue-600' },
   preparing: { label: 'Packing', cls: 'bg-amber-50 text-amber-700' },
   ready: { label: 'Packed', cls: 'bg-violet-50 text-violet-600' },
@@ -29,6 +31,7 @@ const PAY = {
 };
 
 const FILTERS = [
+  { key: 'verifying', label: 'To verify' },
   { key: 'active', label: 'Active' },
   { key: 'unassigned', label: 'No partner' },
   { key: 'delivered', label: 'Delivered' },
@@ -48,7 +51,8 @@ const OrderPanel = ({ order, onClose, onChanged }) => {
   const d = order.delivery || {};
   const stage = order.status === 'expired' ? 'cancelled' : d.status;
   const a = d.address || {};
-  const preStage = ['placed', 'preparing', 'ready', 'awaiting_payment'].includes(stage) && order.status === 'pending';
+  const preStage = ['verifying', 'placed', 'preparing', 'ready', 'awaiting_payment'].includes(stage) && order.status === 'pending';
+  const toVerify = stage === 'verifying' && order.status === 'pending';
   // Already with the partner: cancelling sends it back to the store instead.
   const outForDelivery = stage === 'picked_up' && order.status === 'pending';
 
@@ -83,6 +87,18 @@ const OrderPanel = ({ order, onClose, onChanged }) => {
             <div><p className="text-[11px] text-gray-400">Store</p><p className="font-semibold text-gray-800">{order.store?.name}</p><p className="text-gray-500">{order.store?.phone}</p></div>
             <div><p className="text-[11px] text-gray-400">Customer</p><p className="font-semibold text-gray-800">{a.name || order.customerName}</p><p className="text-gray-500">{a.phone}</p></div>
           </div>
+          {toVerify && (
+            <div className="rounded-xl bg-rose-50 border border-rose-100 p-3 flex items-center gap-3">
+              <div className="flex-1 text-[12px] text-rose-700">
+                Call the customer to confirm the order and address. The store hasn't been told yet.
+              </div>
+              {a.phone && (
+                <a href={`tel:${a.phone}`} className="h-9 px-3 rounded-lg bg-white border border-rose-200 text-rose-600 text-[12px] font-semibold flex items-center gap-1">
+                  <PhoneRoundedIcon sx={{ fontSize: 15 }} /> Call
+                </a>
+              )}
+            </div>
+          )}
           <div>
             <p className="text-[11px] text-gray-400">Address</p>
             <p className="text-gray-700">{[a.line1, a.line2, a.landmark && `Near ${a.landmark}`, a.pincode].filter(Boolean).join(', ')}</p>
@@ -111,6 +127,7 @@ const OrderPanel = ({ order, onClose, onChanged }) => {
           <div className="space-y-1 text-[12px] text-gray-500">
             {[
               ['Placed', d.placedAt || order.createdAt],
+              ['Verified by Offerly', d.verifiedAt],
               ['Accepted by store', d.acceptedAt],
               ['Packed', d.readyAt],
               ['Partner assigned', d.assignedAt],
@@ -147,6 +164,11 @@ const OrderPanel = ({ order, onClose, onChanged }) => {
             </>
           ) : (
             <>
+              {toVerify && (
+                <button disabled={Boolean(busy)} onClick={() => run('verify', () => deliveryAPI.adminVerifyOrder(order._id), 'Verified. The store has the order.')} className="flex-[2] h-11 rounded-xl bg-[#5EB929] text-white text-[13px] font-semibold">
+                  {busy === 'verify' ? 'Sending...' : 'Verified - send to store'}
+                </button>
+              )}
               {preStage && d.partnerName && (
                 <button disabled={Boolean(busy)} onClick={() => run('unassign', () => deliveryAPI.unassignOrder(order._id), 'Back in the pool for another partner')} className="flex-1 h-11 rounded-xl border border-gray-200 text-gray-700 text-[13px] font-semibold">
                   Reassign
@@ -184,6 +206,7 @@ const DeliveryOrders = () => {
   const summary = data?.summary || { stages: {} };
 
   const tiles = [
+    { label: 'To verify', value: summary.stages?.verifying || 0, warn: summary.stages?.verifying > 0 },
     { label: 'Live orders', value: ['placed', 'preparing', 'ready', 'picked_up', 'returning'].reduce((s, k) => s + (summary.stages?.[k] || 0), 0) },
     { label: 'Waiting for partner', value: summary.unassigned || 0, warn: summary.unassigned > 0 },
     { label: 'Delivered today', value: summary.deliveredToday || 0 },
@@ -211,7 +234,7 @@ const DeliveryOrders = () => {
         </div>
       </div>
 
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+      <div className="grid grid-cols-2 lg:grid-cols-5 gap-3">
         {tiles.map((t) => (
           <div key={t.label} className={`rounded-2xl border p-4 ${t.warn ? 'bg-amber-50 border-amber-200' : 'bg-white border-gray-100'}`}>
             <p className="text-[11px] text-gray-500">{t.label}</p>

@@ -33,6 +33,7 @@ const STEP_INDEX = Object.fromEntries(STEPS.map((s, i) => [s.key, i]));
 
 const HERO = {
   awaiting_payment: { title: 'Complete your payment', sub: 'Your order goes to the store once it is paid.', icon: HourglassTopRoundedIcon },
+  verifying: { title: 'Confirming your order', sub: 'Offerly will call you shortly to confirm. It goes to the store right after.', icon: HourglassTopRoundedIcon },
   placed: { title: 'Waiting for the store', sub: 'The store will confirm your order shortly.', icon: StorefrontRoundedIcon },
   preparing: { title: 'Packing your order', sub: 'The store is getting your items ready.', icon: Inventory2RoundedIcon },
   ready: { title: 'Ready for pickup', sub: 'Your order is packed and waiting for the delivery partner.', icon: Inventory2RoundedIcon },
@@ -167,8 +168,10 @@ const OrderTracking = () => {
   const HeroIcon = hero.icon;
   const currentIdx = STEP_INDEX[stage] ?? -1;
   const total = Math.round((order.totals?.final || 0) + (d.fee || 0));
-  const canCancel = isLive && ['awaiting_payment', 'placed', 'preparing', 'ready'].includes(stage);
-  const showCode = isLive && ['placed', 'preparing', 'ready', 'picked_up'].includes(stage) && d.otp;
+  const canCancel = isLive && ['awaiting_payment', 'verifying', 'placed', 'preparing', 'ready'].includes(stage);
+  const showCode = isLive && ['verifying', 'placed', 'preparing', 'ready', 'picked_up'].includes(stage) && d.otp;
+  // Cancelling before Offerly's confirmation call costs nothing.
+  const keepsFee = stage !== 'verifying' && d.fee > 0;
   const addr = d.address || {};
   const cancelSub = sentBack
     ? `We couldn't deliver this order${d.cancelReason ? ` (${d.cancelReason})` : ''}, so it went back to the store.${d.paymentMode === 'cod' ? " You won't be charged." : ''}`
@@ -399,8 +402,8 @@ const OrderTracking = () => {
                 <h3 className="text-lg font-bold text-gray-900">Cancel this order?</h3>
                 <p className="mt-1 text-[13px] text-gray-500">
                   {d.paymentStatus === 'paid'
-                    ? `₹${total - Math.round(d.fee || 0)} will be refunded to your original payment method.${d.fee > 0 ? ` The ₹${Math.round(d.fee)} delivery fee isn't refundable.` : ''}`
-                    : 'The store will be told not to pack it.'}
+                    ? `₹${keepsFee ? total - Math.round(d.fee || 0) : total} will be refunded to your original payment method.${keepsFee ? ` The ₹${Math.round(d.fee)} delivery fee isn't refundable.` : ''}`
+                    : stage === 'verifying' ? 'The order has not gone to the store yet.' : 'The store will be told not to pack it.'}
                 </p>
                 <div className="mt-6 flex gap-3">
                   <button onClick={() => setConfirmCancel(false)} disabled={busy} className="flex-1 h-12 rounded-xl bg-gray-100 text-gray-700 font-bold text-[12px] uppercase tracking-widest">Keep it</button>

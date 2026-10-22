@@ -11,6 +11,9 @@ const deliverySettingsSchema = new mongoose.Schema(
     // freeDeliveryMinOrder (0 = never free).
     deliveryFee: { type: Number, default: 30, min: 0 },
     freeDeliveryMinOrder: { type: Number, default: 0, min: 0 },
+    // On: a new order (once paid, if online) waits for the admin, who calls the
+    // customer and then sends it on to the store. Off: it goes straight to the store.
+    adminVerification: { type: Boolean, default: false },
     // Which ways a delivery order can be paid. At least one stays on.
     allowCod: { type: Boolean, default: true },
     allowOnline: { type: Boolean, default: true },

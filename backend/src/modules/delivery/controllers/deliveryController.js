@@ -22,6 +22,7 @@ import {
   confirmDeliveryReturn,
   RETURN_REASONS,
   markDeliveryOrderPaid,
+  verifyDeliveryOrder,
   refundDeliveryPayment,
   creditStoreForDelivery,
   creditPartnerForDelivery,
@@ -618,6 +619,7 @@ const settingsSchema = Joi.object({
   partnerPayoutPerDelivery: Joi.number().min(0).max(10000),
   maxActiveOrdersPerPartner: Joi.number().integer().min(1).max(20),
   hideDropUntilAccepted: Joi.boolean(),
+  adminVerification: Joi.boolean(),
   targets: Joi.array().max(12).items(
     Joi.object({
       id: Joi.string().hex().length(24),
@@ -667,7 +669,7 @@ export const updateAdminSettings = async (req, res) => {
   if (error) return res.status(400).json({ success: false, error: error.details[0].message });
   try {
     const s = await getDeliverySettings();
-    for (const key of ['enabled', 'deliveryFee', 'freeDeliveryMinOrder', 'allowCod', 'allowOnline', 'maxDistanceKm', 'partnerPayoutPerDelivery', 'maxActiveOrdersPerPartner', 'hideDropUntilAccepted']) {
+    for (const key of ['enabled', 'deliveryFee', 'freeDeliveryMinOrder', 'allowCod', 'allowOnline', 'maxDistanceKm', 'partnerPayoutPerDelivery', 'maxActiveOrdersPerPartner', 'hideDropUntilAccepted', 'adminVerification']) {
       if (value[key] !== undefined) s[key] = value[key];
     }
     if (value.freeGift) s.freeGift = { ...s.freeGift?.toObject?.(), ...value.freeGift };
@@ -807,10 +809,10 @@ export const getAdminOrders = async (req, res) => {
   try {
     const filter = { fulfillment: 'delivery' };
     const stage = String(req.query.stage || '');
-    if (stage === 'active') filter['delivery.status'] = { $in: ['placed', ...POOL_STAGES, 'picked_up', 'returning'] };
+    if (stage === 'active') filter['delivery.status'] = { $in: ['verifying', 'placed', ...POOL_STAGES, 'picked_up', 'returning'] };
     else if (stage === 'unassigned') Object.assign(filter, { 'delivery.status': { $in: POOL_STAGES }, 'delivery.partnerId': null, status: 'pending' });
     else if (stage === 'refunds') filter['delivery.paymentStatus'] = { $in: ['refund_pending', 'refund_failed'] };
-    else if (['awaiting_payment', 'placed', 'preparing', 'ready', 'picked_up', 'delivered', 'cancelled', 'returning', 'returned'].includes(stage)) filter['delivery.status'] = stage;
+    else if (['awaiting_payment', 'verifying', 'placed', 'preparing', 'ready', 'picked_up', 'delivered', 'cancelled', 'returning', 'returned'].includes(stage)) filter['delivery.status'] = stage;
     const q = String(req.query.q || '').trim();
     if (q) {
       const rx = new RegExp(escapeRegex(q), 'i');
@@ -848,7 +850,24 @@ export const getAdminOrders = async (req, res) => {
   }
 };
 
-// @route POST /delivery/admin/orders/:id/unassign  - take an order off its partner, back into the pool
+// @route POST /delivery/admin/orders/:id/verify  - customer confirmed on the phone: send it to the store
+export const adminVerifyOrder = async (req, res) => {
+  if (!validId(req.params.id)) return res.status(400).json({ success: false, error: 'Invalid order' });
+  try {
+    const order = await Redemption.findOne({ _id: req.params.id, fulfillment: 'delivery' });
+    if (!order || order.status !== 'pending' || order.delivery?.status !== 'verifying') {
+      return res.status(400).json({ success: false, error: 'This order is not waiting for verification' });
+    }
+    const verified = await verifyDeliveryOrder(order, { adminId: req.user._id });
+    if (!verified) return res.status(409).json({ success: false, error: 'This order changed just now. Please refresh.' });
+    res.status(200).json({ success: true, data: adminOrderView(await Redemption.findById(verified._id).populate('merchantId', 'storeName phone city')) });
+  } catch (err) {
+    console.error('adminVerifyOrder error:', err);
+    res.status(500).json({ success: false, error: 'Failed to verify the order' });
+  }
+};
+
+// @route POST /delivery/admin/orders/:id/unassign - take an order off its partner, back into the pool
 export const adminUnassignOrder = async (req, res) => {
   if (!validId(req.params.id)) return res.status(400).json({ success: false, error: 'Invalid order' });
   try {

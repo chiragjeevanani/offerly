@@ -201,7 +201,8 @@ const redemptionSchema = new mongoose.Schema(
         type: String,
         // returning/returned: picked up but couldn't be delivered, so the partner
         // takes it back and the store confirms receipt (order itself is cancelled).
-        enum: ['awaiting_payment', 'placed', 'preparing', 'ready', 'picked_up', 'delivered', 'cancelled', 'returning', 'returned'],
+        // verifying: admin's "call the customer" step, before the store sees the order.
+        enum: ['awaiting_payment', 'verifying', 'placed', 'preparing', 'ready', 'picked_up', 'delivered', 'cancelled', 'returning', 'returned'],
       },
       address: {
         name: String,
@@ -243,6 +244,8 @@ const redemptionSchema = new mongoose.Schema(
       cancelReason: String,
       cancelledBy: String,
       placedAt: Date,
+      verifiedAt: Date,
+      verifiedBy: String,
       acceptedAt: Date,
       readyAt: Date,
       assignedAt: Date,

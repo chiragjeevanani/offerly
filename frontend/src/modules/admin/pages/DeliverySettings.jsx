@@ -7,6 +7,7 @@ import CardGiftcardRoundedIcon from '@mui/icons-material/CardGiftcardRounded';
 import PaymentsRoundedIcon from '@mui/icons-material/PaymentsRounded';
 import TwoWheelerRoundedIcon from '@mui/icons-material/TwoWheelerRounded';
 import EmojiEventsRoundedIcon from '@mui/icons-material/EmojiEventsRounded';
+import PhoneInTalkRoundedIcon from '@mui/icons-material/PhoneInTalkRounded';
 import AddRoundedIcon from '@mui/icons-material/AddRounded';
 import DeleteOutlineRoundedIcon from '@mui/icons-material/DeleteOutlineRounded';
 import { deliveryAPI } from '../../../api/delivery.api';
@@ -124,6 +125,22 @@ const DeliverySettings = () => {
     }
   };
 
+  const toggleVerification = async (adminVerification) => {
+    setSwitching(true);
+    try {
+      const res = await deliveryAPI.updateAdminSettings({ adminVerification });
+      queryClient.setQueryData(['adminDeliverySettings'], res.data);
+      setForm((f) => ({ ...f, adminVerification: res.data.adminVerification }));
+      toast.success(adminVerification
+        ? 'New orders now wait for your call before reaching the store'
+        : 'New orders now go straight to the store. Orders already waiting still need your OK.');
+    } catch (err) {
+      toast.error(err?.error || 'Could not change this');
+    } finally {
+      setSwitching(false);
+    }
+  };
+
   const save = async () => {
     const badTarget = form.targets.findIndex((t) => !(Number.isInteger(num(t.deliveries)) && num(t.deliveries) >= 1 && num(t.bonus) >= 1));
     if (badTarget >= 0) {
@@ -202,6 +219,22 @@ const DeliverySettings = () => {
           </p>
         </div>
         <Toggle checked={form.enabled} onChange={toggleModule} disabled={switching} label="Delivery module" />
+      </div>
+
+      {/* Verify orders first - also saves on its own */}
+      <div className={`rounded-2xl border p-5 flex items-center gap-4 ${form.adminVerification ? 'bg-amber-50 border-amber-200' : 'bg-white border-gray-100'}`}>
+        <div className={`w-12 h-12 rounded-2xl flex items-center justify-center shrink-0 ${form.adminVerification ? 'bg-amber-500 text-white' : 'bg-gray-100 text-gray-400'}`}>
+          <PhoneInTalkRoundedIcon />
+        </div>
+        <div className="flex-1 min-w-0">
+          <p className="text-[15px] font-semibold text-gray-900">Verify orders by phone first is {form.adminVerification ? 'ON' : 'OFF'}</p>
+          <p className="text-[12px] text-gray-500">
+            {form.adminVerification
+              ? 'New delivery orders wait in Delivery Orders > "To verify". Call the customer, then send it to the store (or cancel it). Online orders wait once they are paid.'
+              : 'New delivery orders go straight to the store.'}
+          </p>
+        </div>
+        <Toggle checked={Boolean(form.adminVerification)} onChange={toggleVerification} disabled={switching} label="Verify orders first" />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">

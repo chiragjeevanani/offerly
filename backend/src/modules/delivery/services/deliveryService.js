@@ -9,7 +9,8 @@ import { releaseReferralPoints } from '../../user/services/referralService.js';
 import { releaseStockHold } from '../../merchant/services/stockService.js';
 import { notifyMerchant, notifyUser } from '../../user/services/notificationService.js';
 import { sendPushToPartner } from '../../user/services/pushService.js';
-import { emitDeliveryPartnerNotification, emitDeliveryPoolUpdate } from '../../../config/socket.js';
+import AdminNotification from '../../admin/models/AdminNotification.js';
+import { emitAdminNotification, emitDeliveryPartnerNotification, emitDeliveryPoolUpdate } from '../../../config/socket.js';
 
 // A delivery order lives this long once placed; the expiry cron cancels it after.
 export const DELIVERY_ORDER_TTL_MS = 24 * 60 * 60 * 1000;
@@ -21,7 +22,9 @@ export const DEFAULT_MAX_ACTIVE = 3;
 // Stages in which the order is in the open pool (store has accepted it).
 export const POOL_STAGES = ['preparing', 'ready'];
 // Stages before the partner has the parcel - the order can still be cancelled.
-export const CANCELLABLE_STAGES = ['awaiting_payment', 'placed', 'preparing', 'ready'];
+export const CANCELLABLE_STAGES = ['awaiting_payment', 'verifying', 'placed', 'preparing', 'ready'];
+// Stages the store never hears about.
+const HIDDEN_FROM_STORE = ['awaiting_payment', 'verifying'];
 
 export const getDeliverySettings = async () => (await DeliverySettings.findOne()) || DeliverySettings.create({});
 
@@ -42,6 +45,7 @@ export const publicDeliveryConfig = (s) => ({
   allowCod: s.allowCod !== false,
   allowOnline: s.allowOnline !== false,
   maxDistanceKm: s.maxDistanceKm || 0,
+  adminVerification: Boolean(s.adminVerification),
   freeGift: {
     enabled: Boolean(s.freeGift?.enabled && s.freeGift?.title),
     minOrderValue: s.freeGift?.minOrderValue || 0,
@@ -307,8 +311,9 @@ export const cancelDeliveryOrder = async (redemption, { by, reason = '' }) => {
         'delivery.cancelledAt': new Date(),
         'delivery.cancelledBy': by,
         'delivery.cancelReason': reason,
-        // The customer's own cancel doesn't get the delivery fee back.
-        'delivery.feeRetained': by === 'customer',
+        // The customer's own cancel doesn't get the delivery fee back - unless
+        // it was still waiting for Offerly's call, when nothing had started.
+        'delivery.feeRetained': by === 'customer' && redemption.delivery?.status !== 'verifying',
       },
     },
     { new: true }
@@ -330,7 +335,9 @@ export const cancelDeliveryOrder = async (redemption, { by, reason = '' }) => {
     });
   }
 
-  // An unpaid online order that was never placed isn't news to anyone.
+  // An unpaid online order that was never placed isn't news to anyone, and the
+  // store never heard of one still waiting for the admin's call.
+  const storeKnew = !HIDDEN_FROM_STORE.includes(redemption.delivery?.status);
   if (redemption.delivery?.status !== 'awaiting_payment') {
     const why = reason ? ` Reason: ${reason}` : '';
     await announceStage(updated, {
@@ -338,7 +345,7 @@ export const cancelDeliveryOrder = async (redemption, { by, reason = '' }) => {
         title: 'Order cancelled',
         body: `${by === 'store' ? 'The store' : 'Offerly'} cancelled order #${updated.internalId}.${why}`,
       },
-      store: by === 'store' ? null : {
+      store: by === 'store' || !storeKnew ? null : {
         title: 'Delivery order cancelled',
         body: `Order #${updated.internalId} was cancelled${by === 'customer' ? ' by the customer' : ''}.${why}`,
       },
@@ -440,6 +447,7 @@ export const confirmDeliveryReturn = async (redemption, { by }) => {
 // refunded straight away. Returns the order.
 export const markDeliveryOrderPaid = async (razorpayOrderId, razorpayPaymentId) => {
   const now = new Date();
+  const verify = Boolean((await getDeliverySettings()).adminVerification);
   const placed = await Redemption.findOneAndUpdate(
     {
       'delivery.razorpayOrderId': razorpayOrderId,
@@ -448,7 +456,7 @@ export const markDeliveryOrderPaid = async (razorpayOrderId, razorpayPaymentId) 
     },
     {
       $set: {
-        'delivery.status': 'placed',
+        'delivery.status': verify ? 'verifying' : 'placed',
         'delivery.paymentStatus': 'paid',
         'delivery.razorpayPaymentId': razorpayPaymentId,
         'delivery.placedAt': now,
@@ -459,7 +467,7 @@ export const markDeliveryOrderPaid = async (razorpayOrderId, razorpayPaymentId) 
   );
 
   if (placed) {
-    await announceNewOrderToStore(placed);
+    await announceNewOrder(placed);
     return placed;
   }
 
@@ -474,6 +482,54 @@ export const markDeliveryOrderPaid = async (razorpayOrderId, razorpayPaymentId) 
     await refundDeliveryPayment(await Redemption.findById(order._id));
   }
   return Redemption.findById(order._id);
+};
+
+// A new order is in (COD at once, online once paid). With admin verification
+// on it waits for the admin's call; otherwise the store hears right away.
+export const announceNewOrder = async (redemption) => {
+  if (redemption.delivery?.status !== 'verifying') return announceNewOrderToStore(redemption);
+  try {
+    const note = await AdminNotification.create({
+      title: 'Delivery order to verify',
+      body: `#${redemption.internalId} from ${redemption.delivery?.address?.name || redemption.customerName || 'a customer'} (${redemption.delivery?.address?.phone || 'no phone'}) is waiting for your call.`,
+      type: 'delivery',
+      data: { redemptionId: String(redemption._id) },
+    });
+    emitAdminNotification(note);
+  } catch (err) {
+    console.error('[Delivery] Admin notification failed:', err.message);
+  }
+  await announceStage(redemption, {
+    customer: {
+      title: 'Order received',
+      body: `We have order #${redemption.internalId}. Offerly will call you shortly to confirm it before it goes to the store.`,
+    },
+  });
+};
+
+// Admin called the customer and the order checks out: it goes to the store.
+// Returns the order, or null if it wasn't waiting for verification.
+export const verifyDeliveryOrder = async (redemption, { adminId }) => {
+  const now = new Date();
+  const updated = await Redemption.findOneAndUpdate(
+    { _id: redemption._id, status: 'pending', 'delivery.status': 'verifying' },
+    {
+      $set: {
+        'delivery.status': 'placed',
+        'delivery.verifiedAt': now,
+        'delivery.verifiedBy': String(adminId || 'admin'),
+        // The store's day starts now, not when the customer ordered.
+        qrExpiry: new Date(now.getTime() + DELIVERY_ORDER_TTL_MS),
+      },
+    },
+    { new: true }
+  );
+  if (!updated) return null;
+  await announceNewOrderToStore(updated);
+  await announceStage(updated, {
+    customer: { title: 'Order confirmed', body: `Thanks! Order #${updated.internalId} is confirmed and sent to the store.` },
+  });
+  return updated;
 };
 
 export const announceNewOrderToStore = async (redemption) => {

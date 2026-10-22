@@ -29,6 +29,7 @@ import {
   settlePartner,
   getAdminOrders,
   adminUnassignOrder,
+  adminVerifyOrder,
   adminCancelOrder,
   adminConfirmReturn,
   adminRetryRefund,
@@ -96,6 +97,7 @@ router.put('/admin/partners/:id/status', protect, authorize('admin'), updatePart
 router.post('/admin/partners/:id/settle', protect, authorize('admin'), settlePartner);
 router.get('/admin/orders', protect, authorize('admin'), getAdminOrders);
 router.post('/admin/orders/:id/unassign', protect, authorize('admin'), adminUnassignOrder);
+router.post('/admin/orders/:id/verify', protect, authorize('admin'), adminVerifyOrder);
 router.post('/admin/orders/:id/cancel', protect, authorize('admin'), adminCancelOrder);
 router.post('/admin/orders/:id/returned', protect, authorize('admin'), adminConfirmReturn);
 router.post('/admin/orders/:id/retry-refund', protect, authorize('admin'), adminRetryRefund);

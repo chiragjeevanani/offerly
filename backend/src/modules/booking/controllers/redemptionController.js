@@ -28,7 +28,7 @@ import {
   giftFor,
   amountDue,
   generateDeliveryOtp,
-  announceNewOrderToStore,
+  announceNewOrder,
   cancelDeliveryOrder,
   withoutSecrets,
   CANCELLABLE_STAGES,
@@ -304,7 +304,7 @@ export const createRedemption = async (req, res) => {
       const paymentMode = finalTotals.final + fee > 0 ? req.body.delivery.paymentMode : 'cod';
       const awaitingPayment = paymentMode === 'online';
       delivery = {
-        status: awaitingPayment ? 'awaiting_payment' : 'placed',
+        status: awaitingPayment ? 'awaiting_payment' : deliverySettings.adminVerification ? 'verifying' : 'placed',
         address: {
           name: address.name,
           phone: address.phone,
@@ -360,8 +360,8 @@ export const createRedemption = async (req, res) => {
     }
 
     if (isDelivery) {
-      if (delivery.status === 'placed') {
-        await announceNewOrderToStore(redemption);
+      if (delivery.status === 'placed' || delivery.status === 'verifying') {
+        await announceNewOrder(redemption);
         return res.status(201).json({ success: true, data: redemption });
       }
 
@@ -671,8 +671,9 @@ export const runCompletionEffects = async (
 export const getMerchantRedemptions = async (req, res) => {
   try {
     // req.user IS the merchant document for merchant role
-    // Online-pay delivery orders reach the store only once paid.
-    const redemptions = await RedemptionModel.find({ merchantId: req.user._id, 'delivery.status': { $ne: 'awaiting_payment' } })
+    // Online-pay delivery orders reach the store only once paid, and (when the
+    // admin verifies orders first) once the admin has confirmed them.
+    const redemptions = await RedemptionModel.find({ merchantId: req.user._id, 'delivery.status': { $nin: ['awaiting_payment', 'verifying'] } })
         .populate('offerId', 'title')
         .sort('-createdAt');
         
