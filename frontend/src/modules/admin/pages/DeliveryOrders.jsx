@@ -126,7 +126,7 @@ const OrderPanel = ({ order, onClose, onChanged }) => {
             )}
             <div className="pt-2 border-t border-dashed border-gray-100 flex justify-between text-gray-500"><span>Delivery fee</span><span>{rupees(d.fee)}</span></div>
             <div className="flex justify-between font-semibold text-gray-900"><span>Customer pays</span><span>{rupees(order.amountDue)}</span></div>
-            <p className="text-[12px] text-gray-500">{d.paymentMode === 'online' ? 'Online' : 'Cash / UPI on delivery'} · {PAY[d.paymentStatus] || '-'}</p>
+            <p className="text-[12px] text-gray-500">{d.paymentMode === 'online' ? 'Online' : d.collectedVia === 'upi' ? 'UPI QR at the door' : d.collectedVia === 'cash' ? 'Cash at the door' : 'Cash / UPI on delivery'} · {PAY[d.paymentStatus] || '-'}</p>
             {d.feeRetained && d.fee > 0 && (
               <p className="text-[12px] text-gray-500">Cancelled on the customer's side: the {rupees(d.fee)} delivery fee is not refunded{d.refundAmount != null ? ` (refunded ${rupees(d.refundAmount)})` : ''}.</p>
             )}

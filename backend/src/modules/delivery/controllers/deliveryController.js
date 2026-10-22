@@ -418,8 +418,13 @@ export const getPartnerOrder = async (req, res) => {
     const inPool = !order.delivery?.partnerId && order.status === 'pending' && POOL_STAGES.includes(order.delivery?.status)
       && sameCity(req.user.city).test(order.delivery?.city || '');
     if (!mine && !inPool) return res.status(404).json({ success: false, error: 'This order is no longer available' });
-    const { hideDropUntilAccepted } = partnerLimits(await getDeliverySettings());
-    res.status(200).json({ success: true, data: { ...partnerView(order, { full: mine || !hideDropUntilAccepted }), mine } });
+    const settings = await getDeliverySettings();
+    const { hideDropUntilAccepted } = partnerLimits(settings);
+    // The UPI ID the "scan & pay" QR is built from, only for the partner who has the order.
+    const collectUpi = mine && order.delivery?.paymentMode === 'cod' && settings.collectUpiId
+      ? { id: settings.collectUpiId, name: settings.collectUpiName || 'Offerly' }
+      : null;
+    res.status(200).json({ success: true, data: { ...partnerView(order, { full: mine || !hideDropUntilAccepted }), mine, collectUpi } });
   } catch (err) {
     console.error('getPartnerOrder error:', err);
     res.status(500).json({ success: false, error: 'Failed to load order' });
@@ -606,8 +611,13 @@ export const deliverOrder = async (req, res) => {
     }
     const isCod = order.delivery.paymentMode === 'cod';
     const due = amountDue(order);
-    if (isCod && due > 0 && req.body?.cashCollected !== true) {
+    // collectedVia 'cash' | 'upi' (the older apps send cashCollected: true = cash).
+    const via = req.body?.collectedVia === 'upi' ? 'upi' : req.body?.collectedVia === 'cash' || req.body?.cashCollected === true ? 'cash' : null;
+    if (isCod && due > 0 && !via) {
       return res.status(400).json({ success: false, error: `Collect ₹${due} from the customer first`, code: 'CASH_NOT_CONFIRMED' });
+    }
+    if (isCod && due > 0 && via === 'upi' && !(await getDeliverySettings()).collectUpiId) {
+      return res.status(400).json({ success: false, error: 'UPI collection is not set up. Collect cash instead.', code: 'UPI_NOT_AVAILABLE' });
     }
 
     const now = new Date();
@@ -619,7 +629,9 @@ export const deliverOrder = async (req, res) => {
           scannedAt: now,
           'delivery.status': 'delivered',
           'delivery.deliveredAt': now,
-          'delivery.cashCollected': isCod ? due : 0,
+          // Only cash is "in hand" - a UPI payment already reached Offerly.
+          'delivery.cashCollected': isCod && via !== 'upi' ? due : 0,
+          ...(isCod && due > 0 ? { 'delivery.collectedVia': via } : {}),
           ...(isCod && due > 0 ? { 'delivery.paymentStatus': 'paid' } : {}),
         },
       },
@@ -664,6 +676,8 @@ const settingsSchema = Joi.object({
   maxActiveOrdersPerPartner: Joi.number().integer().min(1).max(20),
   hideDropUntilAccepted: Joi.boolean(),
   adminVerification: Joi.boolean(),
+  collectUpiId: Joi.string().trim().pattern(/^[\w.\-]{2,256}@[a-zA-Z][a-zA-Z0-9.\-]{1,64}$/).allow('').messages({ 'string.pattern.base': 'Enter a valid UPI ID, like name@bank' }),
+  collectUpiName: Joi.string().trim().max(60).allow(''),
   targets: Joi.array().max(12).items(
     Joi.object({
       id: Joi.string().hex().length(24),
@@ -685,6 +699,8 @@ const settingsSchema = Joi.object({
 const adminSettingsView = (s) => ({
   ...publicDeliveryConfig(s),
   partnerPayoutPerDelivery: s.partnerPayoutPerDelivery || 0,
+  collectUpiId: s.collectUpiId || '',
+  collectUpiName: s.collectUpiName || 'Offerly',
   ...(({ maxActive, hideDropUntilAccepted }) => ({ maxActiveOrdersPerPartner: maxActive, hideDropUntilAccepted }))(partnerLimits(s)),
   targets: (s.targets || []).map((t) => ({ id: String(t._id), period: t.period, deliveries: t.deliveries, bonus: t.bonus, active: t.active !== false })),
   freeGift: {
@@ -713,7 +729,7 @@ export const updateAdminSettings = async (req, res) => {
   if (error) return res.status(400).json({ success: false, error: error.details[0].message });
   try {
     const s = await getDeliverySettings();
-    for (const key of ['enabled', 'deliveryFee', 'freeDeliveryMinOrder', 'allowCod', 'allowOnline', 'maxDistanceKm', 'partnerPayoutPerDelivery', 'maxActiveOrdersPerPartner', 'hideDropUntilAccepted', 'adminVerification']) {
+    for (const key of ['enabled', 'deliveryFee', 'freeDeliveryMinOrder', 'allowCod', 'allowOnline', 'maxDistanceKm', 'partnerPayoutPerDelivery', 'maxActiveOrdersPerPartner', 'hideDropUntilAccepted', 'adminVerification', 'collectUpiId', 'collectUpiName']) {
       if (value[key] !== undefined) s[key] = value[key];
     }
     if (value.freeGift) s.freeGift = { ...s.freeGift?.toObject?.(), ...value.freeGift };

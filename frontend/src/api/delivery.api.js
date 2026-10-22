@@ -31,8 +31,9 @@ export const deliveryAPI = {
   pickupOrder: async (orderId) => axiosInstance.post(`/delivery/partner/orders/${orderId}/pickup`),
   requestSupport: async (orderId, reason, note = '') => axiosInstance.post(`/delivery/partner/orders/${orderId}/support`, { reason, note }),
   returnOrder: async (orderId, reason, note = '') => axiosInstance.post(`/delivery/partner/orders/${orderId}/return`, { reason, note }),
-  deliverOrder: async (orderId, otp, cashCollected) =>
-    axiosInstance.post(`/delivery/partner/orders/${orderId}/deliver`, { otp, cashCollected }),
+  // collectedVia: 'cash' | 'upi' (only for cash-on-delivery orders)
+  deliverOrder: async (orderId, otp, collectedVia) =>
+    axiosInstance.post(`/delivery/partner/orders/${orderId}/deliver`, { otp, collectedVia }),
 
   // Admin
   getAdminSettings: async () => axiosInstance.get('/delivery/admin/settings'),

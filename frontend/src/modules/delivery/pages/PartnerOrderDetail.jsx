@@ -14,6 +14,8 @@ import CheckCircleRoundedIcon from '@mui/icons-material/CheckCircleRounded';
 import PaymentsRoundedIcon from '@mui/icons-material/PaymentsRounded';
 import VerifiedRoundedIcon from '@mui/icons-material/VerifiedRounded';
 import UndoRoundedIcon from '@mui/icons-material/UndoRounded';
+import QrCode2RoundedIcon from '@mui/icons-material/QrCode2Rounded';
+import { QRCodeSVG } from 'qrcode.react';
 import SupportAgentRoundedIcon from '@mui/icons-material/SupportAgentRounded';
 import { supportAPI } from '../../../api/support.api';
 import { deliveryAPI } from '../../../api/delivery.api';
@@ -55,10 +57,15 @@ const PlaceCard = ({ icon: Icon, tone, title, name, lines, phone, mapTarget }) =
 
 const DeliverSheet = ({ order, onClose, onDone }) => {
   const [code, setCode] = useState(['', '', '', '']);
-  const [cash, setCash] = useState(false);
+  const [via, setVia] = useState(null); // 'cash' | 'upi'
+  const [paid, setPaid] = useState(false);
   const [busy, setBusy] = useState(false);
   const inputs = useRef([]);
   const isCod = order.collectAmount > 0;
+  // A UPI QR with the amount filled in, so the customer just scans and pays.
+  const upiLink = isCod && order.collectUpi?.id
+    ? `upi://pay?pa=${encodeURIComponent(order.collectUpi.id)}&pn=${encodeURIComponent(order.collectUpi.name || 'Offerly')}&am=${Number(order.collectAmount).toFixed(2)}&cu=INR&tn=${encodeURIComponent(`Offerly order ${order.internalId}`)}`
+    : '';
   const otp = code.join('');
 
   const setDigit = (i, v) => {
@@ -76,7 +83,7 @@ const DeliverSheet = ({ order, onClose, onDone }) => {
   const submit = async () => {
     setBusy(true);
     try {
-      await deliveryAPI.deliverOrder(order.id, otp, cash);
+      await deliveryAPI.deliverOrder(order.id, otp, isCod ? via : undefined);
       onDone();
     } catch (err) {
       toast.error(err?.error || 'Could not complete delivery');
@@ -122,18 +129,54 @@ const DeliverSheet = ({ order, onClose, onDone }) => {
         </div>
 
         {isCod && (
-          <label className={`flex items-center gap-3 p-4 rounded-2xl border-2 cursor-pointer transition-all ${cash ? 'border-[#5EB929] bg-[#5EB929]/5' : 'border-amber-200 bg-amber-50'}`}>
-            <input type="checkbox" checked={cash} onChange={(e) => setCash(e.target.checked)} className="sr-only peer" />
-            <span className={`w-6 h-6 rounded-lg flex items-center justify-center shrink-0 ${cash ? 'bg-[#5EB929] text-white' : 'border-2 border-amber-400 bg-white'}`}>
-              {cash && <CheckRoundedIcon sx={{ fontSize: 16 }} />}
-            </span>
-            <span className="text-[13px] font-bold text-gray-800">
-              I have collected <span className="text-gray-900 font-black">{rupees(order.collectAmount)}</span> (cash or UPI)
-            </span>
-          </label>
+          <div className="space-y-3">
+            <SectionLabel>Collect payment</SectionLabel>
+            <div className={`grid gap-2 ${upiLink ? 'grid-cols-2' : 'grid-cols-1'}`}>
+              {[
+                { key: 'cash', label: 'Collect Cash', icon: PaymentsRoundedIcon },
+                ...(upiLink ? [{ key: 'upi', label: 'Scan & Pay QR', icon: QrCode2RoundedIcon }] : []),
+              ].map((o) => (
+                <button
+                  key={o.key}
+                  type="button"
+                  onClick={() => { setVia(o.key); setPaid(false); }}
+                  aria-pressed={via === o.key}
+                  className={`p-3 rounded-2xl border-2 text-left transition-all ${via === o.key ? 'border-[#5EB929] bg-[#5EB929]/5' : 'border-gray-100'}`}
+                >
+                  <o.icon sx={{ fontSize: 22 }} className={via === o.key ? 'text-[#5EB929]' : 'text-gray-400'} />
+                  <p className="text-[12px] font-bold text-gray-900 mt-1">{o.label}</p>
+                  <p className="text-[15px] font-black text-gray-900">{rupees(order.collectAmount)}</p>
+                </button>
+              ))}
+            </div>
+
+            {via === 'upi' && (
+              <div className="rounded-2xl bg-[#F8FAFC] border border-gray-100 p-4 flex flex-col items-center">
+                <div className="bg-white p-3 rounded-2xl border border-gray-100">
+                  <QRCodeSVG value={upiLink} size={190} level="M" />
+                </div>
+                <p className="mt-3 text-[13px] font-black text-gray-900">Pay {rupees(order.collectAmount)}</p>
+                <p className="text-[11px] text-gray-500 font-medium text-center">Customer scans with any UPI app. The amount is already filled in, nothing to type.</p>
+              </div>
+            )}
+
+            {via && (
+              <label className={`flex items-center gap-3 p-4 rounded-2xl border-2 cursor-pointer transition-all ${paid ? 'border-[#5EB929] bg-[#5EB929]/5' : 'border-amber-200 bg-amber-50'}`}>
+                <input type="checkbox" checked={paid} onChange={(e) => setPaid(e.target.checked)} className="sr-only peer" />
+                <span className={`w-6 h-6 rounded-lg flex items-center justify-center shrink-0 ${paid ? 'bg-[#5EB929] text-white' : 'border-2 border-amber-400 bg-white'}`}>
+                  {paid && <CheckRoundedIcon sx={{ fontSize: 16 }} />}
+                </span>
+                <span className="text-[13px] font-bold text-gray-800">
+                  {via === 'upi'
+                    ? <>The customer has paid <span className="text-gray-900 font-black">{rupees(order.collectAmount)}</span> and I saw the payment success on their phone</>
+                    : <>I have collected <span className="text-gray-900 font-black">{rupees(order.collectAmount)}</span> in cash</>}
+                </span>
+              </label>
+            )}
+          </div>
         )}
 
-        <PrimaryButton onClick={submit} loading={busy} disabled={otp.length !== 4 || (isCod && !cash)} className="w-full">
+        <PrimaryButton onClick={submit} loading={busy} disabled={otp.length !== 4 || (isCod && !(via && paid))} className="w-full">
           <VerifiedRoundedIcon sx={{ fontSize: 18 }} /> Confirm Delivery
         </PrimaryButton>
       </motion.div>

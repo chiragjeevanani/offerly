@@ -14,6 +14,10 @@ const deliverySettingsSchema = new mongoose.Schema(
     // On: a new order (once paid, if online) waits for the admin, who calls the
     // customer and then sends it on to the store. Off: it goes straight to the store.
     adminVerification: { type: Boolean, default: false },
+    // Offerly's UPI ID for the "scan & pay" QR the partner shows at the door for
+    // a cash-on-delivery order. Empty = the partner only offers cash.
+    collectUpiId: { type: String, trim: true, default: '' },
+    collectUpiName: { type: String, trim: true, default: 'Offerly' },
     // Which ways a delivery order can be paid. At least one stays on.
     allowCod: { type: Boolean, default: true },
     allowOnline: { type: Boolean, default: true },

@@ -95,6 +95,8 @@ const DeliverySettings = () => {
       partnerPayoutPerDelivery: num(s.partnerPayoutPerDelivery),
       maxActiveOrdersPerPartner: num(s.maxActiveOrdersPerPartner),
       hideDropUntilAccepted: s.hideDropUntilAccepted,
+      collectUpiId: (s.collectUpiId || '').trim(),
+      collectUpiName: (s.collectUpiName || '').trim(),
       targets: (s.targets || []).map((t) => ({ id: t.id || '', period: t.period, deliveries: num(t.deliveries), bonus: num(t.bonus), active: t.active !== false })),
       freeGift: { ...s.freeGift, minOrderValue: num(s.freeGift.minOrderValue) },
     });
@@ -158,6 +160,8 @@ const DeliverySettings = () => {
         partnerPayoutPerDelivery: num(form.partnerPayoutPerDelivery),
         maxActiveOrdersPerPartner: Math.min(20, Math.max(1, num(form.maxActiveOrdersPerPartner) || 1)),
         hideDropUntilAccepted: form.hideDropUntilAccepted,
+        collectUpiId: (form.collectUpiId || '').trim(),
+        collectUpiName: (form.collectUpiName || '').trim(),
         targets: form.targets.map((t) => ({
           ...(t.id ? { id: t.id } : {}),
           period: t.period,
@@ -322,6 +326,14 @@ const DeliverySettings = () => {
               />
             </div>
           ))}
+          <div className="pt-3 border-t border-gray-100 space-y-3">
+            <div>
+              <p className="text-[13px] font-semibold text-gray-800">UPI QR for cash-on-delivery</p>
+              <p className="text-[12px] text-gray-500">{form.collectUpiId ? 'The partner can show a QR with the amount filled in. The money goes to this UPI ID.' : 'Add the Offerly UPI ID to let the partner offer "Scan & Pay QR" next to cash. Empty = cash only.'}</p>
+            </div>
+            <input value={form.collectUpiId || ''} onChange={(e) => set('collectUpiId')(e.target.value.replace(/\s/g, ''))} placeholder="offerly@okbank" autoCapitalize="none" className="w-full h-11 px-3 bg-white border border-gray-200 rounded-xl text-[14px] outline-none focus:border-[#5EB929] focus:ring-2 focus:ring-[#5EB929]/10" />
+            <input value={form.collectUpiName || ''} maxLength={60} onChange={(e) => set('collectUpiName')(e.target.value)} placeholder="Name shown in the UPI app (e.g. Offerly)" className="w-full h-11 px-3 bg-white border border-gray-200 rounded-xl text-[14px] outline-none focus:border-[#5EB929] focus:ring-2 focus:ring-[#5EB929]/10" />
+          </div>
         </Section>
 
         <Section icon={TwoWheelerRoundedIcon} title="Delivery partners" subtitle="Earnings and limits">

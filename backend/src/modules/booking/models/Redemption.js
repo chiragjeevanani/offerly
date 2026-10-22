@@ -239,6 +239,9 @@ const redemptionSchema = new mongoose.Schema(
       partnerPhone: String,
       partnerPayout: Number,
       cashCollected: Number,
+      // How a cash-on-delivery order was paid at the door. UPI goes straight to
+      // Offerly's account, so it is not cash in the partner's hand.
+      collectedVia: { type: String, enum: ['cash', 'upi'] },
       // Set once the store's settlement wallet got the items bill.
       storeCredited: Boolean,
       cancelReason: String,
