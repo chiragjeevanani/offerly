@@ -48,6 +48,7 @@ const OrderPanel = ({ order, onClose, onChanged }) => {
   const [busy, setBusy] = useState('');
   const [cancelling, setCancelling] = useState(false);
   const [reason, setReason] = useState('');
+  const [keepFee, setKeepFee] = useState(false);
   const d = order.delivery || {};
   const stage = order.status === 'expired' ? 'cancelled' : d.status;
   const a = d.address || {};
@@ -87,6 +88,13 @@ const OrderPanel = ({ order, onClose, onChanged }) => {
             <div><p className="text-[11px] text-gray-400">Store</p><p className="font-semibold text-gray-800">{order.store?.name}</p><p className="text-gray-500">{order.store?.phone}</p></div>
             <div><p className="text-[11px] text-gray-400">Customer</p><p className="font-semibold text-gray-800">{a.name || order.customerName}</p><p className="text-gray-500">{a.phone}</p></div>
           </div>
+          {d.supportRequestedAt && stage === 'picked_up' && (
+            <div className="rounded-xl bg-orange-50 border border-orange-200 p-3 text-[12px] text-orange-800">
+              <p className="font-semibold">Partner can't deliver this order ({when(d.supportRequestedAt)})</p>
+              <p className="mt-0.5">{d.supportReason}</p>
+              <p className="mt-1 text-orange-700">Call the customer or the partner, then cancel it to send it back to the store.</p>
+            </div>
+          )}
           {toVerify && (
             <div className="rounded-xl bg-rose-50 border border-rose-100 p-3 flex items-center gap-3">
               <div className="flex-1 text-[12px] text-rose-700">
@@ -141,6 +149,12 @@ const OrderPanel = ({ order, onClose, onChanged }) => {
             {d.cancelReason && <p className="text-red-500">Cancelled by {d.cancelledBy || 'system'}: {d.cancelReason}</p>}
           </div>
 
+          {cancelling && outForDelivery && d.fee > 0 && (
+            <label className="flex items-start gap-2 text-[12px] text-gray-600">
+              <input type="checkbox" checked={keepFee} onChange={(e) => setKeepFee(e.target.checked)} className="mt-0.5 accent-[#5EB929]" />
+              <span>Customer's fault (refused / didn't answer): keep the {rupees(d.fee)} delivery fee, refund the rest</span>
+            </label>
+          )}
           {cancelling && (
             <label className="block">
               <span className="text-[11px] font-semibold text-gray-500 uppercase tracking-wide">Reason (shown to the customer and store)</span>
@@ -158,7 +172,7 @@ const OrderPanel = ({ order, onClose, onChanged }) => {
           {cancelling ? (
             <>
               <button onClick={() => setCancelling(false)} className="flex-1 h-11 rounded-xl bg-gray-100 text-gray-600 text-[13px] font-semibold">Back</button>
-              <button disabled={Boolean(busy)} onClick={() => run('cancel', () => deliveryAPI.adminCancelOrder(order._id, reason.trim()), outForDelivery ? 'Partner told to return it to the store' : 'Order cancelled')} className="flex-1 h-11 rounded-xl bg-red-500 text-white text-[13px] font-semibold">
+              <button disabled={Boolean(busy)} onClick={() => run('cancel', () => deliveryAPI.adminCancelOrder(order._id, reason.trim(), outForDelivery && keepFee), outForDelivery ? 'Partner told to return it to the store' : 'Order cancelled')} className="flex-1 h-11 rounded-xl bg-red-500 text-white text-[13px] font-semibold">
                 {busy === 'cancel' ? 'Cancelling...' : outForDelivery ? 'Cancel & return to store' : 'Cancel order'}
               </button>
             </>

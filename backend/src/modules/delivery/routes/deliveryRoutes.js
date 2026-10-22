@@ -28,6 +28,7 @@ import {
   updatePartnerStatus,
   settlePartner,
   getAdminOrders,
+  requestSupport,
   adminUnassignOrder,
   adminVerifyOrder,
   adminCancelOrder,
@@ -87,6 +88,7 @@ router.post('/partner/orders/:id/accept', protect, authorize('delivery'), accept
 router.post('/partner/orders/:id/release', protect, authorize('delivery'), releaseOrder);
 router.post('/partner/orders/:id/pickup', protect, authorize('delivery'), pickupOrder);
 router.post('/partner/orders/:id/return', protect, authorize('delivery'), returnOrder);
+router.post('/partner/orders/:id/support', protect, authorize('delivery'), requestSupport);
 router.post('/partner/orders/:id/deliver', protect, authorize('delivery'), deliverLimiter, deliverOrder);
 
 // Admin

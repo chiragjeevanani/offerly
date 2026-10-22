@@ -14,6 +14,8 @@ import CheckCircleRoundedIcon from '@mui/icons-material/CheckCircleRounded';
 import PaymentsRoundedIcon from '@mui/icons-material/PaymentsRounded';
 import VerifiedRoundedIcon from '@mui/icons-material/VerifiedRounded';
 import UndoRoundedIcon from '@mui/icons-material/UndoRounded';
+import SupportAgentRoundedIcon from '@mui/icons-material/SupportAgentRounded';
+import { supportAPI } from '../../../api/support.api';
 import { deliveryAPI } from '../../../api/delivery.api';
 import { Card, PrimaryButton, SectionLabel, StageBadge, Spinner } from '../components/PartnerUI';
 import { mapsLink, rupees } from '../utils/partner';
@@ -146,23 +148,63 @@ const RETURN_REASONS = [
   { key: 'other', label: 'Something else' },
 ];
 
-// Picked up but can't be delivered: pick a reason, then take it back to the store.
+// Picked up but can't be delivered (customer refused / not answering...): pick a
+// reason and contact Offerly support, who decide - the partner doesn't send the
+// order back on their own. If support cancels it, the order switches to "returning".
 const ReturnSheet = ({ order, onClose, onDone }) => {
   const [reason, setReason] = useState('');
   const [note, setNote] = useState('');
   const [busy, setBusy] = useState(false);
+  const [sent, setSent] = useState(Boolean(order.supportRequestedAt));
+  const { data: support } = useQuery({
+    queryKey: ['supportContacts'],
+    queryFn: async () => (await supportAPI.getContacts())?.data,
+    staleTime: 300_000,
+  });
+  const helpline = support?.merchant?.phone || support?.customer?.phone;
 
   const submit = async () => {
     setBusy(true);
     try {
-      await deliveryAPI.returnOrder(order.id, reason, note.trim());
+      await deliveryAPI.requestSupport(order.id, reason, note.trim());
+      setSent(true);
       onDone();
     } catch (err) {
-      toast.error(err?.error || 'Could not start the return');
+      toast.error(err?.error || 'Could not reach support');
     } finally {
       setBusy(false);
     }
   };
+
+  if (sent) {
+    return (
+      <div className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center">
+        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={onClose} className="absolute inset-0 bg-black/50 backdrop-blur-sm" />
+        <motion.div
+          initial={{ y: 60, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          exit={{ y: 60, opacity: 0 }}
+          className="relative w-full max-w-lg bg-white rounded-t-[2rem] sm:rounded-[2rem] p-6 pb-8 shadow-2xl space-y-4"
+          role="dialog"
+          aria-label="Support told"
+        >
+          <div className="w-10 h-1 bg-gray-200 rounded-full mx-auto sm:hidden" />
+          <div>
+            <h3 className="text-lg font-bold text-gray-900">Support has been told</h3>
+            <p className="text-[12px] text-gray-500 font-medium">
+              Offerly support will decide what to do with this order and get in touch. Please keep the order safe with you and don't hand it over until they tell you. If they cancel it, you'll be asked to return it to {order.store.name}.
+            </p>
+          </div>
+          {helpline && (
+            <a href={`tel:${helpline}`} className="w-full h-12 rounded-2xl bg-gray-900 text-white text-[12px] font-bold uppercase tracking-widest flex items-center justify-center gap-2">
+              <PhoneRoundedIcon sx={{ fontSize: 18 }} /> Call support
+            </a>
+          )}
+          <button onClick={onClose} className="w-full h-11 rounded-xl text-[11px] font-bold uppercase tracking-widest text-gray-500">Close</button>
+        </motion.div>
+      </div>
+    );
+  }
 
   return (
     <div className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center">
@@ -179,7 +221,7 @@ const ReturnSheet = ({ order, onClose, onDone }) => {
         <div>
           <h3 className="text-lg font-bold text-gray-900">Can't deliver this order?</h3>
           <p className="text-[12px] text-gray-500 font-medium">
-            Try calling {order.drop.name || 'the customer'} first. If it still can't be delivered, take it back to {order.store.name}. There's no payout for this trip.
+            Try calling {order.drop.name || 'the customer'} first. If it still can't be delivered, tell Offerly support and they'll decide what happens next.
           </p>
         </div>
         <div className="space-y-2">
@@ -207,7 +249,7 @@ const ReturnSheet = ({ order, onClose, onDone }) => {
           />
         )}
         <PrimaryButton variant="dark" onClick={submit} loading={busy} disabled={!reason || (reason === 'other' && !note.trim())} className="w-full">
-          <UndoRoundedIcon sx={{ fontSize: 18 }} /> Return to Store
+          <SupportAgentRoundedIcon sx={{ fontSize: 18 }} /> Contact Support
         </PrimaryButton>
       </motion.div>
     </div>
@@ -408,7 +450,7 @@ const PartnerOrderDetail = () => {
             onClick={() => setReturning(true)}
             className="w-full h-11 rounded-xl text-[11px] font-bold uppercase tracking-widest text-red-500 hover:bg-red-50"
           >
-            Can't deliver? Return to store
+            Can't deliver? Contact support
           </button>
         )}
       </div>
@@ -453,11 +495,7 @@ const PartnerOrderDetail = () => {
           <ReturnSheet
             order={order}
             onClose={() => setReturning(false)}
-            onDone={() => {
-              setReturning(false);
-              toast.success('Return started. Take the order back to the store.');
-              refresh();
-            }}
+            onDone={() => refresh()}
           />
         )}
       </AnimatePresence>

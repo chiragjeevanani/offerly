@@ -255,6 +255,9 @@ const redemptionSchema = new mongoose.Schema(
       returnStartedAt: Date,
       returnedAt: Date,
       returnConfirmedBy: String,
+      // The partner couldn't deliver and asked Offerly support what to do.
+      supportRequestedAt: Date,
+      supportReason: String,
     },
   },
   {

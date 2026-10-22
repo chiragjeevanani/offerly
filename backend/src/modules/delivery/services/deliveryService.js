@@ -113,6 +113,7 @@ export const partnerView = (order, { full = false } = {}) => {
     cancelReason: o.delivery?.cancelReason || '',
     returnStartedAt: o.delivery?.returnStartedAt,
     returnedAt: o.delivery?.returnedAt,
+    supportRequestedAt: o.delivery?.supportRequestedAt,
     store: {
       id: store._id ? String(store._id) : String(o.merchantId || ''),
       name: store.storeName || '',

@@ -548,6 +548,50 @@ export const returnOrder = async (req, res) => {
   }
 };
 
+// @route POST /delivery/partner/orders/:id/support  body: { reason, note }
+// The order can't be delivered (customer refused, not answering...). The
+// partner doesn't send it back on their own: Offerly support decides, and the
+// admin then cancels it (which starts the return to the store).
+export const requestSupport = async (req, res) => {
+  if (!validId(req.params.id)) return res.status(400).json({ success: false, error: 'Invalid order' });
+  const code = String(req.body?.reason || '');
+  if (!RETURN_REASONS[code]) return res.status(400).json({ success: false, error: 'Pick why the order could not be delivered' });
+  const note = String(req.body?.note || '').trim().slice(0, 160);
+  if (code === 'other' && !note) return res.status(400).json({ success: false, error: 'Tell us what went wrong' });
+  try {
+    const order = await Redemption.findOne({ _id: req.params.id, 'delivery.partnerId': req.user._id });
+    if (!order || order.status !== 'pending' || order.delivery?.status !== 'picked_up') {
+      return res.status(400).json({ success: false, error: 'Only an order you have picked up can be reported' });
+    }
+    const reason = code === 'other' ? note : note ? `${RETURN_REASONS[code]}: ${note}` : RETURN_REASONS[code];
+    // Re-sending within a couple of minutes doesn't page the admin again.
+    const recent = order.delivery.supportRequestedAt && Date.now() - order.delivery.supportRequestedAt.getTime() < 2 * 60 * 1000;
+    await Redemption.updateOne(
+      { _id: order._id },
+      { $set: { 'delivery.supportRequestedAt': new Date(), 'delivery.supportReason': reason } }
+    );
+    if (!recent) {
+      try {
+        const customer = order.delivery.address || {};
+        const alert = await AdminNotification.create({
+          title: 'Delivery partner needs help',
+          body: `${req.user.name} can't deliver #${order.internalId}: ${reason}. Customer ${customer.name || ''} ${customer.phone || ''}. Decide in Delivery Orders.`,
+          type: 'delivery',
+          data: { redemptionId: String(order._id), partnerId: String(req.user._id) },
+        });
+        emitAdminNotification(alert);
+      } catch (notifyErr) {
+        console.error('requestSupport notify error:', notifyErr.message);
+      }
+    }
+    const fresh = await Redemption.findById(order._id).populate('merchantId', STORE_FIELDS);
+    res.status(200).json({ success: true, data: partnerView(fresh, { full: true }) });
+  } catch (err) {
+    console.error('requestSupport error:', err);
+    res.status(500).json({ success: false, error: 'Failed to contact support' });
+  }
+};
+
 // @route POST /delivery/partner/orders/:id/deliver  body: { otp, cashCollected }
 export const deliverOrder = async (req, res) => {
   if (!validId(req.params.id)) return res.status(400).json({ success: false, error: 'Invalid order' });
@@ -901,7 +945,8 @@ export const adminCancelOrder = async (req, res) => {
     const reason = String(req.body?.reason || '').trim().slice(0, 200);
     // Already with the partner: cancelling means a return to the store.
     if (order.status === 'pending' && order.delivery?.status === 'picked_up') {
-      const returning = await startDeliveryReturn(order, { by: 'admin', reason });
+      // keepFee: the customer's fault (refused, didn't answer) - no delivery fee back.
+      const returning = await startDeliveryReturn(order, { by: 'admin', reason, feeRetained: req.body?.keepFee === true });
       if (!returning) return res.status(409).json({ success: false, error: 'This order changed just now. Please refresh.' });
       return res.status(200).json({ success: true, data: adminOrderView(await Redemption.findById(returning._id).populate('merchantId', 'storeName phone city')) });
     }
