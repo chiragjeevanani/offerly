@@ -118,7 +118,7 @@ const PartnerVerify = () => {
                   autoComplete={i === 0 ? 'one-time-code' : 'off'}
                   maxLength={6}
                   aria-label={`Digit ${i + 1}`}
-                  className="w-12 h-14 sm:w-13 rounded-2xl bg-[#F8FAFC] border border-gray-100 text-center text-xl font-black text-gray-900 outline-none focus:bg-white focus:border-[#5EB929]/50 focus:ring-2 focus:ring-[#5EB929]/10"
+                  className="flex-1 min-w-0 h-14 rounded-2xl bg-[#F8FAFC] border border-gray-100 text-center text-xl font-black text-gray-900 outline-none focus:bg-white focus:border-[#5EB929]/50 focus:ring-2 focus:ring-[#5EB929]/10"
                 />
               ))}
             </div>
