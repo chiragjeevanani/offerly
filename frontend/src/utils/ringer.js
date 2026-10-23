@@ -30,34 +30,68 @@ export const subscribeRing = (fn) => {
   return () => listeners.delete(fn);
 };
 
-const tone = (c, freq, start, dur, volume) => {
-  const osc = c.createOscillator();
-  const gain = c.createGain();
-  osc.type = 'square';
-  osc.frequency.setValueAtTime(freq, start);
-  gain.gain.setValueAtTime(0, start);
-  gain.gain.linearRampToValueAtTime(volume, start + 0.015);
-  gain.gain.setValueAtTime(volume, start + dur - 0.04);
-  gain.gain.linearRampToValueAtTime(0, start + dur);
-  osc.connect(gain);
-  gain.connect(c.destination);
-  osc.start(start);
-  osc.stop(start + dur + 0.02);
+// Everything goes through one chain that drives the signal right up to full
+// scale: a gain boost into a hard clipper (so stacked tones can't distort into
+// mush) and a limiter. The phone's own volume is the only ceiling left.
+let master = null;
+const masterOut = (c) => {
+  if (master && master.context === c) return master;
+  const boost = c.createGain();
+  boost.gain.value = 3;
+  const clip = c.createWaveShaper();
+  const curve = new Float32Array(1024);
+  for (let i = 0; i < curve.length; i += 1) {
+    const x = (i / (curve.length - 1)) * 2 - 1;
+    curve[i] = Math.max(-1, Math.min(1, x * 1.5));
+  }
+  clip.curve = curve;
+  const limiter = c.createDynamicsCompressor();
+  limiter.threshold.value = -1;
+  limiter.ratio.value = 20;
+  limiter.attack.value = 0.001;
+  limiter.release.value = 0.05;
+  boost.connect(clip);
+  clip.connect(limiter);
+  limiter.connect(c.destination);
+  master = boost;
+  return master;
 };
 
-// Two quick double-rings, then a pause - like an old phone.
+// A bell-like trill: two tones a third apart, switching every 40 ms, in the
+// 1.4-2 kHz band the ear is most sensitive to - the loudest-sounding ring for
+// the same speaker.
+const trill = (c, start, dur) => {
+  const out = masterOut(c);
+  ['square', 'sawtooth'].forEach((type) => {
+    const osc = c.createOscillator();
+    const gain = c.createGain();
+    osc.type = type;
+    for (let t = 0, hi = true; t < dur; t += 0.04, hi = !hi) {
+      osc.frequency.setValueAtTime(hi ? 1975 : 1480, start + t);
+    }
+    gain.gain.setValueAtTime(0, start);
+    gain.gain.linearRampToValueAtTime(1, start + 0.01);
+    gain.gain.setValueAtTime(1, start + dur - 0.02);
+    gain.gain.linearRampToValueAtTime(0, start + dur);
+    osc.connect(gain);
+    gain.connect(out);
+    osc.start(start);
+    osc.stop(start + dur + 0.02);
+  });
+};
+
+// Brrring - brrring, then a short pause. Repeats every RING_EVERY_MS.
+const RING_EVERY_MS = 1800;
 const ringOnce = () => {
   const c = ensureContext();
   if (!c) return;
   if (c.state === 'suspended') c.resume().then(notify).catch(() => {});
   if (c.state !== 'running') return notify();
   const t = c.currentTime + 0.02;
-  [0, 0.5].forEach((offset) => {
-    tone(c, 880, t + offset, 0.16, 0.5);
-    tone(c, 1175, t + offset + 0.2, 0.16, 0.5);
-  });
+  trill(c, t, 0.6);
+  trill(c, t + 0.8, 0.6);
   try {
-    navigator.vibrate?.([300, 150, 300]);
+    navigator.vibrate?.([600, 200, 600]);
   } catch {
     /* vibration is optional */
   }
@@ -90,7 +124,7 @@ export const startRinging = () => {
   if (ringing) return;
   ringing = true;
   ringOnce();
-  timer = setInterval(ringOnce, 2600);
+  timer = setInterval(ringOnce, RING_EVERY_MS);
   notify();
 };
 
