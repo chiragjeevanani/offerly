@@ -29,6 +29,10 @@ export const deliveryAPI = {
   acceptOrder: async (orderId) => axiosInstance.post(`/delivery/partner/orders/${orderId}/accept`),
   releaseOrder: async (orderId) => axiosInstance.post(`/delivery/partner/orders/${orderId}/release`),
   pickupOrder: async (orderId) => axiosInstance.post(`/delivery/partner/orders/${orderId}/pickup`),
+  declineOrder: async (orderId) => axiosInstance.post(`/delivery/partner/orders/${orderId}/decline`),
+  getWallet: async () => axiosInstance.get('/delivery/partner/wallet'),
+  // amount omitted = everything available
+  withdraw: async (amount) => axiosInstance.post('/delivery/partner/wallet/withdraw', amount ? { amount } : {}),
   requestSupport: async (orderId, reason, note = '') => axiosInstance.post(`/delivery/partner/orders/${orderId}/support`, { reason, note }),
   returnOrder: async (orderId, reason, note = '') => axiosInstance.post(`/delivery/partner/orders/${orderId}/return`, { reason, note }),
   // collectedVia: 'cash' | 'upi' (only for cash-on-delivery orders)
@@ -41,6 +45,11 @@ export const deliveryAPI = {
   getPartners: async (params = {}) => axiosInstance.get('/delivery/admin/partners', { params }),
   updatePartnerStatus: async (partnerId, status, reason = '') =>
     axiosInstance.put(`/delivery/admin/partners/${partnerId}/status`, { status, reason }),
+  getPartnerShift: async (partnerId) => axiosInstance.get(`/delivery/admin/partners/${partnerId}/shift`),
+  updatePartnerShift: async (partnerId, shift) => axiosInstance.put(`/delivery/admin/partners/${partnerId}/shift`, shift),
+  getWithdrawals: async (status) => axiosInstance.get('/delivery/admin/withdrawals', { params: status ? { status } : {} }),
+  markWithdrawalPaid: async (id, reference) => axiosInstance.post(`/delivery/admin/withdrawals/${id}/paid`, { reference }),
+  rejectWithdrawal: async (id, reason) => axiosInstance.post(`/delivery/admin/withdrawals/${id}/reject`, { reason }),
   settlePartner: async (partnerId, note = '') => axiosInstance.post(`/delivery/admin/partners/${partnerId}/settle`, { note }),
   getAdminOrders: async (params = {}) => axiosInstance.get('/delivery/admin/orders', { params }),
   unassignOrder: async (orderId) => axiosInstance.post(`/delivery/admin/orders/${orderId}/unassign`),

@@ -7,6 +7,9 @@ const deliveryReleaseSchema = new mongoose.Schema(
   {
     partnerId: { type: mongoose.Schema.Types.ObjectId, ref: 'DeliveryPartner', required: true },
     redemptionId: { type: mongoose.Schema.Types.ObjectId, ref: 'Redemption', required: true },
+    // The order was given by auto-assign: recorded (so it isn't given back to
+    // them) but not counted as a cancellation.
+    autoAssigned: { type: Boolean },
   },
   { timestamps: { createdAt: true, updatedAt: false } }
 );

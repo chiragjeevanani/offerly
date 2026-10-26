@@ -9,6 +9,9 @@ import TwoWheelerRoundedIcon from '@mui/icons-material/TwoWheelerRounded';
 import EmojiEventsRoundedIcon from '@mui/icons-material/EmojiEventsRounded';
 import PhoneInTalkRoundedIcon from '@mui/icons-material/PhoneInTalkRounded';
 import AddRoundedIcon from '@mui/icons-material/AddRounded';
+import AssignmentIndRoundedIcon from '@mui/icons-material/AssignmentIndRounded';
+import AccountBalanceWalletRoundedIcon from '@mui/icons-material/AccountBalanceWalletRounded';
+import ScheduleRoundedIcon from '@mui/icons-material/ScheduleRounded';
 import DeleteOutlineRoundedIcon from '@mui/icons-material/DeleteOutlineRounded';
 import { deliveryAPI } from '../../../api/delivery.api';
 
@@ -63,6 +66,22 @@ const MoneyField = ({ label, value, onChange, hint, suffix = '₹', disabled }) 
 
 const num = (v) => (v === '' || v == null ? 0 : Number(v));
 
+const WEEKDAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+
+// The partner-rule groups as the API takes them (also what "unsaved changes" compares).
+const rulesPayload = (s) => ({
+  cancellationRule: { enabled: Boolean(s.cancellationRule?.enabled), allowed: Math.max(0, Math.round(num(s.cancellationRule?.allowed))) },
+  autoAssign: { enabled: Boolean(s.autoAssign?.enabled), afterMinutes: Math.min(60, Math.max(1, Math.round(num(s.autoAssign?.afterMinutes) || 5))) },
+  payouts: { frequency: s.payouts?.frequency === 'daily' ? 'daily' : 'weekly', weeklyDay: Number(s.payouts?.weeklyDay ?? 1), minAmount: Math.max(0, Math.round(num(s.payouts?.minAmount))) },
+  shifts: {
+    enabled: Boolean(s.shifts?.enabled),
+    graceMinutes: Math.min(120, Math.max(0, Math.round(num(s.shifts?.graceMinutes)))),
+    defaultStart: s.shifts?.defaultStart || '09:00',
+    defaultEnd: s.shifts?.defaultEnd || '21:00',
+    defaultBreakMinutes: Math.min(600, Math.max(0, Math.round(num(s.shifts?.defaultBreakMinutes)))),
+  },
+});
+
 const PERIODS = [
   { key: 'daily', label: 'In a day', short: 'a day' },
   { key: 'weekly', label: 'In a week', short: 'a week (Mon-Sun)' },
@@ -95,7 +114,7 @@ const DeliverySettings = () => {
       partnerPayoutPerDelivery: num(s.partnerPayoutPerDelivery),
       maxActiveOrdersPerPartner: num(s.maxActiveOrdersPerPartner),
       hideDropUntilAccepted: s.hideDropUntilAccepted,
-      maxCancellations: num(s.maxCancellations),
+      ...rulesPayload(s),
       collectUpiId: (s.collectUpiId || '').trim(),
       collectUpiName: (s.collectUpiName || '').trim(),
       targets: (s.targets || []).map((t) => ({ id: t.id || '', period: t.period, deliveries: num(t.deliveries), bonus: num(t.bonus), active: t.active !== false })),
@@ -105,6 +124,8 @@ const DeliverySettings = () => {
   }, [form, data]);
 
   const set = (key) => (value) => setForm((f) => ({ ...f, [key]: value }));
+  // cancellationRule / autoAssign / payouts / shifts are small nested groups.
+  const setIn = (group, key) => (value) => setForm((f) => ({ ...f, [group]: { ...f[group], [key]: value } }));
   const setGift = (key) => (value) => setForm((f) => ({ ...f, freeGift: { ...f.freeGift, [key]: value } }));
   const setTarget = (idx, patch) =>
     setForm((f) => ({ ...f, targets: f.targets.map((t, i) => (i === idx ? { ...t, ...patch } : t)) }));
@@ -161,7 +182,7 @@ const DeliverySettings = () => {
         partnerPayoutPerDelivery: num(form.partnerPayoutPerDelivery),
         maxActiveOrdersPerPartner: Math.min(20, Math.max(1, num(form.maxActiveOrdersPerPartner) || 1)),
         hideDropUntilAccepted: form.hideDropUntilAccepted,
-        maxCancellations: Math.max(0, Math.round(num(form.maxCancellations))),
+        ...rulesPayload(form),
         collectUpiId: (form.collectUpiId || '').trim(),
         collectUpiName: (form.collectUpiName || '').trim(),
         targets: form.targets.map((t) => ({
@@ -373,14 +394,23 @@ const DeliverySettings = () => {
           )
         }
       >
-        <div className="rounded-xl border border-gray-100 bg-gray-50/60 p-3">
-          <MoneyField
-            label="Order cancellation limit"
-            suffix="#"
-            value={form.maxCancellations}
-            onChange={set('maxCancellations')}
-            hint={num(form.maxCancellations) > 0 ? `A partner who accepts and then cancels ${num(form.maxCancellations)} or more orders in a target's period gets no bonus for that period` : '0 = no limit. Cancelling orders never costs a partner their bonus.'}
-          />
+        <div className="rounded-xl border border-gray-100 bg-gray-50/60 p-3 space-y-3">
+          <div className="flex items-start gap-3">
+            <div className="flex-1">
+              <p className="text-[13px] font-semibold text-gray-800">Order cancellation target</p>
+              <p className="text-[12px] text-gray-500">
+                {!form.cancellationRule.enabled
+                  ? 'Off: cancelling orders never costs a partner their bonus.'
+                  : num(form.cancellationRule.allowed) === 0
+                    ? 'A partner who cancels even one order (accepts it, then releases it) gets no bonus for that period.'
+                    : `A partner who cancels more than ${num(form.cancellationRule.allowed)} order${num(form.cancellationRule.allowed) === 1 ? '' : 's'} in a target's period gets no bonus for it.`}
+              </p>
+            </div>
+            <Toggle checked={form.cancellationRule.enabled} onChange={setIn('cancellationRule', 'enabled')} label="Order cancellation target" />
+          </div>
+          {form.cancellationRule.enabled && (
+            <MoneyField label="Cancellations allowed per period" suffix="#" value={form.cancellationRule.allowed} onChange={setIn('cancellationRule', 'allowed')} hint="0 = no cancellations allowed. Giving back an order the system assigned doesn't count." />
+          )}
         </div>
         {form.targets.length === 0 ? (
           <p className="text-[13px] text-gray-500">
@@ -428,6 +458,76 @@ const DeliverySettings = () => {
           The bonus is added to the partner's earnings once per target per period (days, Monday-to-Sunday weeks and months follow Indian time) and is paid out with their other earnings under Delivery Partners. Changing a target never changes bonuses already paid.
         </p>
       </Section>
+
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
+        <Section
+          icon={AssignmentIndRoundedIcon}
+          title="Auto-assign orders"
+          subtitle="When no partner accepts in time"
+          right={<Toggle checked={form.autoAssign.enabled} onChange={setIn('autoAssign', 'enabled')} label="Auto-assign orders" />}
+        >
+          <MoneyField label="Assign after" suffix="min" value={form.autoAssign.afterMinutes} onChange={setIn('autoAssign', 'afterMinutes')} disabled={!form.autoAssign.enabled} hint="Between 1 and 60 minutes, counted from when the store accepts the order." />
+          <p className="text-[12px] text-gray-500">
+            {form.autoAssign.enabled
+              ? `An order nobody accepts within ${num(form.autoAssign.afterMinutes) || 5} minutes goes to an online partner in its city with room for it: fewest orders in hand first, partners who declined it last. You're told if nobody is online.`
+              : 'Off: orders wait in the pool until a partner accepts them.'}
+          </p>
+        </Section>
+
+        <Section icon={AccountBalanceWalletRoundedIcon} title="Partner withdrawals" subtitle="When partners can take out their earnings">
+          <div className="grid grid-cols-2 gap-2">
+            {[{ key: 'daily', label: 'Once a day' }, { key: 'weekly', label: 'Once a week' }].map((o) => (
+              <button
+                key={o.key}
+                type="button"
+                onClick={() => setIn('payouts', 'frequency')(o.key)}
+                className={`h-10 rounded-xl border text-[12px] font-semibold ${form.payouts.frequency === o.key ? 'border-[#5EB929] bg-[#5EB929]/5 text-[#3F7F17]' : 'border-gray-200 text-gray-500'}`}
+              >
+                {o.label}
+              </button>
+            ))}
+          </div>
+          {form.payouts.frequency === 'weekly' && (
+            <label className="block">
+              <span className="text-[11px] font-semibold text-gray-500 uppercase tracking-wide">Withdrawal day</span>
+              <select
+                value={form.payouts.weeklyDay}
+                onChange={(e) => setIn('payouts', 'weeklyDay')(Number(e.target.value))}
+                className="mt-1.5 w-full h-11 px-3 bg-white border border-gray-200 rounded-xl text-[14px] outline-none focus:border-[#5EB929]"
+              >
+                {WEEKDAYS.map((d, i) => <option key={d} value={i}>{d}</option>)}
+              </select>
+            </label>
+          )}
+          <MoneyField label="Smallest withdrawal" value={form.payouts.minAmount} onChange={setIn('payouts', 'minAmount')} hint="0 = any amount" />
+          <p className="text-[12px] text-gray-500">Requests appear under Delivery Partners &gt; Withdrawals for you to pay and mark as paid.</p>
+        </Section>
+
+        <Section
+          icon={ScheduleRoundedIcon}
+          title="Shifts"
+          subtitle="Late or long breaks lose the incentive"
+          right={<Toggle checked={form.shifts.enabled} onChange={setIn('shifts', 'enabled')} label="Shifts" />}
+        >
+          <div className="grid grid-cols-2 gap-3">
+            <label className="block">
+              <span className="text-[11px] font-semibold text-gray-500 uppercase tracking-wide">Default start</span>
+              <input type="time" value={form.shifts.defaultStart} onChange={(e) => setIn('shifts', 'defaultStart')(e.target.value)} className="mt-1.5 w-full h-11 px-3 bg-white border border-gray-200 rounded-xl text-[14px] outline-none focus:border-[#5EB929]" />
+            </label>
+            <label className="block">
+              <span className="text-[11px] font-semibold text-gray-500 uppercase tracking-wide">Default end</span>
+              <input type="time" value={form.shifts.defaultEnd} onChange={(e) => setIn('shifts', 'defaultEnd')(e.target.value)} className="mt-1.5 w-full h-11 px-3 bg-white border border-gray-200 rounded-xl text-[14px] outline-none focus:border-[#5EB929]" />
+            </label>
+          </div>
+          <MoneyField label="Default break" suffix="min" value={form.shifts.defaultBreakMinutes} onChange={setIn('shifts', 'defaultBreakMinutes')} />
+          <MoneyField label="Grace after start" suffix="min" value={form.shifts.graceMinutes} onChange={setIn('shifts', 'graceMinutes')} hint="0 = must be online exactly at shift start" />
+          <p className="text-[12px] text-gray-500">
+            {form.shifts.enabled
+              ? 'A partner who comes online after their shift start (plus grace), or is offline longer than their break during the shift, gets no target bonus for that period. Set each partner\'s own shift under Delivery Partners.'
+              : 'Off: no shift rules. Switching on applies from that moment, never to earlier days.'}
+          </p>
+        </Section>
+      </div>
 
       <div className="bg-gray-50 border border-gray-100 rounded-2xl p-4 text-[12px] text-gray-600">
         <span className="font-semibold text-gray-800">Customers see: </span>

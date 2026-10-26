@@ -29,12 +29,16 @@ import {
   settlePartner,
   getAdminOrders,
   requestSupport,
+  declineOrder,
+  getPartnerShift,
+  updatePartnerShift,
   adminUnassignOrder,
   adminVerifyOrder,
   adminCancelOrder,
   adminConfirmReturn,
   adminRetryRefund,
 } from '../controllers/deliveryController.js';
+import { getWallet, requestWithdrawal, getAdminWithdrawals, markWithdrawalPaid, rejectWithdrawal } from '../controllers/payoutController.js';
 
 const router = express.Router();
 
@@ -89,6 +93,9 @@ router.post('/partner/orders/:id/release', protect, authorize('delivery'), relea
 router.post('/partner/orders/:id/pickup', protect, authorize('delivery'), pickupOrder);
 router.post('/partner/orders/:id/return', protect, authorize('delivery'), returnOrder);
 router.post('/partner/orders/:id/support', protect, authorize('delivery'), requestSupport);
+router.post('/partner/orders/:id/decline', protect, authorize('delivery'), declineOrder);
+router.get('/partner/wallet', protect, authorize('delivery'), getWallet);
+router.post('/partner/wallet/withdraw', protect, authorize('delivery'), requestWithdrawal);
 router.post('/partner/orders/:id/deliver', protect, authorize('delivery'), deliverLimiter, deliverOrder);
 
 // Admin
@@ -97,6 +104,11 @@ router.put('/admin/settings', protect, authorize('admin'), updateAdminSettings);
 router.get('/admin/partners', protect, authorize('admin'), getAdminPartners);
 router.put('/admin/partners/:id/status', protect, authorize('admin'), updatePartnerStatus);
 router.post('/admin/partners/:id/settle', protect, authorize('admin'), settlePartner);
+router.get('/admin/partners/:id/shift', protect, authorize('admin'), getPartnerShift);
+router.put('/admin/partners/:id/shift', protect, authorize('admin'), updatePartnerShift);
+router.get('/admin/withdrawals', protect, authorize('admin'), getAdminWithdrawals);
+router.post('/admin/withdrawals/:id/paid', protect, authorize('admin'), markWithdrawalPaid);
+router.post('/admin/withdrawals/:id/reject', protect, authorize('admin'), rejectWithdrawal);
 router.get('/admin/orders', protect, authorize('admin'), getAdminOrders);
 router.post('/admin/orders/:id/unassign', protect, authorize('admin'), adminUnassignOrder);
 router.post('/admin/orders/:id/verify', protect, authorize('admin'), adminVerifyOrder);

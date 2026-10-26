@@ -29,12 +29,15 @@ import {
   creditPartnerForDelivery,
   awardTargetBonuses,
   targetProgress,
-  cancellationLimit,
+  cancellationRuleOf,
+  assignOrderToPartner,
   partnerLimits,
   sameCity,
   POOL_STAGES,
   CANCELLABLE_STAGES,
 } from '../services/deliveryService.js';
+import { HHMM, effectiveShift, logDuty, shiftRules, shiftToday } from '../services/shiftService.js';
+import { payoutRules } from '../services/payoutService.js';
 
 const STORE_FIELDS = 'storeName address locality phone coordinates city logo';
 const escapeRegex = (value = '') => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
@@ -65,6 +68,13 @@ export const serializePartner = (p) => ({
   status: p.status,
   rejectionReason: p.rejectionReason || '',
   isOnline: Boolean(p.isOnline),
+  // The partner's own shift settings (empty = the defaults in Delivery Settings).
+  shift: {
+    start: p.shift?.start || '',
+    end: p.shift?.end || '',
+    breakMinutes: typeof p.shift?.breakMinutes === 'number' ? p.shift.breakMinutes : null,
+    offDays: Array.isArray(p.shift?.offDays) ? p.shift.offDays : null,
+  },
   stats: {
     totalDeliveries: p.stats?.totalDeliveries || 0,
     totalEarnings: p.stats?.totalEarnings || 0,
@@ -178,12 +188,12 @@ export const cancelMyOrder = async (req, res) => {
 /* ───────────────────────────── Store ───────────────────────────── */
 
 // Moves a store's own delivery order from one stage to the next.
-const storeStep = (from, to, stampField, messages) => async (req, res) => {
+const storeStep = (from, to, stampField, messages, { pooled = false } = {}) => async (req, res) => {
   if (!validId(req.params.id)) return res.status(400).json({ success: false, error: 'Invalid order' });
   try {
     const updated = await Redemption.findOneAndUpdate(
       { _id: req.params.id, merchantId: req.user._id, fulfillment: 'delivery', status: 'pending', 'delivery.status': { $in: from } },
-      { $set: { 'delivery.status': to, [`delivery.${stampField}`]: new Date() } },
+      { $set: { 'delivery.status': to, [`delivery.${stampField}`]: new Date(), ...(pooled ? { 'delivery.pooledAt': new Date() } : {}) } },
       { new: true }
     );
     if (!updated) {
@@ -203,7 +213,7 @@ export const storeAcceptOrder = storeStep(['placed'], 'preparing', 'acceptedAt',
   await announceStage(order, {
     customer: { title: 'Order accepted', body: `The store is packing order #${order.internalId}. We're finding a delivery partner.` },
   });
-});
+}, { pooled: true });
 
 // @route POST /delivery/store/orders/:id/ready  - packed and waiting for the partner
 export const storeMarkReady = storeStep(['preparing'], 'ready', 'readyAt', async (order) => {
@@ -261,7 +271,7 @@ export const getPartnerMe = async (req, res) => {
       ]),
       DeliveryTargetAward.find({ partnerId: partner._id }).sort({ createdAt: -1 }).limit(20).lean(),
     ]);
-    const targets = await targetProgress(partner._id, settings);
+    const [targets, shift] = await Promise.all([targetProgress(partner, settings), shiftToday(partner, settings)]);
     res.status(200).json({
       success: true,
       data: {
@@ -275,7 +285,9 @@ export const getPartnerMe = async (req, res) => {
         bonuses: bonusHistory.map((b) => ({ id: String(b._id), period: b.period, deliveries: b.deliveries, bonus: b.bonus, at: b.createdAt })),
         activeCount,
         maxActive: partnerLimits(settings).maxActive,
-        cancellationLimit: cancellationLimit(settings),
+        cancellationRule: cancellationRuleOf(settings),
+        // Today's shift and how it is going (null when shifts are off).
+        shift,
         payoutPerDelivery: settings.partnerPayoutPerDelivery || 0,
         deliveryEnabled: Boolean(settings.enabled),
       },
@@ -319,11 +331,14 @@ export const updatePartnerMe = async (req, res) => {
         return res.status(400).json({ success: false, error: 'Deliveries are paused by Offerly right now' });
       }
     }
+    const wasOnline = Boolean(partner.isOnline);
     for (const key of ['isOnline', 'name', 'email', 'profilePhoto', 'vehicleType', 'vehicleNumber']) {
       if (value[key] !== undefined) partner[key] = value[key];
     }
     if (value.bankDetails) partner.bankDetails = { ...partner.bankDetails?.toObject?.(), ...value.bankDetails };
     await partner.save();
+    // Shift rules work from these on/off records.
+    if (Boolean(partner.isOnline) !== wasOnline) await logDuty(partner._id, Boolean(partner.isOnline));
     res.status(200).json({ success: true, data: serializePartner(partner) });
   } catch (err) {
     console.error('updatePartnerMe error:', err);
@@ -451,33 +466,11 @@ export const acceptOrder = async (req, res) => {
     if (active >= maxActive) {
       return res.status(400).json({ success: false, error: `You can carry up to ${maxActive} order${maxActive === 1 ? '' : 's'} at a time. Deliver one first.` });
     }
-    const order = await Redemption.findOneAndUpdate(
-      {
-        _id: req.params.id,
-        fulfillment: 'delivery',
-        status: 'pending',
-        'delivery.status': { $in: POOL_STAGES },
-        'delivery.city': sameCity(partner.city),
-        'delivery.partnerId': null,
-      },
-      {
-        $set: {
-          'delivery.partnerId': partner._id,
-          'delivery.partnerName': partner.name,
-          'delivery.partnerPhone': partner.phone,
-          'delivery.assignedAt': new Date(),
-        },
-      },
-      { new: true }
-    ).populate('merchantId', STORE_FIELDS);
-    if (!order) {
+    const assigned = await assignOrderToPartner(req.params.id, partner);
+    if (!assigned) {
       return res.status(409).json({ success: false, error: 'Another partner took this order just now', code: 'ALREADY_TAKEN' });
     }
-    withdrawFromPool(order);
-    await announceStage(order, {
-      customer: { title: 'Delivery partner assigned', body: `${partner.name} will deliver order #${order.internalId}.` },
-      store: { title: 'Delivery partner on the way', body: `${partner.name} (${partner.phone}) will pick up #${order.internalId}.` },
-    });
+    const order = await Redemption.findById(assigned._id).populate('merchantId', STORE_FIELDS);
     res.status(200).json({ success: true, data: partnerView(order, { full: true }) });
   } catch (err) {
     console.error('acceptOrder error:', err);
@@ -491,12 +484,14 @@ export const releaseOrder = async (req, res) => {
   try {
     const order = await Redemption.findOneAndUpdate(
       { _id: req.params.id, 'delivery.partnerId': req.user._id, status: 'pending', 'delivery.status': { $in: POOL_STAGES } },
-      { $unset: { 'delivery.partnerId': 1, 'delivery.partnerName': 1, 'delivery.partnerPhone': 1, 'delivery.assignedAt': 1 } },
-      { new: true }
+      { $unset: { 'delivery.partnerId': 1, 'delivery.partnerName': 1, 'delivery.partnerPhone': 1, 'delivery.assignedAt': 1, 'delivery.autoAssigned': 1 }, $set: { 'delivery.pooledAt': new Date() } },
+      { new: false } // the order as it was: was it auto-assigned?
     );
     if (!order) return res.status(400).json({ success: false, error: 'This order can no longer be released' });
-    // Counts toward the admin's cancellation limit for incentives.
-    await DeliveryRelease.create({ partnerId: req.user._id, redemptionId: order._id }).catch((err) => console.error('release record failed:', err.message));
+    // Counts toward the admin's cancellation limit for incentives - but not an
+    // order the system gave them, which they never chose to take. Either way
+    // it is recorded, so auto-assign won't give this order back to them.
+    await DeliveryRelease.create({ partnerId: req.user._id, redemptionId: order._id, ...(order.delivery?.autoAssigned ? { autoAssigned: true } : {}) }).catch((err) => console.error('release record failed:', err.message));
     announceToPool(order, { except: req.user._id });
     await announceStage(order, {
       store: { title: 'Delivery partner changed', body: `The partner for #${order.internalId} dropped out. We're finding another one.` },
@@ -681,7 +676,26 @@ const settingsSchema = Joi.object({
   maxActiveOrdersPerPartner: Joi.number().integer().min(1).max(20),
   hideDropUntilAccepted: Joi.boolean(),
   adminVerification: Joi.boolean(),
-  maxCancellations: Joi.number().integer().min(0).max(1000),
+  cancellationRule: Joi.object({
+    enabled: Joi.boolean().required(),
+    allowed: Joi.number().integer().min(0).max(1000).required(),
+  }),
+  autoAssign: Joi.object({
+    enabled: Joi.boolean(),
+    afterMinutes: Joi.number().integer().min(1).max(60),
+  }),
+  payouts: Joi.object({
+    frequency: Joi.string().valid('daily', 'weekly'),
+    weeklyDay: Joi.number().integer().min(0).max(6),
+    minAmount: Joi.number().min(0).max(100000),
+  }),
+  shifts: Joi.object({
+    enabled: Joi.boolean(),
+    graceMinutes: Joi.number().integer().min(0).max(120),
+    defaultStart: Joi.string().pattern(HHMM).messages({ 'string.pattern.base': 'Shift times must look like 09:00' }),
+    defaultEnd: Joi.string().pattern(HHMM).messages({ 'string.pattern.base': 'Shift times must look like 21:00' }),
+    defaultBreakMinutes: Joi.number().integer().min(0).max(600),
+  }),
   collectUpiId: Joi.string().trim().pattern(/^[\w.\-]{2,256}@[a-zA-Z][a-zA-Z0-9.\-]{1,64}$/).allow('').messages({ 'string.pattern.base': 'Enter a valid UPI ID, like name@bank' }),
   collectUpiName: Joi.string().trim().max(60).allow(''),
   targets: Joi.array().max(12).items(
@@ -705,7 +719,10 @@ const settingsSchema = Joi.object({
 const adminSettingsView = (s) => ({
   ...publicDeliveryConfig(s),
   partnerPayoutPerDelivery: s.partnerPayoutPerDelivery || 0,
-  maxCancellations: s.maxCancellations || 0,
+  cancellationRule: cancellationRuleOf(s),
+  autoAssign: { enabled: Boolean(s.autoAssign?.enabled), afterMinutes: s.autoAssign?.afterMinutes || 5 },
+  payouts: payoutRules(s),
+  shifts: (({ since, ...rules }) => ({ ...rules, since }))(shiftRules(s)),
   collectUpiId: s.collectUpiId || '',
   collectUpiName: s.collectUpiName || 'Offerly',
   ...(({ maxActive, hideDropUntilAccepted }) => ({ maxActiveOrdersPerPartner: maxActive, hideDropUntilAccepted }))(partnerLimits(s)),
@@ -736,8 +753,17 @@ export const updateAdminSettings = async (req, res) => {
   if (error) return res.status(400).json({ success: false, error: error.details[0].message });
   try {
     const s = await getDeliverySettings();
-    for (const key of ['enabled', 'deliveryFee', 'freeDeliveryMinOrder', 'allowCod', 'allowOnline', 'maxDistanceKm', 'partnerPayoutPerDelivery', 'maxActiveOrdersPerPartner', 'hideDropUntilAccepted', 'adminVerification', 'maxCancellations', 'collectUpiId', 'collectUpiName']) {
+    for (const key of ['enabled', 'deliveryFee', 'freeDeliveryMinOrder', 'allowCod', 'allowOnline', 'maxDistanceKm', 'partnerPayoutPerDelivery', 'maxActiveOrdersPerPartner', 'hideDropUntilAccepted', 'adminVerification', 'collectUpiId', 'collectUpiName']) {
       if (value[key] !== undefined) s[key] = value[key];
+    }
+    if (value.cancellationRule) s.cancellationRule = value.cancellationRule;
+    if (value.autoAssign) s.autoAssign = { ...s.autoAssign?.toObject?.(), ...value.autoAssign };
+    if (value.payouts) s.payouts = { ...s.payouts?.toObject?.(), ...value.payouts };
+    if (value.shifts) {
+      const wasOn = Boolean(s.shifts?.enabled);
+      s.shifts = { ...s.shifts?.toObject?.(), ...value.shifts };
+      // Rules count from the moment shifts are switched on, never backwards.
+      if (value.shifts.enabled && !wasOn) s.shifts.since = new Date();
     }
     if (value.freeGift) s.freeGift = { ...s.freeGift?.toObject?.(), ...value.freeGift };
     if (value.targets) {
@@ -752,7 +778,11 @@ export const updateAdminSettings = async (req, res) => {
     }
     await s.save();
     // Switching delivery off sends every partner offline.
-    if (value.enabled === false) await DeliveryPartner.updateMany({ isOnline: true }, { $set: { isOnline: false } });
+    if (value.enabled === false) {
+      const online = await DeliveryPartner.find({ isOnline: true }).distinct('_id');
+      await DeliveryPartner.updateMany({ _id: { $in: online } }, { $set: { isOnline: false } });
+      await logDuty(online, false);
+    }
     res.status(200).json({ success: true, data: adminSettingsView(s) });
   } catch (err) {
     console.error('updateAdminSettings error:', err);
@@ -798,8 +828,10 @@ export const updatePartnerStatus = async (req, res) => {
     if (!partner) return res.status(404).json({ success: false, error: 'Partner not found' });
     partner.status = status;
     partner.rejectionReason = status === 'rejected' ? reason : '';
+    const wasOnline = partner.isOnline;
     if (status !== 'approved') partner.isOnline = false;
     await partner.save();
+    if (wasOnline && !partner.isOnline) await logDuty(partner._id, false);
 
     // A partner taken off the road hands back orders they haven't picked up.
     if (status !== 'approved') {
@@ -807,7 +839,7 @@ export const updatePartnerStatus = async (req, res) => {
       for (const order of held) {
         await Redemption.updateOne(
           { _id: order._id },
-          { $unset: { 'delivery.partnerId': 1, 'delivery.partnerName': 1, 'delivery.partnerPhone': 1, 'delivery.assignedAt': 1 } }
+          { $unset: { 'delivery.partnerId': 1, 'delivery.partnerName': 1, 'delivery.partnerPhone': 1, 'delivery.assignedAt': 1, 'delivery.autoAssigned': 1 }, $set: { 'delivery.pooledAt': new Date() } }
         );
         announceToPool(order);
       }
@@ -941,7 +973,7 @@ export const adminUnassignOrder = async (req, res) => {
     const before = await Redemption.findById(req.params.id).select('delivery');
     const order = await Redemption.findOneAndUpdate(
       { _id: req.params.id, status: 'pending', 'delivery.status': { $in: POOL_STAGES }, 'delivery.partnerId': { $ne: null } },
-      { $unset: { 'delivery.partnerId': 1, 'delivery.partnerName': 1, 'delivery.partnerPhone': 1, 'delivery.assignedAt': 1 } },
+      { $unset: { 'delivery.partnerId': 1, 'delivery.partnerName': 1, 'delivery.partnerPhone': 1, 'delivery.assignedAt': 1, 'delivery.autoAssigned': 1 }, $set: { 'delivery.pooledAt': new Date() } },
       { new: true }
     ).populate('merchantId', 'storeName phone city');
     if (!order) return res.status(400).json({ success: false, error: 'Only an assigned order that has not been picked up can be unassigned' });
@@ -1019,5 +1051,81 @@ export const adminRetryRefund = async (req, res) => {
   } catch (err) {
     console.error('adminRetryRefund error:', err);
     res.status(500).json({ success: false, error: 'Failed to retry refund' });
+  }
+};
+
+// @route POST /delivery/partner/orders/:id/decline  - turned down from the new-order alert
+// Nothing changes for the order; auto-assign just tries other partners first.
+export const declineOrder = async (req, res) => {
+  if (!validId(req.params.id)) return res.status(400).json({ success: false, error: 'Invalid order' });
+  try {
+    await Redemption.updateOne(
+      { _id: req.params.id, status: 'pending', 'delivery.status': { $in: POOL_STAGES }, 'delivery.partnerId': null },
+      { $addToSet: { 'delivery.declinedBy': req.user._id } }
+    );
+    res.status(200).json({ success: true });
+  } catch (err) {
+    console.error('declineOrder error:', err);
+    res.status(500).json({ success: false, error: 'Failed to decline' });
+  }
+};
+
+/* ── Shifts (admin) ── */
+
+const shiftSchema = Joi.object({
+  // Empty / null = use the default from Delivery Settings.
+  start: Joi.string().pattern(HHMM).allow('', null).messages({ 'string.pattern.base': 'Shift start must look like 09:00' }),
+  end: Joi.string().pattern(HHMM).allow('', null).messages({ 'string.pattern.base': 'Shift end must look like 21:00' }),
+  breakMinutes: Joi.number().integer().min(0).max(600).allow(null),
+  offDays: Joi.array().items(Joi.number().integer().min(0).max(6)).max(7).unique().allow(null),
+});
+
+// @route GET /delivery/admin/partners/:id/shift  - the partner's shift and how today is going
+export const getPartnerShift = async (req, res) => {
+  if (!validId(req.params.id)) return res.status(400).json({ success: false, error: 'Invalid partner' });
+  try {
+    const [partner, settings] = await Promise.all([DeliveryPartner.findById(req.params.id), getDeliverySettings()]);
+    if (!partner) return res.status(404).json({ success: false, error: 'Partner not found' });
+    res.status(200).json({
+      success: true,
+      data: { own: serializePartner(partner).shift, effective: effectiveShift(partner, settings), rules: shiftRules(settings), today: await shiftToday(partner, settings) },
+    });
+  } catch (err) {
+    console.error('getPartnerShift error:', err);
+    res.status(500).json({ success: false, error: 'Failed to load shift' });
+  }
+};
+
+// @route PUT /delivery/admin/partners/:id/shift
+export const updatePartnerShift = async (req, res) => {
+  if (!validId(req.params.id)) return res.status(400).json({ success: false, error: 'Invalid partner' });
+  const { error, value } = shiftSchema.validate(req.body || {});
+  if (error) return res.status(400).json({ success: false, error: error.details[0].message });
+  try {
+    const $set = {};
+    const $unset = {};
+    for (const key of ['start', 'end', 'breakMinutes', 'offDays']) {
+      if (value[key] === undefined) continue;
+      if (value[key] === '' || value[key] === null) $unset[`shift.${key}`] = 1;
+      else $set[`shift.${key}`] = value[key];
+    }
+    const partner = await DeliveryPartner.findByIdAndUpdate(
+      req.params.id,
+      { ...(Object.keys($set).length ? { $set } : {}), ...(Object.keys($unset).length ? { $unset } : {}) },
+      { new: true }
+    );
+    if (!partner) return res.status(404).json({ success: false, error: 'Partner not found' });
+    const settings = await getDeliverySettings();
+    const eff = effectiveShift(partner, settings);
+    notifyPartner(partner._id, {
+      type: 'shift_changed',
+      title: 'Your shift was updated',
+      body: `Shift ${eff.start} to ${eff.end}, ${eff.breakMinutes} min break.`,
+      link: '/delivery',
+    });
+    res.status(200).json({ success: true, data: { own: serializePartner(partner).shift, effective: eff, rules: shiftRules(settings), today: await shiftToday(partner, settings) } });
+  } catch (err) {
+    console.error('updatePartnerShift error:', err);
+    res.status(500).json({ success: false, error: 'Failed to save shift' });
   }
 };

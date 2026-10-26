@@ -6,6 +6,7 @@ import { invalidateFeedCache } from '../utils/feedCache.js';
 import { releaseUnrefundedReferralPoints } from '../modules/user/services/referralService.js';
 import { releaseUnreleasedStockHolds } from '../modules/merchant/services/stockService.js';
 import { expireRewardCredits, expireUnscratchedCards } from '../modules/rewards/services/rewardCreditService.js';
+import { sweepAutoAssign } from '../modules/delivery/services/autoAssignService.js';
 import { sweepLapsedDeliveryOrders, sweepUnansweredOrderAlerts } from '../modules/delivery/services/deliveryService.js';
 import { refreshAllBlueTicks } from '../modules/merchant/services/blueTickService.js';
 import { backfillStoreSlugs } from '../utils/storeSlug.js';
@@ -93,6 +94,8 @@ export const initCronJobs = () => {
     try {
       const changed = await syncStoreOpenWithHours();
       await sweepUnansweredOrderAlerts().catch((err) => console.error('[Cron Error] Order alert sweep failed:', err.message));
+      const autoAssigned = await sweepAutoAssign().catch((err) => { console.error('[Cron Error] Auto-assign failed:', err.message); return 0; });
+      if (autoAssigned > 0) console.log(`[Cron] Auto-assigned ${autoAssigned} delivery order(s).`);
       if (changed > 0) console.log(`[Cron] Synced open/closed status for ${changed} store(s) with business hours.`);
     } catch (err) {
       console.error('[Cron Error] Failed to sync store hours:', err);

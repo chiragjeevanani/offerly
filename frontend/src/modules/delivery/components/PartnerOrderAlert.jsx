@@ -74,6 +74,8 @@ const PartnerOrderAlert = ({ me }) => {
   };
 
   const skip = () => {
+    // Auto-assign then tries other partners first.
+    deliveryAPI.declineOrder(order.id).catch(() => {});
     const next = new Set(skipped);
     next.add(order.id);
     writeSkipped(next);

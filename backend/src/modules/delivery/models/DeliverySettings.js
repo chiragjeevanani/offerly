@@ -29,9 +29,41 @@ const deliverySettingsSchema = new mongoose.Schema(
     maxActiveOrdersPerPartner: { type: Number, default: 3, min: 1, max: 20 },
     // Pool shows only area/pincode until a partner accepts; off = full address + phone up front.
     hideDropUntilAccepted: { type: Boolean, default: true },
-    // A partner who cancels (accepts an order, then releases it) this many orders
-    // within a target's period gets no bonus for that target. 0 = no limit.
+    // Old form of cancellationRule (N or more cancellations = no bonus, 0 = off).
+    // Read only to carry an existing value over; see cancellationRuleOf().
     maxCancellations: { type: Number, default: 0, min: 0, max: 1000 },
+    // Partners who cancel (accept an order, then release it) more than `allowed`
+    // orders within a target's period get no bonus for that target. allowed 0 =
+    // a single cancellation loses it.
+    cancellationRule: {
+      enabled: { type: Boolean },
+      allowed: { type: Number, min: 0, max: 1000 },
+    },
+    // An order nobody accepts within `afterMinutes` of joining the pool is given
+    // to an online partner in its city (fewest orders in hand first).
+    autoAssign: {
+      enabled: { type: Boolean, default: false },
+      afterMinutes: { type: Number, default: 5, min: 1, max: 60 },
+    },
+    // When partners may withdraw their earnings: once a day, or once a week on
+    // weeklyDay (0 Sunday ... 6 Saturday, IST). minAmount is the smallest request.
+    payouts: {
+      frequency: { type: String, enum: ['daily', 'weekly'], default: 'weekly' },
+      weeklyDay: { type: Number, default: 1, min: 0, max: 6 },
+      minAmount: { type: Number, default: 0, min: 0 },
+    },
+    // Shifts: a partner must come online by shift start (+ graceMinutes) and stay
+    // offline no longer than their break during the shift, or they lose the
+    // target bonuses for that period. The defaults apply to partners without
+    // their own shift. `since` = when it was switched on (earlier days don't count).
+    shifts: {
+      enabled: { type: Boolean, default: false },
+      since: { type: Date },
+      graceMinutes: { type: Number, default: 0, min: 0, max: 120 },
+      defaultStart: { type: String, default: '09:00' },
+      defaultEnd: { type: String, default: '21:00' },
+      defaultBreakMinutes: { type: Number, default: 15, min: 0, max: 600 },
+    },
     // Incentive targets: deliver `deliveries` orders within the period and earn
     // `bonus` on top of the per-delivery payout. Several can run at once (say a
     // daily one and a weekly one). Periods follow IST calendar days, Monday-start

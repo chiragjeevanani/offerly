@@ -38,6 +38,17 @@ const deliveryPartnerSchema = new mongoose.Schema(
     rejectionReason: { type: String, default: '' },
     // Only online, approved partners see the open order pool.
     isOnline: { type: Boolean, default: false },
+    // Own shift, set by the admin (times are IST, 'HH:MM'; end before start =
+    // ends next day). Unset fields fall back to the defaults in DeliverySettings.
+    shift: {
+      start: { type: String },
+      end: { type: String },
+      breakMinutes: { type: Number, min: 0, max: 600 },
+      // 0 Sunday ... 6 Saturday: days with no shift (no rules apply).
+      offDays: { type: [Number], default: undefined },
+    },
+    // Last time an order was given to this partner; auto-assign spreads work by it.
+    lastAssignedAt: { type: Date },
     // Running totals. cashInHand is COD money collected and not yet handed to
     // Offerly; earningsDue is what Offerly owes the partner. Admin settles both.
     stats: {

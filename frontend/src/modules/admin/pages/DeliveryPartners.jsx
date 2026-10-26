@@ -8,12 +8,15 @@ import PhoneRoundedIcon from '@mui/icons-material/PhoneRounded';
 import CheckCircleRoundedIcon from '@mui/icons-material/CheckCircleRounded';
 import BlockRoundedIcon from '@mui/icons-material/BlockRounded';
 import { deliveryAPI } from '../../../api/delivery.api';
+import PartnerShiftEditor from '../components/PartnerShiftEditor';
+import PartnerWithdrawals from '../components/PartnerWithdrawals';
 
 const TABS = [
   { key: 'pending', label: 'Pending' },
   { key: 'approved', label: 'Approved' },
   { key: 'rejected', label: 'Rejected' },
   { key: 'blocked', label: 'Blocked' },
+  { key: 'withdrawals', label: 'Withdrawals' },
 ];
 
 const STATUS_CLS = {
@@ -137,6 +140,8 @@ const PartnerPanel = ({ partner, onClose, onUpdated }) => {
             </div>
           )}
 
+          {partner.status === 'approved' && <PartnerShiftEditor partnerId={partner.id} />}
+
           {rejecting && (
             <label className="block">
               <span className="text-[11px] font-semibold text-gray-500 uppercase tracking-wide">Reason (shown to the partner)</span>
@@ -213,6 +218,13 @@ const DeliveryPartners = () => {
     queryKey: key,
     queryFn: async () => deliveryAPI.getPartners({ status: tab, q: q.trim() || undefined }),
     placeholderData: (prev) => prev,
+    enabled: tab !== 'withdrawals',
+  });
+  // Waiting withdrawals, for the tab's badge.
+  const { data: waiting } = useQuery({
+    queryKey: ['adminWithdrawals', 'requested'],
+    queryFn: async () => deliveryAPI.getWithdrawals('requested'),
+    refetchInterval: 60_000,
   });
   const partners = data?.data || [];
   const counts = data?.counts || {};
@@ -229,7 +241,7 @@ const DeliveryPartners = () => {
           <div className="w-10 h-10 rounded-xl bg-[#5EB929]/10 text-[#5EB929] flex items-center justify-center shrink-0"><TwoWheelerRoundedIcon /></div>
           <div>
             <h1 className="text-xl lg:text-2xl font-medium text-gray-800">Delivery Partners</h1>
-            <p className="text-[12px] text-gray-500">Approve new partners, check documents and settle cash and earnings.</p>
+            <p className="text-[12px] text-gray-500">Approve new partners, set their shifts, settle cash and pay withdrawals.</p>
           </div>
         </div>
         <div className="relative w-full md:w-72">
@@ -246,12 +258,16 @@ const DeliveryPartners = () => {
             className={`px-4 h-9 rounded-lg text-[12px] font-semibold flex items-center gap-2 whitespace-nowrap ${tab === t.key ? 'bg-[#5EB929] text-white' : 'text-gray-500 hover:bg-gray-50'}`}
           >
             {t.label}
-            <span className={`text-[10px] px-1.5 rounded ${tab === t.key ? 'bg-white/20' : 'bg-gray-100'}`}>{counts[t.key] || 0}</span>
+            <span className={`text-[10px] px-1.5 rounded ${tab === t.key ? 'bg-white/20' : t.key === 'withdrawals' && waiting?.counts?.requested?.n ? 'bg-amber-100 text-amber-700' : 'bg-gray-100'}`}>
+              {t.key === 'withdrawals' ? waiting?.counts?.requested?.n || 0 : counts[t.key] || 0}
+            </span>
           </button>
         ))}
       </div>
 
-      {isLoading ? (
+      {tab === 'withdrawals' ? (
+        <PartnerWithdrawals />
+      ) : isLoading ? (
         <div className="py-16 flex justify-center"><div className="w-8 h-8 border-2 border-[#5EB929]/20 border-t-[#5EB929] rounded-full animate-spin" /></div>
       ) : partners.length === 0 ? (
         <div className="py-16 text-center bg-white rounded-2xl border border-dashed border-gray-200">

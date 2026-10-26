@@ -264,6 +264,15 @@ const redemptionSchema = new mongoose.Schema(
       lastStoreAlertAt: Date,
       poolAlerts: Number,
       lastPoolAlertAt: Date,
+      // When the order (re)joined the open pool: store accepted, partner released,
+      // admin unassigned. Auto-assign counts its wait from here.
+      pooledAt: Date,
+      // Given to the partner by the system, not accepted by them.
+      autoAssigned: Boolean,
+      // Partners who turned the order down from the new-order alert.
+      declinedBy: { type: [mongoose.Schema.Types.ObjectId], default: undefined },
+      // Admin was told nobody could be auto-assigned (once per order).
+      autoAssignAlertedAt: Date,
       supportRequestedAt: Date,
       supportReason: String,
     },

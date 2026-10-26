@@ -12,6 +12,7 @@ import { notifyMerchant, notifyUser } from '../../user/services/notificationServ
 import { sendPushToPartner, sendPushToMerchant } from '../../user/services/pushService.js';
 import AdminNotification from '../../admin/models/AdminNotification.js';
 import { emitAdminNotification, emitDeliveryPartnerNotification, emitDeliveryPoolUpdate } from '../../../config/socket.js';
+import { loadDutyLogsSince, missedShiftIn, shiftRules } from './shiftService.js';
 
 // A delivery order lives this long once placed; the expiry cron cancels it after.
 export const DELIVERY_ORDER_TTL_MS = 24 * 60 * 60 * 1000;
@@ -115,6 +116,8 @@ export const partnerView = (order, { full = false } = {}) => {
     returnStartedAt: o.delivery?.returnStartedAt,
     returnedAt: o.delivery?.returnedAt,
     supportRequestedAt: o.delivery?.supportRequestedAt,
+    // Given by auto-assign: giving it back is not counted as a cancellation.
+    autoAssigned: Boolean(o.delivery?.autoAssigned),
     store: {
       id: store._id ? String(store._id) : String(o.merchantId || ''),
       name: store.storeName || '',
@@ -210,6 +213,7 @@ export const notifyPartner = (partnerId, payload) => {
     sendPushToPartner(String(partnerId), {
       title: payload.title,
       body: payload.body || '',
+      urgent: Boolean(payload.urgent),
       data: { type: payload.type || 'general', ...(payload.orderId ? { orderId: payload.orderId } : {}) },
       link: payload.link || (payload.orderId ? `/delivery/orders/${payload.orderId}` : '/delivery'),
     }).catch(() => {});
@@ -637,12 +641,36 @@ const deliveredCount = (partnerId, window) =>
 
 // Orders the partner accepted and then gave up inside a period.
 const cancelledCount = (partnerId, window) =>
-  DeliveryRelease.countDocuments({ partnerId, createdAt: { $gte: window.start, $lt: window.end } });
+  DeliveryRelease.countDocuments({ partnerId, autoAssigned: { $ne: true }, createdAt: { $gte: window.start, $lt: window.end } });
 
-export const cancellationLimit = (settings) => Math.max(0, Math.round(settings.maxCancellations || 0));
+// The admin's cancellation rule: { enabled, allowed }. A partner who cancels
+// more than `allowed` orders in a target's period loses that target's bonus.
+// Carries over the older maxCancellations setting (N or more = no bonus).
+export const cancellationRuleOf = (settings) => {
+  const rule = settings.cancellationRule || {};
+  if (typeof rule.enabled === 'boolean') {
+    return { enabled: rule.enabled, allowed: Math.max(0, Math.round(rule.allowed || 0)) };
+  }
+  const old = Math.max(0, Math.round(settings.maxCancellations || 0));
+  return old > 0 ? { enabled: true, allowed: old - 1 } : { enabled: false, allowed: 0 };
+};
+const overCancellationLimit = (rule, cancelled) => rule.enabled && cancelled > rule.allowed;
+
+// Why a target's bonus is held back this period, if it is: too many
+// cancellations, or a missed shift day. `logs` = the partner's duty log, loaded
+// once for all their targets.
+const bonusHold = async (partner, settings, window, cancelled, logs) => {
+  const rule = cancellationRuleOf(settings);
+  if (overCancellationLimit(rule, cancelled)) return { reason: 'cancellations' };
+  const missed = await missedShiftIn(partner, settings, window, new Date(), logs);
+  return missed ? { reason: 'shift', day: missed.date, shiftStatus: missed.status } : null;
+};
+
+const longestWindowStart = (windows) => new Date(Math.min(...Object.values(windows).map((w) => w.start.getTime())));
 
 // Where a partner stands on every running target, for their app.
-export const targetProgress = async (partnerId, settings) => {
+export const targetProgress = async (partner, settings) => {
+  const partnerId = partner._id;
   const targets = liveTargets(settings);
   if (!targets.length) return [];
   const windows = Object.fromEntries(TARGET_PERIODS.map((p) => [p, targetWindow(p)]));
@@ -653,26 +681,37 @@ export const targetProgress = async (partnerId, settings) => {
       [counts[p], cancelled[p]] = await Promise.all([deliveredCount(partnerId, windows[p]), cancelledCount(partnerId, windows[p])]);
     })
   );
-  const limit = cancellationLimit(settings);
+  const rule = cancellationRuleOf(settings);
+  const logs = shiftRules(settings).enabled ? await loadDutyLogsSince(partnerId, longestWindowStart(windows)) : [];
   const awards = await DeliveryTargetAward.find({
     partnerId,
     windowKey: { $in: Object.values(windows).map((w) => w.key) },
   }).select('targetId windowKey').lean();
   const won = new Set(awards.map((a) => `${a.targetId}|${a.windowKey}`));
 
+  const holds = {};
+  for (const p of new Set(targets.map((t) => t.period))) {
+    holds[p] = await bonusHold(partner, settings, windows[p], cancelled[p] || 0, logs);
+  }
+
   return targets.map((t) => {
     const w = windows[t.period];
+    const achieved = won.has(`${t._id}|${w.key}`);
+    const hold = achieved ? null : holds[t.period];
     return {
       id: String(t._id),
       period: t.period,
       deliveries: t.deliveries,
       bonus: t.bonus,
       done: counts[t.period] || 0,
-      achieved: won.has(`${t._id}|${w.key}`),
+      achieved,
       cancelled: cancelled[t.period] || 0,
-      cancelLimit: limit,
-      // Too many cancellations this period: this bonus is no longer available.
-      blocked: limit > 0 && (cancelled[t.period] || 0) >= limit && !won.has(`${t._id}|${w.key}`),
+      cancelRule: rule,
+      // No bonus this period: too many cancellations or a missed shift day.
+      blocked: Boolean(hold),
+      blockedReason: hold?.reason || null,
+      blockedDay: hold?.day || null,
+      blockedShiftStatus: hold?.shiftStatus || null,
       resetsAt: w.end,
     };
   });
@@ -686,15 +725,18 @@ export const awardTargetBonuses = async (partnerId, redemptionId = null) => {
     const targets = liveTargets(settings);
     if (!targets.length) return [];
 
+    const partner = await DeliveryPartner.findById(partnerId).select('shift createdAt').lean();
+    if (!partner) return [];
+    const windows = Object.fromEntries(TARGET_PERIODS.map((p) => [p, targetWindow(p)]));
+    const logs = shiftRules(settings).enabled ? await loadDutyLogsSince(partnerId, longestWindowStart(windows)) : [];
     const counts = {};
     const earned = [];
     for (const t of targets) {
-      const w = targetWindow(t.period);
+      const w = windows[t.period];
       if (counts[t.period] === undefined) counts[t.period] = await deliveredCount(partnerId, w);
       if (counts[t.period] < t.deliveries) continue;
-      // Cancelled too many orders in this period: no incentive.
-      const limit = cancellationLimit(settings);
-      if (limit > 0 && (await cancelledCount(partnerId, w)) >= limit) continue;
+      // Too many cancellations or a missed shift day in this period: no incentive.
+      if (await bonusHold(partner, settings, w, await cancelledCount(partnerId, w), logs)) continue;
 
       try {
         await DeliveryTargetAward.create({
@@ -798,4 +840,39 @@ export const sweepUnansweredOrderAlerts = async () => {
     sent += 1;
   }
   return sent;
+};
+
+// Gives an open pool order to a partner, by their own accept or by auto-assign.
+// Takes it off the pool and tells the customer and store. Returns the order, or
+// null when someone else got it first.
+export const assignOrderToPartner = async (orderId, partner, { auto = false } = {}) => {
+  const now = new Date();
+  const order = await Redemption.findOneAndUpdate(
+    {
+      _id: orderId,
+      fulfillment: 'delivery',
+      status: 'pending',
+      'delivery.status': { $in: POOL_STAGES },
+      'delivery.city': sameCity(partner.city),
+      'delivery.partnerId': null,
+    },
+    {
+      $set: {
+        'delivery.partnerId': partner._id,
+        'delivery.partnerName': partner.name,
+        'delivery.partnerPhone': partner.phone,
+        'delivery.assignedAt': now,
+        'delivery.autoAssigned': auto,
+      },
+    },
+    { new: true }
+  );
+  if (!order) return null;
+  await DeliveryPartner.updateOne({ _id: partner._id }, { $set: { lastAssignedAt: now } });
+  withdrawFromPool(order);
+  await announceStage(order, {
+    customer: { title: 'Delivery partner assigned', body: `${partner.name} will deliver order #${order.internalId}.` },
+    store: { title: 'Delivery partner on the way', body: `${partner.name} (${partner.phone}) will pick up #${order.internalId}.` },
+  });
+  return order;
 };

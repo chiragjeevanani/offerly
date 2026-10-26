@@ -64,8 +64,9 @@ const usePartnerSocket = (partner) => {
       } else if (n?.title) {
         toast(n.title + (n.body ? ` - ${n.body}` : ''));
       }
-      if (['account_status', 'settled'].includes(n?.type)) {
+      if (['account_status', 'settled', 'shift_changed', 'target_achieved'].includes(n?.type)) {
         queryClient.invalidateQueries({ queryKey: ['partnerMe'] });
+        queryClient.invalidateQueries({ queryKey: ['partnerWallet'] });
       }
     });
     return () => socket.disconnect();
@@ -75,7 +76,7 @@ const usePartnerSocket = (partner) => {
 const NAV = [
   { to: '/delivery', label: 'Home', icon: HomeRoundedIcon, end: true },
   { to: '/delivery/history', label: 'Orders', icon: ReceiptLongRoundedIcon },
-  { to: '/delivery/earnings', label: 'Earnings', icon: AccountBalanceWalletRoundedIcon },
+  { to: '/delivery/earnings', label: 'Wallet', icon: AccountBalanceWalletRoundedIcon },
   { to: '/delivery/profile', label: 'Profile', icon: PersonRoundedIcon },
 ];
 

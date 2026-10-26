@@ -15,6 +15,7 @@ import { deliveryAPI } from '../../../api/delivery.api';
 import { Card, SectionLabel, StageBadge, Spinner } from '../components/PartnerUI';
 import { rupees } from '../utils/partner';
 import { warmPartnerScreens } from '../screens';
+import ShiftCard from '../components/ShiftCard';
 
 // The notification opt-in pulls in Firebase; it loads after Home is on screen.
 const PushOptInCard = lazy(() => import('../../../components/common/PushOptInCard'));
@@ -95,6 +96,17 @@ const OrderCard = ({ order, action, onAction, busy, onOpen }) => (
 
 const PERIOD_LABEL = { daily: 'Today', weekly: 'This week', monthly: 'This month' };
 
+const SHIFT_MISS = { late: 'came online late', absent: "didn't come online", over_break: 'went over the break time' };
+const dayLabel = (key) => new Date(`${key}T12:00:00+05:30`).toLocaleDateString('en-IN', { weekday: 'short', day: 'numeric', month: 'short' });
+
+// Why a target's bonus is gone for this period.
+const blockedText = (t) => {
+  if (t.blockedReason === 'shift') return `No bonus this period: you ${SHIFT_MISS[t.blockedShiftStatus] || 'missed your shift'} on ${dayLabel(t.blockedDay)}`;
+  return t.cancelRule?.allowed === 0
+    ? `No bonus this period: you cancelled ${t.cancelled} order${t.cancelled === 1 ? '' : 's'}`
+    : `No bonus this period: ${t.cancelled} cancelled orders (${t.cancelRule?.allowed} allowed)`;
+};
+
 // Progress toward the admin's incentive targets.
 const TargetsCard = ({ targets }) => (
   <section className="space-y-3">
@@ -113,7 +125,7 @@ const TargetsCard = ({ targets }) => (
                 {t.deliveries} deliveries <span className="text-gray-400 font-semibold">· {PERIOD_LABEL[t.period]}</span>
               </p>
               <p className={`text-[11px] font-semibold ${t.achieved ? 'text-[#3F7F17]' : t.blocked ? 'text-red-500' : 'text-gray-500'}`}>
-                {t.achieved ? 'Target achieved! Bonus added to your earnings' : t.blocked ? `No bonus this period: ${t.cancelled} cancelled orders (limit ${t.cancelLimit})` : `${left} more to earn the bonus`}
+                {t.achieved ? 'Target achieved! Bonus added to your earnings' : t.blocked ? blockedText(t) : `${left} more to earn the bonus`}
               </p>
             </div>
             <div className="text-right shrink-0">
@@ -126,7 +138,7 @@ const TargetsCard = ({ targets }) => (
           </div>
           <div className="mt-1.5 flex justify-between text-[10px] font-bold text-gray-400">
             <span>{Math.min(t.done, t.deliveries)} / {t.deliveries} done</span>
-            {t.cancelLimit > 0 && !t.blocked && !t.achieved && <span>{t.cancelled} / {t.cancelLimit} cancelled</span>}
+            {t.cancelRule?.enabled && !t.blocked && !t.achieved && <span>{t.cancelled} cancelled · {t.cancelRule.allowed} allowed</span>}
             <span>Resets {new Date(t.resetsAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}</span>
           </div>
         </Card>
@@ -273,6 +285,7 @@ const PartnerHome = ({ me }) => {
         ))}
       </div>
 
+      <ShiftCard shift={me.shift} />
       {me.targets?.length > 0 && <TargetsCard targets={me.targets} />}
 
       {/* My active orders */}
