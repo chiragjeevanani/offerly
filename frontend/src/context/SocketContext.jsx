@@ -10,8 +10,10 @@ export const SocketProvider = ({ children }) => {
   const { user, isLoggedIn } = useAuth();
 
   useEffect(() => {
-    // Only connect if user is logged in
-    if (!isLoggedIn || !user) {
+    // Only connect if user is logged in. Delivery partners get their own socket
+    // (DeliveryPartnerApp), so a second connection here would only cost them.
+    const isPartner = user?.type === 'delivery' || user?.role === 'delivery';
+    if (!isLoggedIn || !user || isPartner) {
       if (socket) {
         socket.disconnect();
         setSocket(null);

@@ -12,6 +12,7 @@ import { Link } from 'react-router-dom';
 import { useApp } from '../../customer/context/AppContext';
 import { deliveryAPI } from '../../../api/delivery.api';
 import { supportAPI } from '../../../api/support.api';
+import { clearPartnerCache } from '../utils/partnerCache';
 import { Card, PrimaryButton, SectionLabel, TextField } from '../components/PartnerUI';
 import DocumentPicker from '../components/DocumentPicker';
 import { VEHICLES, uploadDocument } from '../utils/partner';
@@ -68,6 +69,7 @@ const PartnerProfile = ({ partner }) => {
   // Don't leave the account "online" in the pool after signing out.
   const signOut = async () => {
     if (partner.isOnline) await deliveryAPI.updateMe({ isOnline: false }).catch(() => {});
+    clearPartnerCache();
     logout();
   };
 

@@ -308,11 +308,19 @@ const PartnerOrderDetail = () => {
   const [returning, setReturning] = useState(false);
   const [done, setDone] = useState(false);
 
-  const { data: order, isLoading, isError } = useQuery({
+  const { data: order, isLoading, isError, isPlaceholderData } = useQuery({
     queryKey: ['partnerOrder', id],
     queryFn: async () => (await deliveryAPI.getOrder(id))?.data,
     refetchInterval: 20_000,
     retry: false,
+    // Opened from Home: show what the list already knows at once; the full
+    // order (address, UPI, latest stage) replaces it a moment later.
+    placeholderData: () => {
+      const own = queryClient.getQueryData(['partnerActive'])?.find((o) => o.id === id);
+      if (own) return { ...own, mine: true, collectUpi: null };
+      const open = queryClient.getQueryData(['partnerAvailable'])?.find((o) => o.id === id);
+      return open ? { ...open, mine: false, collectUpi: null } : undefined;
+    },
   });
 
   const refresh = () => {
@@ -323,6 +331,7 @@ const PartnerOrderDetail = () => {
   };
 
   const act = async (key, fn, message, after) => {
+    if (isPlaceholderData) return; // wait for the full order before changing it
     setBusy(key);
     try {
       await fn();
@@ -494,7 +503,7 @@ const PartnerOrderDetail = () => {
         )}
         {mine && stage === 'picked_up' && (
           <button
-            onClick={() => setReturning(true)}
+            onClick={() => !isPlaceholderData && setReturning(true)}
             className="w-full h-11 rounded-xl text-[11px] font-bold uppercase tracking-widest text-red-500 hover:bg-red-50"
           >
             Can't deliver? Contact support
@@ -507,15 +516,15 @@ const PartnerOrderDetail = () => {
         <div className="fixed bottom-0 inset-x-0 z-40 bg-white/95 backdrop-blur-xl border-t border-gray-100 pb-safe">
           <div className="max-w-lg mx-auto p-3">
             {!mine ? (
-              <PrimaryButton className="w-full" loading={busy === 'accept'} onClick={() => act('accept', () => deliveryAPI.acceptOrder(order.id), 'Order accepted. Head to the store.')}>
+              <PrimaryButton className="w-full" loading={busy === 'accept' || isPlaceholderData} onClick={() => act('accept', () => deliveryAPI.acceptOrder(order.id), 'Order accepted. Head to the store.')}>
                 Accept Order
               </PrimaryButton>
             ) : stage === 'picked_up' ? (
-              <PrimaryButton className="w-full" onClick={() => setDelivering(true)}>
+              <PrimaryButton className="w-full" loading={isPlaceholderData} onClick={() => !isPlaceholderData && setDelivering(true)}>
                 <CheckCircleRoundedIcon sx={{ fontSize: 18 }} /> Complete Delivery
               </PrimaryButton>
             ) : (
-              <PrimaryButton variant="dark" className="w-full" loading={busy === 'pickup'} onClick={() => act('pickup', () => deliveryAPI.pickupOrder(order.id), 'Picked up. Now head to the customer.')}>
+              <PrimaryButton variant="dark" className="w-full" loading={busy === 'pickup' || isPlaceholderData} onClick={() => act('pickup', () => deliveryAPI.pickupOrder(order.id), 'Picked up. Now head to the customer.')}>
                 <StorefrontRoundedIcon sx={{ fontSize: 18 }} /> Confirm Pickup
               </PrimaryButton>
             )}

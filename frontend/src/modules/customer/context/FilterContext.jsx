@@ -209,8 +209,11 @@ export const FilterProvider = ({ children }) => {
     }
   }, [loadCities, ensureServiceCity, applyCity, applyLabel]);
 
-  // Auto-fetch location on mount
+  // Auto-fetch location on mount - customer app only. The delivery partner app
+  // never uses the feed city, and a GPS fix plus a map lookup on every open
+  // only slowed it down.
   useEffect(() => {
+    if (window.location.pathname.startsWith('/delivery')) return;
     fetchCurrentLocation();
   }, [fetchCurrentLocation]);
 

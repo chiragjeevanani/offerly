@@ -1,4 +1,4 @@
-import { lazy, Suspense, useEffect } from 'react';
+import { lazy, Suspense, useEffect, useState } from 'react';
 import { Routes, Route, Navigate, NavLink, useLocation } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { io } from 'socket.io-client';
@@ -10,16 +10,28 @@ import PersonRoundedIcon from '@mui/icons-material/PersonRounded';
 import { useApp } from '../customer/context/AppContext';
 import { deliveryAPI } from '../../api/delivery.api';
 import PartnerOrderAlert from './components/PartnerOrderAlert';
+import { hydratePartnerCache, persistPartnerCache } from './utils/partnerCache';
 
 const PartnerLogin = lazy(() => import('./auth/PartnerLogin'));
 const PartnerVerify = lazy(() => import('./auth/PartnerVerify'));
 const PartnerSignup = lazy(() => import('./auth/PartnerSignup'));
 const PartnerStatus = lazy(() => import('./pages/PartnerStatus'));
-const PartnerHome = lazy(() => import('./pages/PartnerHome'));
-const PartnerOrderDetail = lazy(() => import('./pages/PartnerOrderDetail'));
-const PartnerHistory = lazy(() => import('./pages/PartnerHistory'));
-const PartnerEarnings = lazy(() => import('./pages/PartnerEarnings'));
-const PartnerProfile = lazy(() => import('./pages/PartnerProfile'));
+// The signed-in screens. Home starts downloading as soon as this file loads (in
+// parallel with the profile request, not after it); the others right after the
+// first screen is up, so a tab tap never waits for its code.
+const loadHome = () => import('./pages/PartnerHome');
+const SCREENS = [
+  () => import('./pages/PartnerOrderDetail'),
+  () => import('./pages/PartnerHistory'),
+  () => import('./pages/PartnerEarnings'),
+  () => import('./pages/PartnerProfile'),
+];
+if (typeof window !== 'undefined' && localStorage.getItem('offerly_auth_token')) loadHome().catch(() => {});
+const PartnerHome = lazy(loadHome);
+const PartnerOrderDetail = lazy(SCREENS[0]);
+const PartnerHistory = lazy(SCREENS[1]);
+const PartnerEarnings = lazy(SCREENS[2]);
+const PartnerProfile = lazy(SCREENS[3]);
 const PartnerLegal = lazy(() => import('./pages/PartnerLegal'));
 
 const Loader = () => (
@@ -46,7 +58,9 @@ const usePartnerSocket = (partner) => {
   const city = partner?.city;
   useEffect(() => {
     if (!id) return undefined;
-    const socket = io(import.meta.env.VITE_API_URL?.replace('/api', '') || 'http://localhost:5000');
+    // WebSocket straight away: the default starts with several long-polling
+    // round trips before upgrading, which costs seconds on a slow phone network.
+    const socket = io(import.meta.env.VITE_API_URL?.replace('/api', '') || 'http://localhost:5000', { transports: ['websocket', 'polling'] });
     socket.on('connect', () => socket.emit('join', { userId: id, role: 'delivery', city }));
     socket.on('delivery_notification', (n) => {
       queryClient.invalidateQueries({ queryKey: ['partnerAvailable'] });
@@ -104,9 +118,29 @@ const PartnerLayout = ({ children }) => {
 };
 
 const SignedInApp = () => {
+  const queryClient = useQueryClient();
+  // Last session's profile and orders, shown at once while fresh ones load.
+  useState(() => hydratePartnerCache(queryClient));
+  useEffect(() => persistPartnerCache(queryClient), [queryClient]);
+  // Home's order lists load alongside the profile instead of after it.
+  useEffect(() => {
+    queryClient.prefetchQuery({ queryKey: ['partnerActive'], queryFn: async () => (await deliveryAPI.getMyOrders('active'))?.data || [] });
+    queryClient.prefetchQuery({ queryKey: ['partnerAvailable'], queryFn: async () => (await deliveryAPI.getAvailable())?.data || [] });
+  }, [queryClient]);
   const { data, isLoading, isError, refetch } = usePartnerMe();
   const partner = data?.partner;
   usePartnerSocket(partner?.status === 'approved' ? partner : null);
+  const approved = partner?.status === 'approved';
+  useEffect(() => {
+    if (!approved) return undefined;
+    const idle = window.requestIdleCallback || ((fn) => setTimeout(fn, 1200));
+    const handle = idle(() => {
+      SCREENS.forEach((load) => load().catch(() => {}));
+      // The Orders tab's list too, so its first visit isn't a spinner.
+      queryClient.prefetchQuery({ queryKey: ['partnerHistory'], queryFn: async () => (await deliveryAPI.getMyOrders('history'))?.data || [], staleTime: 30_000 });
+    });
+    return () => (window.cancelIdleCallback || clearTimeout)(handle);
+  }, [approved, queryClient]);
 
   if (isLoading) return <Loader />;
   if (isError || !partner) {

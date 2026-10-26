@@ -41,7 +41,6 @@
     <link rel="icon" type="image/png" href="/offerly-icon-64.png" />
     <link rel="apple-touch-icon" href="/offerly-icon-192.png" />
     <link rel="manifest" href="/manifest.json" />
-    <link rel="preload" as="image" href="/splash-screen-clean@2x.webp?v=7" type="image/webp" fetchpriority="high" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="mobile-web-app-capable" content="yes" />
@@ -56,7 +55,7 @@
          so the phone isn't stuck on a blank screen. Same rule as App.jsx: once per
          session, forced by ?splash=1, never on business routes. main.jsx removes it. -->
     <div id="boot-splash" style="display:none;position:fixed;inset:0;z-index:99998;background:linear-gradient(to bottom,#FAFEF7,#F4FBF1,#E2F5DC)">
-      <img src="/splash-screen-clean@2x.webp?v=7" alt="" style="width:100%;height:100%;object-fit:cover" />
+      <img id="boot-splash-img" alt="" fetchpriority="high" style="width:100%;height:100%;object-fit:cover" />
     </div>
     <script>
       (function () {
@@ -64,6 +63,9 @@
         if (/^\/(merchant|admin|delivery)/.test(p)) return;
         try { seen = sessionStorage.getItem('offerly_splash_seen') === '1'; } catch (e) {}
         if (/[?&]splash=(1|true)\b/.test(location.search) || !seen) {
+          // Only fetched when shown: the merchant, admin and delivery apps never
+          // download this 76 KB picture.
+          document.getElementById('boot-splash-img').src = '/splash-screen-clean@2x.webp?v=7';
           document.getElementById('boot-splash').style.display = 'block';
         }
       })();

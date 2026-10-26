@@ -4,6 +4,13 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import './index.css'
 import App from './App.jsx'
 
+// Opening the delivery partner app: fetch its code now, alongside the rest of
+// startup, instead of after React first renders the route. App.jsx's lazy()
+// import then finds it already loaded.
+if (window.location.pathname.startsWith('/delivery')) {
+  import('./modules/delivery/DeliveryPartnerApp.jsx').catch(() => {})
+}
+
 // Auto-recover from stale chunks after new deployments
 window.addEventListener('vite:preloadError', () => {
   const lastReload = sessionStorage.getItem('chunk_reload');

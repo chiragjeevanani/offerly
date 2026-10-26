@@ -29,7 +29,21 @@ const ENDPOINTS = {
  *   tracks auth in its own context, so the caller passes it in rather than
  *   this hook picking a context and breaking in the other app.
  */
-export const usePushNotifications = ({ persona = 'customer', isLoggedIn = true } = {}) => {
+// Registered-device lookups, kept for a few minutes per endpoint, so a page that
+// mounts the opt-in card again (every visit to Home) doesn't ask the server again.
+// enable/disable drop the entry, so the next lookup is fresh.
+const LOOKUP_TTL_MS = 5 * 60 * 1000;
+const lookups = new Map();
+const lookupDevices = (endpoint) => {
+  const hit = lookups.get(endpoint);
+  if (hit && Date.now() - hit.at < LOOKUP_TTL_MS) return hit.promise;
+  const promise = axiosInstance.get(endpoint).then((res) => res?.devices || []);
+  lookups.set(endpoint, { at: Date.now(), promise });
+  promise.catch(() => lookups.delete(endpoint));
+  return promise;
+};
+
+export const usePushNotifications =({ persona = 'customer', isLoggedIn = true } = {}) => {
   const [supported] = useState(() => isPushSupported());
   const [permission, setPermission] = useState(() => getPermission());
   const [enabled, setEnabled] = useState(false);
@@ -45,11 +59,9 @@ export const usePushNotifications = ({ persona = 'customer', isLoggedIn = true }
 
     let cancelled = false;
 
-    axiosInstance
-      .get(endpoint)
-      .then((res) => {
+    lookupDevices(endpoint)
+      .then((devices) => {
         if (cancelled) return;
-        const devices = res?.devices || [];
         setEnabled(devices.length > 0 && getPermission() === 'granted');
       })
       .catch(() => {
@@ -63,6 +75,7 @@ export const usePushNotifications = ({ persona = 'customer', isLoggedIn = true }
 
   const enable = useCallback(async () => {
     setBusy(true);
+    lookups.delete(endpoint);
     try {
       const result = await syncPushToken({ requestPermission: true, persona });
       setPermission(getPermission());
@@ -84,10 +97,11 @@ export const usePushNotifications = ({ persona = 'customer', isLoggedIn = true }
     } finally {
       setBusy(false);
     }
-  }, [persona]);
+  }, [persona, endpoint]);
 
   const disable = useCallback(async () => {
     setBusy(true);
+    lookups.delete(endpoint);
     try {
       await disablePushToken(persona);
       setEnabled(false);
@@ -96,7 +110,7 @@ export const usePushNotifications = ({ persona = 'customer', isLoggedIn = true }
     } finally {
       setBusy(false);
     }
-  }, [persona]);
+  }, [persona, endpoint]);
 
   const sendTest = useCallback(async () => {
     try {

@@ -12,6 +12,7 @@ import { BrandMark, Card, PrimaryButton, SectionLabel } from '../components/Part
 import DocumentPicker from '../components/DocumentPicker';
 import { uploadDocument } from '../utils/partner';
 import PushOptInCard from '../../../components/common/PushOptInCard';
+import { clearPartnerCache } from '../utils/partnerCache';
 
 const COPY = {
   pending: {
@@ -129,7 +130,7 @@ const PartnerStatus = ({ partner }) => {
           </Card>
         )}
 
-        <PrimaryButton variant="light" onClick={logout} className="w-full">
+        <PrimaryButton variant="light" onClick={() => { clearPartnerCache(); logout(); }} className="w-full">
           <LogoutRoundedIcon sx={{ fontSize: 18 }} /> Sign Out
         </PrimaryButton>
       </div>
