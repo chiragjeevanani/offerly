@@ -43,7 +43,7 @@ const PartnerOrderAlert = ({ me }) => {
     queryKey: ['partnerAvailable'],
     queryFn: async () => (await deliveryAPI.getAvailable())?.data || [],
     enabled: online,
-    refetchInterval: online ? 10_000 : false,
+    refetchInterval: online ? 15_000 : false,
   });
 
   const order = useMemo(() => (online && !atLimit ? pool.find((o) => !skipped.has(o.id)) : undefined), [pool, skipped, online, atLimit]);

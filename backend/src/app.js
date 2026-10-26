@@ -118,6 +118,11 @@ app.use("/plans", planRoutes);
 app.use("/payments", paymentRoutes);
 app.use("/rewards", rewardRoutes);
 app.use("/delivery", deliveryRoutes);
+// Same routes under a second path. The Android app wrapper treats any request
+// URL containing "/delivery/" as a login call: it copies every response to the
+// native side and re-syncs tokens, which flooded the delivery app (seconds of
+// lag per tap). The web app calls /dlv; /delivery stays for older clients.
+app.use("/dlv", deliveryRoutes);
 app.use("/upload", uploadRoutes);
 
 app.use((req, res) => {

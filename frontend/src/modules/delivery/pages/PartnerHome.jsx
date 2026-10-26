@@ -164,7 +164,8 @@ const PartnerHome = ({ me }) => {
     queryKey: ['partnerAvailable'],
     queryFn: async () => (await deliveryAPI.getAvailable())?.data || [],
     enabled: online,
-    refetchInterval: online ? 15_000 : false,
+    // Kept fresh by the new-order alert's 15 s refresh (it runs on every screen)
+    // and by live pool updates; a second timer here only doubled the requests.
   });
 
   // Home is up: now fetch the other screens' code and the Orders list in the

@@ -12,7 +12,7 @@ import {
 const ENDPOINTS = {
   customer: '/users/me/push-tokens',
   merchant: '/merchants/me/push-tokens',
-  delivery: '/delivery/partner/me/push-tokens',
+  delivery: '/dlv/partner/me/push-tokens', // not /delivery/: see api/delivery.api.js
 };
 
 /**
