@@ -23,7 +23,24 @@ const ensureContext = () => {
 
 const notify = () => listeners.forEach((fn) => fn());
 
-export const isRingBlocked = () => Boolean(ctx && ctx.state !== 'running') || (!ctx && ringing);
+// Inside the Offerly Android app the ring is handed to the app, which plays it
+// on the phone's ALARM channel: it ignores the media volume (and silent mode on
+// most phones), so a merchant who turned media down still hears new orders. A
+// browser can't do that; there the page plays it itself (media volume).
+// The app answers `true` when it took over; anything else = keep ringing here.
+// Bridges: flutter_inappwebview handler 'offerlyRing', or window.OfferlyNative.ring().
+let nativeRinging = false;
+const callNative = (action) => {
+  try {
+    if (window.flutter_inappwebview?.callHandler) return Promise.resolve(window.flutter_inappwebview.callHandler('offerlyRing', action));
+    if (typeof window.OfferlyNative?.ring === 'function') return Promise.resolve(window.OfferlyNative.ring(action));
+  } catch {
+    /* no app bridge */
+  }
+  return Promise.resolve(false);
+};
+
+export const isRingBlocked = () => !nativeRinging && Boolean(ctx && ctx.state !== 'running') || (!ctx && ringing);
 
 export const subscribeRing = (fn) => {
   listeners.add(fn);
@@ -126,6 +143,18 @@ export const startRinging = () => {
   ringOnce();
   timer = setInterval(ringOnce, RING_EVERY_MS);
   notify();
+  // Hand it to the app if we're inside it; stop the page's own sound once it confirms.
+  callNative('start').then((ok) => {
+    if (ok !== true) return;
+    if (!ringing) {
+      callNative('stop');
+      return;
+    }
+    nativeRinging = true;
+    clearInterval(timer);
+    timer = null;
+    notify();
+  }).catch(() => {});
 };
 
 export const stopRinging = () => {
@@ -133,6 +162,9 @@ export const stopRinging = () => {
   ringing = false;
   clearInterval(timer);
   timer = null;
+  nativeRinging = false;
+  // Always tell the app (a start may still be on its way to it).
+  callNative('stop').catch(() => {});
   notify();
 };
 
