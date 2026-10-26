@@ -450,11 +450,11 @@ export const confirmDeliveryReturn = async (redemption, { by }) => {
 };
 
 // Marks an online order paid (browser verify or webhook, whichever is first)
-// and places it with the store. A payment that lands after the order lapsed is
-// refunded straight away. Returns the order.
+// and places it with the store - straight away, even with admin verification on:
+// only cash-on-delivery orders wait for the admin's call. A payment that lands
+// after the order lapsed is refunded straight away. Returns the order.
 export const markDeliveryOrderPaid = async (razorpayOrderId, razorpayPaymentId) => {
   const now = new Date();
-  const verify = Boolean((await getDeliverySettings()).adminVerification);
   const placed = await Redemption.findOneAndUpdate(
     {
       'delivery.razorpayOrderId': razorpayOrderId,
@@ -463,7 +463,7 @@ export const markDeliveryOrderPaid = async (razorpayOrderId, razorpayPaymentId) 
     },
     {
       $set: {
-        'delivery.status': verify ? 'verifying' : 'placed',
+        'delivery.status': 'placed',
         'delivery.paymentStatus': 'paid',
         'delivery.razorpayPaymentId': razorpayPaymentId,
         'delivery.placedAt': now,

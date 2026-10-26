@@ -11,8 +11,9 @@ const deliverySettingsSchema = new mongoose.Schema(
     // freeDeliveryMinOrder (0 = never free).
     deliveryFee: { type: Number, default: 30, min: 0 },
     freeDeliveryMinOrder: { type: Number, default: 0, min: 0 },
-    // On: a new order (once paid, if online) waits for the admin, who calls the
-    // customer and then sends it on to the store. Off: it goes straight to the store.
+    // On: a new cash-on-delivery order waits for the admin, who calls the
+    // customer and then sends it on to the store. Prepaid orders (and all orders
+    // when off) go straight to the store.
     adminVerification: { type: Boolean, default: false },
     // Offerly's UPI ID for the "scan & pay" QR the partner shows at the door for
     // a cash-on-delivery order. Empty = the partner only offers cash.

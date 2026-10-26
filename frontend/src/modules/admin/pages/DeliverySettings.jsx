@@ -254,10 +254,10 @@ const DeliverySettings = () => {
           <PhoneInTalkRoundedIcon />
         </div>
         <div className="flex-1 min-w-0">
-          <p className="text-[15px] font-semibold text-gray-900">Verify orders by phone first is {form.adminVerification ? 'ON' : 'OFF'}</p>
+          <p className="text-[15px] font-semibold text-gray-900">Verify cash orders by phone first is {form.adminVerification ? 'ON' : 'OFF'}</p>
           <p className="text-[12px] text-gray-500">
             {form.adminVerification
-              ? 'New delivery orders wait in Delivery Orders > "To verify". Call the customer, then send it to the store (or cancel it). Online orders wait once they are paid.'
+              ? 'New cash-on-delivery orders wait in Delivery Orders > "To verify". Call the customer, then send it to the store (or cancel it). Prepaid orders go straight to the store.'
               : 'New delivery orders go straight to the store.'}
           </p>
         </div>
