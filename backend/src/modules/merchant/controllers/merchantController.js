@@ -133,6 +133,8 @@ export const getMerchants = async (req, res) => {
     query.status = "approved";
     // Lapsed memberships are hidden from the public store list.
     query._id = { $in: await getAllActiveMerchantIds() };
+    // So are half-set-up accounts with no store name (they showed as a blank card).
+    query.storeName = /\S/;
   }
 
   // Handle search query (q)
@@ -214,7 +216,7 @@ export const getMerchants = async (req, res) => {
           merchant.coordinates.lat,
           merchant.coordinates.lng
         );
-        merchantObj.distance = formatDistance(distance);
+        if (distance !== null) merchantObj.distance = formatDistance(distance);
       }
 
       return merchantObj;

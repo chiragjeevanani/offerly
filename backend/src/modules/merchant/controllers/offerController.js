@@ -354,6 +354,7 @@ const loadFeedBase = async ({ selectedCity, normalizedCityKey, selectedZone, ban
     let cityMerchants = await Merchant.find({
       status: "approved",
       city: exactCityRegex,
+      storeName: /\S/, // no blank cards for half-set-up accounts
     })
       .select(merchantFields)
       .lean();
@@ -362,6 +363,7 @@ const loadFeedBase = async ({ selectedCity, normalizedCityKey, selectedZone, ban
       cityMerchants = await Merchant.find({
         status: "approved",
         city: fuzzyCityRegex,
+        storeName: /\S/,
       })
         .select(merchantFields)
         .lean();

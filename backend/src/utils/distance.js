@@ -41,8 +41,11 @@ const toRad = (degrees) => {
  * @param {number} lon - Longitude
  * @returns {boolean} True if valid
  */
+// 0,0 is Merchant.coordinates' default ("no pin set"), not a real place: a
+// store without a pin would otherwise show as ~10,000 km away.
 const isValidCoordinate = (lat, lon) => {
   return (
+    !(lat === 0 && lon === 0) &&
     typeof lat === 'number' &&
     typeof lon === 'number' &&
     !isNaN(lat) &&
