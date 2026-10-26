@@ -1,7 +1,6 @@
 import { createContext, useContext, useState, useEffect, useCallback, useMemo } from 'react';
 import { storage } from '../../../utils/storage';
 import { userAPI } from '../../../api/user.api';
-import { releasePushTokenOnLogout } from '../../../utils/push';
 
 const AuthContext = createContext(null);
 
@@ -72,8 +71,12 @@ export const AuthProvider = ({ children }) => {
     // bearer before clearing storage and hand it over explicitly — the request
     // interceptor reads storage, which is about to be empty. Not awaited: the
     // sign-out must feel instant, and the server evicts this token anyway the
-    // next time it is registered against any account.
-    releasePushTokenOnLogout(storage.getToken());
+    // next time it is registered against any account. Loaded on demand: the push
+    // module pulls in Firebase, which no app needs just to start up.
+    const bearer = storage.getToken();
+    import('../../../utils/push')
+      .then(({ releasePushTokenOnLogout }) => releasePushTokenOnLogout(bearer))
+      .catch(() => {});
 
     storage.clearAuth();
     setUser(null);

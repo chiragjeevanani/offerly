@@ -2,14 +2,12 @@ import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import './index.css'
-import App from './App.jsx'
 
-// Opening the delivery partner app: fetch its code now, alongside the rest of
-// startup, instead of after React first renders the route. App.jsx's lazy()
-// import then finds it already loaded.
-if (window.location.pathname.startsWith('/delivery')) {
-  import('./modules/delivery/DeliveryPartnerApp.jsx').catch(() => {})
-}
+// The delivery partner app gets its own, much smaller root (no customer app
+// code at all). The vite.config.js plugin preloads whichever root this path
+// needs from index.html, so neither side waits an extra round trip for it.
+const isDeliveryApp = window.location.pathname.startsWith('/delivery')
+const loadRoot = isDeliveryApp ? import('./DeliveryRoot.jsx') : import('./App.jsx')
 
 // Auto-recover from stale chunks after new deployments
 window.addEventListener('vite:preloadError', () => {
@@ -67,14 +65,25 @@ const queryClient = new QueryClient({
   },
 })
 
-createRoot(document.getElementById('root')).render(
-  <StrictMode>
-    <QueryClientProvider client={queryClient}>
-      <App />
-    </QueryClientProvider>
-  </StrictMode>,
-)
+loadRoot.then(({ default: Root }) => {
+  createRoot(document.getElementById('root')).render(
+    <StrictMode>
+      <QueryClientProvider client={queryClient}>
+        <Root />
+      </QueryClientProvider>
+    </StrictMode>,
+  )
 
-// The static splash in index.html only covers the JS download; React's own
-// SplashScreen is on top by now, so drop it after the first frame.
-requestAnimationFrame(() => requestAnimationFrame(() => document.getElementById('boot-splash')?.remove()))
+  // The static splash in index.html only covers the JS download; React's own
+  // SplashScreen is on top by now, so drop it after the first frame.
+  requestAnimationFrame(() => requestAnimationFrame(() => document.getElementById('boot-splash')?.remove()))
+}).catch(() => {
+  // The root's code didn't load (usually a stale copy after a deploy): reload
+  // once, same guard as the chunk-error handlers above.
+  const lastReload = sessionStorage.getItem('chunk_reload')
+  const now = Date.now()
+  if (!lastReload || now - parseInt(lastReload, 10) > 10000) {
+    sessionStorage.setItem('chunk_reload', now.toString())
+    window.location.reload()
+  }
+})

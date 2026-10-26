@@ -11,27 +11,20 @@ import { useApp } from '../customer/context/AppContext';
 import { deliveryAPI } from '../../api/delivery.api';
 import PartnerOrderAlert from './components/PartnerOrderAlert';
 import { hydratePartnerCache, persistPartnerCache } from './utils/partnerCache';
+import { loadHome, SCREENS } from './screens';
 
 const PartnerLogin = lazy(() => import('./auth/PartnerLogin'));
 const PartnerVerify = lazy(() => import('./auth/PartnerVerify'));
 const PartnerSignup = lazy(() => import('./auth/PartnerSignup'));
 const PartnerStatus = lazy(() => import('./pages/PartnerStatus'));
-// The signed-in screens. Home starts downloading as soon as this file loads (in
-// parallel with the profile request, not after it); the others right after the
-// first screen is up, so a tab tap never waits for its code.
-const loadHome = () => import('./pages/PartnerHome');
-const SCREENS = [
-  () => import('./pages/PartnerOrderDetail'),
-  () => import('./pages/PartnerHistory'),
-  () => import('./pages/PartnerEarnings'),
-  () => import('./pages/PartnerProfile'),
-];
+// Home starts downloading as soon as this file loads (in parallel with the
+// profile request, not after it). Home warms the other screens once it shows.
 if (typeof window !== 'undefined' && localStorage.getItem('offerly_auth_token')) loadHome().catch(() => {});
 const PartnerHome = lazy(loadHome);
-const PartnerOrderDetail = lazy(SCREENS[0]);
-const PartnerHistory = lazy(SCREENS[1]);
-const PartnerEarnings = lazy(SCREENS[2]);
-const PartnerProfile = lazy(SCREENS[3]);
+const PartnerOrderDetail = lazy(SCREENS.orderDetail);
+const PartnerHistory = lazy(SCREENS.history);
+const PartnerEarnings = lazy(SCREENS.earnings);
+const PartnerProfile = lazy(SCREENS.profile);
 const PartnerLegal = lazy(() => import('./pages/PartnerLegal'));
 
 const Loader = () => (
@@ -130,17 +123,6 @@ const SignedInApp = () => {
   const { data, isLoading, isError, refetch } = usePartnerMe();
   const partner = data?.partner;
   usePartnerSocket(partner?.status === 'approved' ? partner : null);
-  const approved = partner?.status === 'approved';
-  useEffect(() => {
-    if (!approved) return undefined;
-    const idle = window.requestIdleCallback || ((fn) => setTimeout(fn, 1200));
-    const handle = idle(() => {
-      SCREENS.forEach((load) => load().catch(() => {}));
-      // The Orders tab's list too, so its first visit isn't a spinner.
-      queryClient.prefetchQuery({ queryKey: ['partnerHistory'], queryFn: async () => (await deliveryAPI.getMyOrders('history'))?.data || [], staleTime: 30_000 });
-    });
-    return () => (window.cancelIdleCallback || clearTimeout)(handle);
-  }, [approved, queryClient]);
 
   if (isLoading) return <Loader />;
   if (isError || !partner) {

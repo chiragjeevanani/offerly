@@ -10,6 +10,7 @@ import SplashScreen from './modules/customer/components/ui/SplashScreen';
 import { useRewardsEnabled } from './hooks/useRewardsEnabled';
 import { customerPageLoaders as pages, preloadCustomerPages } from './routes/customerPages';
 import { rememberAfterLogin, takeAfterLogin } from './utils/afterLogin';
+import { toasterProps } from './config/toaster';
 
 // Loading Component
 const PageLoader = () => (
@@ -221,22 +222,7 @@ const App = () => (
       <SocketProvider>
         <AppRoutes />
         <PushNotificationBridge />
-        <Toaster
-          position="top-center"
-          toastOptions={{
-            duration: 2500,
-            style: {
-              background: '#1A1A1A',
-              color: '#fff',
-              borderRadius: '12px',
-              fontSize: '13px',
-              fontWeight: 500,
-            },
-            success: {
-              iconTheme: { primary: '#5EB929', secondary: '#fff' },
-            },
-          }}
-        />
+        <Toaster {...toasterProps} />
       </SocketProvider>
     </AppProvider>
   </BrowserRouter>

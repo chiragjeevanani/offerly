@@ -1,7 +1,6 @@
-import { useState } from 'react';
+import { lazy, Suspense, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { motion, AnimatePresence } from 'framer-motion';
 import toast from 'react-hot-toast';
 import PowerSettingsNewRoundedIcon from '@mui/icons-material/PowerSettingsNewRounded';
 import StorefrontRoundedIcon from '@mui/icons-material/StorefrontRounded';
@@ -15,7 +14,10 @@ import CheckCircleRoundedIcon from '@mui/icons-material/CheckCircleRounded';
 import { deliveryAPI } from '../../../api/delivery.api';
 import { Card, SectionLabel, StageBadge, Spinner } from '../components/PartnerUI';
 import { rupees } from '../utils/partner';
-import PushOptInCard from '../../../components/common/PushOptInCard';
+import { warmPartnerScreens } from '../screens';
+
+// The notification opt-in pulls in Firebase; it loads after Home is on screen.
+const PushOptInCard = lazy(() => import('../../../components/common/PushOptInCard'));
 
 const timeAgo = (d) => {
   if (!d) return '';
@@ -153,6 +155,18 @@ const PartnerHome = ({ me }) => {
     refetchInterval: online ? 15_000 : false,
   });
 
+  // Home is up: now fetch the other screens' code and the Orders list in the
+  // background, so tab taps are instant without slowing this first screen.
+  const homeReady = !loadingActive && (!online || !loadingPool);
+  useEffect(() => {
+    if (!homeReady) return;
+    warmPartnerScreens(() => queryClient.prefetchQuery({
+      queryKey: ['partnerHistory'],
+      queryFn: async () => (await deliveryAPI.getMyOrders('history'))?.data || [],
+      staleTime: 30_000,
+    }));
+  }, [homeReady, queryClient]);
+
   const toggleOnline = async () => {
     setToggling(true);
     try {
@@ -211,8 +225,7 @@ const PartnerHome = ({ me }) => {
       </div>
 
       {/* Online switch */}
-      <motion.div
-        layout
+      <div
         className={`relative overflow-hidden rounded-[2rem] p-5 shadow-xl text-white ${
           online ? 'bg-gradient-to-br from-gray-950 via-gray-900 to-[#132c0c] border border-[#5EB929]/30' : 'bg-gradient-to-br from-gray-800 to-gray-900'
         }`}
@@ -237,10 +250,14 @@ const PartnerHome = ({ me }) => {
             {toggling ? <Spinner /> : <PowerSettingsNewRoundedIcon sx={{ fontSize: 30 }} />}
           </button>
         </div>
-      </motion.div>
+      </div>
 
       {/* Without push, a partner with the app closed never hears about new orders. */}
-      <PushOptInCard persona="delivery" hideWhenOn />
+      {homeReady && (
+        <Suspense fallback={null}>
+          <PushOptInCard persona="delivery" hideWhenOn />
+        </Suspense>
+      )}
 
       {/* Today */}
       <div className="grid grid-cols-3 gap-3">
@@ -305,19 +322,16 @@ const PartnerHome = ({ me }) => {
               You're carrying {me.maxActive} orders. Deliver one to accept more.
             </p>
           )}
-          <AnimatePresence>
-            {pool.map((o) => (
-              <motion.div key={o.id} layout initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}>
-                <OrderCard
-                  order={o}
-                  action={atLimit ? null : 'Accept order'}
-                  busy={accepting === o.id}
-                  onAction={() => accept(o)}
-                  onOpen={() => navigate(`/delivery/orders/${o.id}`)}
-                />
-              </motion.div>
-            ))}
-          </AnimatePresence>
+          {pool.map((o) => (
+            <OrderCard
+              key={o.id}
+              order={o}
+              action={atLimit ? null : 'Accept order'}
+              busy={accepting === o.id}
+              onAction={() => accept(o)}
+              onOpen={() => navigate(`/delivery/orders/${o.id}`)}
+            />
+          ))}
           </>
         )}
       </section>

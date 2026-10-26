@@ -1,18 +1,17 @@
-import { motion } from 'framer-motion';
 import { STAGE_LABEL } from '../utils/partner';
 
 // Small building blocks shared by the delivery partner screens, in the
 // customer app's look: Poppins, #5EB929, white rounded cards on #F8FAFC.
+// Plain CSS for the small press/fade effects: these load with every partner
+// screen, and the animation library would add ~38 KB to opening the app.
 
 export const BrandMark = ({ subtitle = 'Delivery Partner' }) => (
   <div className="flex flex-col items-center gap-4">
-    <motion.div
-      initial={{ scale: 0.9, opacity: 0 }}
-      animate={{ scale: 1, opacity: 1 }}
+    <div
       className="w-16 h-16 bg-gray-900 rounded-[1.5rem] flex items-center justify-center shadow-xl shadow-black/20 p-2.5"
     >
       <img src="/offerly-logo-ring-256.webp" alt="Offerly" className="w-full h-full object-contain" />
-    </motion.div>
+    </div>
     <div className="text-center">
       <h1 className="text-gray-900 font-bold text-2xl tracking-tight">Offerly</h1>
       <p className="text-[#5EB929] text-[10px] font-bold uppercase tracking-[0.3em] mt-0.5">{subtitle}</p>
@@ -42,14 +41,13 @@ export const PrimaryButton = ({ loading, children, className = '', variant = 'gr
     danger: 'bg-white text-red-500 border border-red-100',
   }[variant];
   return (
-    <motion.button
-      whileTap={{ scale: 0.98 }}
+    <button
       disabled={loading || props.disabled}
-      className={`min-h-[52px] px-5 rounded-2xl font-bold text-[12px] uppercase tracking-[0.15em] flex items-center justify-center gap-2 transition-all disabled:opacity-50 ${look} ${className}`}
+      className={`min-h-[52px] px-5 rounded-2xl font-bold text-[12px] uppercase tracking-[0.15em] flex items-center justify-center gap-2 transition-all active:scale-[0.98] disabled:opacity-50 ${look} ${className}`}
       {...props}
     >
       {loading ? <Spinner className={variant === 'light' || variant === 'danger' ? 'w-5 h-5 border-gray-200 border-t-gray-600' : undefined} /> : children}
-    </motion.button>
+    </button>
   );
 };
 
