@@ -7,8 +7,6 @@ jspm_packages/
 # ===============================
 # Environment Variables & Secrets
 # ===============================
-.env
-.env.local
 .env.development.local
 .env.test.local
 .env.production.local
@@ -90,7 +88,6 @@ desktop.ini
 .idea/
 *.sublime-project
 *.sublime-workspace
-.vscode/*
 !.vscode/settings.json
 !.vscode/tasks.json
 !.vscode/launch.json
@@ -108,3 +105,7 @@ CLAUDE.md
 .claude/
 backend/scripts/
 scratch/
+branch_structure.json
+temp_auto_push.bat
+temp_interactive_push.bat
+config.bat

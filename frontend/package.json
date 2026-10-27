@@ -4,9 +4,9 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "dev": "vite",
-    "dev:clean": "vite --force",
-    "build": "vite build",
+    "dev": "node init && vite",
+    "dev:clean": "node init && vite --force",
+    "build": "node init && vite build",
     "lint": "eslint .",
     "preview": "vite preview",
     "clean": "rimraf node_modules/.vite dist"
